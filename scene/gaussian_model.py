@@ -9,6 +9,8 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
+# 精读地图：本文件保存可训练 Gaussian 的位置、颜色、尺度、旋转和透明度，并负责优化器维护、复制、分裂与剪枝。
+
 import torch
 import numpy as np
 from utils.general_utils import inverse_sigmoid, get_expon_lr_func, build_rotation, build_scaling

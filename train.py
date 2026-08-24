@@ -9,6 +9,8 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
+# 精读地图：本文件组织训练初始化与主循环，汇总各项 Loss、执行反向传播，并在指定迭代阶段触发 Gaussian 稠密化与剪枝。
+
 import os
 from datetime import datetime
 import torch

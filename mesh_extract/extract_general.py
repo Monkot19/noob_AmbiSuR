@@ -8,6 +8,8 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
+# 精读地图：本文件加载训练好的 Gaussian，从多视角渲染 RGB/深度并融合 Open3D TSDF，最终导出并清理 Mesh。
+
 import os, sys
 from pathlib import Path
 dir_path = Path(os.path.dirname(os.path.realpath(__file__))).parents[0]

@@ -9,6 +9,8 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
+# 精读地图：本文件把相机和 Gaussian 参数交给光栅化器，并以字典返回 RGB、可见性、深度、法线、alpha 等训练所需结果。
+
 import torch
 import math
 from diff_plane_rasterization_ambisur import GaussianRasterizationSettings as PlaneGaussianRasterizationSettings
