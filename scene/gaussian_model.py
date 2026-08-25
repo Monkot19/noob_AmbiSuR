@@ -43,6 +43,7 @@ class GaussianModel:
             symm = strip_symmetric(actual_covariance)
             return symm
         
+        # 原始优化变量不必满足物理约束；这些映射会得到正尺度、0 到 1 的 opacity 和单位四元数。
         self.scaling_activation = torch.exp
         self.scaling_inverse_activation = torch.log
 
@@ -56,6 +57,7 @@ class GaussianModel:
     def __init__(self, sh_degree : int):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
+        # 下划线字段先以空张量占位，并在 create_from_pcd() 中替换为可训练的 nn.Parameter。
         self._xyz = torch.empty(0)
         self._knn_f = torch.empty(0)
         self._features_dc = torch.empty(0)
@@ -173,6 +175,7 @@ class GaussianModel:
         self.spatial_lr_scale = spatial_lr_scale
         fused_point_cloud = torch.tensor(np.asarray(pcd.points)).float().cuda()
         fused_color = RGB2SH(torch.tensor(np.asarray(pcd.colors)).float().cuda())
+        # 默认 sh_degree=3 时共有 16 个系数：DC 保存为 [N,1,3]，其余 15 个保存为 [N,15,3]。
         features = torch.zeros((fused_color.shape[0], 3, (self.max_sh_degree + 1) ** 2)).float().cuda()
         features[:, :3, 0 ] = fused_color
         features[:, 3:, 1:] = 0.0
@@ -188,6 +191,7 @@ class GaussianModel:
         opacities = inverse_sigmoid(0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
 
         knn_f = torch.randn((fused_point_cloud.shape[0], 6)).float().cuda()
+        # requires_grad 让反向传播计算梯度；这些参数随后在 training_setup() 中被显式交给 Adam。
         self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
         self._knn_f = nn.Parameter(knn_f.requires_grad_(True))
         self._features_dc = nn.Parameter(features[:,:,0:1].transpose(1, 2).contiguous().requires_grad_(True))
@@ -207,6 +211,7 @@ class GaussianModel:
         self.abs_split_radii2D_threshold = training_args.abs_split_radii2D_threshold
         self.max_abs_split_points = training_args.max_abs_split_points
         self.max_all_points = training_args.max_all_points
+        # 每个参数组显式设置独立学习率，因此 Adam 外层的 lr=0.0 只是未指定组的默认值。
         l = [
             {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
             {'params': [self._knn_f], 'lr': 0.01, "name": "knn_f"},
