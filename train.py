@@ -466,6 +466,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 viewspace_point_tensor_abs = render_pkg["viewspace_points_abs"]
 
                 # 将本轮可见 Gaussian 的屏幕空间 xy 梯度累计起来，供周期性的 clone/split 判断使用。
+                # Primitive Truncation 不直接提供 densify Mask，但会改变同一 rasterizer backward 的屏幕梯度，因而间接影响增点。
                 gaussians.add_densification_stats(viewspace_point_tensor, viewspace_point_tensor_abs, visibility_filter)
 
                 # 默认条件是 iteration>500 且每 100 轮一次，因此首次 densification 为 600，末次为 14900。

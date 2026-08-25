@@ -32,6 +32,7 @@ class Scene:
         self.loaded_iter = None
         self.gaussians = gaussians
         self.source_path = args.source_path
+        # 将训练命令或 cfg_args 中的截断配置挂到 GaussianModel，训练与后续 Mesh 渲染因而复用同一设置。
         self.gaussians.disable_trunc = args.disable_trunc
         self.gaussians.trunc_sigma = args.trunc_sigma
 

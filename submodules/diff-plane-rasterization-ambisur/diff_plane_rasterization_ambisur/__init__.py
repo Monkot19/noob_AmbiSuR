@@ -63,6 +63,8 @@ class _RasterizeGaussians(torch.autograd.Function):
     ):
 
         # Restructure arguments the way that the C++ lib expects them
+        # Python 在此把截断常量传给底层 forward；随后 ctx.raster_settings 会保留同一设置，供 backward 再次传入。
+        # 这里仅是 autograd 接口边界，2σ 条件及边界外梯度如何处理要到第三轮核对 CUDA。
         args = (
             raster_settings.bg, 
             means3D,

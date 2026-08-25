@@ -104,6 +104,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             prefiltered=False,
             render_geo=return_plane,
             ray_reg=ray_reg,
+            # Primitive Truncation 不是额外 Loss：它作为光栅化设置直接改变 Gaussian 的像素贡献范围，
+            # 因而统一作用于 RGB、深度、法线、alpha 等渲染量及其反向梯度。
             disable_trunc=pc.disable_trunc,
             trunc_sigma=pc.trunc_sigma,
             debug=pipe.debug

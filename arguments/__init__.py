@@ -61,6 +61,8 @@ class ModelParams(ParamGroup):
         self.multi_view_min_dis = 0.01
         self.multi_view_max_dis = 1.5
 
+        # Gaussian Primitive Truncation 默认开启；--disable_trunc 才关闭，trunc_sigma 是保留核心的 σ 倍数。
+        # 默认 2.0 表示保留约 2σ 内的贡献；数值越大，截掉的尾部越少、截断越弱。
         self.disable_trunc = False
         self.trunc_sigma = 2.0
 
