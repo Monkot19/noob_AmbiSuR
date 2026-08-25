@@ -137,6 +137,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             source_path=dataset.source_path,
             force_rerun=False)
         
+        # mono 分支虽在 iteration>1000 时进入，但该 Loss 内部从 3000 才激活，因此默认首个有效 Loss 在第 3000 轮。
         depthanythingv2_loss = DepthAnythingv2Loss(
             iter_from=3000,
             iter_end=opt.iterations,
@@ -167,6 +168,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             gaussians.use_app = True
 
         bg = torch.rand((3), device="cuda") if opt.random_background else background
+        # Ray-Color 不加到 Python 的显式 Loss：默认仅在 5001..densify_until_iter 传正权重，其余传 -1 作为关闭值。
+        # raster settings 通过 ctx 保留该值，loss.backward() 进入自定义 backward 后才交给底层；CUDA 内具体用法留到第三轮核验。
         render_pkg = render(viewpoint_cam, gaussians, pipe, bg, app_model=app_model,
                             return_plane=iteration>0, return_depth_normal=True, 
                             ray_reg=(-1 if iteration > opt.densify_until_iter else opt.ray_color_lambda) if iteration > 5000 else -1,
@@ -192,6 +195,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             min_scale_loss = sorted_scale[...,0]
             loss += opt.scale_loss_weight * min_scale_loss.mean()
         # single-view loss
+        # single-view、multi-view 与 ALR 都对默认 from_iter=7000 使用严格的 >，所以实际首轮是 7001。
         if iteration > opt.single_view_weight_from_iter:
             weight = opt.single_view_weight
             normal = render_pkg["rendered_normal"]
@@ -464,6 +468,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 # 将本轮可见 Gaussian 的屏幕空间 xy 梯度累计起来，供周期性的 clone/split 判断使用。
                 gaussians.add_densification_stats(viewspace_point_tensor, viewspace_point_tensor_abs, visibility_filter)
 
+                # 默认条件是 iteration>500 且每 100 轮一次，因此首次 densification 为 600，末次为 14900。
                 if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     # 精读风险（服务器待验证）：densify/prune 在 optimizer.step() 前重建 Gaussian Parameter，
@@ -489,6 +494,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     gaussians.reset_opacity()
 
             # Optimizer step
+            # 默认第 30000 轮仍会渲染、反传和保存，但只有 1..29999 满足此条件并真正更新参数。
             if iteration < opt.iterations:
                 # step 按当前 .grad 改参数；随后设为 None，防止旧梯度被下一轮继续累加。
                 gaussians.optimizer.step()
