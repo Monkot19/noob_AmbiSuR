@@ -145,6 +145,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
 
 
+    # 每轮训练可分为三段：前向渲染并汇总 Loss -> backward 计算梯度 -> 无梯度区内统计、增删点和 optimizer 更新参数。
     for iteration in range(first_iter, opt.iterations + 1):
 
         iter_start.record()
@@ -390,6 +391,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 metric_depth_conf = 1
                 conf_thresh = -1
             
+            # loss_unc 对应论文的 Amorphous Local Regularizer (ALR)，不是预测“不确定度数值”的监督 Loss。
+            # 它用 SH 双端歧义区域的软 Mask，加权“深度先验法线”和“渲染深度法线”的方向差异。
+            # rendered_unc.detach() 表示该 Mask 在此处只决定惩罚位置，不通过本 Loss 反向更新 Mask 的生成路径。
             if iteration > opt.unc_from_iter:
                 sh_uncertainty = gaussians.compute_weighted_sh_norm("equal")
                 unc_thresh = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_upper_ratio)
@@ -420,9 +424,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 gaussians._rotation.requires_grad_ = True
 
 
+        # backward 只计算并累积各参数的 .grad；真正改动参数数值要等后面的 optimizer.step()。
         loss.backward()
         iter_end.record()
 
+        # no_grad 禁止下面的管理操作建立新计算图，但仍可读取刚才 backward 已写好的 .grad。
         with torch.no_grad():
             # Progress bar
             ema_loss_for_log = 0.4 * image_loss.item() if image_loss is not None else 0.0 + 0.6 * ema_loss_for_log
@@ -455,10 +461,13 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 gaussians.max_radii2D[mask] = torch.max(gaussians.max_radii2D[mask], radii[mask])
                 viewspace_point_tensor_abs = render_pkg["viewspace_points_abs"]
 
+                # 将本轮可见 Gaussian 的屏幕空间 xy 梯度累计起来，供周期性的 clone/split 判断使用。
                 gaussians.add_densification_stats(viewspace_point_tensor, viewspace_point_tensor_abs, visibility_filter)
 
                 if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
+                    # 精读风险（服务器待验证）：densify/prune 在 optimizer.step() 前重建 Gaussian Parameter，
+                    # 只迁移 Adam 动量而未显式迁移旧 .grad；发生替换的本轮可能跳过部分或全部 Gaussian 参数更新。
                     gaussians.densify_and_prune(opt.densify_grad_threshold, opt.densify_abs_grad_threshold, 
                                                 opt.opacity_cull_threshold, scene.cameras_extent, size_threshold)
             
@@ -481,6 +490,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
             # Optimizer step
             if iteration < opt.iterations:
+                # step 按当前 .grad 改参数；随后设为 None，防止旧梯度被下一轮继续累加。
                 gaussians.optimizer.step()
                 app_model.optimizer.step()
                 gaussians.optimizer.zero_grad(set_to_none = True)

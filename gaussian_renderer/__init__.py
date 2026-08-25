@@ -42,6 +42,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     Background tensor (bg_color) must be on GPU!
     """
     # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means
+    # 这两个全零张量不是实际二维坐标，而是给自定义光栅化 backward 承接屏幕空间梯度的“桥”。
+    # 前向渲染使用它们，反向后训练循环读取其 .grad，判断哪些 Gaussian 需要 densification。
     screenspace_points = torch.zeros_like(pc.get_xyz, dtype=pc.get_xyz.dtype, requires_grad=True, device="cuda") + 0
     screenspace_points_abs = torch.zeros_like(pc.get_xyz, dtype=pc.get_xyz.dtype, requires_grad=True, device="cuda") + 0
     try:

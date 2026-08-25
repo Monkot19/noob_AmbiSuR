@@ -541,6 +541,7 @@ class GaussianModel:
         torch.cuda.empty_cache()
 
     def add_densification_stats(self, viewspace_point_tensor, viewspace_point_tensor_abs, update_filter):
+        # 只统计可见 Gaussian：累计两种屏幕空间梯度前两维的 L2 范数，denom 记录被观察次数以便之后求均值。
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
         self.xyz_gradient_accum_abs[update_filter] += torch.norm(viewspace_point_tensor_abs.grad[update_filter,:2], dim=-1, keepdim=True)
         self.denom[update_filter] += 1
