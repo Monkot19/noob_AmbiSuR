@@ -137,6 +137,7 @@ class OptimizationParams(ParamGroup):
         self.unc_from_iter = 7000
         self.unc_conf_thresh_ratio = 0.0
 
+        # Ray-Color 权重：正则量是同一 ray 上各 Gaussian 颜色相对渲染均值颜色的加权方差，默认系数为 1e-5。
         self.ray_color_lambda = 1e-5
 
         self.use_mono = False

@@ -65,6 +65,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         # Restructure arguments the way that the C++ lib expects them
         # Python 在此把截断常量传给底层 forward；随后 ctx.raster_settings 会保留同一设置，供 backward 再次传入。
         # 这里仅是 autograd 接口边界，2σ 条件及边界外梯度如何处理要到第三轮核对 CUDA。
+        # 注意此 forward 参数表没有 ray_reg：Ray-Color 不生成 Python 可见的前向 Loss 或额外输出。
         args = (
             raster_settings.bg, 
             means3D,
@@ -118,6 +119,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         all_map_pixels, final_colors, colors_precomp, all_maps, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer = ctx.saved_tensors
 
         # Restructure args as C++ method expects them
+        # ray_reg 从这里才进入底层 backward，用于 Ray-Color 的梯度计算；具体累计量与返回槽留到第三轮 CUDA 核验。
         args = (raster_settings.bg,
                 all_map_pixels,
                 final_colors,

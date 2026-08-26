@@ -170,6 +170,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         bg = torch.rand((3), device="cuda") if opt.random_background else background
         # Ray-Color 不加到 Python 的显式 Loss：默认仅在 5001..densify_until_iter 传正权重，其余传 -1 作为关闭值。
         # raster settings 通过 ctx 保留该值，loss.backward() 进入自定义 backward 后才交给底层；CUDA 内具体用法留到第三轮核验。
+        # 论文设计 detach 混合权重和均值颜色，只让每 Gaussian 颜色接收此梯度；故预期不影响 densification，待 CUDA 确认。
         render_pkg = render(viewpoint_cam, gaussians, pipe, bg, app_model=app_model,
                             return_plane=iteration>0, return_depth_normal=True, 
                             ray_reg=(-1 if iteration > opt.densify_until_iter else opt.ray_color_lambda) if iteration > 5000 else -1,
@@ -538,6 +539,7 @@ def prepare_output_and_logger(args, opt):
 
 def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs, app_model):
     if tb_writer:
+        # total_loss 只记录 Python 显式 loss；Ray-Color 在自定义 backward 注入梯度，此处没有它的独立数值。
         tb_writer.add_scalar('train_loss_patches/l1_loss', Ll1.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
         tb_writer.add_scalar('iter_time', elapsed, iteration)
