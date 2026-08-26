@@ -129,6 +129,8 @@ class OptimizationParams(ParamGroup):
         self.depth_weight = 0.1
         self.metric_depth_normal_weight_base = 0.0
 
+        # Dual-End：0.95 是上端分位阈值，配合严格 > 实际选择 SH 指标最高约 5% 的 Gaussian；0.1 选择最低约 10%。
+        # 低端最终阈值取 min(低端分位数, sh_unc_lower_max)，所以 1.0 是阈值上限，不是简单选择所有 <=1.0 的点。
         self.sh_ambi_upper_ratio = 0.95
         self.sh_ambi_lower_ratio = 0.1
         self.sh_unc_lower_max = 1.0

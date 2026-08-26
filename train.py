@@ -400,6 +400,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             # 它用 SH 双端歧义区域的软 Mask，加权“深度先验法线”和“渲染深度法线”的方向差异。
             # rendered_unc.detach() 表示该 Mask 在此处只决定惩罚位置，不通过本 Loss 反向更新 Mask 的生成路径。
             if iteration > opt.unc_from_iter:
+                # renderer 已计算像素级 Mask；这里重新计算 Gaussian 级 Mask，供后面的参数级选择使用。
                 sh_uncertainty = gaussians.compute_weighted_sh_norm("equal")
                 unc_thresh = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_upper_ratio)
                 unc_thresh_min = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_lower_ratio)

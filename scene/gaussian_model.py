@@ -584,6 +584,7 @@ class GaussianModel:
 
     def compute_weighted_sh_norm(self, weighting='equal'):
         # [N, 15, 3] (when max_sh_degree=3)
+        # 这里把 15 个非 DC 系数写死，因此只兼容默认 max_sh_degree=3；修改 --sh_degree 可能导致 view shape 错误。
         features = self._features_rest.clone().view(self._features_rest.shape[0], 15, 3)
         
         energy = features ** 2  # [N, 15, 3]
@@ -592,13 +593,13 @@ class GaussianModel:
         idx_band_2 = slice(3, 8)    # 5 coeffs
         idx_band_3 = slice(8, 15)   # 7 coeffs
         
-        e_b1 = energy[:, idx_band_1, :].sum(dim=1)
-        e_b2 = energy[:, idx_band_2, :].sum(dim=1)
-        e_b3 = energy[:, idx_band_3, :].sum(dim=1)
+        e_b1 = energy[:, idx_band_1, :].sum(dim=1)  # [N, 3]
+        e_b2 = energy[:, idx_band_2, :].sum(dim=1)  # [N, 3]
+        e_b3 = energy[:, idx_band_3, :].sum(dim=1)  # [N, 3]
         
         if weighting == 'equal':
             total_energy = e_b1 + e_b2 + e_b3
-            
+
         elif weighting == 'sobolev':
             # l=1 -> weight 2
             # l=2 -> weight 6
@@ -608,6 +609,6 @@ class GaussianModel:
         elif weighting == 'aggressive':
             total_energy = e_b2 + 4 * e_b3
             
-        total_energy_sum = total_energy.sum(dim=-1)
-        metric = torch.sqrt(torch.clamp(total_energy_sum, min=1e-8))
+        total_energy_sum = total_energy.sum(dim=-1) # [N]
+        metric = torch.sqrt(torch.clamp(total_energy_sum, min=1e-8))    # [N]，每个 Gaussian 的加权 SH 能量平方根，即 L2 范数。
         return metric

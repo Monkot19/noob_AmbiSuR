@@ -153,15 +153,16 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # scaling_rate = min_scale / mid_scale * sorted_scale[...,1] * sorted_scale[...,2]
     # input_all_map[:, 5] = pc._features_rest.view(means3D.shape[0], -1).norm(p=2, dim=1)
     
+    # Indicator 从第一次 render 就计算；ALR 到 7001 轮才消费，且之后 train.py 还会再算一次 Gaussian 级 Mask。
     sh_uncertainty = pc.compute_weighted_sh_norm("equal")
     if opt is not None:
         unc_thresh = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_upper_ratio)
         unc_thresh_min = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_lower_ratio)
         unc_thresh_min = min(opt.sh_unc_lower_max, unc_thresh_min)
-        input_all_map[:, 5] = (sh_uncertainty > unc_thresh) + (sh_uncertainty < unc_thresh_min)
-
+        input_all_map[:, 5] = (sh_uncertainty > unc_thresh) + (sh_uncertainty < unc_thresh_min) # 普通 Gaussian 标 0，双端命中 Gaussian 标 1
     input_all_map[:, 6] = depth_z
 
+    # 此处进行光栅化渲染，返回 RGB、深度、法线、alpha 等训练所需结果。
     rendered_image, radii, out_observe, out_all_map, plane_depth = rasterizer(
         means3D = means3D,
         means2D = means2D,
@@ -178,6 +179,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     rendered_alpha = out_all_map[3:4, ]
     rendered_distance = out_all_map[4:5, ]
 
+    # 像素级 [1,H,W] 软 Mask：Gaussian 级 0/1 标记经 alpha/透射混合得到；下方归一化写法已被注释，并未执行。
     rendered_unc = out_all_map[5:6, ] # / (out_all_map[5:6, ].max() + 1e-5)
 
 
