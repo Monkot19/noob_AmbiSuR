@@ -134,6 +134,9 @@ class OptimizationParams(ParamGroup):
         self.sh_ambi_upper_ratio = 0.95
         self.sh_ambi_lower_ratio = 0.1
         self.sh_unc_lower_max = 1.0
+
+        # ALR 默认从第 7001 轮开始；unc_weight=0 只把数值乘成 0，并不会跳过 ALR 分支及其 backward。
+        # 仅当 0<unc_decay<1 时正则才随训练减弱；默认值 1.0 表示不衰减。
         self.unc_decay = 1.0
         self.unc_weight = 0.1
         self.unc_from_iter = 7000

@@ -407,19 +407,32 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 unc_thresh_min = min(opt.sh_unc_lower_max, unc_thresh_min)
                 unc_mask = (sh_uncertainty > unc_thresh) | (sh_uncertainty < unc_thresh_min)
 
+                # 配置耦合风险：ALR 衰减进度以 multi_view_weight_from_iter 为起点，而不是 unc_from_iter；默认二者恰好同为 7000。
                 ratio = (iteration - opt.multi_view_weight_from_iter) / (opt.iterations - opt.multi_view_weight_from_iter)
+                # 当 0<unc_decay<1 时，mult 让 ALR 在后期逐渐减弱、避免过度约束；默认 unc_decay=1.0 时 mult 始终为 1。
                 mult = opt.unc_decay ** ratio
 
                 normal_from_metric_depth = render_normal(viewpoint_cam, metric_depth)
+                # 深度先验法线、置信度条件和 detach 后的像素 Mask 都只充当固定权重；梯度来自渲染 depth_normal 一侧。
+                # Python 层可追到 depth_normal -> plane_depth -> rasterizer；CUDA 具体向哪些 Gaussian 输入返回梯度留到第三轮确认。
                 unc_diff = 1 - (normal_from_metric_depth * render_pkg["depth_normal"]).sum(0)
                 loss_unc = opt.unc_weight * mult * (unc_diff * render_pkg["rendered_unc"].detach() * (metric_depth_conf >= conf_thresh)).mean()
 
+                # 代码风险（服务器待验证）：requires_grad_ 是方法，下面却给方法名赋值，没有调用 PyTorch 的冻结接口，可能直接报只读属性错误。
+                # 即使改成 requires_grad_(False)，布尔索引得到的临时张量也不能实现“按 Gaussian 元素冻结”，且前向计算图已经建立。
+                # 论文/代码不符：论文明确冻结非风险点并排除 opacity/scale；结合 normal-loss 路径，风险点的位置/旋转应是几何优化对象。
+                # 下方代码的表面意图却是保留风险点 opacity、冻结全部 rotation，与该 Parameter Separation 描述相反。
+                # 因而当前代码不能据此证明 ALR 只更新 unc_mask 命中的 Gaussian；真正实现需对 ALR 单独产生的参数梯度做 Mask 等处理。
                 gaussians._xyz[~unc_mask].requires_grad_ = False
                 gaussians._opacity[~unc_mask].requires_grad_ = False
                 gaussians._scaling.requires_grad_ = False
                 gaussians._rotation.requires_grad_ = False
 
+                # 先单独反传 ALR，把它的贡献累积进参数 .grad；这并不会自动避免与主 Loss 梯度混合。
+                # retain_graph=True 保留同一计算图，供后面的主 loss.backward() 再次反传并继续累加梯度。
                 loss_unc.backward(retain_graph=True)
+                # 只清除 ALR 的屏幕空间代理梯度，使它不进入 densification 统计；Gaussian Parameter 上的 ALR 梯度仍被保留。
+                # viewspace_point_tensor 就是 render_pkg["viewspace_points"]，所以第一、第三行实际上重复清零同一个张量。
                 render_pkg["viewspace_points"].grad *= 0
                 render_pkg["viewspace_points_abs"].grad *= 0
                 viewspace_point_tensor.grad *= 0
@@ -430,7 +443,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 gaussians._rotation.requires_grad_ = True
 
 
-        # backward 只计算并累积各参数的 .grad；真正改动参数数值要等后面的 optimizer.step()。
+        # 此处只计算主 Loss 的梯度贡献，但会累加到同一份 .grad；若 ALR 已执行，最终 .grad 同时包含 ALR 与主 Loss。
+        # backward 仍不改参数数值，真正应用这两部分累计梯度要等后面的 optimizer.step()。
         loss.backward()
         iter_end.record()
 
@@ -455,6 +469,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 progress_bar.close()
 
             # Log and save
+            # 日志风险：这里传入的 loss 没有加上单独计算的 loss_unc，因此记录的“总 Loss”不含 ALR，尽管优化器会使用其累计梯度。
             training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background), app_model)
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
