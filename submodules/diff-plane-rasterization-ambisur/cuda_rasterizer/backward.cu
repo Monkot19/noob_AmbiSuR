@@ -548,7 +548,10 @@ renderCUDA(
 			if (power > 0.0f)
 				continue;
 			
+			// backward 重放 forward 的截断门，保证只对 forward 实际参与混合的 Gaussian-pixel 配对累计梯度。
 			float threshold = -0.5f * trunc_sigma * trunc_sigma;
+			// 默认 gamma=2/4 时越界 alpha 会在下方被阈值跳过，因此颜色、opacity、二维中心和 conic 都不接收该配对的梯度。
+			// 风险：若极小 gamma 使越界 alpha 未被跳过，下面的几何导数没有包含 power*=100 所需的链式因子 100。
 			if ((power < threshold) && !disable_trunc)
 			// if ((power < -2.0f))
 				power = power * 100.0f;
@@ -638,6 +641,7 @@ renderCUDA(
 			const float dG_ddelx = -gdx * con_o.x - gdy * con_o.y;
 			const float dG_ddely = -gdy * con_o.z - gdx * con_o.y;
 
+			// 保留配对的 mean2D/conic 梯度稍后会映射到 mean3D、scale、rotation；mean2D/abs 也会返回 Python 供 densification 使用。
 			// Update gradients w.r.t. 2D mean position of the Gaussian
 			atomicAdd(&dL_dmean2D[global_id].x, dL_dG * dG_ddelx * ddelx_dx);
 			atomicAdd(&dL_dmean2D[global_id].y, dL_dG * dG_ddely * ddely_dy);

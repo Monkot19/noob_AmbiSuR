@@ -32,6 +32,7 @@ std::function<char*(size_t N)> resizeFunctional(torch::Tensor& t) {
     return lambda;
 }
 
+// Forward 桥：检查 PyTorch Tensor、分配输出，再把 trunc_sigma/disable_trunc 作为普通标量传给核心 CUDA rasterizer。
 std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
 RasterizeGaussiansCUDA(
 	const torch::Tensor& background,
@@ -128,6 +129,7 @@ RasterizeGaussiansCUDA(
   return std::make_tuple(rendered, out_color, radii, out_observe, out_all_map, out_plane_depth, geomBuffer, binningBuffer, imgBuffer);
 }
 
+// Backward 桥：分配各输入的梯度 Tensor；截断配置只控制配对筛选，本身不会出现在返回的梯度 tuple 中。
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
 RasterizeGaussiansBackwardCUDA(
  	const torch::Tensor& background,

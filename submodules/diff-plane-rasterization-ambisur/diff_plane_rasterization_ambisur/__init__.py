@@ -87,6 +87,7 @@ class _RasterizeGaussians(torch.autograd.Function):
             raster_settings.campos,
             raster_settings.prefiltered,
             raster_settings.render_geo,
+            # 这两个值是普通配置量：forward 只用它们筛选 Gaussian-pixel 配对，它们自身不参与求导。
             raster_settings.trunc_sigma,
             raster_settings.disable_trunc,
             raster_settings.debug
@@ -147,6 +148,7 @@ class _RasterizeGaussians(torch.autograd.Function):
                 imgBuffer,
                 raster_settings.render_geo,
                 raster_settings.ray_reg,
+                # backward 会重放 alpha 混合，因此必须复用 forward 的同一截断阈值和开关。
                 raster_settings.trunc_sigma,
                 raster_settings.disable_trunc,
                 raster_settings.debug)
@@ -175,6 +177,7 @@ class _RasterizeGaussians(torch.autograd.Function):
             grad_rotations,
             grad_cov3Ds_precomp,
             gard_all_map,
+            # 最后的 None 对应 raster_settings；其中的 trunc_sigma/disable_trunc 没有梯度返回槽。
             None,
         )
 

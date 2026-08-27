@@ -356,11 +356,15 @@ renderCUDA(
 			float2 xy = collected_xy[j];
 			float2 d = { xy.x - pixf.x, xy.y - pixf.y };
 			float4 con_o = collected_conic_opacity[j];
+			// con_o.xyz 是投影 Gaussian 的逆协方差（conic）；若 r^2=d^T Q d，则 power=-r^2/2。
 			float power = -0.5f * (con_o.x * d.x * d.x + con_o.z * d.y * d.y) - con_o.y * d.x * d.y;
 			if (power > 0.0f)
 				continue;
 			
+			// power < -gamma^2/2 等价于椭圆标准化距离 r>gamma；严格 < 使边界 r=gamma 仍被保留。
 			float threshold = -0.5f * trunc_sigma * trunc_sigma;
+			// 代码以指数强压低近似论文的二值截断：默认 gamma=2 时越界 power<-2，乘 100 后 exp(power)<exp(-200)。
+			// 后面的 alpha<1/255 会将其完全跳过；参数无范围校验，极小 gamma（约 <0.333）时不一定形成硬截断。
 			if ((power < threshold) && !disable_trunc)
 				power = power * 100.0f;
 
