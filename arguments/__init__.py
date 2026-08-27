@@ -142,7 +142,8 @@ class OptimizationParams(ParamGroup):
         self.unc_from_iter = 7000
         self.unc_conf_thresh_ratio = 0.0
 
-        # Ray-Color 权重：正则量是同一 ray 上各 Gaussian 颜色相对渲染均值颜色的加权方差，默认系数为 1e-5。
+        # Ray-Color 权重：传进 renderer/CUDA 后改名为 ray_reg；约束同一 ray 上单个 Gaussian 颜色与最终像素颜色的差异。
+        # 代码注入 lambda*w_i*(c_i-C)，相同名义权重下等价于论文平方范数 Loss 的一半（严格导数还应有系数 2）。
         self.ray_color_lambda = 1e-5
 
         self.use_mono = False

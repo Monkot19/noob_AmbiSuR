@@ -103,6 +103,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             campos=viewpoint_camera.camera_center,
             prefiltered=False,
             render_geo=return_plane,
+            # ray_reg 只随 settings 被 ctx 保存供自定义 backward 使用；底层 forward 不计算 Ray-Color Loss 或额外输出。
             ray_reg=ray_reg,
             # Primitive Truncation 不是额外 Loss：它作为光栅化设置直接改变 Gaussian 的像素贡献范围，
             # 因而统一作用于 RGB、深度、法线、alpha 等渲染量及其反向梯度。

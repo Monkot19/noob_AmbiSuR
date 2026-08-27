@@ -416,6 +416,7 @@ renderCUDA(
 		n_contrib[pix_id] = last_contributor;
 		n_contrib_first[pix_id] = first_contributor;
 		for (int ch = 0; ch < CHANNELS; ch++)
+			// 此最终颜色会被 backward 当作 Ray-Color 的 C；它包含 T*background，故仅在黑背景时严格等于论文的 sum_i w_i*c_i。
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
 		if (render_geo) {
 			for (int ch = 0; ch < ALL_MAP; ch++)

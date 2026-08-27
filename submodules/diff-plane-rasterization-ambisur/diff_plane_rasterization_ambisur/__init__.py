@@ -108,6 +108,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         # Keep relevant tensors for backward
         ctx.raster_settings = raster_settings
         ctx.num_rendered = num_rendered
+        # color 会作为 final_colors 保存给 backward；Ray-Color 把它当固定的最终像素颜色 C，不沿 C 的生成路径求导。
         ctx.save_for_backward(out_all_map, color, colors_precomp, all_maps, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer)
         return color, radii, out_observe, out_all_map, out_plane_depth
 
@@ -120,7 +121,8 @@ class _RasterizeGaussians(torch.autograd.Function):
         all_map_pixels, final_colors, colors_precomp, all_maps, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer = ctx.saved_tensors
 
         # Restructure args as C++ method expects them
-        # ray_reg 从这里才进入底层 backward，用于 Ray-Color 的梯度计算；具体累计量与返回槽留到第三轮 CUDA 核验。
+        # ray_reg 从这里才进入底层 backward；CUDA 直接注入 lambda*w_i*(c_i-C) 到 dL_dcolors，不返回显式 Loss。
+        # 默认会物化未使用输出的零梯度，因此由 ALR 深度输出触发的 backward 也可能再次注入该额外项。
         args = (raster_settings.bg,
                 all_map_pixels,
                 final_colors,

@@ -187,6 +187,7 @@ RasterizeGaussiansBackwardCUDA(
   
   if(P != 0)
   {  
+	  // ray_reg 是由 ray_color_lambda 改名得到的普通标量，只在这条 backward 桥中继续传入核心 rasterizer。
 	  CudaRasterizer::Rasterizer::backward(P, degree, M, R,
 	  background.contiguous().data<float>(),
 	  all_map_pixels.contiguous().data<float>(),

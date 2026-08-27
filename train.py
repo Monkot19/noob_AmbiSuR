@@ -168,9 +168,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             gaussians.use_app = True
 
         bg = torch.rand((3), device="cuda") if opt.random_background else background
-        # Ray-Color 不加到 Python 的显式 Loss：默认仅在 5001..densify_until_iter 传正权重，其余传 -1 作为关闭值。
-        # raster settings 通过 ctx 保留该值，loss.backward() 进入自定义 backward 后才交给底层；CUDA 内具体用法留到第三轮核验。
-        # 论文设计 detach 混合权重和均值颜色，只让每 Gaussian 颜色接收此梯度；故预期不影响 densification，待 CUDA 确认。
+        # ray_reg 就是 ray_color_lambda 传入 renderer/CUDA 后的名字；默认在第 5001 轮到 densification 结束（含）之间开启。
+        # 它不形成 Python 可见的 Loss，而在每次 rasterizer backward 中惩罚同一 ray 上“单个 Gaussian 颜色与最终像素颜色的差异”。
+        # 额外项先直接加到 dL_dcolors；默认 SH 路径会继续更新 SH，并可能经视角方向更新 means3D，但不直接写 densification 的屏幕梯度。
+        # 耦合风险：7001..densify_until_iter 还会执行 ALR 的独立 backward，因而同一 Ray-Color 项可能先后累计两次。
         render_pkg = render(viewpoint_cam, gaussians, pipe, bg, app_model=app_model,
                             return_plane=iteration>0, return_depth_normal=True, 
                             ray_reg=(-1 if iteration > opt.densify_until_iter else opt.ray_color_lambda) if iteration > 5000 else -1,

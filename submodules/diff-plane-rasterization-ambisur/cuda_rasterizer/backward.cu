@@ -467,7 +467,7 @@ renderCUDA(
 	float dL_dpixel[C];
 	float dL_dout_all_map[MAP_N];
 
-	// [Added]
+	// forward 保存的最终像素颜色；手写 backward 只读取其数值，故对 Ray-Color 而言等效 detach。
     float final_pixel_c[C] = { 0 };
 
 	// float grad_sum = 0;
@@ -475,8 +475,7 @@ renderCUDA(
 		for (int i = 0; i < C; i++) {
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
 
-			// [新增] 读取 Forward Pass 渲染出的最终颜色
-            // 假设 final_colors 的布局和 dL_dpixels (Image) 一致，是 Planar 格式 [C, H, W]
+			// final_colors 与图像梯度相同，采用 [C,H,W] 的 planar 布局；非黑背景时其中还包含 T_final*background。
             final_pixel_c[i] = final_colors[i * H * W + pix_id];
 			
 			// grad_sum += fabs(dL_dpixel[i]);
@@ -562,6 +561,7 @@ renderCUDA(
 				continue;
 
 			T = T / (1.f - alpha);
+			// alpha*T 就是论文的 blending weight w_i；Ray-Color 只拿它加权颜色梯度，不向 alpha/T 反传该额外项。
 			const float dchannel_dcolor = alpha * T;
 
 			// // MODIFY: first interaction align to the gt color
@@ -592,18 +592,19 @@ renderCUDA(
 				// many that were affected by this Gaussian.
 
 				// =========================================================
-                // Color Consistency Regularization
+                // Ray-Color Consistency：ray_reg 即 Python 的 ray_color_lambda。
                 // =========================================================
                 
                 float total_grad_factor = dL_dchannel;
 
                 if (ray_reg > 0.0f) {
-					// L2	
+					// final_pixel_c 与 w_i 均视为 detach，仅 c_i 接收 ray_reg*w_i*(c_i-C)；论文平方范数的严格导数还多系数 2。
                     float reg_diff = c - final_pixel_c[ch];
                     total_grad_factor += ray_reg * reg_diff;
                 }
 
 				atomicAdd(&(dL_dcolors[global_id * C + ch]), dchannel_dcolor * total_grad_factor);
+				// 额外项只写 dL_dcolors；默认 SH backward 会再把它传给 SH，并经 view direction 传给 means3D。
 			}
 			if (render_geo) {
 				for (int ch = 0; ch < MAP_N; ch++)
