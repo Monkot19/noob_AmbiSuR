@@ -488,6 +488,7 @@ renderCUDA(
 			const float3 normal = {all_map_pixels[pix_id], all_map_pixels[H * W + pix_id], all_map_pixels[2 * H * W + pix_id]};
 			const float distance = all_map_pixels[4 * H * W + pix_id];
 			const float tmp = (normal.x * ray.x + normal.y * ray.y + normal.z + 1.0e-8);
+			// 对 plane_depth=-D/tmp 求导：先把上游深度梯度加到 distance 通道，再按商式加到三个 normal 通道。
 			dL_dout_all_map[4] += (-dL_dout_plane_depths[pix_id] / tmp);
 			dL_dout_all_map[0] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.x);
 			dL_dout_all_map[1] += dL_dout_plane_depths[pix_id] * (distance / (tmp * tmp) * ray.y);
@@ -607,6 +608,7 @@ renderCUDA(
 				// 额外项只写 dL_dcolors；默认 SH backward 会再把它传给 SH，并经 view direction 传给 means3D。
 			}
 			if (render_geo) {
+				// all_map 有两条梯度路：w_i*dL/dmap 直接回每 Gaussian 的 normal/distance；map 对 alpha 的影响则累计进 dL_dalpha。
 				for (int ch = 0; ch < MAP_N; ch++)
 				{
 					const float c = collected_all_maps[ch * BLOCK_SIZE + j];
@@ -623,6 +625,7 @@ renderCUDA(
 				}
 			}
 			
+			// 后一条 alpha 路径会继续到 opacity、mean2D 和 conic，再由 preprocess 映射到 xyz/scale/rotation。
 			dL_dalpha *= T;
 			// Update last alpha (to be used in the next iteration)
 			last_alpha = alpha;

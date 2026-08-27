@@ -140,6 +140,7 @@ class _RasterizeGaussians(torch.autograd.Function):
                 raster_settings.tanfovy, 
                 grad_out_color, 
                 grad_out_all_map,
+                # plane_depth 是 forward 的第 5 个输出；其上游梯度从这里进入 CUDA 的商式求导与通用 all_map backward。
                 grad_out_plane_depth,
                 sh, 
                 raster_settings.sh_degree, 
@@ -178,6 +179,7 @@ class _RasterizeGaussians(torch.autograd.Function):
             grad_scales,
             grad_rotations,
             grad_cov3Ds_precomp,
+            # gard_all_map（原代码拼写）返回给 forward 的 all_maps 输入，再由 PyTorch 继续反传到 normal/distance 的 Python 生成式。
             gard_all_map,
             # 最后的 None 对应 raster_settings；其中的 trunc_sigma/disable_trunc 没有梯度返回槽。
             None,

@@ -415,7 +415,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
                 normal_from_metric_depth = render_normal(viewpoint_cam, metric_depth)
                 # 深度先验法线、置信度条件和 detach 后的像素 Mask 都只充当固定权重；梯度来自渲染 depth_normal 一侧。
-                # Python 层可追到 depth_normal -> plane_depth -> rasterizer；CUDA 具体向哪些 Gaussian 输入返回梯度留到第三轮确认。
+                # depth_normal 由 plane_depth 的邻域点叉积得到；CUDA 再把深度梯度分到 normal/distance 特征及 alpha 混合权重。
+                # 因而 ALR 可到 xyz/rotation，若参数分离失效还可经 alpha 路径到 opacity/scale；其屏幕代理梯度会在下方单独清零。
                 unc_diff = 1 - (normal_from_metric_depth * render_pkg["depth_normal"]).sum(0)
                 loss_unc = opt.unc_weight * mult * (unc_diff * render_pkg["rendered_unc"].detach() * (metric_depth_conf >= conf_thresh)).mean()
 

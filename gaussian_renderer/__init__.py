@@ -27,6 +27,7 @@ def render_normal(viewpoint_cam, depth, offset=None, normal=None, scale=1):
     st = max(int(scale/2)-1,0)
     if offset is not None:
         offset = offset[st::scale,st::scale]
+    # normal_from_depth_image 用相邻深度点的左右/上下差向量求叉积；普通 PyTorch autograd 会把一个法线的梯度传回邻域 depth。
     normal_ref = normal_from_depth_image(depth[st::scale,st::scale], 
                                             intrinsic_matrix.to(depth.device), 
                                             extrinsic_matrix.to(depth.device), offset)
@@ -143,6 +144,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     pts_in_cam = means3D @ viewpoint_camera.world_view_transform[:3,:3] + viewpoint_camera.world_view_transform[3,:3]
     depth_z = pts_in_cam[:, 2]
     local_distance = (local_normal * pts_in_cam).sum(-1).abs()
+    # 通道 0:3/4 分别保存局部法线/平面距离并共同定义 plane_depth；5 是 SH 双端歧义标记，CUDA 只把它当普通特征混合。
     input_all_map = torch.zeros((means3D.shape[0], 7)).cuda().float()
     input_all_map[:, :3] = local_normal
     input_all_map[:, 3] = 1.0

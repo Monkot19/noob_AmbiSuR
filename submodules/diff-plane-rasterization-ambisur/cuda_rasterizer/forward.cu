@@ -386,6 +386,7 @@ renderCUDA(
 			for (int ch = 0; ch < CHANNELS; ch++)
 				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
 			if (render_geo) {
+				// 包括第 5 通道歧义标记在内，所有 all_map 特征都仅按同一 w_i=alpha*T 加权；这里没有 SH Indicator 专用 CUDA 逻辑。
 				for (int ch = 0; ch < ALL_MAP; ch++)
 					All_map[ch] += all_map[collected_id[j] * ALL_MAP + ch] * alpha * T;
 			}
@@ -421,6 +422,7 @@ renderCUDA(
 		if (render_geo) {
 			for (int ch = 0; ch < ALL_MAP; ch++)
 				out_all_map[ch * H * W + pix_id] = All_map[ch];
+			// plane_depth=-D/(N·ray+eps)：All_map[0:3] 是混合法线 N，All_map[4] 是混合平面距离 D。
 			out_plane_depth[pix_id] = All_map[4] / -(All_map[0] * ray.x + All_map[1] * ray.y + All_map[2] + 1.0e-8);
 		}
 	}

@@ -148,6 +148,7 @@ class GaussianModel:
     
     def get_smallest_axis(self, return_idx=False):
         rotation_matrices = self.get_rotation_matrix()
+        # scale 只通过离散 argmin 选出最短轴的索引；选中轴的方向来自 rotation matrix，索引本身没有连续 scale 梯度。
         smallest_axis_idx = self.get_scaling.min(dim=-1)[1][..., None, None].expand(-1, 3, -1)
         smallest_axis = rotation_matrices.gather(2, smallest_axis_idx)
         if return_idx:
@@ -157,6 +158,7 @@ class GaussianModel:
     def get_normal(self, view_cam):
         normal_global = self.get_smallest_axis()
         gaussian_to_cam_global = view_cam.camera_center - self._xyz
+        # 这个硬布尔判断只选择法线符号，不对判断条件求导；确定符号后的法线仍可把梯度传给 rotation。
         neg_mask = (normal_global * gaussian_to_cam_global).sum(-1) < 0.0
         normal_global[neg_mask] = -normal_global[neg_mask]
         return normal_global

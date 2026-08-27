@@ -66,8 +66,10 @@ def depth_pcd2normal(xyz, offset=None, gt_image=None):
         top_point    = xyz[..., 0:hd-2, 1:wd-1, :]
         right_point  = xyz[..., 1:hd-1, 2:wd,   :]
         left_point   = xyz[..., 1:hd-1, 0:wd-2, :]
+    # 每个中心像素的法线同时依赖左右、上下邻点；因此法线 Loss 的梯度会分摊给这四个点对应的深度，而非只回到中心深度。
     left_to_right = right_point - left_point
     bottom_to_top = top_point - bottom_point 
+    # 差分、叉积与 normalize 都是 PyTorch 运算，这段不需要自定义 CUDA backward。
     xyz_normal = torch.cross(left_to_right, bottom_to_top, dim=-1)
     xyz_normal = torch.nn.functional.normalize(xyz_normal, p=2, dim=-1)
     xyz_normal = torch.nn.functional.pad(xyz_normal.permute(2,0,1), (1,1,1,1), mode='constant').permute(1,2,0)
