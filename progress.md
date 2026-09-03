@@ -121,7 +121,8 @@
 - [x] 用户单独批准第一次 E0 500-iteration paired experiment：同一 frozen Tool Room canonical snapshot/seed/config，baseline 与 E0 all-off 串行、各自新建 private view/output；不含 GT/mesh/tag/D0/C1/8k。
 - [x] 首次 baseline launcher 在训练前被过严数据门停止，无 run root/训练结果；只读审计确认原始 pose 是完整 txt/PINHOLE，DA3+aligned 是 binary，scale 正确、无 split、Git clean，数据无需重传。
 - [x] 第二次 launcher 也在训练前停止：错误统计 depth 全目录 812；审计确认训练所需 depth/conf `.npy` 各 406 且与 images 逐名严格对应，另 406 个 depth `.jpg` 只是预览，无 run root。
-- [ ] 使用 txt/PINHOLE pose + `.npy` basename 集合合同的最终 launcher 启动 baseline 500；aligned prior 仍必须 private copy 且保留 binary/trans 强门。baseline 完成审计后才继续 E0。
+- [x] 第三次 launcher 在重复 `git fetch origin --tags` 时遇到 GitHub 443 timeout（130.66 s）；branch fetch 已成功，但流程仍在 run root/训练前停止，return 128。
+- [ ] 使用服务器已有且已验证的 exact commit/tag 执行无网络 launcher；保留 txt/PINHOLE、`.npy` basename、aligned private copy 与 source hash 强门。baseline 完成审计后才继续 E0。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖，不启动服务器实验。
 
 ## Experiment Readiness
