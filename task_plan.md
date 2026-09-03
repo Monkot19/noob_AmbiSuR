@@ -6,7 +6,7 @@
 
 **Architecture:** 保留 feature-off legacy 训练路径；Core-active 路径由 `EvidenceAccumulator`、纯函数五状态机、`GradientRouter` 和 `LifecycleManager` 组成。证据刷新通过可选、forward-only 的 CUDA Gaussian evidence accumulator 精确汇聚 `sg(alpha*T)`；连续参数只做一次 optimizer step，离散 topology 在 step 后提交并用显式索引映射迁移状态。
 
-**Tech Stack:** baseline runtime 以仓库 `environment.yml` 为准：Python 3.10、PyTorch 2.7.1+cu128、CUDA 12.8 custom extension、NumPy 1.26.3/Open3D；E0 开始前另补 pytest；单张 RTX 4090 24GB。设计稿 §1 的 Python 3.12/PyTorch 2.8 是待批准修正的环境描述，不作为运行阻断条件。
+**Tech Stack:** baseline runtime 以仓库 `environment.yml` 为准：Python 3.10、PyTorch 2.7.1+cu128、CUDA 12.8 custom extension、NumPy 1.26.3/Open3D；当前 E0 测试兼容标准库 `unittest`，无需为此安装 pytest；单张 RTX 4090 24GB。设计稿 §1 的 Python 3.12/PyTorch 2.8 是待批准修正的环境描述，不作为运行阻断条件。
 
 **Spec:** `docs/research/ambisur-reliability-routing-design.md`
 
@@ -68,7 +68,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** in_progress_metadata_red_observed_waiting_for_autodl_green
+- **Status:** in_progress_integration_green_waiting_for_full_component_suite
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -127,6 +127,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | AutoDL E0 integration test 在 clean `research/core-routing@b2c46db49e3465da7ff5cfda56a7ddd30be6f02c` 上 RED | 1 | Python 3.10.21 成功导入 `train.py`，随后因 `train` 尚未导出 `build_checkpoint_payload` 精确失败；确认目标接口缺口后才进入最小 `train.py` 接线 |
 | 2026-09-03 | 本地把 GPU integration 目录包含进 bundled Python discovery，因该运行时无 `torch` 导入失败 | 1 | 栈追踪确认失败发生在 `train.py:import torch`，不是 E0 回归；随后只运行 19 项非 GPU suite（PASS），GPU integration 继续由既有 AutoDL Python 3.10/torch 环境验证，不安装本地依赖 |
 | 2026-09-03 | AutoDL 第二次 E0 integration test 在 clean `research/core-routing@02ac3b9700ea53a9f723ef3f62c3c8cac1b15d42` 上 RED | 1 | legacy dispatch、tuple checkpoint 与 `core_config=None` 三项通过；唯一失败精确为 `prepare_output_and_logger()` 仍是二参数签名。确认元数据接线缺口后才增加 logger/CLI wiring |
+| 2026-09-03 | AutoDL E0 integration GREEN 在 clean `research/core-routing@a7d04d4bbd28aa025f1d09373e8e7d1e615bf688` 上完成 | 1 | Python 3.10.21 标准库 `unittest` 4/4 PASS（0.097 s）；logger 实际创建临时输出并写元数据，测试后工作树仍 clean。下一步是完整 component suite/CLI 检查，不把 integration GREEN 写成 G0 数值等价 |
 
 ## Scope Guardrails
 
@@ -302,7 +303,7 @@ def test_feature_off_checkpoint_uses_legacy_tuple_schema(legacy_components):
 - [ ] baseline 通过后才建议创建 annotated `c0-baseline` 指向该 40 位 SHA；若失败，使用 systematic-debugging 单独形成 baseline fix 方案，不能把修复混进 C1。
 - [x] 从 `c0-baseline` 创建累计分支 `research/core-routing`；规划文件改动在该分支提交，main 不再推进方法代码。
 - [x] 添加 default-false Core flags、shadow mode、`--seed` 默认 0 与 nested validation；AutoDL 已证明 all-off 选择 legacy、checkpoint 保持 tuple 且训练入口显式接收 CoreConfig。
-- [ ] 已实现输出 `resolved_config.json` 和运行身份并把显式 seed/CoreConfig 接入 CLI；仍待 AutoDL integration GREEN，且尚未进行训练数值等价验证。
+- [x] 输出 `resolved_config.json` 和运行身份，并把显式 seed/CoreConfig 接入 CLI；AutoDL integration 4/4 GREEN。尚未进行训练数值等价验证。
 - [x] 实现只读 comparator，比较两次新目录，不接触 baseline assets。
 
 **Feature-off / CPU / GPU：** CPU 检查 flags、seed、schema；AutoDL 500 iter c0 vs E0 all-off；Tool Room seed 0 快速等价运行建议 8k，必须覆盖 densify(600+)、trim(1000+)、Ray-Color(5001+) 与 ALR(7001+)。
