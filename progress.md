@@ -107,7 +107,7 @@
 - [x] Core implementation plan 已获用户批准；当前执行授权严格限于 E0
 
 ### 2026-09-03 E0 implementation authorization
-- **Status:** paired_500_failed_rng_trace_excluded_pending_baseline_repeat
+- **Status:** awaiting_g0_numerical_equivalence_clarification
 - [x] 用户批准完整实施计划，并授权当前仅实施 E0 测试、default-off 配置/调度、显式 seed、复现元数据和只读 comparator。
 - [x] 开工前确认 `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c`、upstream 同步且工作树 clean。
 - [x] CoreConfig/seed/runtime/comparator tests 均先观察到目标 RED，再完成最小 GREEN；19 项非 GPU suite 在 bundled Python 通过。
@@ -132,8 +132,10 @@
 - [x] Baseline self-repeat run `baseline2_d6f15c88_20260903T094958Z` 完成且 gate PASS：500/500、exit 0、0 error/nonfinite、200,000 points、canonical/Git clean，服务器恢复 `research/core-routing@287ff08086e687fd8467ea5054ade98e28b8901f`。
 - [x] Baseline-1 与 baseline-2 的 PLY/checkpoint SHA 不同，而 baseline cfg_opts 与三次 app model exact；baseline 自身非 bitwise deterministic 已获直接证据。其 L1/PSNR 波动与 E0 相对 baseline-1 的波动处于相近量级。
 - [x] 三方 Gaussian 参数与 densification proxy 统计已取得：E0 两个 pair 与 baseline self-repeat 的 RMSE/mean-absolute 整体同阶，且 `knn_f/features_rest/max_weight` 三次 exact。
-- [ ] 三方报告在 `spatial_lr_scale` scalar JSON 分支再次触发 NumPy `bool_` 序列化错误；仅补跑尚缺的 scalar/optimizer/strict/app/metrics remainder，不重跑已完成字段或训练。
-- [ ] 完成三方逐字段参数/optimizer/proxy 误差审计后，才判断 E0 是否落入 baseline 自噪声包络；在此之前禁止修改实现、调整容差或进入 8k/D0/C1。
+- [x] 三方报告在 `spatial_lr_scale` scalar JSON 分支再次触发 NumPy `bool_` 序列化错误；已改用统一 Python scalar 转换，并只读补跑缺失 remainder，未重复训练。
+- [x] Remainder exit 0：scalar、optimizer hyperparameters/state keys/steps、strict first-difference、app 与 metrics 全部取得；服务器仓库仍 clean `research/core-routing@287ff08086e687fd8467ea5054ade98e28b8901f`。
+- [x] 三组 learned parameter/proxy/optimizer moment 误差总体同阶；E0 未出现结构性特有偏离。E0 与 baseline-2 的 L1/PSNR 差仅 `-9.4168e-6/-0.0007416 dB`，但这仍不是预注册 G0 判据。
+- [ ] 当前发现 G0 规格缺口：设计只规定“合理随机波动”，未定义非确定 baseline 下的数值门。按 brainstorming 一次只请求一个 architectural clarification；确认前不修改设计稿、不标 E0 PASS、不运行 8k/D0/C1。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖；当前实验授权仅限 paired-500，不含 8k/正式实验。
 
 ## Experiment Readiness
