@@ -68,7 +68,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** in_progress_component_gate_pass_waiting_for_500_iteration_experiment_approval
+- **Status:** in_progress_paired_500_iteration_experiment_approved_waiting_for_launch
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -130,6 +130,14 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | AutoDL E0 integration GREEN 在 clean `research/core-routing@a7d04d4bbd28aa025f1d09373e8e7d1e615bf688` 上完成 | 1 | Python 3.10.21 标准库 `unittest` 4/4 PASS（0.097 s）；logger 实际创建临时输出并写元数据，测试后工作树仍 clean。下一步是完整 component suite/CLI 检查，不把 integration GREEN 写成 G0 数值等价 |
 | 2026-09-03 | AutoDL E0 full component gate 在 clean `research/core-routing@7223f919e8e015f1b1eed2d94d6855aed3b4eb29` 上完成 | 1 | 标准库 `unittest` 23/23 PASS（0.211 s）；`train.py --help` 返回 0，seed、shadow 与六级 Core flags 全部存在，测试后工作树 clean。仅证明工程组件门，不证明 500-step/8k feature-off 数值等价 |
 | 2026-09-03 | 本地 PowerShell 将未引用的 annotated-tag peel 表达式 `c0-baseline^{}` 误解析，commit 查询失败并产生无关输出 | 1 | 未修改仓库；改用跨 shell 稳定的 `git rev-list -n 1 c0-baseline`，确认 peeled commit 为 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` |
+
+### 2026-09-03 E0 paired-500 authorization
+
+- [x] 用户批准 Tool Room、`-r 2`、seed 0、500 iterations 的 baseline/E0 all-off 成对实验。
+- [x] baseline 固定为 `c0-baseline@d6f15c8891a53800d5e3100f95817a7dd7f98e2f`；E0 固定为批准记录提交后的 `research/core-routing` HEAD。
+- [x] 两次运行使用同一 canonical snapshot、各自独立 private working view 和新输出目录；保存 iteration 500 point cloud/checkpoint。
+- [x] 本次不使用 GT、不提取 mesh、不创建 tag、不启用 Core、不并行占用 GPU；baseline 成功后才启动 E0。
+- [ ] 两次运行完成后执行只读 comparator；任何错误、非有限值、输入污染或差异立即停止，不进入 8k。
 
 ## Scope Guardrails
 
