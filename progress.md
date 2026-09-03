@@ -107,7 +107,7 @@
 - [x] Core implementation plan 已获用户批准；当前执行授权严格限于 E0
 
 ### 2026-09-03 E0 implementation authorization
-- **Status:** integration_green_waiting_for_full_component_suite
+- **Status:** component_gate_pass_waiting_for_500_iteration_experiment_approval
 - [x] 用户批准完整实施计划，并授权当前仅实施 E0 测试、default-off 配置/调度、显式 seed、复现元数据和只读 comparator。
 - [x] 开工前确认 `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c`、upstream 同步且工作树 clean。
 - [x] CoreConfig/seed/runtime/comparator tests 均先观察到目标 RED，再完成最小 GREEN；19 项非 GPU suite 在 bundled Python 通过。
@@ -117,7 +117,8 @@
 - [x] AutoDL 第二次 integration：legacy dispatch、tuple checkpoint、explicit CoreConfig 三项通过；metadata 唯一精确 RED 为 logger 二参数签名（commit `02ac3b9700ea53a9f723ef3f62c3c8cac1b15d42`）。
 - [x] 最小接线已在本地完成：logger 写 resolved config/run identity，CLI 显式传递 seed/CoreConfig；19 项非 GPU suite、AST parse 与 `git diff --check` 通过。
 - [x] AutoDL 在 clean `research/core-routing@a7d04d4bbd28aa025f1d09373e8e7d1e615bf688`、Python 3.10.21 上以标准库 `unittest` 验证四项 integration GREEN（4/4，0.097 s），测试后工作树 clean。
-- [ ] 运行完整 23 项 component suite 与 `train.py --help` CLI flag 检查；通过后再单独申请第一次 E0 500-iteration feature-off 实验授权。
+- [x] AutoDL clean `research/core-routing@7223f919e8e015f1b1eed2d94d6855aed3b4eb29` 完整 23 项 component suite PASS（0.211 s）；CLI help 返回 0，八个 flags 全部存在，测试后工作树 clean。
+- [ ] 等待用户单独批准第一次 E0 500-iteration paired experiment：同一 frozen Tool Room working snapshot/seed/config 分别运行 `c0-baseline` 与当前 E0 all-off，新建两个独立输出目录并用只读 comparator 检查。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖，不启动服务器实验。
 
 ## Experiment Readiness
@@ -152,6 +153,7 @@
 | 2026-09-03 | Tool C0 r2 mesh completion audit | same | user-operated process/exit/full-log/PLY-header/resource/Git/input-safety audit | PASS；exit 0；406/406 render+TSDF；0 errors/nonfinite；peak 5,480 MiB；raw/post vertices vs old `-1.364%/-1.032%`；C0 reference accepted, tag pending | same + `$RUN_DIR/mesh_manifest.md` |
 | 2026-09-03 | Git C0 baseline lock | `c0-baseline -> d6f15c8891a53800d5e3100f95817a7dd7f98e2f`; docs `6145c5787b3d6453a07a28da94bc2f44e26bcc47` | local ref/type/scope checks；non-force push branch and annotated tag | branch/tag first push succeeded；remote verification and final clean-worktree audit follow status commit | n/a |
 | 2026-09-03 | E0 TDD foundation + AutoDL train integration | tests `68922cc`,`580adeb`; implementation `b2c46db`,`0601056`,`eaebd8d`; docs `a7d04d4` | bundled Python 19-test suite；AutoDL Python 3.10.21 targeted integration RED→GREEN | 本地 19/19；AutoDL 两次目标 RED 后最终 4/4 GREEN；尚未运行真实训练或 feature-off numerical comparator | n/a |
+| 2026-09-03 | E0 full component/CLI gate | `7223f919e8e015f1b1eed2d94d6855aed3b4eb29` | AutoDL stdlib discovery + `train.py --help` exact flag presence | 23/23 PASS；8/8 flags present；post-test clean；等待 paired 500 experiment 授权 | n/a |
 
 ## Cloud Runs
 
