@@ -68,7 +68,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** in_progress_paired_500_iteration_experiment_approved_waiting_for_launch
+- **Status:** in_progress_baseline_500_pass_waiting_for_e0_pair
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -140,6 +140,8 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] baseline 固定为 `c0-baseline@d6f15c8891a53800d5e3100f95817a7dd7f98e2f`；E0 固定为批准记录提交后的 `research/core-routing` HEAD。
 - [x] 两次运行使用同一 canonical snapshot、各自独立 private working view 和新输出目录；保存 iteration 500 point cloud/checkpoint。
 - [x] 本次不使用 GT、不提取 mesh、不创建 tag、不启用 Core、不并行占用 GPU；baseline 成功后才启动 E0。
+- [x] Baseline 半程完成：pair `pair_20260903T090116Z`，exit 0，0 error/nonfinite，200,000 points，PLY SHA `01407a4da71819f5c13477111f912a7dbcc8ccf6aa489c300c7612b1233f0c5c`，peak 4,769 MiB，canonical source/Git clean。
+- [ ] 在同一 pair、独立 private view 上运行 exact `a26082154889ed539322425347af5a57a859a52f` 的 E0 all-off，并进行 checkpoint/app/PLY/metric 严格比较。
 - [ ] 两次运行完成后执行只读 comparator；任何错误、非有限值、输入污染或差异立即停止，不进入 8k。
 
 ## Scope Guardrails
@@ -148,7 +150,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - GT mesh 不进入训练。
 - C0–C6 每阶段必须对应独立 commit 和验证 tag。
 - 服务器不修改代码。
-- 当前授权仅允许 E0：测试框架、default-off Core 配置/调度、显式 seed、复现元数据和只读 comparator；禁止 D0/C1、renderer/CUDA、Supporting、阶段 tag、依赖安装和服务器实验，后者均须另行批准。
+- 当前授权仅允许 E0：测试框架、default-off Core 配置/调度、显式 seed、复现元数据、只读 comparator，以及已单独批准的 Tool Room paired-500；禁止 D0/C1、renderer/CUDA、Supporting、阶段 tag、依赖安装和 8k/正式实验，后者均须另行批准。
 
 ## Planned File Boundaries and Interfaces
 

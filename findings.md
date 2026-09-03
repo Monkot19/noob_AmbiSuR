@@ -143,6 +143,7 @@
 - AutoDL 在 clean `research/core-routing@7223f919e8e015f1b1eed2d94d6855aed3b4eb29` 上完成 E0 full component gate：23/23 tests PASS（0.211 s），CLI help 返回 0 且八个 E0/Core flags 全部可见，测试后工作树 clean。事实边界仍是 component/CLI；G0 需要同 snapshot/seed/config 的 baseline 与 E0 feature-off 成对训练和只读比较。
 - Paired-500 首次 launcher 在训练前因错误强制原始 `sparse/0/cameras.bin` 而安全停止；无 run root、Git clean。服务器只读审计确认原始 pose 为完整 `cameras/images/points3D.txt`（184 / 171,471,240 / 36,248,710 bytes），camera model=`PINHOLE`；`sparse_da3` 与 aligned prior 为 binary，aligned `points3D.bin=11,800,008 bytes`、`trans.json=623 bytes`、scale=`0.4221856859435143`，无 `split.json`。这与 `readColmapSceneInfo` 的 bin→txt fallback 一致，数据无需重传。
 - 第二次 launcher 因把 `estimated_depths` 总文件数 812 与训练条目数 406 混淆而在训练前停止，无 run root。只读审计确认 812=406 `.npy` + 406 `.jpg` 预览；406 image 的期望 `<完整图像名>.npy` 与 depth/conf 集合完全相等（missing=unexpected=0）。训练合同只消费 `.npy`，预览文件不得计作缺失或额外先验。
+- E0 paired-500 baseline 半程已在 `c0-baseline@d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 完成：pair `pair_20260903T090116Z`，Tool Room `-r 2`、semantic seed 0、500 iterations；exit 0，training complete=1，0 error/nonfinite，initial/final 200,000 Gaussians，train L1 `0.0749632939696312`、PSNR `19.052456665039063`，PLY SHA `01407a4da71819f5c13477111f912a7dbcc8ccf6aa489c300c7612b1233f0c5c`，peak 4,769 MiB，canonical manifest SHA `aad92aa2e0f0d072756b3a56c686d5c1d35f448811ce60ca4360c67dbc3ef255` 前后不变，Git clean。服务器 detached HEAD 指向 baseline 是按协议临时 checkout，不表示 `research/core-routing` 分支被移动。
 
 ## 公式输入—代码来源映射（2026-09-01 只读审计）
 
