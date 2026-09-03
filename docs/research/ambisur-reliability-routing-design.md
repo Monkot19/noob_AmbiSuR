@@ -82,7 +82,7 @@ $$
 | Gaussian 参数 | $\mu_i,\boldsymbol\sigma_i,q_i,\rho_i,\Theta_i$                                                   | xyz、正尺度向量、旋转四元数、opacity logit、SH 系数  |
 | 曝光参数        | $a_v,b_v$                                                                                         | 每个训练视图学习的仿射曝光参数                      |
 | renderer 输出 | $\alpha_{ivr},T_{ivr},w_{ivr},\widehat D_v,\widehat n_v^{prim},\widehat n_v^{depth},O_{iv}$&#x20; | alpha、透射率、合成权重、渲染深度/法线、`out_observe` |
-| 派生统计        | $A_i,S_i,N_i,T_i^P,V_i^P,T_i^G,V_i^G,r_i^P,r_i^G,K_i,\Delta_i$                                    | 本文后续公式依次计算                           |
+| 派生统计        | $A_i,S_i,N_i,T_i^P,V_i^P,T_i^G,V_i^G,r_i^P,r_i^G,Z_i^{PG},V_i^{PG},K_i,\Delta_i$                    | 本文后续公式依次计算                           |
 | 离线量         | GT mesh 与其点到面误差                                                                                   | 只用于 D0/最终评价，严禁进入训练与仲裁                |
 
 像素记为 $r$，相机记为 $v,u$，Gaussian 记为 $i$。$\pi_v(X)$ 和 $\pi_v^{-1}(r,d)$ 分别是由已知相机内外参确定的投影和反投影。$\operatorname{sg}(x)$ 表示 stop-gradient；$\mathbf1[\cdot]$ 为条件成立取 1、否则取 0 的指示函数；$\operatorname{clip}(x,l,h)=\min(\max(x,l),h)$。除非另行说明，$\epsilon=10^{-8}$。
@@ -124,6 +124,8 @@ x_i^{(t)},&\text{该 Gaussian 首次获得有效统计},\\
 $$
 
 其中固定初值 $\beta_x=0.9$，D0 最多允许调整一次并随后冻结。新 Gaussian 不继承父节点的 EMA。下文为避免符号臃肿，仲裁中的 $A,S,T,K$ 均指其 stop-gradient EMA；需求度 $N$ 由平滑后的 $A,S$ 重新计算，不再对 $N$ 二次 EMA。
+
+对 $K_i$ 另加 joint-validity 合同：只有当前刷新 $V_i^{PG}=1$ 时，$K_i^{raw}$ 才是有效观测并按上式初始化或更新 EMA。$V_i^{PG}=0$ 时不计算或不使用零分母产生的 $K_i^{raw}$，不更新 EMA；可以保留历史 $K_i$ EMA 供日志观察，但当前刷新严禁绕过 $V_i^{PG}$ 参与仲裁。新 Gaussian 在首次获得有效 joint support 前，K EMA 标记为未初始化，不能初始化为 1。
 
 ## 4. 观测校准的歧义需求
 
@@ -379,17 +381,27 @@ $$
 令 $m_{vr}^{PG}$ 表示两路深度和法线都有限且渲染 alpha $\ge\tau_\alpha$，则：
 
 $$
+Z_i^{PG}=\sum_{v,r}\operatorname{sg}(w_{ivr})m_{vr}^{PG},
+$$
+
+$$
+V_i^{PG}=\mathbf1[Z_i^{PG}>\tau_Z],\qquad \tau_Z=10^{-4}.
+$$
+
+这里复用第 5.1 节已有的 $\tau_Z$，不新增超参数。只有 $V_i^{PG}=1$ 时才计算当前刷新的 pooled error 与原始一致性：
+
+$$
 \bar e_{d,i}^{PG}=\operatorname{Pool}_i(e_{d,vr}^{PG};m_{vr}^{PG}),\quad
 \bar e_{n,i}^{PG}=\operatorname{Pool}_i(e_{n,vr}^{PG};m_{vr}^{PG}),
 $$
 
 $$
-K_i=\exp\!\left[-\frac12\left(
+K_i^{raw}=\exp\!\left[-\frac12\left(
 \frac{\bar e_{d,i}^{PG}}{\tau_d^{PG}}+
 \frac{\bar e_{n,i}^{PG}}{\tau_n^{PG}}\right)\right],
 $$
 
-其中 $\tau_d^{PG}=0.05,\tau_n^{PG}=0.10$。若任一可靠性通道无效，$K_i$ 仅记录诊断值，不参与 Consensus 判断。可靠性差为：
+其中 $\tau_d^{PG}=0.05,\tau_n^{PG}=0.10$。有效的 $K_i^{raw}$ 按第 3.2 节更新 K EMA；仲裁中的 $K_i$ 指该 EMA，但其本轮可用性的必要条件仍是 $V_i^{PG}=1$。$V_i^{PG}=0$ 时，不把零分母对应的 $K_i^{raw}\approx1$ 当作一致，不更新 K EMA；历史 EMA 只能记录，不能参与当前仲裁。可靠性差仍定义为：
 
 $$
 \Delta_i=r_i^P-r_i^G.
@@ -410,16 +422,18 @@ $$
 \widehat s_i=
 \begin{cases}
 \text{Bypass},&N_i\le\tau_N,\\
-\text{Consensus},&H_i^P=H_i^G=1\ \land\ K_i\ge\tau_K,\\
+\text{Consensus},&H_i^P=H_i^G=1\ \land\ V_i^{PG}=1\ \land\ K_i\ge\tau_K,\\
 \text{Prior-led},&H_i^P=1\ \land\ H_i^G=0,\\
 \text{Geometry-led},&H_i^P=0\ \land\ H_i^G=1,\\
-\text{Prior-led},&H_i^P=H_i^G=1\ \land\ K_i<\tau_K\ \land\ \Delta_i>\delta,\\
-\text{Geometry-led},&H_i^P=H_i^G=1\ \land\ K_i<\tau_K\ \land\ \Delta_i<-\delta,\\
+\text{Prior-led},&H_i^P=H_i^G=1\ \land\ V_i^{PG}=1\ \land\ K_i<\tau_K\ \land\ \Delta_i>\delta,\\
+\text{Geometry-led},&H_i^P=H_i^G=1\ \land\ V_i^{PG}=1\ \land\ K_i<\tau_K\ \land\ \Delta_i<-\delta,\\
 \text{Abstain},&\text{其余情况}.
 \end{cases}
 $$
 
-这覆盖了低需求、双方一致、单方可信、双方冲突且一方明显占优、冲突难判以及双方证据不足，不存在未定义分支。
+Bypass 保持最高优先级，不要求 $V_i^{PG}$。单方达到主导条件时也不依赖 K：$H_i^P=1,H_i^G=0$ 仍为 Prior-led，$H_i^P=0,H_i^G=1$ 仍为 Geometry-led。只有 $H_i^P=H_i^G=1$、需要判断双方一致或冲突时才要求 $V_i^{PG}=1$。若同时满足 $N_i>\tau_N$、$H_i^P=H_i^G=1$、$V_i^{PG}=0$，候选状态为 Abstain；$\Delta_i$ 只记录诊断，不得选边，也不得把 joint-invalid 解释为 Consensus 或双方冲突。
+
+这覆盖了低需求、双方一致、单方可信、双方冲突且一方明显占优、joint-invalid、冲突难判以及双方证据不足，不存在未定义分支。
 
 为防止状态抖动，候选状态连续计数为：
 
@@ -579,22 +593,32 @@ $$
 | Abstain      | Quarantine | 暂停强几何更新与增密，延迟决定是否剪枝   |
 | 新生成 Gaussian | Probation  | 从中性统计开始，设冷却期，禁止连续分裂   |
 
+**生命周期状态语义（2026-09-02 已批准澄清 A）：** 第 6 节得到的 $s_i$ 始终表示经过 $H_{enter}$ 迟滞后的稳定五状态仲裁结果；$\ell_i$ 始终表示供连续动作保护与离散 topology 门控消费的生命周期状态。记上表的确定性映射为 $\mathcal M$。除新点冷却外，只在证据刷新 $t$ 执行
+
+$$
+\ell_i^{(t)}=\mathcal M\!\left(s_i^{(t)}\right),
+$$
+
+两次证据刷新之间保持 $\ell_i$ 不变，不允许按每个训练 iteration 重新解释 $s_i$。
+
+若 Gaussian $i$ 在 optimizer iteration $b_i$ 的 topology 提交后新生成，则其 $\ell_i$ 强制初始化为 Probation，并至少保持 $C_{prob}=500$ 个 optimizer iteration。Probation 期间仍可计算和记录 $s_i$，但 $s_i$ 不得覆盖 $\ell_i$，也不得绕过 Probation 触发先验强路由、clone、split 或普通 opacity prune。令 $t^*$ 是满足当前 iteration $k_{t^*}\ge b_i+C_{prob}$ 的第一次证据刷新；只在 $t^*$ 才用当时已经稳定的 $s_i^{(t^*)}$ 执行 $\ell_i^{(t^*)}=\mathcal M(s_i^{(t^*)})$。因此达到第 500 轮本身不构成刷新，也不在刷新间隔中途解除 Probation。
+
 ### 8.1 两阶段提交
 
 令 $a\in\{clone,split,prune\}$，$B_{i,a}^{(t)}\in\{0,1\}$ 是 AmbiSuR 原始增密/剪枝规则在第 $t$ 轮给出的候选事件。生命周期只增加门控，不暗中改写 baseline 判据。状态门控为：
 
 $$
 G_{i,clone}=G_{i,split}=
-\mathbf1[s_i\in\{\text{Normal},\text{Confirmed}\}],
+\mathbf1[\ell_i\in\{\text{Normal},\text{Confirmed}\}],
 $$
 
 $$
 G_{i,prune}=
-\mathbf1[s_i\ne\text{Confirmed}]
-\mathbf1[s_i\ne\text{Protected}].
+\mathbf1[\ell_i\ne\text{Confirmed}]
+\mathbf1[\ell_i\ne\text{Protected}].
 $$
 
-动作条件为 $E_{i,a}^{(t)}=B_{i,a}^{(t)}G_{i,a}^{(t)}$。正确的持续计数递推是：
+动作条件为 $E_{i,a}^{(t)}=B_{i,a}^{(t)}G_{i,a}^{(t)}$。所有 clone、split、prune 候选只消费 $\ell_i$，不得直接把五状态枚举 $s_i$ 与生命周期枚举比较。正确的持续计数递推是：
 
 $$
 z_{i,a}^{(t)}=
@@ -626,7 +650,7 @@ d_i^{(t-1)}+1,&\ell_i^{(t)}=\ell_i^{(t-1)},\\
 \end{cases}
 $$
 
-这里 $t$ 表示证据刷新序号。$\ell_i\in\{Normal,Confirmed,Repair,Protected,Quarantine,Probation\}$ 由第 8 节映射表得到；第 8.2 节“状态持续至少 $H_Q$ 次刷新”即 $d_i\ge H_Q$。
+这里 $t$ 表示证据刷新序号。$d_i$ 只在证据刷新时更新：若该次刷新后的 $\ell_i$ 与上次刷新相同则加一，发生映射变化则重置为 1；普通训练 iteration 和仅到达 Probation 的 500 轮边界均不得改变 $d_i$。$\ell_i\in\{Normal,Confirmed,Repair,Protected,Quarantine,Probation\}$ 由第 8 节映射表和 Probation 覆盖规则得到；第 8.2 节“状态持续至少 $H_Q$ 次刷新”即 $d_i\ge H_Q$。
 
 ### 8.2 具体约束
 
@@ -636,9 +660,11 @@ $$
 
 * Quarantine：禁止 clone/split；仅当状态持续至少 $H_Q=5$ 次证据刷新、opacity $\operatorname{sigmoid}(\rho_i)<\tau_o=0.01$ 且 $M_i<K_{prune}=2$ 时，才额外允许 prune 候选。
 
-* Probation：新 Gaussian 的 $A,S,T,V,K$ 历史清零，`trunc_sigma=2.0`；在 $C_{prob}=500$ 轮内接受 $g_B$，但禁止先验强路由、再次 split/clone 和普通 opacity prune。
+* Probation：新 Gaussian 的 $A,S,T,V,K$ 历史清零；Core C6 不为其设置或迁移逐 Gaussian truncation 状态，而是原样沿用 baseline 的全局 `--trunc_sigma/--disable_trunc` 配置（当前默认 `trunc_sigma=2.0`）。从生成后开始至少 $C_{prob}=500$ 个 optimizer iteration 只接受 $g_B$，禁止先验强路由、再次 split/clone 和普通 opacity prune；满 500 轮后仍须等到下一次证据刷新，才按当时稳定的 $s_i$ 映射到非 Probation 生命周期状态。
 
 核心原则是“先修复再复制、先隔离后剪枝”。
+
+**Core 边界澄清（2026-09-02 已批准方案 A）：** 上述 `2.0` 只是 baseline 全局 renderer 配置的当前默认值，不是 Probation 的逐 Gaussian 生命周期动作，也不构成 C6 新变量。Core C1–C6 不新增 per-Gaussian `trunc_sigma` Tensor、不按 $\ell_i$ 改写全局截断参数，也不修改现有 Python/C++/CUDA truncation 接口。第 9.4 节的状态驱动逐 Gaussian 截断完整保留为 Supporting 候选；只有 Core 通过 G0–G2 后，才可在独立阶段、tag 和消融中另行评估。
 
 ## 9. 配套增强
 
@@ -804,7 +830,7 @@ $$
 
 ### 11.1 D0：影子仲裁诊断
 
-D0 只计算 $S,A,N,T,V,K,\Delta$ 和五状态，不改变训练。报告：
+D0 只计算 $S,A,N,T,V,K,\Delta$ 和五状态，不改变训练。joint-invalid 时只把候选状态记录为 Abstain，不执行任何训练动作。报告：
 
 * $N$、$A$、$1-S$ 对高几何误差的 AUROC、AUPRC 或分位风险；
 
@@ -815,6 +841,14 @@ D0 只计算 $S,A,N,T,V,K,\Delta$ 和五状态，不改变训练。报告：
 * 冲突子集的选边正确率、Abstain coverage 与 oracle regret；
 
 * 各状态对应的 GT 几何误差分布。
+
+* $Z^{PG}$、$V^{PG}$、$P(V^{PG}=1)$ 与 $P(V^{PG}=1\mid H^P=H^G=1)$；
+
+* joint-invalid 导致的 Abstain 比例，以及按场景、训练阶段和 N 分位区间分组的 joint coverage；
+
+* joint-valid 与 joint-invalid Gaussian 的 GT 离线几何误差。GT 仍只在离线诊断读取。
+
+若采用该 gate 后几乎全部进入 Abstain，只报告 coverage 问题并停止晋级；不得自动改成基于 $\Delta$ 的回退、降低 $\tau_Z$ 或绕过 $V^{PG}$。
 
 D0 不进入 C0–C6 的重建性能表。
 
@@ -844,30 +878,30 @@ g_i^{geo,C2}=
 \begin{cases}
 g_{B,i}^{geo}, & N_i\le\tau_N,\\
 g_{B,i}^{geo}+0.5g_{P,i}^{geo},
-& H_i^P=H_i^G=1,\ K_i\ge\tau_K,\\
+& H_i^P=H_i^G=1,\ V_i^{PG}=1,\ K_i\ge\tau_K,\\
 g_{P,i}^{geo},&H_i^P=1,\ H_i^G=0,\\
 g_{B,i}^{geo},&H_i^P=0,\ H_i^G=1,\\
-g_{P,i}^{geo},&H_i^P=H_i^G=1,\ K_i<\tau_K,\ \Delta_i>0,\\
+g_{P,i}^{geo},&H_i^P=H_i^G=1,\ V_i^{PG}=1,\ K_i<\tau_K,\ \Delta_i>0,\\
 g_{B,i}^{geo},&\text{otherwise}.
 \end{cases}
 $$
 
-C2 无拒绝能力；打平或两路均不可信时回退基础梯度。C3 首次加入 Abstain，其完整公式为：
+C2 无拒绝能力；打平、两路均不可信，或双方均可靠但 $V_i^{PG}=0$ 时都落入 `otherwise`，回退基础梯度。joint-invalid 时不得用 $\Delta_i$ 选边。C3 首次加入 Abstain，其完整公式为：
 
 $$
 g_i^{geo,C3}=
 \begin{cases}
 g_{B,i}^{geo},&N_i\le\tau_N,\\
-g_{B,i}^{geo}+0.5g_{P,i}^{geo},&H_i^P=H_i^G=1,\ K_i\ge\tau_K,\\
+g_{B,i}^{geo}+0.5g_{P,i}^{geo},&H_i^P=H_i^G=1,\ V_i^{PG}=1,\ K_i\ge\tau_K,\\
 g_{P,i}^{geo},&H_i^P=1,\ H_i^G=0,\\
 g_{B,i}^{geo},&H_i^P=0,\ H_i^G=1,\\
-g_{P,i}^{geo},&H_i^P=H_i^G=1,\ K_i<\tau_K,\ \Delta_i>\delta,\\
-g_{B,i}^{geo},&H_i^P=H_i^G=1,\ K_i<\tau_K,\ \Delta_i<-\delta,\\
+g_{P,i}^{geo},&H_i^P=H_i^G=1,\ V_i^{PG}=1,\ K_i<\tau_K,\ \Delta_i>\delta,\\
+g_{B,i}^{geo},&H_i^P=H_i^G=1,\ V_i^{PG}=1,\ K_i<\tau_K,\ \Delta_i<-\delta,\\
 0,&\text{otherwise}.
 \end{cases}
 $$
 
-所有 C1–C3 都始终允许 $g_i^{SH}=g_{B,i}^{SH}$ 及曝光基础梯度。由此 D0 只观察；C2 已有整组执行器；C3 增加拒绝；C4 细化参数组；C5 才投影；C6 才改变拓扑。
+因此双方均可靠但 $V_i^{PG}=0$ 时，C3 落入最后的 Abstain。C4–C6 继承 C3 已产生的状态，不得自行绕过 $V_i^{PG}$ 重新解释历史 K 或 $\Delta_i$。所有 C1–C3 都始终允许 $g_i^{SH}=g_{B,i}^{SH}$ 及曝光基础梯度。由此 D0 只观察；C2 已有整组执行器；C3 增加拒绝；C4 细化参数组；C5 才投影；C6 才改变拓扑。
 
 ### 11.3 支撑模块消融
 
@@ -1067,9 +1101,9 @@ Core/Full 在 DTU/TnT 上不得出现跨多数场景的系统性退化。论文�
 | 先验需求    | 外观歧义强度 $A_i$、观测充分度 $S_i$                   | 按第 4.3 节合并二者                                             | 先验需求度 $N_i$                                       | 决定该 Gaussian 是否需要进入强先验仲裁 |
 | 外部可靠性   | DA3 深度、DA3 confidence、多视图重投影、Gaussian 合成权重 | 评价 DA3 自身置信度和跨视图一致性，并检查有效支持视图是否足够                        | 外部可信度 $T_i^P$、有效标记 $V_i^P$、可靠性 $r_i^P$            | 判断 DA3 是否有资格主导几何更新       |
 | 内部可靠性   | 当前渲染深度、两种渲染法线、多视图重投影、历史位置和法线               | 评价当前 Gaussian 几何的跨视图一致性、法线一致性和历史稳定性                      | 内部可信度 $T_i^G$、有效标记 $V_i^G$、可靠性 $r_i^G$            | 判断当前重建是否有资格拒绝外部先验        |
-| 双方一致性   | DA3 深度/法线、当前渲染深度/法线                        | 比较两套几何在同一像素上的深度和法线差异                                     | 一致性 $K_i$                                         | 区分双方一致与双方冲突              |
+| 双方一致性   | DA3 深度/法线、当前渲染深度/法线                        | 先用 $Z_i^{PG},V_i^{PG}$ 验证共同支持，再比较同像素深度和法线差异                    | joint validity 与一致性 $K_i$                         | 区分双方一致、双方冲突与 joint-invalid |
 | 可靠性优势   | 外部可靠性 $r_i^P$、内部可靠性 $r_i^G$                | 用外部可靠性减去内部可靠性                                            | 可靠性差 $\Delta_i$                                   | 冲突时判断哪一方有明显优势            |
-| 五状态仲裁   | $N_i$、两路可信度与有效标记、$K_i$、$\Delta_i$          | 按第 6 节的完整优先级判断                                           | Bypass、Consensus、Prior-led、Geometry-led 或 Abstain | 决定每个 Gaussian 应采取哪种训练动作  |
+| 五状态仲裁   | $N_i$、两路可信度与有效标记、$V_i^{PG}$、$K_i$、$\Delta_i$ | 按第 6 节的完整优先级判断                                           | Bypass、Consensus、Prior-led、Geometry-led 或 Abstain | 决定每个 Gaussian 应采取哪种训练动作  |
 | 参数执行    | 当前状态、基础梯度、先验梯度                             | 对位置/旋转、尺度、opacity、SH 分别保留、冻结、加权或投影梯度                     | 最终参数梯度                                            | 执行一次 optimizer 更新        |
 | 生命周期与截断 | 稳定后的仲裁状态、持续计数、冷却计数                         | 控制 clone、split、protect、quarantine、prune 和逐 Gaussian 截断半径 | Gaussian 的连续更新与离散拓扑动作                             | 完成从“证据判断”到“实际训练行为”的闭环    |
 
