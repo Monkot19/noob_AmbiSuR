@@ -129,6 +129,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | AutoDL 第二次 E0 integration test 在 clean `research/core-routing@02ac3b9700ea53a9f723ef3f62c3c8cac1b15d42` 上 RED | 1 | legacy dispatch、tuple checkpoint 与 `core_config=None` 三项通过；唯一失败精确为 `prepare_output_and_logger()` 仍是二参数签名。确认元数据接线缺口后才增加 logger/CLI wiring |
 | 2026-09-03 | AutoDL E0 integration GREEN 在 clean `research/core-routing@a7d04d4bbd28aa025f1d09373e8e7d1e615bf688` 上完成 | 1 | Python 3.10.21 标准库 `unittest` 4/4 PASS（0.097 s）；logger 实际创建临时输出并写元数据，测试后工作树仍 clean。下一步是完整 component suite/CLI 检查，不把 integration GREEN 写成 G0 数值等价 |
 | 2026-09-03 | AutoDL E0 full component gate 在 clean `research/core-routing@7223f919e8e015f1b1eed2d94d6855aed3b4eb29` 上完成 | 1 | 标准库 `unittest` 23/23 PASS（0.211 s）；`train.py --help` 返回 0，seed、shadow 与六级 Core flags 全部存在，测试后工作树 clean。仅证明工程组件门，不证明 500-step/8k feature-off 数值等价 |
+| 2026-09-03 | 本地 PowerShell 将未引用的 annotated-tag peel 表达式 `c0-baseline^{}` 误解析，commit 查询失败并产生无关输出 | 1 | 未修改仓库；改用跨 shell 稳定的 `git rev-list -n 1 c0-baseline`，确认 peeled commit 为 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` |
 
 ## Scope Guardrails
 
