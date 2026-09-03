@@ -90,11 +90,11 @@
 - **Scope:** C0 运行授权已结束；2026-09-03 新授权仅覆盖 Git baseline tag、累计分支及四份文档的提交/推送，不覆盖方法源码、D0/C1 或其他实验。
 
 ### 2026-09-03 Git baseline locking
-- **Status:** local_refs_created_docs_commit_and_push_in_progress
+- **Status:** completed_waiting_for_e0_plan_approval
 - [x] 用户批准 annotated `c0-baseline` 精确指向 C0 SHA `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`。
 - [x] 远端预检确认 `origin` 尚无同名 `c0-baseline` tag 或 `research/core-routing` branch，未覆盖既有 ref。
 - [x] 本地创建 `c0-baseline`，并从相同 baseline SHA 创建/切换累计分支 `research/core-routing`；四份获批文档修改随分支保留。
-- [ ] 以 `docs: add Core audit and implementation plan` 提交四份文档并推送 branch/tag；完成后核验本地与远端 refs。
+- [x] 四份文档已由 commit `6145c5787b3d6453a07a28da94bc2f44e26bcc47`（`docs: add Core audit and implementation plan`）提交；`research/core-routing` 与 annotated `c0-baseline` 已推送到 `origin`。
 - **Scope:** 不修改方法源码，不安装依赖，不启动 E0/D0/C1 或服务器实验。
 
 ### Project bootstrap
@@ -110,7 +110,7 @@
 
 - **当前阶段：** Phase 0 审计、Core 实施计划和 Tool Room C0 可复现锚点均已完成；方法源码尚未开始，E0/D0/C1–C6 均未执行。
 - **最早可启动的下一阶段：** Git 锁定完成后，仍须用户另行批准完整实施计划，才开始 E0 测试基础和 default-off harness；E0 先做 CPU/static/oracle，再由用户在 AutoDL 执行 500-iteration smoke 与覆盖 7001+ 分支的 Tool quick。GT evaluator 不阻塞 E0 工程等价，但在解释几何结果前必须冻结。
-- **E0 开工条件：** C0 复现和本地 refs 已锁定；仍需完成文档 push、用户另行批准完整实施计划，并在服务器补齐 pytest。随后才允许修改 default-off harness。
+- **E0 开工条件：** C0 复现、local/remote refs 与规划文档 push 均已锁定；仍需用户另行批准完整实施计划，并在服务器补齐 pytest。随后才允许修改 default-off harness。
 - **首个诊断实验：** E0/G0 通过后运行 D0 Tool Room seed 0（正式时序到 7k），只记录证据/状态；G1 不通过则停止。
 - **首个方法实验：** D0/G1 通过且 C1 single-step gradient oracle 全部通过后，才运行 C1 Tool Room seed 0 quick。C2–C6 依次按上一阶段 tag 晋级，不能并行跳级。
 - **当前数据事实：** 服务器 Tool source/DA3/GT 已通过文件数、basename、数值、COLMAP、scale 与 hash preflight，并完成 C0；Utility 尚未上传且本地版本仍需从 FISHEYE 转为 PINHOLE/SIMPLE_PINHOLE。它不阻塞 E0/D0/C1 Tool quick，但阻塞 G2 多场景结论。旧协议为全部相机训练，无 `split.json`，且旧结果没有 ScanNet++ GT geometry metric。
@@ -136,6 +136,7 @@
 | 2026-09-03 | Tool C0 r2 training completion audit | same | user-operated exit/resource/hash/config/full-log/artifact audit | accepted training path；exit 0；0 errors；canonical/GT unchanged；peak 11,966 MiB；7k/30k deviations small；mesh pending | same |
 | 2026-09-03 | Tool C0 r2 mesh launch | same | user-operated safety-gated `extract_general.py --max_depth 5.0 --voxel_size 0.005 --sdf_trunc_scale 4.0 --num_cluster 2` | runtime gate PASS；PID 2320 running at launch；iteration 30000 and 406/406 cameras loaded；completion audit pending | `$RUN_DIR/mesh_manifest.md` |
 | 2026-09-03 | Tool C0 r2 mesh completion audit | same | user-operated process/exit/full-log/PLY-header/resource/Git/input-safety audit | PASS；exit 0；406/406 render+TSDF；0 errors/nonfinite；peak 5,480 MiB；raw/post vertices vs old `-1.364%/-1.032%`；C0 reference accepted, tag pending | same + `$RUN_DIR/mesh_manifest.md` |
+| 2026-09-03 | Git C0 baseline lock | `c0-baseline -> d6f15c8891a53800d5e3100f95817a7dd7f98e2f`; docs `6145c5787b3d6453a07a28da94bc2f44e26bcc47` | local ref/type/scope checks；non-force push branch and annotated tag | branch/tag first push succeeded；remote verification and final clean-worktree audit follow status commit | n/a |
 
 ## Cloud Runs
 
@@ -146,8 +147,8 @@
 
 ## Current Blocker
 
-1. Tool Room `-r 2 / 30k / seed 0` C0 reference 已接受，本地 tag/branch 已建立；当前 Git 锁定任务只剩四份文档 commit/push 与远端核验。
+1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
 2. 完整 Core 实施计划仍未获最终批准；当前授权不允许方法源码修改、D0/C1 或实验。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；pytest 尚缺，必须在 E0 测试开发前补齐，但不阻塞本次 legacy baseline。
-5. 当前本地分支为 `research/core-routing`，四份文档待提交；`main` 与 `c0-baseline` 均保持 baseline SHA，服务器 C0 commit 保持 clean。
+5. 当前本地分支为 `research/core-routing`；`main` 与 `c0-baseline` 均保持 baseline SHA，服务器 C0 commit 保持 clean。
