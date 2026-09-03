@@ -68,7 +68,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** in_progress_baseline_500_pass_waiting_for_e0_pair
+- **Status:** in_progress_paired_500_failed_under_systematic_debugging
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -133,6 +133,9 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | 首次 paired-500 baseline launcher 的数据安全门强制要求原始 `sparse/0/*.bin`，在 `cameras.bin` 处停止 | 1 | 训练未启动、run root 未创建、Git clean。只读审计确认原始 pose 是完整 txt 三件套且 camera=`PINHOLE`，DA3/aligned 是完整 binary、scale=`0.4221856859435143`；修正安全门为原始 pose 接受完整 bin **或** txt，aligned 仍强制 `points3D.bin/trans.json`，无需重传数据 |
 | 2026-09-03 | 修正后的 launcher 用 `estimated_depths` 全部文件数要求 406，因目录还含 406 个 `.jpg` 预览而再次在训练前停止 | 1 | 无 run root/训练结果。只读 basename 审计确认 images=406、depth `.npy`=406、conf `.npy`=406，缺失/多余均为 0；额外 depth `.jpg`=406。最终门改为代码实际消费的 `<完整图像名>.npy` 集合严格相等，不再检查目录总文件数 |
 | 2026-09-03 | 第三次 baseline launcher 的 branch fetch 成功后又冗余执行 tag fetch，GitHub 443 在 130.66 s 后超时 | 1 | wrapper return 128，发生在数据门/run root 创建/训练之前；此前本地 tag 已验证且首次 fetch 已取得批准 commit。后续 launcher 不访问网络，只核对服务器已有 exact commit/tag/object 与 clean status |
+| 2026-09-03 | 本地检查 baseline→E0 diff 时将 `git diff` 与 revision 连写为不存在的 `git diffd6f...` 子命令 | 1 | 命令未修改仓库；立即改为 `git diff <baseline>..<E0> -- <paths>`，取得完整真实 diff 后再形成诊断假设 |
+| 2026-09-03 | 记录 paired-500 FAIL 的首个多文件补丁含错误的 baseline SHA 占位符，事务校验失败 | 1 | `apply_patch` 未写入任何文件；先用 `rg` 读取精确上下文，再拆分为逐文件补丁 |
+| 2026-09-03 | E0 all-off 500 正常训练但 strict equivalence gate 失败 | 1 | 立即停止 8k/D0/C1；首个 semantic mismatch 为 checkpoint capture `_xyz`，L1 `+2.2673e-5`、PSNR `-0.0050125 dB`、PLY SHA 不同，points/peak/exit/source/Git 相同。先做只读逐字段误差与 RNG sentinel 诊断，不调整容差或代码 |
 
 ### 2026-09-03 E0 paired-500 authorization
 
@@ -141,8 +144,9 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 两次运行使用同一 canonical snapshot、各自独立 private working view 和新输出目录；保存 iteration 500 point cloud/checkpoint。
 - [x] 本次不使用 GT、不提取 mesh、不创建 tag、不启用 Core、不并行占用 GPU；baseline 成功后才启动 E0。
 - [x] Baseline 半程完成：pair `pair_20260903T090116Z`，exit 0，0 error/nonfinite，200,000 points，PLY SHA `01407a4da71819f5c13477111f912a7dbcc8ccf6aa489c300c7612b1233f0c5c`，peak 4,769 MiB，canonical source/Git clean。
-- [ ] 在同一 pair、独立 private view 上运行 exact `a26082154889ed539322425347af5a57a859a52f` 的 E0 all-off，并进行 checkpoint/app/PLY/metric 严格比较。
-- [ ] 两次运行完成后执行只读 comparator；任何错误、非有限值、输入污染或差异立即停止，不进入 8k。
+- [x] 在同一 pair、独立 private view 上运行 exact `a26082154889ed539322425347af5a57a859a52f` 的 E0 all-off；训练/metadata/source/Git 均正常。
+- [x] Strict comparator 发现 checkpoint `_xyz`、L1/PSNR、PLY SHA 差异，`E0_PAIRED_500_GATE=FAIL`；已按停止条件禁止 8k/D0/C1。
+- [ ] 只读判定差异来自 RNG trace、baseline 自身非确定性还是 E0 feature-off 副作用；未取得证据前不修复、不放宽阈值。
 
 ## Scope Guardrails
 

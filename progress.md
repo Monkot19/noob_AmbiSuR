@@ -107,7 +107,7 @@
 - [x] Core implementation plan 已获用户批准；当前执行授权严格限于 E0
 
 ### 2026-09-03 E0 implementation authorization
-- **Status:** baseline_500_pass_waiting_for_e0_pair
+- **Status:** paired_500_failed_under_systematic_debugging
 - [x] 用户批准完整实施计划，并授权当前仅实施 E0 测试、default-off 配置/调度、显式 seed、复现元数据和只读 comparator。
 - [x] 开工前确认 `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c`、upstream 同步且工作树 clean。
 - [x] CoreConfig/seed/runtime/comparator tests 均先观察到目标 RED，再完成最小 GREEN；19 项非 GPU suite 在 bundled Python 通过。
@@ -123,7 +123,9 @@
 - [x] 第二次 launcher 也在训练前停止：错误统计 depth 全目录 812；审计确认训练所需 depth/conf `.npy` 各 406 且与 images 逐名严格对应，另 406 个 depth `.jpg` 只是预览，无 run root。
 - [x] 第三次 launcher 在重复 `git fetch origin --tags` 时遇到 GitHub 443 timeout（130.66 s）；branch fetch 已成功，但流程仍在 run root/训练前停止，return 128。
 - [x] Baseline half PASS：`pair_20260903T090116Z`，`d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，500/500，exit 0，0 error/nonfinite，200,000 points，peak 4,769 MiB，canonical source/Git clean，PLY SHA `01407a4d…f0c5c`。
-- [ ] 切到 exact E0 commit `a26082154889ed539322425347af5a57a859a52f`，在同一 pair 的独立 private view 运行 all-off 500，随后做 semantic checkpoint/app 与只读 comparator；结束后切回 `research/core-routing`。
+- [x] Exact E0 `a26082154889ed539322425347af5a57a859a52f` 同 pair 500 完成：训练/metadata/artifact/source/Git均PASS，服务器已切回 `research/core-routing`（head `9f75c97…`，clean，behind remote 3 commits）。
+- [x] Strict equivalence FAIL：checkpoint 首个 mismatch=`_xyz`；L1 `+2.2673e-5`、PSNR `-0.0050125 dB`、PLY SHA不同；points=200,000、peak delta=0、wall delta=-1 s。
+- [ ] 只读逐字段 checkpoint diff、RNG sentinel 与配置 diff；在区分 RNG trace / baseline 自身非确定性 / E0副作用之前，禁止修改实现或运行8k。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖；当前实验授权仅限 paired-500，不含 8k/正式实验。
 
 ## Experiment Readiness
@@ -160,6 +162,7 @@
 | 2026-09-03 | E0 TDD foundation + AutoDL train integration | tests `68922cc`,`580adeb`; implementation `b2c46db`,`0601056`,`eaebd8d`; docs `a7d04d4` | bundled Python 19-test suite；AutoDL Python 3.10.21 targeted integration RED→GREEN | 本地 19/19；AutoDL 两次目标 RED 后最终 4/4 GREEN；尚未运行真实训练或 feature-off numerical comparator | n/a |
 | 2026-09-03 | E0 full component/CLI gate | `7223f919e8e015f1b1eed2d94d6855aed3b4eb29` | AutoDL stdlib discovery + `train.py --help` exact flag presence | 23/23 PASS；8/8 flags present；post-test clean；等待 paired 500 experiment 授权 | n/a |
 | 2026-09-03 | E0 paired-500 baseline half | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | Tool Room `-r 2 --iterations 500 --test_iterations 500 --checkpoint_iterations 500`，private aligned copy + source hash guards | PASS；exit 0；0 error/nonfinite；200,000 points；train PSNR 19.0524567；peak 4,769 MiB；canonical/Git clean | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/baseline_d6f15c88/manifest.md` |
+| 2026-09-03 | E0 paired-500 all-off half | `a26082154889ed539322425347af5a57a859a52f` | identical Tool Room protocol + `--seed 0`/Core default-off；semantic checkpoint/app compare + read-only comparator | training/metadata/source/Git PASS；strict equivalence FAIL at `_xyz`, L1/PSNR/PLY SHA；8k stopped pending diagnosis | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/e0_a2608215/manifest.md` |
 
 ## Cloud Runs
 
