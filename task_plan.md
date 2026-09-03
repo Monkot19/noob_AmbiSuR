@@ -136,6 +136,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | 本地检查 baseline→E0 diff 时将 `git diff` 与 revision 连写为不存在的 `git diffd6f...` 子命令 | 1 | 命令未修改仓库；立即改为 `git diff <baseline>..<E0> -- <paths>`，取得完整真实 diff 后再形成诊断假设 |
 | 2026-09-03 | 记录 paired-500 FAIL 的首个多文件补丁含错误的 baseline SHA 占位符，事务校验失败 | 1 | `apply_patch` 未写入任何文件；先用 `rg` 读取精确上下文，再拆分为逐文件补丁 |
 | 2026-09-03 | E0 all-off 500 正常训练但 strict equivalence gate 失败 | 1 | 立即停止 8k/D0/C1；首个 semantic mismatch 为 checkpoint capture `_xyz`，L1 `+2.2673e-5`、PSNR `-0.0050125 dB`、PLY SHA 不同，points/peak/exit/source/Git 相同。先做只读逐字段误差与 RNG sentinel 诊断，不调整容差或代码 |
+| 2026-09-03 | 首次逐字段 checkpoint 审计在打印 NumPy 标量比较结果时触发 `bool_ is not JSON serializable` | 1 | 已输出的字段有效：private prior PLY、`knn_f`、`features_rest`、`max_weight` exact；learned params/proxy 不同且均 finite。修正版显式把 NumPy scalar 转 Python scalar，再补 optimizer/app/config 与 RNG sentinel；不重跑训练 |
 
 ### 2026-09-03 E0 paired-500 authorization
 

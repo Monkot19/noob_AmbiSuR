@@ -125,7 +125,8 @@
 - [x] Baseline half PASS：`pair_20260903T090116Z`，`d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，500/500，exit 0，0 error/nonfinite，200,000 points，peak 4,769 MiB，canonical source/Git clean，PLY SHA `01407a4d…f0c5c`。
 - [x] Exact E0 `a26082154889ed539322425347af5a57a859a52f` 同 pair 500 完成：训练/metadata/artifact/source/Git均PASS，服务器已切回 `research/core-routing`（head `9f75c97…`，clean，behind remote 3 commits）。
 - [x] Strict equivalence FAIL：checkpoint 首个 mismatch=`_xyz`；L1 `+2.2673e-5`、PSNR `-0.0050125 dB`、PLY SHA不同；points=200,000、peak delta=0、wall delta=-1 s。
-- [ ] 只读逐字段 checkpoint diff、RNG sentinel 与配置 diff；在区分 RNG trace / baseline 自身非确定性 / E0副作用之前，禁止修改实现或运行8k。
+- [x] Partial field audit：private prior PLY、`knn_f`、`features_rest`、`max_weight` exact；learned params与 densification proxy 均 finite 但不同，定位到训练阶段分叉。
+- [ ] 修正诊断脚本的 NumPy `bool_` JSON 序列化错误，补 optimizer/app/config 与 logger 后 RNG/camera-trace sentinel；在区分 RNG trace / baseline 自身非确定性 / E0副作用之前，禁止修改实现或运行8k。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖；当前实验授权仅限 paired-500，不含 8k/正式实验。
 
 ## Experiment Readiness
