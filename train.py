@@ -41,6 +41,8 @@ import time
 import torch.nn.functional as F
 
 from scene.cameras import get_camera_optimizer
+from reliability.config import CoreConfig
+from reliability.runtime import build_checkpoint_payload, select_training_path
 
 
 def setup_seed(seed):
@@ -84,7 +86,13 @@ def gen_virtul_cam(cam, trans_noise=1.0, deg_noise=15.0):
                         preload_img=False, data_device = "cuda")
     return virtul_cam
 
-def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from, core_config=None):
+    if core_config is None:
+        core_config = CoreConfig()
+    training_path = select_training_path(core_config)
+    if training_path != "legacy":
+        raise NotImplementedError("Core training path is not implemented in E0")
+
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset, opt)
     # # backup main code
@@ -524,7 +532,12 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
-                torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+                torch.save(
+                    build_checkpoint_payload(
+                        gaussians.capture(), iteration, core_config
+                    ),
+                    scene.model_path + "/chkpnt" + str(iteration) + ".pth",
+                )
                 app_model.save_weights(scene.model_path, iteration)
 
     app_model.save_weights(scene.model_path, opt.iterations)
