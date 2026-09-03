@@ -42,7 +42,14 @@ import torch.nn.functional as F
 
 from scene.cameras import get_camera_optimizer
 from reliability.config import CoreConfig
-from reliability.runtime import build_checkpoint_payload, select_training_path
+from reliability.runtime import (
+    build_checkpoint_payload,
+    build_resolved_config,
+    collect_run_identity,
+    core_config_from_namespace,
+    select_training_path,
+    write_run_metadata,
+)
 
 
 def setup_seed(seed):
@@ -94,7 +101,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         raise NotImplementedError("Core training path is not implemented in E0")
 
     first_iter = 0
-    tb_writer = prepare_output_and_logger(dataset, opt)
+    tb_writer = prepare_output_and_logger(dataset, opt, pipe, core_config)
     # # backup main code
     # cmd = f'cp ./train.py {dataset.model_path}/'
     # os.system(cmd)
@@ -543,7 +550,12 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
     app_model.save_weights(scene.model_path, opt.iterations)
     torch.cuda.empty_cache()
 
-def prepare_output_and_logger(args, opt):    
+def prepare_output_and_logger(args, opt, pipe=None, core_config=None):
+    if core_config is None:
+        core_config = CoreConfig()
+    if pipe is None:
+        pipe = Namespace()
+
     if not args.model_path:
         if os.getenv('OAR_JOB_ID'):
             unique_str=os.getenv('OAR_JOB_ID')
@@ -551,7 +563,12 @@ def prepare_output_and_logger(args, opt):
             unique_str = str(uuid.uuid4())
         args.model_path = os.path.join("./output/", unique_str[0:10])
 
-        
+    resolved_config = build_resolved_config(args, opt, pipe, core_config)
+    run_identity = collect_run_identity(os.path.dirname(os.path.abspath(__file__)))
+    run_identity["argv"] = [sys.executable, *sys.argv]
+    run_identity["cwd"] = os.getcwd()
+    run_identity["seed"] = core_config.seed
+
     # Set up output folder
     print("Output folder: {}".format(args.model_path))
     os.makedirs(args.model_path, exist_ok = True)
@@ -559,6 +576,7 @@ def prepare_output_and_logger(args, opt):
         cfg_log_f.write(str(Namespace(**vars(args))))
     with open(os.path.join(args.model_path, "cfg_opts"), 'w') as cfg_log_f:
         cfg_log_f.write(str(Namespace(**vars(opt))))
+    write_run_metadata(args.model_path, resolved_config, run_identity)
 
     # Create Tensorboard writer
     tb_writer = None
@@ -639,16 +657,28 @@ if __name__ == "__main__":
     parser.add_argument("--start_checkpoint", type=str, default = None)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
-    
+    core_config = core_config_from_namespace(args)
+    core_config.validate()
+
     print("Optimizing " + args.model_path)
 
     # Initialize system state (RNG)
-    safe_state(args.quiet)
+    safe_state(args.quiet, seed=core_config.seed)
 
     # Start GUI server, configure and run training
     # network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    training(lp.extract(args), op.extract(args), pp.extract(args), args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
+    training(
+        lp.extract(args),
+        op.extract(args),
+        pp.extract(args),
+        args.test_iterations,
+        args.save_iterations,
+        args.checkpoint_iterations,
+        args.start_checkpoint,
+        args.debug_from,
+        core_config=core_config,
+    )
 
     # All done
     print("\nTraining complete.")
