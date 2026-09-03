@@ -133,6 +133,12 @@
 
 每项必须引用对应 manifest、commit、scene 和 seed。不得把单次运行写成稳定结论。
 
+### E0 implementation facts（2026-09-03，尚未完成服务器验证）
+
+- Commit `68922cc` 新增 E0 测试合同；commit `b2c46db` 新增 `reliability.config.CoreConfig`、`reliability.runtime::{select_training_path,build_checkpoint_payload,build_resolved_config,collect_run_identity,write_run_metadata}`、参数开关/seed、`safe_state(seed)` 和只读 comparator。当前 `train.py` 尚未接线，因此这只是 E0 foundation，不是 feature-off 等价结论。
+- 本机 bundled Python 3.12（无 torch/pytest）以 `unittest` 执行 19 项非 GPU 测试全部通过；覆盖默认全关、六级严格嵌套、shadow、seed 重放、legacy tuple、元数据 Git dirty identity、run 文件只读比较和 PLY hash 差异。项目实际 Python 3.10/CUDA integration 仍待 AutoDL。
+- `tests/gpu/test_feature_off_dispatch.py` 已先于 `train.py` 接线写入。AutoDL 在 clean `research/core-routing@b2c46db49e3465da7ff5cfda56a7ddd30be6f02c`、Python 3.10.21 上已观察到目标 RED：`ImportError: cannot import name 'build_checkpoint_payload' from 'train'`；这证明 E0 train integration 仍缺失，不是环境、数据或 CUDA import 故障，现可按 TDD 补最小入口接线。
+
 ## 公式输入—代码来源映射（2026-09-01 只读审计）
 
 约定：`P` 是当前 Gaussian 数，`V` 是训练视图数，`H×W` 是当前 renderer 分辨率，`E` 是一次证据累加的像素通道数。下表的 Core 统计均应为 CUDA float32/bool/int tensor、`requires_grad=False`，默认每 `Delta_obs=1000` iteration 在证据刷新中更新；候选/稳定状态在刷新间保持不变。现有代码事实不等同于已验证运行结果。
@@ -197,3 +203,4 @@
 | 2026-09-02 | 用户批准 lifecycle 方案 A：`s_i` 固定为稳定五状态仲裁，`ell_i` 固定为生命周期；映射/`d_i` 只在 evidence refresh，所有 topology gate 用 `ell_i`；新点 Probation 至少 500 iteration 后等下一刷新 | 用户 architectural specification clarification；design §6/§8/§8.1/§8.2 | 修正枚举域冲突；C6 增加 mapping、499/500/refresh、gate-domain、duration 与 resume 测试；不授权 truncation 改动 |
 | 2026-09-02 | 用户批准 Probation truncation 方案 A：Core 仅沿用 baseline 全局 `trunc_sigma/disable_trunc`，默认 `2.0` 不是生命周期动作 | 用户 architectural specification clarification；`arguments/__init__.py:64-67`; design §8.2/§9.4 | C1–C6 禁止 per-Gaussian truncation Tensor、状态迁移或 renderer/CUDA 接口改动；§9.4 保留为 G0–G2 后独立 Supporting 候选 |
 | 2026-09-03 | 用户批准 Git 基线锁定：仅创建 `c0-baseline`、创建并切换 `research/core-routing`、提交和推送四份规划/设计文档 | C0 training+mesh completion audit；用户明确授权边界 | `main`/`c0-baseline` 保持 baseline SHA `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`；Core 文档提交进入累计分支；本次不修改方法源码或启动实验 |
+| 2026-09-03 | 用户批准完整 Core 实施计划，并授权当前仅实施 E0 | 用户明确回复“好的”；Git 已在 clean `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c` | 可以用 TDD 修改 E0 配置/入口/元数据/测试；仍禁止 D0/C1、renderer/CUDA、tag、依赖安装或服务器实验，E0 smoke 需另行批准 |

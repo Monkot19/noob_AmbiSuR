@@ -98,19 +98,30 @@
 - **Scope:** 不修改方法源码，不安装依赖，不启动 E0/D0/C1 或服务器实验。
 
 ### Project bootstrap
-- **Status:** git_baseline_lock_in_progress_waiting_for_e0_approval
+- **Status:** complete
 - [x] 交接包已在仓库根目录并完整读取
 - [x] 最终设计稿已核对
 - [x] baseline candidate commit 已记录
 - [x] 本轮识别的 architectural specification gaps 已闭合
 - [x] Git baseline tag 与累计分支已按批准策略建立
-- [ ] Core implementation plan 已获用户批准
+- [x] Core implementation plan 已获用户批准；当前执行授权严格限于 E0
+
+### 2026-09-03 E0 implementation authorization
+- **Status:** train_interface_red_observed_implementing_minimal_wiring
+- [x] 用户批准完整实施计划，并授权当前仅实施 E0 测试、default-off 配置/调度、显式 seed、复现元数据和只读 comparator。
+- [x] 开工前确认 `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c`、upstream 同步且工作树 clean。
+- [x] CoreConfig/seed/runtime/comparator tests 均先观察到目标 RED，再完成最小 GREEN；19 项非 GPU suite 在 bundled Python 通过。
+- [x] Commit `68922cc` 保存 test-first harness；commit `b2c46db` 保存纯 E0 配置/runtime/comparator foundation；`train.py` 尚未修改。
+- [x] 在 AutoDL clean `research/core-routing@b2c46db49e3465da7ff5cfda56a7ddd30be6f02c`、Python 3.10.21 以标准库 `unittest` 运行 integration test，精确 RED 为 `train.py` 缺少 `build_checkpoint_payload`；未安装依赖、未启动训练。
+- [x] Commit `580adeb` 先增加 metadata integration 合同；commit `0601056` 只接线已观察 RED 所需的 runtime helper、`training(..., core_config=None)`、feature-off legacy dispatch 与 legacy tuple checkpoint。
+- [ ] 在 AutoDL 观察下一目标 RED（`prepare_output_and_logger` 尚未接收 pipeline/CoreConfig 或写元数据），然后才接入运行元数据；完成本地静态审查后再申请服务器 GREEN/component test。
+- **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖，不启动服务器实验。
 
 ## Experiment Readiness
 
 - **当前阶段：** Phase 0 审计、Core 实施计划和 Tool Room C0 可复现锚点均已完成；方法源码尚未开始，E0/D0/C1–C6 均未执行。
-- **最早可启动的下一阶段：** Git 锁定完成后，仍须用户另行批准完整实施计划，才开始 E0 测试基础和 default-off harness；E0 先做 CPU/static/oracle，再由用户在 AutoDL 执行 500-iteration smoke 与覆盖 7001+ 分支的 Tool quick。GT evaluator 不阻塞 E0 工程等价，但在解释几何结果前必须冻结。
-- **E0 开工条件：** C0 复现、local/remote refs 与规划文档 push 均已锁定；仍需用户另行批准完整实施计划，并在服务器补齐 pytest。随后才允许修改 default-off harness。
+- **最早可启动的下一阶段：** E0 本地 TDD 已获批准并开始；完成本地静态/CPU 审查后，另行申请在 AutoDL 安装 pytest、执行 component tests、500-iteration smoke 与覆盖 7001+ 分支的 Tool quick。GT evaluator 不阻塞 E0 工程等价，但在解释几何结果前必须冻结。
+- **E0 开工条件：** C0、local/remote refs、规划文档和实施计划批准均已满足；服务器 pytest 与 smoke 授权只阻塞 E0 的云端验证，不阻塞当前本地 TDD。
 - **首个诊断实验：** E0/G0 通过后运行 D0 Tool Room seed 0（正式时序到 7k），只记录证据/状态；G1 不通过则停止。
 - **首个方法实验：** D0/G1 通过且 C1 single-step gradient oracle 全部通过后，才运行 C1 Tool Room seed 0 quick。C2–C6 依次按上一阶段 tag 晋级，不能并行跳级。
 - **当前数据事实：** 服务器 Tool source/DA3/GT 已通过文件数、basename、数值、COLMAP、scale 与 hash preflight，并完成 C0；Utility 尚未上传且本地版本仍需从 FISHEYE 转为 PINHOLE/SIMPLE_PINHOLE。它不阻塞 E0/D0/C1 Tool quick，但阻塞 G2 多场景结论。旧协议为全部相机训练，无 `split.json`，且旧结果没有 ScanNet++ GT geometry metric。
@@ -137,6 +148,7 @@
 | 2026-09-03 | Tool C0 r2 mesh launch | same | user-operated safety-gated `extract_general.py --max_depth 5.0 --voxel_size 0.005 --sdf_trunc_scale 4.0 --num_cluster 2` | runtime gate PASS；PID 2320 running at launch；iteration 30000 and 406/406 cameras loaded；completion audit pending | `$RUN_DIR/mesh_manifest.md` |
 | 2026-09-03 | Tool C0 r2 mesh completion audit | same | user-operated process/exit/full-log/PLY-header/resource/Git/input-safety audit | PASS；exit 0；406/406 render+TSDF；0 errors/nonfinite；peak 5,480 MiB；raw/post vertices vs old `-1.364%/-1.032%`；C0 reference accepted, tag pending | same + `$RUN_DIR/mesh_manifest.md` |
 | 2026-09-03 | Git C0 baseline lock | `c0-baseline -> d6f15c8891a53800d5e3100f95817a7dd7f98e2f`; docs `6145c5787b3d6453a07a28da94bc2f44e26bcc47` | local ref/type/scope checks；non-force push branch and annotated tag | branch/tag first push succeeded；remote verification and final clean-worktree audit follow status commit | n/a |
+| 2026-09-03 | E0 non-GPU TDD foundation + AutoDL train RED | tests `68922cc`; implementation `b2c46db` | bundled Python 19-test suite；AutoDL Python 3.10.21 `tests.gpu.test_feature_off_dispatch` | 19/19 non-GPU pass；AutoDL 精确 RED：`train` 未导出 `build_checkpoint_payload`；允许进入最小 train wiring | n/a |
 
 ## Cloud Runs
 
@@ -148,7 +160,7 @@
 ## Current Blocker
 
 1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
-2. 完整 Core 实施计划仍未获最终批准；当前授权不允许方法源码修改、D0/C1 或实验。
+2. 完整 Core 计划已批准，但当前执行边界仅为 E0；D0/C1 和实验仍未授权。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；pytest 尚缺，必须在 E0 测试开发前补齐，但不阻塞本次 legacy baseline。
 5. 当前本地分支为 `research/core-routing`；`main` 与 `c0-baseline` 均保持 baseline SHA，服务器 C0 commit 保持 clean。

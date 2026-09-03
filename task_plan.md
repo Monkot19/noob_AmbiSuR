@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0：只读代码审计与 Core 实施计划（本轮不锁定 tag、不修改源码）。
+Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与 default-off 工程实现。
 
 ## Phases
 
@@ -58,17 +58,17 @@ Phase 0：只读代码审计与 Core 实施计划（本轮不锁定 tag、不修
 - [x] 从只读旧结果恢复 Tool Room r2/r4 baseline 训练与 mesh 提取命令、完整 cfg 和运行时摘要
 - [x] 用户报告已按 frozen contract 上传 Tool Room canonical source/GT，并批准一次 `-r 4` 8k clean-baseline
 - [x] 用户终端只读 preflight 验证 Git、406 image/depth/conf、COLMAP、aligned scale、GT、CUDA 与 `train` import；唯一失败为 preflight 错把 Python 3.12 当要求，仓库实际锁定 3.10.21
-- [ ] 用户最终批准完整实施计划并授权进入 E0 执行阶段
+- [x] 用户最终批准完整实施计划，并授权当前仅执行 E0；D0/C1、renderer/CUDA、阶段 tag 和服务器实验仍未授权
 - [x] 用户于 2026-09-03 在已审计的 C0 run 目录启动冻结协议 mesh 提取；runtime gate 通过，launcher PID `2317`、mesh PID `2320`，启动日志已加载 iteration 30000 模型与 406/406 cameras
 - [x] Mesh completion audit：exit 0，406/406 render/TSDF 完成，错误/NaN/Inf 为 0，峰值 5,480 MiB，Git/canonical source/GT 不变；raw/post mesh 相对旧 r2 的 vertices 差 `-1.364%/-1.032%`、faces 差 `-1.050%/-0.918%`
 - [x] 接受 `main@d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 的 Tool Room r2/30k/seed0 运行作为当前可复现 C0 锚点；这不是对历史输出的 bitwise 等价声明，也不替代 E0 feature-off 严格等价测试
-- **Status:** c0_locked_on_core_branch_waiting_for_e0_approval
+- **Status:** complete
 
 ### Phase 1：E0 与测试基础
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
-- [ ] 建立 CPU 单元测试和 GPU smoke 入口
+- [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** pending
+- **Status:** in_progress_train_interface_red_observed
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -121,6 +121,11 @@ Phase 0：只读代码审计与 Core 实施计划（本轮不锁定 tag、不修
 | 2026-09-02 | runtime correction 的首个跨三文件补丁因 findings 上下文匹配失败而整笔未应用 | 1 | 确认无部分写入后改为逐文件小补丁；以 `environment.yml` 和用户终端输出为证据 |
 | 2026-09-02 | path-check 记录验证脚本把点数差精确期望手算成 0.624740%，与实际 0.624754% 不符 | 1 | 用 `(1166901-1159656)/1159656` 重新计算；文档只写四舍五入 0.625%，内容无需修正 |
 | 2026-09-02 | C0 完成记录的首个多文件补丁使用了错误的连字符状态文本，事务未应用 | 1 | 用 `rg` 读取实际 underscore 状态后拆分为逐文件补丁；无部分写入 |
+| 2026-09-03 | 切回 Core 分支时设计稿被另一 Windows 进程独占，Git 无法 unlink；用户侧已有两个内容相同的 stash | 1 | 停止强制操作；确认 working/stash/remote blob 相同后由用户解除锁并恢复到 clean `research/core-routing`，未丢失内容 |
+| 2026-09-03 | 首次 E0 skill/plan 读取调用的 JavaScript 封装含非法字符，脚本未启动 | 1 | 改为较小的规范 `exec_command` 调用；只读读取成功，仓库未受影响 |
+| 2026-09-03 | metadata 测试把 `Path("data/scene")` 的字符串结果硬编码为 POSIX `/`，Windows GREEN 首轮失败 | 1 | 生产逻辑保持不变；测试改为独立的 `str(Path(...))` 平台原生期望，随后 19 项非 GPU suite 全部通过 |
+| 2026-09-03 | AutoDL E0 integration test 在 clean `research/core-routing@b2c46db49e3465da7ff5cfda56a7ddd30be6f02c` 上 RED | 1 | Python 3.10.21 成功导入 `train.py`，随后因 `train` 尚未导出 `build_checkpoint_payload` 精确失败；确认目标接口缺口后才进入最小 `train.py` 接线 |
+| 2026-09-03 | 本地把 GPU integration 目录包含进 bundled Python discovery，因该运行时无 `torch` 导入失败 | 1 | 栈追踪确认失败发生在 `train.py:import torch`，不是 E0 回归；随后只运行 19 项非 GPU suite（PASS），GPU integration 继续由既有 AutoDL Python 3.10/torch 环境验证，不安装本地依赖 |
 
 ## Scope Guardrails
 
@@ -128,7 +133,7 @@ Phase 0：只读代码审计与 Core 实施计划（本轮不锁定 tag、不修
 - GT mesh 不进入训练。
 - C0–C6 每阶段必须对应独立 commit 和验证 tag。
 - 服务器不修改代码。
-- 本轮只允许更新设计稿、`task_plan.md`、`findings.md`、`progress.md`；不修改 AmbiSuR 源码、Git refs 或服务器状态。
+- 当前授权仅允许 E0：测试框架、default-off Core 配置/调度、显式 seed、复现元数据和只读 comparator；禁止 D0/C1、renderer/CUDA、Supporting、阶段 tag、依赖安装和服务器实验，后者均须另行批准。
 
 ## Planned File Boundaries and Interfaces
 
@@ -294,10 +299,10 @@ def test_feature_off_checkpoint_uses_legacy_tuple_schema(legacy_components):
 - [ ] 在干净 `main@d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 用现有代码跑 Tool Room seed 0 baseline，不修改代码；确认 7001 之后 ALR/Ray-Color 路径可运行。
 - [ ] baseline 前验证 source view：406 个 image/COLMAP pose/DA3 depth/conf 文件名一一对应；相机模型为 PINHOLE/SIMPLE_PINHOLE；`sparse_da3_aligned/0/trans.json` 和 `points3D.bin` 存在；canonical asset checksum 未变化。
 - [ ] baseline 通过后才建议创建 annotated `c0-baseline` 指向该 40 位 SHA；若失败，使用 systematic-debugging 单独形成 baseline fix 方案，不能把修复混进 C1。
-- [ ] 从 `c0-baseline` 建议创建累计分支 `research/core-routing`；规划文件改动在该分支提交，main 不再推进方法代码。
-- [ ] 添加 default-false Core flags、shadow mode、`--seed` 默认 0 与 nested validation；all-off 直接调用未改写 legacy loop。
+- [x] 从 `c0-baseline` 创建累计分支 `research/core-routing`；规划文件改动在该分支提交，main 不再推进方法代码。
+- [x] 添加 default-false Core flags、shadow mode、`--seed` 默认 0 与 nested validation；纯 runtime 已证明 all-off 选择 legacy，`train.py` 接线仍待 AutoDL RED 后实施。
 - [ ] 输出 `resolved_config.json` 和运行身份，但不改变 loss/render/checkpoint/topology。
-- [ ] 实现只读 comparator，比较两次新目录，不接触 baseline assets。
+- [x] 实现只读 comparator，比较两次新目录，不接触 baseline assets。
 
 **Feature-off / CPU / GPU：** CPU 检查 flags、seed、schema；AutoDL 500 iter c0 vs E0 all-off；Tool Room seed 0 快速等价运行建议 8k，必须覆盖 densify(600+)、trim(1000+)、Ray-Color(5001+) 与 ALR(7001+)。
 
