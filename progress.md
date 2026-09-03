@@ -119,7 +119,8 @@
 - [x] AutoDL 在 clean `research/core-routing@a7d04d4bbd28aa025f1d09373e8e7d1e615bf688`、Python 3.10.21 上以标准库 `unittest` 验证四项 integration GREEN（4/4，0.097 s），测试后工作树 clean。
 - [x] AutoDL clean `research/core-routing@7223f919e8e015f1b1eed2d94d6855aed3b4eb29` 完整 23 项 component suite PASS（0.211 s）；CLI help 返回 0，八个 flags 全部存在，测试后工作树 clean。
 - [x] 用户单独批准第一次 E0 500-iteration paired experiment：同一 frozen Tool Room canonical snapshot/seed/config，baseline 与 E0 all-off 串行、各自新建 private view/output；不含 GT/mesh/tag/D0/C1/8k。
-- [ ] 首次 baseline launcher 在训练前被数据安全门停止：安全门错误强制原始 COLMAP binary 三件套并发现 `cameras.bin` 不存在；当前无训练结果。正在只读确认实际 txt/bin 模型，确认后修正 launcher，baseline 完成审计后才继续 E0。
+- [x] 首次 baseline launcher 在训练前被过严数据门停止，无 run root/训练结果；只读审计确认原始 pose 是完整 txt/PINHOLE，DA3+aligned 是 binary，scale 正确、无 split、Git clean，数据无需重传。
+- [ ] 使用接受原始完整 bin 或 txt 的修正 launcher 启动 baseline 500；aligned prior 仍必须 private copy 且保留 binary/trans 强门。baseline 完成审计后才继续 E0。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖，不启动服务器实验。
 
 ## Experiment Readiness
