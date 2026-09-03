@@ -131,6 +131,8 @@
 - [x] 用户批准第二次 exact-baseline 500 self-repeat；范围限定为同 GPU/snapshot/seed/config、新 private view/output 和对既有 baseline/E0 的只读比较，不含 GT/mesh/tag/8k/D0/C1。
 - [x] Baseline self-repeat run `baseline2_d6f15c88_20260903T094958Z` 完成且 gate PASS：500/500、exit 0、0 error/nonfinite、200,000 points、canonical/Git clean，服务器恢复 `research/core-routing@287ff08086e687fd8467ea5054ade98e28b8901f`。
 - [x] Baseline-1 与 baseline-2 的 PLY/checkpoint SHA 不同，而 baseline cfg_opts 与三次 app model exact；baseline 自身非 bitwise deterministic 已获直接证据。其 L1/PSNR 波动与 E0 相对 baseline-1 的波动处于相近量级。
+- [x] 三方 Gaussian 参数与 densification proxy 统计已取得：E0 两个 pair 与 baseline self-repeat 的 RMSE/mean-absolute 整体同阶，且 `knn_f/features_rest/max_weight` 三次 exact。
+- [ ] 三方报告在 `spatial_lr_scale` scalar JSON 分支再次触发 NumPy `bool_` 序列化错误；仅补跑尚缺的 scalar/optimizer/strict/app/metrics remainder，不重跑已完成字段或训练。
 - [ ] 完成三方逐字段参数/optimizer/proxy 误差审计后，才判断 E0 是否落入 baseline 自噪声包络；在此之前禁止修改实现、调整容差或进入 8k/D0/C1。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖；当前实验授权仅限 paired-500，不含 8k/正式实验。
 

@@ -151,6 +151,7 @@
 - 当前剩余两类解释必须保持为 hypothesis：H1，baseline 的 CUDA rasterizer/backward 或相关 GPU reduction 在同机同配置下本身不保证 bitwise 重现；H2，E0 feature-off 的其他非 RNG 副作用改变了训练数值。单个 baseline-vs-E0 pair 无法区分 H1/H2。最小下一实验是同机、同 exact baseline commit、同 snapshot/seed/config 的第二次 baseline 500；在得到 baseline self-repeat 前，不得把现有小幅指标差异解释为“可接受噪声”，也不得修改实现或放宽 comparator。
 - 用户已批准上述第二次 exact-baseline 500 自重复诊断。授权仅覆盖新 private view/output、同 GPU 串行训练及对既有两个 run 的只读三方比较；不覆盖 GT、mesh、tag、8k、D0/C1 或方法源码修改。
 - Exact-baseline self-repeat 已在同一 RTX 4090 完成：run `baseline2_d6f15c88_20260903T094958Z`，500/500、exit 0、0 error/nonfinite、200,000 points、canonical/Git clean，且 `cfg_opts` 与 baseline-1 SHA exact、三次 app model SHA exact。baseline-2 的 PLY/checkpoint SHA 均不同于 baseline-1，直接证实当前 baseline GPU 训练路径自身不是 bitwise deterministic。baseline-1→baseline-2 的 L1 为 `+3.2089650630950928e-5`、PSNR 为 `-0.00427093505859375 dB`；baseline-1→E0 则为 `+2.26728618144989e-5`、`-0.00501251220703125 dB`。这些标量说明 E0 差异与 baseline 自波动处于相近量级，但“E0 数值等价”仍是 hypothesis，必须先比较 Gaussian 参数、optimizer moments 与 densification proxy 的三方误差尺度。
+- 三方逐字段审计的已验证部分显示，E0 的 `xyz/features_dc/scaling/rotation/opacity/max_radii2D/xyz_gradient_accum{,_abs}/denom{,_abs}` pairwise RMSE 与 baseline-1↔baseline-2 自重复 RMSE 均同阶；初始化/未激活字段 `knn_f/features_rest/max_weight` 三次逐位一致。例如 xyz RMSE 为 self `0.00124173`、b1↔E0 `0.00125083`、b2↔E0 `0.00125102`，denom 为 `0.205487/0.208483/0.205158`。这支持但尚未证明 E0 落入 baseline 自噪声：审计在打印 NumPy scalar `spatial_lr_scale` 时因报告脚本的 `bool_` JSON 序列化错误停止，optimizer/strict/app/metrics remainder 仍待只读补跑。
 
 ## 公式输入—代码来源映射（2026-09-01 只读审计）
 
