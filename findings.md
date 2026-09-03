@@ -149,6 +149,7 @@
 - 修正后的 remainder audit 完成且未重跑训练：`spatial_lr_scale=3.394348192214966` exact；所有 optimizer group 超参数与 step counters exact；`f_rest` optimizer moments 9,000,000 元素 exact；appearance model 3,200 元素 exact；共同 model/optimization 配置无差异，E0 仅多出 seed=0 与七个 false Core flags。xyz/f_dc/opacity/scaling/rotation 的 optimizer moments 与其已更新参数同步分叉，进一步把差异定位为训练数值演化，而不是 checkpoint schema、学习率/optimizer 设置或 appearance 分支差异。
 - RNG sentinel 在 baseline `d6f15c8` 与 E0 `a260821` 的 fresh Python 进程中，分别执行各自真实 `train` import、`safe_state`、logger 初始化后，得到完全相同的 Python、NumPy、Torch CPU 与 Torch CUDA RNG state SHA；模拟代码实际 406-camera shuffle/pop 的前 500 次轨迹也完全一致（trace SHA `bd9e3e309a730aee57c2f33ca90fb170999eb763372de49353c935da5312f860`，前 20 个索引相同）。因此“seed 接线改变随机流”“metadata logger 消耗 RNG”“相机采样顺序不同”均被本次证据排除。
 - 当前剩余两类解释必须保持为 hypothesis：H1，baseline 的 CUDA rasterizer/backward 或相关 GPU reduction 在同机同配置下本身不保证 bitwise 重现；H2，E0 feature-off 的其他非 RNG 副作用改变了训练数值。单个 baseline-vs-E0 pair 无法区分 H1/H2。最小下一实验是同机、同 exact baseline commit、同 snapshot/seed/config 的第二次 baseline 500；在得到 baseline self-repeat 前，不得把现有小幅指标差异解释为“可接受噪声”，也不得修改实现或放宽 comparator。
+- 用户已批准上述第二次 exact-baseline 500 自重复诊断。授权仅覆盖新 private view/output、同 GPU 串行训练及对既有两个 run 的只读三方比较；不覆盖 GT、mesh、tag、8k、D0/C1 或方法源码修改。
 
 ## 公式输入—代码来源映射（2026-09-01 只读审计）
 

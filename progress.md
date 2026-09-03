@@ -128,7 +128,8 @@
 - [x] Partial field audit：private prior PLY、`knn_f`、`features_rest`、`max_weight` exact；learned params与 densification proxy 均 finite 但不同，定位到训练阶段分叉。
 - [x] 修正版只读审计完成：spatial LR、optimizer hyperparameters/steps、共同配置 exact；app model、SH rest 及其 optimizer moments exact；已训练参数及 moments 分叉。
 - [x] Baseline/E0 fresh-process RNG sentinel 完全一致：Python/NumPy/Torch CPU/Torch CUDA state SHA 以及 500-step camera trace SHA 全部相同；排除 seed/logger RNG 消耗与相机顺序差异。脚本 exit 0，并恢复服务器 `research/core-routing@9f75c970b3aea0694934424cd98a3e05c7705162`，工作树 clean、当时 behind origin 3。
-- [ ] 下一最小诊断需用户另行批准第二次 exact-baseline 500 self-repeat；在区分 baseline CUDA 非确定性 hypothesis 与 E0 非 RNG 副作用 hypothesis 之前，禁止修改实现、调整容差或运行 8k/D0/C1。
+- [x] 用户批准第二次 exact-baseline 500 self-repeat；范围限定为同 GPU/snapshot/seed/config、新 private view/output 和对既有 baseline/E0 的只读比较，不含 GT/mesh/tag/8k/D0/C1。
+- [ ] 执行 baseline self-repeat 并取得三方 checkpoint/metric/PLY 证据；在区分 baseline CUDA 非确定性 hypothesis 与 E0 非 RNG 副作用 hypothesis 之前，禁止修改实现或调整容差。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖；当前实验授权仅限 paired-500，不含 8k/正式实验。
 
 ## Experiment Readiness
