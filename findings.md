@@ -135,9 +135,10 @@
 
 ### E0 implementation facts（2026-09-03，尚未完成服务器验证）
 
-- Commit `68922cc` 新增 E0 测试合同；commit `b2c46db` 新增 `reliability.config.CoreConfig`、`reliability.runtime::{select_training_path,build_checkpoint_payload,build_resolved_config,collect_run_identity,write_run_metadata}`、参数开关/seed、`safe_state(seed)` 和只读 comparator。当前 `train.py` 尚未接线，因此这只是 E0 foundation，不是 feature-off 等价结论。
+- Commit `68922cc` 新增 E0 测试合同；commit `b2c46db` 新增 `reliability.config.CoreConfig`、`reliability.runtime::{select_training_path,build_checkpoint_payload,build_resolved_config,collect_run_identity,write_run_metadata}`、参数开关/seed、`safe_state(seed)` 和只读 comparator。Commit `0601056` 完成已观察 RED 所需的 legacy dispatch/signature/tuple checkpoint 接线；训练数值 feature-off 等价仍未验证。
 - 本机 bundled Python 3.12（无 torch/pytest）以 `unittest` 执行 19 项非 GPU 测试全部通过；覆盖默认全关、六级严格嵌套、shadow、seed 重放、legacy tuple、元数据 Git dirty identity、run 文件只读比较和 PLY hash 差异。项目实际 Python 3.10/CUDA integration 仍待 AutoDL。
 - `tests/gpu/test_feature_off_dispatch.py` 已先于 `train.py` 接线写入。AutoDL 在 clean `research/core-routing@b2c46db49e3465da7ff5cfda56a7ddd30be6f02c`、Python 3.10.21 上已观察到目标 RED：`ImportError: cannot import name 'build_checkpoint_payload' from 'train'`；这证明 E0 train integration 仍缺失，不是环境、数据或 CUDA import 故障，现可按 TDD 补最小入口接线。
+- AutoDL 在 clean `research/core-routing@02ac3b9700ea53a9f723ef3f62c3c8cac1b15d42` 上已观察到第二个精确 RED：前三个 train 接口测试通过，只有 metadata integration 因 `prepare_output_and_logger` 仍为二参数签名失败。该证据授权的最小改动仅为 logger 写两份 JSON、CLI 显式传 seed/CoreConfig；不能据此声称 E0/G0 完成。
 
 ## 公式输入—代码来源映射（2026-09-01 只读审计）
 

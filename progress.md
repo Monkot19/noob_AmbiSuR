@@ -107,14 +107,16 @@
 - [x] Core implementation plan 已获用户批准；当前执行授权严格限于 E0
 
 ### 2026-09-03 E0 implementation authorization
-- **Status:** train_interface_red_observed_implementing_minimal_wiring
+- **Status:** metadata_red_observed_waiting_for_autodl_integration_green
 - [x] 用户批准完整实施计划，并授权当前仅实施 E0 测试、default-off 配置/调度、显式 seed、复现元数据和只读 comparator。
 - [x] 开工前确认 `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c`、upstream 同步且工作树 clean。
 - [x] CoreConfig/seed/runtime/comparator tests 均先观察到目标 RED，再完成最小 GREEN；19 项非 GPU suite 在 bundled Python 通过。
 - [x] Commit `68922cc` 保存 test-first harness；commit `b2c46db` 保存纯 E0 配置/runtime/comparator foundation；`train.py` 尚未修改。
 - [x] 在 AutoDL clean `research/core-routing@b2c46db49e3465da7ff5cfda56a7ddd30be6f02c`、Python 3.10.21 以标准库 `unittest` 运行 integration test，精确 RED 为 `train.py` 缺少 `build_checkpoint_payload`；未安装依赖、未启动训练。
 - [x] Commit `580adeb` 先增加 metadata integration 合同；commit `0601056` 只接线已观察 RED 所需的 runtime helper、`training(..., core_config=None)`、feature-off legacy dispatch 与 legacy tuple checkpoint。
-- [ ] 在 AutoDL 观察下一目标 RED（`prepare_output_and_logger` 尚未接收 pipeline/CoreConfig 或写元数据），然后才接入运行元数据；完成本地静态审查后再申请服务器 GREEN/component test。
+- [x] AutoDL 第二次 integration：legacy dispatch、tuple checkpoint、explicit CoreConfig 三项通过；metadata 唯一精确 RED 为 logger 二参数签名（commit `02ac3b9700ea53a9f723ef3f62c3c8cac1b15d42`）。
+- [x] 最小接线已在本地完成：logger 写 resolved config/run identity，CLI 显式传递 seed/CoreConfig；19 项非 GPU suite、AST parse 与 `git diff --check` 通过。
+- [ ] 推送后由 AutoDL 标准库 `unittest` 验证四项 integration GREEN；此前不启动训练。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖，不启动服务器实验。
 
 ## Experiment Readiness
