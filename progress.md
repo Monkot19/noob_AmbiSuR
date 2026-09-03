@@ -107,7 +107,7 @@
 - [x] Core implementation plan 已获用户批准；当前执行授权严格限于 E0
 
 ### 2026-09-03 E0 implementation authorization
-- **Status:** paired_500_failed_under_systematic_debugging
+- **Status:** paired_500_failed_rng_trace_excluded_pending_baseline_repeat
 - [x] 用户批准完整实施计划，并授权当前仅实施 E0 测试、default-off 配置/调度、显式 seed、复现元数据和只读 comparator。
 - [x] 开工前确认 `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c`、upstream 同步且工作树 clean。
 - [x] CoreConfig/seed/runtime/comparator tests 均先观察到目标 RED，再完成最小 GREEN；19 项非 GPU suite 在 bundled Python 通过。
@@ -126,14 +126,16 @@
 - [x] Exact E0 `a26082154889ed539322425347af5a57a859a52f` 同 pair 500 完成：训练/metadata/artifact/source/Git均PASS，服务器已切回 `research/core-routing`（head `9f75c97…`，clean，behind remote 3 commits）。
 - [x] Strict equivalence FAIL：checkpoint 首个 mismatch=`_xyz`；L1 `+2.2673e-5`、PSNR `-0.0050125 dB`、PLY SHA不同；points=200,000、peak delta=0、wall delta=-1 s。
 - [x] Partial field audit：private prior PLY、`knn_f`、`features_rest`、`max_weight` exact；learned params与 densification proxy 均 finite 但不同，定位到训练阶段分叉。
-- [ ] 修正诊断脚本的 NumPy `bool_` JSON 序列化错误，补 optimizer/app/config 与 logger 后 RNG/camera-trace sentinel；在区分 RNG trace / baseline 自身非确定性 / E0副作用之前，禁止修改实现或运行8k。
+- [x] 修正版只读审计完成：spatial LR、optimizer hyperparameters/steps、共同配置 exact；app model、SH rest 及其 optimizer moments exact；已训练参数及 moments 分叉。
+- [x] Baseline/E0 fresh-process RNG sentinel 完全一致：Python/NumPy/Torch CPU/Torch CUDA state SHA 以及 500-step camera trace SHA 全部相同；排除 seed/logger RNG 消耗与相机顺序差异。脚本 exit 0，并恢复服务器 `research/core-routing@9f75c970b3aea0694934424cd98a3e05c7705162`，工作树 clean、当时 behind origin 3。
+- [ ] 下一最小诊断需用户另行批准第二次 exact-baseline 500 self-repeat；在区分 baseline CUDA 非确定性 hypothesis 与 E0 非 RNG 副作用 hypothesis 之前，禁止修改实现、调整容差或运行 8k/D0/C1。
 - **Scope:** 不实现 D0/C1，不修改 renderer/CUDA，不创建 tag，不安装依赖；当前实验授权仅限 paired-500，不含 8k/正式实验。
 
 ## Experiment Readiness
 
-- **当前阶段：** Phase 0 审计、Core 实施计划和 Tool Room C0 可复现锚点均已完成；方法源码尚未开始，E0/D0/C1–C6 均未执行。
-- **最早可启动的下一阶段：** E0 本地 TDD 已获批准并开始；完成本地静态/CPU 审查后，另行申请在 AutoDL 安装 pytest、执行 component tests、500-iteration smoke 与覆盖 7001+ 分支的 Tool quick。GT evaluator 不阻塞 E0 工程等价，但在解释几何结果前必须冻结。
-- **E0 开工条件：** C0、local/remote refs、规划文档和实施计划批准均已满足；服务器 pytest 与 smoke 授权只阻塞 E0 的云端验证，不阻塞当前本地 TDD。
+- **当前阶段：** Phase 0、Tool Room C0 锚点和 E0 工程组件门已完成；E0 paired-500 严格等价失败，当前停在系统化诊断，D0/C1–C6 未开始。
+- **最早可启动的下一阶段：** 仅在用户批准后运行第二次 exact-baseline 500 self-repeat，用已有结果测量 baseline 自身重复性；这不是方法实验，不使用 GT/mesh，也不授权 8k/D0/C1。
+- **E0 当前门：** RNG、camera trace、配置、optimizer 超参数与输入初始化证据一致；仍需 baseline self-repeat 区分 GPU baseline 非确定性与 E0 非 RNG 副作用。若 baseline self-repeat 逐位一致，则继续查 E0 副作用；若 baseline 自身分叉，则先报告其噪声包络并请求用户确认新的 G0 数值等价判据，绝不静默放宽。
 - **首个诊断实验：** E0/G0 通过后运行 D0 Tool Room seed 0（正式时序到 7k），只记录证据/状态；G1 不通过则停止。
 - **首个方法实验：** D0/G1 通过且 C1 single-step gradient oracle 全部通过后，才运行 C1 Tool Room seed 0 quick。C2–C6 依次按上一阶段 tag 晋级，不能并行跳级。
 - **当前数据事实：** 服务器 Tool source/DA3/GT 已通过文件数、basename、数值、COLMAP、scale 与 hash preflight，并完成 C0；Utility 尚未上传且本地版本仍需从 FISHEYE 转为 PINHOLE/SIMPLE_PINHOLE。它不阻塞 E0/D0/C1 Tool quick，但阻塞 G2 多场景结论。旧协议为全部相机训练，无 `split.json`，且旧结果没有 ScanNet++ GT geometry metric。
@@ -164,6 +166,7 @@
 | 2026-09-03 | E0 full component/CLI gate | `7223f919e8e015f1b1eed2d94d6855aed3b4eb29` | AutoDL stdlib discovery + `train.py --help` exact flag presence | 23/23 PASS；8/8 flags present；post-test clean；等待 paired 500 experiment 授权 | n/a |
 | 2026-09-03 | E0 paired-500 baseline half | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | Tool Room `-r 2 --iterations 500 --test_iterations 500 --checkpoint_iterations 500`，private aligned copy + source hash guards | PASS；exit 0；0 error/nonfinite；200,000 points；train PSNR 19.0524567；peak 4,769 MiB；canonical/Git clean | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/baseline_d6f15c88/manifest.md` |
 | 2026-09-03 | E0 paired-500 all-off half | `a26082154889ed539322425347af5a57a859a52f` | identical Tool Room protocol + `--seed 0`/Core default-off；semantic checkpoint/app compare + read-only comparator | training/metadata/source/Git PASS；strict equivalence FAIL at `_xyz`, L1/PSNR/PLY SHA；8k stopped pending diagnosis | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/e0_a2608215/manifest.md` |
+| 2026-09-03 | E0 remainder/RNG read-only audit | baseline `d6f15c8`; E0 `a260821` | existing checkpoints/configs + fresh-process post-logger RNG states + simulated 500-step camera trace；no training | spatial LR/config/optimizer hyperparameters and RNG/camera trace exact；learned states diverge during training；baseline self-repeat still required | same pair; sentinel `/root/autodl-tmp/e0-rng-sentinel.hTwRyR` |
 
 ## Cloud Runs
 
@@ -172,11 +175,12 @@
 | 2026-09-02 | Tool Room | baseline-pathcheck-r4-8k | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/baseline-pathcheck-r4-8k/d6f15c88/seed_0/attempt_20260902T074545Z` | path-check accepted；not C0 reproduced |
 | 2026-09-02 | Tool Room | c0-candidate-r2-30k | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z` | complete C0 reference accepted；annotated tag pending user approval |
 | 2026-09-03 | Tool Room | E0 paired-500 baseline | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/baseline_d6f15c88` | baseline half PASS；等待同 pair E0 all-off |
+| 2026-09-03 | Tool Room | E0 paired-500 all-off | `a26082154889ed539322425347af5a57a859a52f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/e0_a2608215` | training PASS；strict equivalence FAIL；RNG/camera trace 排除，等待 baseline self-repeat |
 
 ## Current Blocker
 
 1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
-2. 完整 Core 计划已批准；当前执行边界为 E0 且仅 paired-500 实验已单独授权。D0/C1、8k 与正式实验仍未授权。
+2. 完整 Core 计划已批准；当前执行边界为 E0。已授权 paired-500 已结束且 strict FAIL；下一次 baseline self-repeat、8k、D0/C1 与正式实验均尚未授权。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；当前 E0 suite 可由标准库 `unittest` 完整执行，pytest 缺失不再阻塞 E0 component 验证，后续若测试使用 pytest-only fixture 再单独申请安装。
 5. 当前本地分支为 `research/core-routing`；`main` 与 `c0-baseline` 均保持 baseline SHA，服务器 C0 commit 保持 clean。

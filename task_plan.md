@@ -68,7 +68,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** in_progress_paired_500_failed_under_systematic_debugging
+- **Status:** in_progress_paired_500_failed_rng_trace_excluded_pending_baseline_repeat
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -147,7 +147,10 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] Baseline 半程完成：pair `pair_20260903T090116Z`，exit 0，0 error/nonfinite，200,000 points，PLY SHA `01407a4da71819f5c13477111f912a7dbcc8ccf6aa489c300c7612b1233f0c5c`，peak 4,769 MiB，canonical source/Git clean。
 - [x] 在同一 pair、独立 private view 上运行 exact `a26082154889ed539322425347af5a57a859a52f` 的 E0 all-off；训练/metadata/source/Git 均正常。
 - [x] Strict comparator 发现 checkpoint `_xyz`、L1/PSNR、PLY SHA 差异，`E0_PAIRED_500_GATE=FAIL`；已按停止条件禁止 8k/D0/C1。
-- [ ] 只读判定差异来自 RNG trace、baseline 自身非确定性还是 E0 feature-off 副作用；未取得证据前不修复、不放宽阈值。
+- [x] 完成剩余只读审计：`spatial_lr_scale`、optimizer group 超参数、共同 model/optimization 配置均一致；app model 和未激活的 SH/rest optimizer state 逐位一致，已更新参数的 optimizer moments 随训练参数一同分叉。
+- [x] 在 baseline/E0 exact commit 的独立 fresh Python 进程中复现初始化至 logger 后状态；Python、NumPy、Torch CPU、Torch CUDA RNG 哈希以及 406-camera/500-step 采样轨迹哈希全部一致。由此排除显式 seed、metadata logger 消耗 RNG、Python 相机顺序不同这三项原因。
+- [ ] 获得用户批准后，以同一 GPU、同一 exact baseline commit、同一 snapshot/seed/config 和新 private view 再运行一次 baseline 500，测量 baseline 自身的 bitwise/numerical repeatability；不得复用或覆盖现有 pair。
+- [ ] 只有 baseline-repeat 证据才能区分 baseline CUDA 数值非确定性 hypothesis 与 E0 feature-off 副作用 hypothesis；未取得证据前不修复、不放宽阈值、不运行 8k/D0/C1。
 
 ## Scope Guardrails
 
