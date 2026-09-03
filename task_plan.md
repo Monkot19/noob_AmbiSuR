@@ -150,7 +150,8 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 完成剩余只读审计：`spatial_lr_scale`、optimizer group 超参数、共同 model/optimization 配置均一致；app model 和未激活的 SH/rest optimizer state 逐位一致，已更新参数的 optimizer moments 随训练参数一同分叉。
 - [x] 在 baseline/E0 exact commit 的独立 fresh Python 进程中复现初始化至 logger 后状态；Python、NumPy、Torch CPU、Torch CUDA RNG 哈希以及 406-camera/500-step 采样轨迹哈希全部一致。由此排除显式 seed、metadata logger 消耗 RNG、Python 相机顺序不同这三项原因。
 - [x] 用户已批准以同一 GPU、同一 exact baseline commit、同一 snapshot/seed/config 和新 private view 再运行一次 baseline 500，测量 baseline 自身的 bitwise/numerical repeatability；不得复用或覆盖现有 pair。
-- [ ] 执行获批的 baseline self-repeat，并对 baseline-1↔baseline-2 与 baseline-2↔E0 做同一套 checkpoint/metric/PLY 差异审计。
+- [x] 执行获批的 baseline self-repeat：训练/数据/Git/artifact 安全门全部 PASS；同一 exact baseline 的第二次 PLY/checkpoint SHA 也与第一次不同，证明 baseline 路径自身不是 bitwise deterministic。
+- [ ] 对 baseline-1↔baseline-2、baseline-1↔E0、baseline-2↔E0 做同一套 checkpoint 参数、optimizer state、densification proxy 与指标误差尺度审计；不能只凭 SHA 或最终 loss 宣布 E0 等价。
 - [ ] 只有 baseline-repeat 证据才能区分 baseline CUDA 数值非确定性 hypothesis 与 E0 feature-off 副作用 hypothesis；未取得证据前不修复、不放宽阈值、不运行 8k/D0/C1。
 
 ## Scope Guardrails
