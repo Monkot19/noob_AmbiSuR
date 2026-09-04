@@ -8,7 +8,10 @@ from pathlib import Path
 import re
 import sys
 
-import torch
+try:
+    import torch
+except (ImportError, ModuleNotFoundError):
+    torch = None
 
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -50,8 +53,14 @@ _ERROR_PATTERNS = {
 }
 
 
+def _require_torch():
+    if torch is None:
+        raise RuntimeError("Torch is required to read checkpoint tensor evidence")
+    return torch
+
+
 def _json_safe(value):
-    if torch.is_tensor(value):
+    if torch is not None and torch.is_tensor(value):
         if value.numel() != 1:
             raise ValueError("only scalar tensors can be embedded in exact metadata")
         return value.detach().cpu().item()
@@ -74,6 +83,7 @@ def _sha256(path):
 
 def tensor_pair_stats(left, right, *, chunk_size=1_000_000):
     """Return exact and float64 distance statistics without broadcasting."""
+    _require_torch()
     if not torch.is_tensor(left) or not torch.is_tensor(right):
         raise TypeError("tensor_pair_stats requires two Torch tensors")
     if chunk_size <= 0:
@@ -164,7 +174,7 @@ def _state_for_parameter(state, parameter_id):
     string_id = str(parameter_id)
     if string_id in state:
         return state[string_id]
-    raise ValueError(f"optimizer state missing parameter id {parameter_id!r}")
+    return {}
 
 
 def normalize_optimizer(optimizer_state):
@@ -199,8 +209,8 @@ def normalize_optimizer(optimizer_state):
         group_structure["state_keys"] = sorted(str(key) for key in parameter_state)
         step = parameter_state.get("step")
         if step is None:
-            raise ValueError(f"optimizer group {name!r} has no step counter")
-        if torch.is_tensor(step):
+            group_structure["step"] = None
+        elif torch is not None and torch.is_tensor(step):
             if step.numel() != 1:
                 raise ValueError(f"optimizer group {name!r} has a non-scalar step")
             group_structure["step"] = float(step.detach().cpu().item())
@@ -212,7 +222,7 @@ def normalize_optimizer(optimizer_state):
         structure["group_names"].append(name)
         structure["groups"][name] = group_structure
         for state_name, value in parameter_state.items():
-            if torch.is_tensor(value):
+            if torch is not None and torch.is_tensor(value):
                 tensors[f"optimizer.{name}.{state_name}"] = value.detach().cpu()
     return structure, tensors
 
@@ -232,6 +242,7 @@ def finalize_gate(gate, *, exploratory):
 
 
 def load_checkpoint(run_directory, iteration):
+    _require_torch()
     path = Path(run_directory) / f"chkpnt{iteration}.pth"
     if not path.is_file():
         raise FileNotFoundError(f"checkpoint is missing: {path}")
@@ -241,6 +252,7 @@ def load_checkpoint(run_directory, iteration):
 
 
 def _load_tensor_mapping(path):
+    _require_torch()
     path = Path(path)
     if not path.is_file():
         raise FileNotFoundError(f"tensor artifact is missing: {path}")
@@ -328,8 +340,8 @@ def _feature_off_metadata_valid(resolved_config, run_identity, contract):
     if any(core.get(flag) is not False for flag in enabled_flags):
         return False
     return (
-        run_identity.get("commit") == contract.get("commit")
-        and run_identity.get("dirty") is False
+        run_identity.get("git_commit") == contract.get("commit")
+        and run_identity.get("git_dirty") is False
         and run_identity.get("seed") == core.get("seed")
     )
 
@@ -379,7 +391,16 @@ def _add_contract_invariants(
         "training_config",
     ):
         values = {role: contracts[role].get(field) for role in ROLES}
-        exact_invariants.append(_exact(f"launcher_contract.{field}", values))
+        if any(value is None for value in values.values()):
+            exact_invariants.append(
+                _exact(
+                    f"launcher_contract.{field}",
+                    {role: values[role] is not None for role in ROLES},
+                    {role: True for role in ROLES},
+                )
+            )
+        else:
+            exact_invariants.append(_exact(f"launcher_contract.{field}", values))
     if expected_dataset_sha:
         exact_invariants.append(
             _exact(

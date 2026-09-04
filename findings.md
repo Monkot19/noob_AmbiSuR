@@ -218,6 +218,7 @@
 - AutoDL clean `research/core-routing@32f192997ac11b8f03d2b20c9d8656e437fa62f6`、Python 3.10.21 上，`tests.gpu.test_feature_off_triplet_audit` 的 6/6 测试均因唯一预期原因 `ModuleNotFoundError: scripts.diagnostics.audit_feature_off_triplet` 进入 RED；这证明测试实际约束的是尚不存在的新模块，而不是环境、数据或旧训练代码故障。
 - 本地随后只新增 `scripts/diagnostics/audit_feature_off_triplet.py`，并为 exact invariant 增加 role-specific expected-value 支持；实现使用 CPU `torch.load(..., weights_only=False)`、分块 float64 RMSE/MAE、严格 legacy 16-field capture、optimizer structure/tensor 分离及 exploratory 永不晋级 G0 的 gate。
 - 本机 Python 3.14.7 仍缺 Torch/NumPy：新 6 项 Torch 测试只能确认为 6 项 skip；完整 discovery 的两个 import error 分别是既知缺少 `torch` 与 `numpy`，不是本次实现结论。服务器 GREEN 之前，该实现状态只能写为“等待验证”。
+- AutoDL clean `research/core-routing@de732f232997677e03f27f07f0e5d07b56b6ae3a` 已给出定向 6/6、完整 39/39、compile 与 post-test clean 的 GREEN 证据。随后按完成前 review 对照 `scene/gaussian_model.py::training_setup` 与 `reliability/runtime.py::collect_run_identity`，发现测试遗漏的两个真实合同：`knn_f` 可以没有 Adam state；E0 metadata 字段实际为 `git_commit/git_dirty`。在 artifact replay 前已停止并先补回归测试，不能用首轮 39/39 掩盖该覆盖缺口。
 
 ## Decisions
 

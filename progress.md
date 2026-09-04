@@ -157,8 +157,11 @@
 
 - [x] AutoDL expected RED：clean `research/core-routing@32f192997ac11b8f03d2b20c9d8656e437fa62f6`，6/6 新测试均因缺少 `scripts.diagnostics.audit_feature_off_triplet` 报错，符合 TDD 合同。
 - [x] 本地最小实现已写入；role-specific exact invariant 新测试先失败后通过，comparator 定向 suite 14/14 PASS，脚本与相关测试 `py_compile` PASS，`git diff --check` 无 whitespace error。
-- [ ] AutoDL GREEN 尚未执行；本机缺 Torch/NumPy，因此 Torch 测试为 6 skip，完整本地 discovery 的既知依赖 import error 不得记作 suite PASS。
+- [x] AutoDL 对 `de732f2` 的首轮 GREEN 已执行；本机仍缺 Torch/NumPy，不能用本地 skip 代替服务器证据。完成前 review 后产生的修正需要新的服务器复验。
 - [ ] 尚未运行 500 artifact replay、尚未启动 8k、尚未改方法源码或创建 tag。
+- [x] AutoDL 首轮实现验证：`de732f2` 定向 6/6、完整 39/39、compile、post-test clean 均 PASS。
+- [x] 完成前单代理 code review 对照真实 optimizer/metadata producer；发现 `knn_f` 无 state 与 `git_commit/git_dirty` 两项覆盖缺口，已在 replay 前暂停。
+- [x] 三项回归合同与一项 Torch-optional import 合同均先观察 RED；最小修正后本地 4/4 新测试与 14/14 comparator 测试 PASS。服务器复验尚未执行，故 Task 2 仍未关闭。
 
 ## Verification Log
 

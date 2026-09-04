@@ -145,6 +145,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-04 | Task 1 首轮 GREEN 暴露三个旧 comparator 测试回归 | 1 | systematic-debugging 定位为新 test helper 被插入 `_write_run` 中间，导致原 fixture 后半段落到 `_field` 的 return 后；只移动测试代码恢复函数边界，随后目标 suite 13/13 PASS |
 | 2026-09-04 | 本机 full discovery 导入 `tests/gpu/test_feature_off_dispatch.py` 时无 Torch | 1 | 与既有环境边界一致，非 Task 1 回归；显式运行全部 28 项 non-GPU modules、`py_compile` 与 diff check 均通过，完整 GPU discovery留给 AutoDL |
 | 2026-09-04 | Task 2 测试与计划状态的首个补丁重复更新同一计划文件，工具拒绝 | 1 | 补丁未写入；拆成测试/记录与单独计划状态两个事务，未接触生产代码 |
+| 2026-09-04 | Task 2 首轮 39/39 GREEN 后 code review 发现真实 producer 合同未被 fixture 覆盖 | 1 | 对照 `GaussianModel.training_setup` 确认 `knn_f` 可无 Adam state，对照 `collect_run_identity` 确认字段是 `git_commit/git_dirty`；在 500 replay 前新增真实结构回归测试并修正，未读取或修改实验资产 |
 
 ### 2026-09-03 E0 paired-500 authorization
 
