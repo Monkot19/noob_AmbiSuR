@@ -140,6 +140,8 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | 三方语义审计复用了未规范化的 scalar JSON 分支，在 `spatial_lr_scale` 后因 NumPy `bool_` 再次停止 | 1 | Gaussian 参数与 densification proxy 三方统计已完整输出且有效；错误发生在只读报告层，未触碰训练/输出/Git。下一命令删除已完成部分，只对 scalar、optimizer、strict full-state、app 与 metrics 使用显式 Python scalar 转换后补跑 |
 | 2026-09-04 | 只读符号检索把 comparator 路径误写成 `scripts/compare_feature_off.py` | 1 | 依据现有计划定位 `scripts/diagnostics/compare_feature_off.py` 后完整读取；未改变文件或运行训练 |
 | 2026-09-04 | 文档覆盖断言错误要求四份文件都含 `64/64`，而设计稿只定义合同、不承载探索性结果 | 1 | 未改设计内容；把断言拆成设计合同 markers 与三份记录文件的 500 回代 markers，再重新运行完整检查 |
+| 2026-09-04 | 首次读取 `writing-plans` skill 的命令含错误 workdir 和不存在的 `Get-GenericContent` | 1 | 进程未启动、仓库未变；改用正确仓库路径和 `Get-Content` 后完整读取 skill，再开始计划 |
+| 2026-09-04 | G0 计划自审补丁的多段上下文首次未匹配 | 1 | 补丁事务未应用；用 `rg` 取得精确行后按稳定的逐行上下文重试，明确 baseline 无 E0-only `run_identity.json`、历史 500 不伪造新 provenance 文件 |
 
 ### 2026-09-03 E0 paired-500 authorization
 
@@ -158,6 +160,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 证据确认 baseline CUDA 路径自身非 bitwise deterministic；E0 未出现配置/RNG/结构/未激活字段差异，已训练参数、proxy 与 optimizer moment 的 pairwise 误差总体与 baseline self-distance 同阶。
 - [x] 用户于 2026-09-04 选择 G0 architectural clarification 方案 A；已将严格不变量 + baseline 自波动 2 倍数值门写入设计 §13 与三份规划文件。500 轮仅为探索性标定，不回写原 strict FAIL，也不宣布 G0 PASS。
 - [ ] 用户审阅方案 A 书面规格；随后细化只读 comparator 的 TDD 与独立 8k 三次运行计划，实验须另行批准。
+- [x] 用户已审阅并确认方案 A 书面规格；详细执行计划保存为 `docs/superpowers/plans/2026-09-04-g0-triplet-equivalence.md`，按既定禁用多代理约束采用 inline execution。
 
 ### 2026-09-04 G0 方案 A：冻结的验收合同与待办
 

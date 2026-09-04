@@ -137,7 +137,8 @@
 - [x] 三组 learned parameter/proxy/optimizer moment 误差总体同阶；E0 未出现结构性特有偏离。E0 与 baseline-2 的 L1/PSNR 差仅 `-9.4168e-6/-0.0007416 dB`，但这仍不是预注册 G0 判据。
 - [x] 用户于 2026-09-04 选择方案 A：exact 不变量保持严格；已更新字段/proxy/optimizer moment 逐字段分别以 RMSE/MAE 检查 `d_E<=2*d_B`，`d_B=0` 时 exact；标量指标用绝对差。方案已同步进设计 §13、计划和 findings。
 - [x] 只读回代现有 500 三方审计 JSON：32 个字段 × 2 种距离共 64 门全部落在批准界内，最大比值约 `1.99`；L1/PSNR 最近 baseline 比值约 `0.293/0.174`。该数据在规则冻结前已观察，只能标为探索性标定，原 strict comparator 结果仍为 FAIL，G0 尚未通过。
-- [ ] 等待用户审阅书面方案 A；随后才可按 TDD 增加三方只读 comparator。独立 8k baseline/baseline-repeat/E0 确认运行仍需单独批准。
+- [x] 用户已确认方案 A 书面规格并要求尽快推进；`writing-plans` 详细计划写入 `docs/superpowers/plans/2026-09-04-g0-triplet-equivalence.md`。用户既定禁用多代理，因此执行路径固定为 inline。
+- [ ] 下一步按计划 Task 1 先写三方 gate 失败测试；独立 8k baseline/baseline-repeat/E0 确认运行仍需单独批准。
 - **Scope:** 本轮只同步四份文档；不实现 D0/C1，不修改方法源码/renderer/CUDA，不创建 tag，不安装依赖，不启动 8k 或正式实验。
 
 ## Experiment Readiness
