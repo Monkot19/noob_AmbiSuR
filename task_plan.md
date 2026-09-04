@@ -30,7 +30,7 @@
 - 新 Gaussian 在 topology 提交时强制 `ell_i=Probation`，至少保持 `C_prob=500` 个 optimizer iteration；期间 `s_i` 可计算/记录但不得覆盖 `ell_i`。满 500 轮后只在下一次证据刷新按当时稳定 `s_i` 完成首次映射；`d_i` 只按证据刷新计数，生命周期变化时重置为 1。
 - **Probation truncation 澄清 A（2026-09-02 已批准）：** Core C6 不设置或迁移逐 Gaussian truncation 状态；Probation 与全部 Gaussian 一样原样沿用 baseline 全局 `--trunc_sigma/--disable_trunc`（当前默认 `trunc_sigma=2.0`）。Core 不新增 truncation Tensor、不按 `ell_i` 改写全局参数、不修改 renderer/CUDA truncation 接口；设计 §9.4 仅为 G0–G2 后可独立立项、tag 和消融的 Supporting 候选。
 - 任何 GPU 实验前记录 40 位 SHA、空 `git status --short`、`git diff --exit-code=0`、resolved config、seed、scene、命令和环境。
-- 完整 Core 计划已于 2026-09-03 获批准，但执行授权仅限已批准的 E0 工程范围与逐次批准的实验；2026-09-04 的 G0 方案 A 选择仅同步设计/规划文档，不授权方法源码、8k、D0/C1 或新 tag。既往 r4/8k、C0/30k 与 paired-500/self-repeat 授权不自动覆盖下一次运行。
+- 完整 Core 计划已于 2026-09-03 获批准；2026-09-04 用户另行批准冻结的独立 Tool Room 8k B1→B2→E0 确认组。该授权只覆盖 G0 三次串行训练、逐次安全审计与最终只读 comparator，不授权方法源码、D0/C1 或新 tag。既往 r4/8k、C0/30k 与 paired-500/self-repeat 授权不自动覆盖其他运行。
 - 服务器操作固定采用 user-operated terminal：助手一次给出可审计命令，用户复制执行并回传完整输出，助手复核通过后才给下一步；助手不直接控制浏览器、SSH 或服务器终端。
 
 ---
@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0 已完成；E0 工程、G0 三元审计器与既有 500-run 探索性回放已完成，当前等待独立 Tool Room 8k B1/B2/E0 确认实验的明确授权。D0/C1 尚未开始。
+Phase 0 已完成；E0 工程、G0 三元审计器与既有 500-run 探索性回放已完成。独立 Tool Room 8k B1/B2/E0 确认实验已获明确授权，当前等待纯只读 preflight；D0/C1 尚未开始。
 
 ## Phases
 
@@ -164,7 +164,7 @@ Phase 0 已完成；E0 工程、G0 三元审计器与既有 500-run 探索性回
 - [x] 对 baseline-1↔baseline-2、baseline-1↔E0、baseline-2↔E0 完成同一套 checkpoint 参数、optimizer state、densification proxy 与指标误差尺度审计；报告脚本 remainder exit 0。
 - [x] 证据确认 baseline CUDA 路径自身非 bitwise deterministic；E0 未出现配置/RNG/结构/未激活字段差异，已训练参数、proxy 与 optimizer moment 的 pairwise 误差总体与 baseline self-distance 同阶。
 - [x] 用户于 2026-09-04 选择 G0 architectural clarification 方案 A；已将严格不变量 + baseline 自波动 2 倍数值门写入设计 §13 与三份规划文件。500 轮仅为探索性标定，不回写原 strict FAIL，也不宣布 G0 PASS。
-- [ ] 用户审阅方案 A 书面规格；随后细化只读 comparator 的 TDD 与独立 8k 三次运行计划，实验须另行批准。
+- [x] 用户审阅方案 A 书面规格；只读 comparator 的 TDD、服务器硬化验证和 500 artifact 版本化探索性 replay 均已完成。
 - [x] 用户已审阅并确认方案 A 书面规格；详细执行计划保存为 `docs/superpowers/plans/2026-09-04-g0-triplet-equivalence.md`，按既定禁用多代理约束采用 inline execution。
 
 ### 2026-09-04 G0 方案 A：冻结的验收合同与待办
@@ -172,11 +172,10 @@ Phase 0 已完成；E0 工程、G0 三元审计器与既有 500-run 探索性回
 - 对同 horizon 的 baseline 两次运行 B1/B2 和 E0 全关运行 E，逐字段、逐距离定义 `d_B=D(B1,B2)`、`d_E=min(D(E,B1),D(E,B2))`。RMSE、MAE 各自满足 `d_E<=2*d_B`；`d_B=0` 时必须 exact；标量指标用绝对差。三组距离均保留，不能跨字段平均放行。
 - 配置/输入/prior hash、legacy dispatch、RNG/相机轨迹、checkpoint schema/dtype/shape、optimizer groups/hyperparameters/keys/steps、未激活字段、Gaussian 数量仍 exact；各 run 的 commit 对照各自批准 SHA。缺失证据、shape/count 差异、nonfinite 或任一超界均停止。
 - 已学习结果 SHA、max-abs、mismatch count 仅诊断；输入 SHA 仍是硬门。8k 已激活的 SH/app 不沿用 500 轮的“未激活字段”分类。
-- 现有 500 三次运行用于标定；新 8k 三次独立启动用于确认，使用 8k 自身 baseline self-distance。先固定规则与字段/评价点，再运行；不复用旧 r4/8k 或 30k 结果，不得事后提高 2 倍系数。此工程规则不替代 C1 单步 gradient oracle。
-- [ ] **先写失败测试（待书面规格审阅后）：** 在 `tests/test_compare_feature_off.py` 增加 `test_envelope_accepts_boundary`、`test_envelope_rejects_over_boundary`、`test_zero_self_distance_requires_exact`、`test_rmse_and_mae_must_both_pass`、`test_each_distance_uses_nearest_baseline`、`test_exact_invariant_mismatch_rejected`、`test_missing_nonfinite_or_shape_mismatch_rejected`、`test_learned_hash_only_diagnostic`、`test_legacy_comparator_unchanged`；测试名为计划，不代表已经实现。
-- [ ] **最小实现（本轮不做）：** 仅在 `scripts/diagnostics/compare_feature_off.py` 新增显式三方入口/纯数值判定函数，保留原 `compare_runs` strict 行为；按字段输出三组距离、界限、exact/数值门失败项与 run 身份。不触碰 `train.py`、renderer/CUDA、loss/backward/optimizer/topology。
-- [ ] **CPU/只读复核：** 新测试先 RED 后 GREEN，标准库 `unittest` full non-GPU suite 与静态检查；再由用户终端对三份现有 500 artifact 运行只读复核。不得把仅有汇总数值当作新的 artifact 审计。
-- [ ] **8k 前固定运行单：** baseline `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 两次、E0 `a26082154889ed539322425347af5a57a859a52f` 一次；Tool Room `-r 2`/seed 0、同 snapshot/GPU/runtime，串行、三个独立 private view/output；预先列明评价点、checkpoint/资源/采样轨迹证据与磁盘预算，用户批准后才给启动命令。
+- 现有 500 三次运行用于标定；新 8k 三次独立启动用于确认，使用 8k 自身 baseline self-distance。先固定规则与字段/评价点，再运行；不复用旧 r4/8k 或 30k 结果，不得事后提高 2 倍系数。500 replay 最大比值 `1.9854507624` 是 64 个数值门中的探索性极值，只说明当前余量较小，不构成放宽证据；2.0 仍是确认性 8k 的冻结阈值。此工程规则不替代 C1 单步 gradient oracle。
+- [x] **失败测试与最小实现：** 三方 envelope、zero-self exact、双距离、nearest baseline、exact invariant、缺失/nonfinite/shape、learned-hash diagnostic、legacy comparator 兼容和真实 checkpoint 合同均已按 RED→GREEN 实现；版本化 comparator 为 `3db69bb3b5a7ae86d082e16158dd2d58609f5b29`。
+- [x] **CPU/只读复核：** AutoDL hardened suite 43/43 PASS，真实 B1 checkpoint schema probe PASS；版本化 500 replay exact failure 0、64/64 tensor 门与 2/2 scalar 门通过，且强制 `exploratory=true/g0_equivalent=false`。
+- [x] **8k 运行单与授权：** baseline `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 两次、E0 `a26082154889ed539322425347af5a57a859a52f` 一次；Tool Room `-r 2`/seed 0、同 snapshot/GPU/runtime，串行、三个独立 private view/output；评价点 `500 1000 5001 7001 8000`，save/checkpoint 仅 8000。用户已于 2026-09-04 明确批准；下一步仅执行不启动训练的 preflight，复核后再逐次给 B1/B2/E 命令。
 - [ ] **晋级/停止：** 覆盖 600/1000/5001/7001 后按设计 §13 逐门验收；全部通过才接受确认性 G0，任何 count/shape/字段/安全门失败立即停止，不跳进 D0/C1。不通过时保留全部结果，报告是否为 baseline 自重复本身破坏严格不变量。
 - **建议后续 commits：** `test: define G0 empirical envelope contract`、`feat: add read-only three-run equivalence comparator`；验证文档用 `docs:`。不新增 E0 tag，不移动 `c0-baseline`。
 
@@ -186,7 +185,7 @@ Phase 0 已完成；E0 工程、G0 三元审计器与既有 500-run 探索性回
 - GT mesh 不进入训练。
 - C0–C6 每阶段必须对应独立 commit 和验证 tag。
 - 服务器不修改代码。
-- 当前授权仅允许 E0：测试框架、default-off Core 配置/调度、显式 seed、复现元数据、只读 comparator，以及已单独批准的 Tool Room paired-500；禁止 D0/C1、renderer/CUDA、Supporting、阶段 tag、依赖安装和 8k/正式实验，后者均须另行批准。
+- 当前授权允许 E0 工程、只读 comparator，以及已单独批准的 Tool Room 独立 8k B1→B2→E0 G0 确认组；仍禁止 D0/C1、renderer/CUDA、Supporting、阶段 tag、依赖安装和其他正式实验。
 
 ## Planned File Boundaries and Interfaces
 

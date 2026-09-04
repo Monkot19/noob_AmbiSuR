@@ -206,9 +206,9 @@ Stop if the replay differs; use `superpowers:systematic-debugging` before changi
 - E0 role SHA: `a26082154889ed539322425347af5a57a859a52f` for E.
 - Fixed training protocol: Tool Room, `-r 2`, semantic seed 0, 8000 iterations, evaluation iterations `500 1000 5001 7001 8000`, save/checkpoint only at 8000, serial order B1 → B2 → E, unique private working view/output for every role.
 
-- [ ] **Step 1: Obtain explicit experiment approval**
+- [x] **Step 1: Obtain explicit experiment approval**
 
-Present the final safety-gated shell command and estimated disk/time budget. Do not launch based only on approval of this implementation plan.
+User explicitly approved the independent 8k triplet on 2026-09-04. The observed 500 replay maximum ratio `1.9854507624` does not change the preregistered factor: it is the maximum of 64 exploratory checks selected after observation, while factor `2.0` already permits twice the baseline self-distance. Keep `factor=2.0`; if the independent 8k triplet exceeds it, record failure and investigate without post-hoc relaxation. Present the final safety-gated shell command and estimated disk/time budget before launch.
 
 - [ ] **Step 2: Run one preflight command**
 

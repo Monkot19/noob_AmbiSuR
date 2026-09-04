@@ -221,6 +221,8 @@
 - AutoDL clean `research/core-routing@de732f232997677e03f27f07f0e5d07b56b6ae3a` 已给出定向 6/6、完整 39/39、compile 与 post-test clean 的 GREEN 证据。随后按完成前 review 对照 `scene/gaussian_model.py::training_setup` 与 `reliability/runtime.py::collect_run_identity`，发现测试遗漏的两个真实合同：`knn_f` 可以没有 Adam state；E0 metadata 字段实际为 `git_commit/git_dirty`。在 artifact replay 前已停止并先补回归测试，不能用首轮 39/39 掩盖该覆盖缺口。
 - 修正提交 `3db69bb3b5a7ae86d082e16158dd2d58609f5b29` 的 AutoDL hardened gate 已通过：定向 10/10、完整 43/43、compile 和 post-test clean；只读加载真实 B1 `chkpnt500.pth` 得到 16-field capture、200,000 Gaussians、7 个 optimizer groups 和 18 个 optimizer tensors。真实 `knn_f` 为 `state_keys=[]/step=None`，其余 6 组均为 `exp_avg/exp_avg_sq/step=499`，与修正合同一致。
 - 版本化审计器随后在三个既有 500-run 只读资产上完成 replay：exact failures `0`，32 个 tensor/state 字段的 64 个 RMSE/MAE 门全部通过，2 个训练标量门通过；最大 tensor ratio=`1.9854507624`（`optimizer.opacity.exp_avg_sq`/RMSE/nearest B1），L1/PSNR ratio=`0.2934525192/0.1736334405`（nearest B2），与冻结前手工审计一致。报告 SHA256=`5598ab13615f2540c80c2909b7820d45dddb8cc65bfa3288bc2cef910cb0126b`。该结果严格标记 `exploratory=true`、`g0_equivalent=false`，不能作为 G0 晋级结论。
+- 用户指出上述最大比值接近 2.0。当前判断是：该值是 64 个数值检查中事后选出的最大极值，且数据在确认门冻结前已被观察；它是“500 轮余量较小”的诊断事实，不是提高阈值的确认性证据。`d_E<=2*d_B` 本身已容许 E0 到最近 baseline 的偏差达到 baseline 自重复偏差的两倍，因此独立 8k 前不放宽。**Hypothesis:** 8k 的更长时序和 topology 分叉可能改变比值分布；只有新 8k 三元组能检验 2.0 是否覆盖该 horizon，若超界必须按冻结规则报告 G0 failure 并分析来源，不能回改本次阈值。
+- 用户已明确批准独立 Tool Room 8k B1→B2→E0 确认组；批准范围为冻结协议下的三次串行训练、逐次审计和最终只读比较，不包含方法源码、D0/C1、tag 或其他实验。启动仍按 user-operated terminal 一次一条命令进行，先完成纯只读 preflight。
 
 ## Decisions
 
@@ -234,3 +236,4 @@
 | 2026-09-03 | 用户批准完整 Core 实施计划，并授权当前仅实施 E0 | 用户明确回复“好的”；Git 已在 clean `research/core-routing@59ffca971782b44439c19f7bc18ea3490b1d452c` | 可以用 TDD 修改 E0 配置/入口/元数据/测试；仍禁止 D0/C1、renderer/CUDA、tag、依赖安装或服务器实验，E0 smoke 需另行批准 |
 | 2026-09-03 | 用户批准首次 E0 paired 500-iteration experiment | E0 component gate 23/23 PASS、8/8 CLI flags present、AutoDL post-test clean；用户明确回复“批准” | 仅 Tool Room `-r 2`/seed0/500，baseline→E0 all-off 串行、独立 private views/输出、只读 comparator；不授权 GT/mesh/tag/D0/C1/8k |
 | 2026-09-04 | 用户批准非确定 baseline 的 G0 数值等价方案 A，并授权同步至最终设计与三份规划文件 | exact baseline self-repeat 已证实非 bitwise；三方字段/optimizer/proxy/metric 审计完整；用户回复“选A吧” | exact 不变量不放宽；数值字段逐项 RMSE/MAE 采用 `d_E<=2*d_B`，self=0 时 exact；500 仅探索性标定，独立 8k 三次运行才是确认门，且仍需单独实验授权 |
+| 2026-09-04 | 用户批准冻结的独立 Tool Room 8k G0 三元确认组；500 最大比值接近门限不触发放宽 | 用户明确回复“批准”；500 replay 是冻结前观察的探索性数据，最大值为 64 门的事后极值 | 保持 factor `2.0`；先只读 preflight，再串行 B1→B2→E0 并逐次审计；任一确认门超界即保留结果、报告 G0 failure、停止 D0/C1，禁止事后调阈值 |

@@ -138,15 +138,16 @@
 - [x] 用户于 2026-09-04 选择方案 A：exact 不变量保持严格；已更新字段/proxy/optimizer moment 逐字段分别以 RMSE/MAE 检查 `d_E<=2*d_B`，`d_B=0` 时 exact；标量指标用绝对差。方案已同步进设计 §13、计划和 findings。
 - [x] 只读回代现有 500 三方审计 JSON：32 个字段 × 2 种距离共 64 门全部落在批准界内，最大比值约 `1.99`；L1/PSNR 最近 baseline 比值约 `0.293/0.174`。该数据在规则冻结前已观察，只能标为探索性标定，原 strict comparator 结果仍为 FAIL，G0 尚未通过。
 - [x] 用户已确认方案 A 书面规格并要求尽快推进；`writing-plans` 详细计划写入 `docs/superpowers/plans/2026-09-04-g0-triplet-equivalence.md`。用户既定禁用多代理，因此执行路径固定为 inline。
-- [ ] 下一步按计划 Task 1 先写三方 gate 失败测试；独立 8k baseline/baseline-repeat/E0 确认运行仍需单独批准。
+- [x] 三方 gate TDD、服务器 hardened gate、真实 checkpoint probe 与 500 versioned exploratory replay 均已完成。
 - [x] Task 1 已完成 RED→GREEN：新增 API 首次运行精确因 import 缺失失败；最小实现后目标 comparator suite 13/13 PASS，全部 28 项本地 non-GPU tests PASS，`py_compile`/diff check 返回 0。Commit `286d67f`；既有两方 strict comparator 保持原行为。
 - [x] Task 2 的六项 AutoDL CPU-Torch 合同测试已先写入；本机无 Torch 因而整类 skip。下一步在服务器 clean exact test commit 上观察缺少 `audit_feature_off_triplet` 的预期 RED，尚未实现 extractor。
-- **Scope:** 本轮只同步四份文档；不实现 D0/C1，不修改方法源码/renderer/CUDA，不创建 tag，不安装依赖，不启动 8k 或正式实验。
+- [x] 用户已明确批准冻结的独立 Tool Room 8k baseline/baseline-repeat/E0 确认组；factor 保持 `2.0`，不因 500 replay 的最大比值 `1.9854507624` 事后放宽。
+- **Scope:** 当前可执行 G0 8k preflight、三次串行训练、逐次审计和最终只读 comparator；仍不实现 D0/C1，不修改方法源码/renderer/CUDA，不创建 tag，不安装依赖或启动其他正式实验。
 
 ## Experiment Readiness
 
-- **当前阶段：** Phase 0、Tool Room C0、E0 工程、三元 comparator 和既有 500-run 探索性 replay 均已完成；当前等待独立 8k baseline/baseline-repeat/E0 确认组的明确实验授权。D0/C1–C6 尚未开始。
-- **最早可启动的下一项：** 获得单独授权后运行冻结的 Tool Room 8k B1→B2→E0 确认组。它仍是 E0/G0 工程实验，不是 D0/C1 方法实验。
+- **当前阶段：** Phase 0、Tool Room C0、E0 工程、三元 comparator 和既有 500-run 探索性 replay 均已完成；独立 8k baseline/baseline-repeat/E0 确认组已获批准，下一步为不启动训练的服务器 preflight。D0/C1–C6 尚未开始。
+- **最早可启动的下一项：** preflight 通过后按冻结顺序运行 Tool Room 8k B1→审计→B2→审计→E0→审计→comparator。它仍是 E0/G0 工程实验，不是 D0/C1 方法实验。
 - **E0 当前门：** 500 三方结果按新规则探索性回代为 64/64 数值门通过，但 G0 尚未通过。仍需以预先冻结的同一规则在 8k 新三次运行中确认，并同时通过 Gaussian 数量/shape、配置/输入、未激活字段、optimizer 结构、资源和错误等严格门。
 - **首个诊断实验：** E0/G0 通过后运行 D0 Tool Room seed 0（正式时序到 7k），只记录证据/状态；G1 不通过则停止。
 - **首个方法实验：** D0/G1 通过且 C1 single-step gradient oracle 全部通过后，才运行 C1 Tool Room seed 0 quick。C2–C6 依次按上一阶段 tag 晋级，不能并行跳级。
@@ -164,6 +165,8 @@
 - [x] 三项回归合同与一项 Torch-optional import 合同均先观察 RED；最小修正后本地 4/4 新测试与 14/14 comparator 测试 PASS。服务器复验尚未执行，故 Task 2 仍未关闭。
 - [x] AutoDL hardened 复验关闭 Task 2：clean `3db69bb` 上定向 10/10、完整 43/43、compile、post-test clean 与真实 B1 checkpoint schema probe 全部 PASS；下一步只读 replay 三个既有 500-run artifact。
 - [x] Task 3 replay：报告 `/root/autodl-tmp/ambisur_diagnostics/e0-g0-a-500-replay-3db69bb.json`，SHA256 `5598ab13…cb0126b`；exact `0` failure、32 字段/64 tensor 门与 2 scalar 门全部通过，且 `exploratory=true/g0_equivalent=false`。下一步必须单独批准独立 8k triplet。
+- [x] 用户已单独批准 Task 4 独立 8k triplet；对 500 最大比值接近 2.0 的担忧已记录。factor 继续冻结为 `2.0`，8k 超界时按失败处理而不事后放宽。
+- [ ] Task 4 Step 2：执行纯只读/不启动训练的服务器 preflight，确认 Git/commit/tag/runtime/GPU/磁盘/数据 manifest/目标目录合同；通过后才给 B1 启动命令。
 
 ## Verification Log
 
@@ -207,7 +210,7 @@
 ## Current Blocker
 
 1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
-2. 完整 Core 计划已批准；当前执行边界仍为 E0。500 三方诊断已结束，方案 A 已书面化但须由用户审阅；三方 comparator 代码、独立 8k 确认、D0/C1 与正式实验均未由本次选择自动授权。
+2. 完整 Core 计划已批准；当前执行边界仍为 E0/G0。三方 comparator 和 500 探索性 replay 已结束，独立 8k 确认已获批准并等待 preflight；D0/C1 与其他正式实验尚未获执行授权。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；当前 E0 suite 可由标准库 `unittest` 完整执行，pytest 缺失不再阻塞 E0 component 验证，后续若测试使用 pytest-only fixture 再单独申请安装。
 5. 当前本地分支为 `research/core-routing`；`main` 与 `c0-baseline` 均保持 baseline SHA，服务器 C0 commit 保持 clean。
