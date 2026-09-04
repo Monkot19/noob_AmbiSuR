@@ -127,7 +127,17 @@ def evaluate_triplet_report(report, factor=2.0):
         name = invariant.get("name", "<unnamed>")
         if not all(key in invariant for key in ("b1", "b2", "e0")):
             exact_failures.append(name)
-        elif not (invariant["b1"] == invariant["b2"] == invariant["e0"]):
+            continue
+        expected = invariant.get("expected")
+        if expected is None:
+            passed = invariant["b1"] == invariant["b2"] == invariant["e0"]
+        else:
+            passed = (
+                isinstance(expected, dict)
+                and all(key in expected for key in ("b1", "b2", "e0"))
+                and all(invariant[key] == expected[key] for key in ("b1", "b2", "e0"))
+            )
+        if not passed:
             exact_failures.append(name)
 
     numeric_results = [

@@ -153,6 +153,13 @@
 - **当前数据事实：** 服务器 Tool source/DA3/GT 已通过文件数、basename、数值、COLMAP、scale 与 hash preflight，并完成 C0；Utility 尚未上传且本地版本仍需从 FISHEYE 转为 PINHOLE/SIMPLE_PINHOLE。它不阻塞 E0/D0/C1 Tool quick，但阻塞 G2 多场景结论。旧协议为全部相机训练，无 `split.json`，且旧结果没有 ScanNet++ GT geometry metric。
 - **当前环境事实：** 本机 Python 3.14.7 无 torch/pytest，不能充当项目验证环境；服务器已验证为仓库锁定的 Python 3.10.21、PyTorch 2.7.1+cu128、CUDA 12.8/RTX 4090。服务器 pytest 尚未安装，E0 前补齐。
 
+### 2026-09-04 G0 Task 2 checkpoint comparator
+
+- [x] AutoDL expected RED：clean `research/core-routing@32f192997ac11b8f03d2b20c9d8656e437fa62f6`，6/6 新测试均因缺少 `scripts.diagnostics.audit_feature_off_triplet` 报错，符合 TDD 合同。
+- [x] 本地最小实现已写入；role-specific exact invariant 新测试先失败后通过，comparator 定向 suite 14/14 PASS，脚本与相关测试 `py_compile` PASS，`git diff --check` 无 whitespace error。
+- [ ] AutoDL GREEN 尚未执行；本机缺 Torch/NumPy，因此 Torch 测试为 6 skip，完整本地 discovery 的既知依赖 import error 不得记作 suite PASS。
+- [ ] 尚未运行 500 artifact replay、尚未启动 8k、尚未改方法源码或创建 tag。
+
 ## Verification Log
 
 | Date | Stage | Commit | Command | Result | Manifest |

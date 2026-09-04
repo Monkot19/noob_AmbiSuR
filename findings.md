@@ -213,6 +213,12 @@
 
 `docs/research/baseline-audit.md` 的 11 项代码事实全部与当前 HEAD 源码一致：动态 SH 缺口、`out_observe` 语义、trim 扫描、detached appearance SSIM、Ray-Color→means 泄漏、ALR 重复 backward、切片 `requires_grad_` 无效、全局 truncation、step 前 topology/状态迁移、DA3 双重参与、最短轴法线与视角翻转均已定位到上表证据。此结论是源码一致性审计，不是服务器运行验证；其中 ALR 属性赋值是否立即报错、CUDA 数值与显存行为仍需 GPU smoke。
 
+### G0 三元审计器实现证据（2026-09-04）
+
+- AutoDL clean `research/core-routing@32f192997ac11b8f03d2b20c9d8656e437fa62f6`、Python 3.10.21 上，`tests.gpu.test_feature_off_triplet_audit` 的 6/6 测试均因唯一预期原因 `ModuleNotFoundError: scripts.diagnostics.audit_feature_off_triplet` 进入 RED；这证明测试实际约束的是尚不存在的新模块，而不是环境、数据或旧训练代码故障。
+- 本地随后只新增 `scripts/diagnostics/audit_feature_off_triplet.py`，并为 exact invariant 增加 role-specific expected-value 支持；实现使用 CPU `torch.load(..., weights_only=False)`、分块 float64 RMSE/MAE、严格 legacy 16-field capture、optimizer structure/tensor 分离及 exploratory 永不晋级 G0 的 gate。
+- 本机 Python 3.14.7 仍缺 Torch/NumPy：新 6 项 Torch 测试只能确认为 6 项 skip；完整 discovery 的两个 import error 分别是既知缺少 `torch` 与 `numpy`，不是本次实现结论。服务器 GREEN 之前，该实现状态只能写为“等待验证”。
+
 ## Decisions
 
 | Date | Decision | Evidence | Consequence |

@@ -234,6 +234,28 @@ class ThreeRunEnvelopeTests(unittest.TestCase):
         self.assertFalse(result["equivalent"])
         self.assertEqual(result["exact_failures"], ["gaussian_count"])
 
+    def test_exact_invariant_can_match_role_specific_expected_values(self):
+        expected = {"b1": "baseline", "b2": "baseline", "e0": "feature-off"}
+        report = {
+            "exact_invariants": [{
+                "name": "commit",
+                "b1": "baseline",
+                "b2": "baseline",
+                "e0": "feature-off",
+                "expected": expected,
+            }],
+            "numeric_fields": [],
+            "scalar_metrics": [],
+            "diagnostics": {},
+        }
+
+        self.assertTrue(evaluate_triplet_report(report)["equivalent"])
+
+        report["exact_invariants"][0]["e0"] = "wrong"
+        failed = evaluate_triplet_report(report)
+        self.assertFalse(failed["equivalent"])
+        self.assertEqual(failed["exact_failures"], ["commit"])
+
     def test_learned_hash_difference_is_diagnostic_only(self):
         report = {
             "exact_invariants": [

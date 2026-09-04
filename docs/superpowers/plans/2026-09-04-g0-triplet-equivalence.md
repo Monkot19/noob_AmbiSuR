@@ -110,7 +110,7 @@ git commit -m "test: define G0 empirical envelope contract"
 
 Use `unittest.mock` and small CPU Torch tensors to verify `tensor_pair_stats`, capture-length rejection, outer checkpoint-schema rejection, dtype/shape/count exact gates, optimizer group-name/hyperparameter/state-key/step extraction, and report exit code (`0` pass, `1` gate failure, `2` malformed/missing evidence). Use `@unittest.skipUnless(torch.cuda.is_available(), ...)` only for a one-test checkpoint load smoke; pure CPU Torch tests must not be skipped on AutoDL.
 
-- [ ] **Step 2: Observe RED on AutoDL before implementation**
+- [x] **Step 2: Observe RED on AutoDL before implementation**
 
 Run in the clean server checkout of the test commit:
 
@@ -120,7 +120,7 @@ Run in the clean server checkout of the test commit:
 
 Expected: import failure for `scripts.diagnostics.audit_feature_off_triplet`; return code nonzero. Return the complete output before implementation proceeds.
 
-- [ ] **Step 3: Implement extraction and normalization**
+- [x] **Step 3: Implement extraction and normalization**
 
 Load checkpoints onto CPU with `torch.load(..., map_location="cpu", weights_only=False)`. Accumulate pair distances in float64 and chunks so the 8k SH/optimizer tensors do not create three full float64 copies. Record direct-order tensor RMSE/MAE, exact, finite, shape, dtype, element count, mismatch count and max-absolute difference for all capture tensors and optimizer moments.
 
