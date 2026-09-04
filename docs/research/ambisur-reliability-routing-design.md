@@ -965,6 +965,47 @@ $$
 
 * 不出现 NaN/Inf、显存持续增长或额外 backward 重复注入梯度。
 
+#### 非确定 baseline 的数值等价合同（2026-09-04 已批准方案 A）
+
+本澄清将上述“合理随机波动”落实为可审计的工程验收规则，不改变训练算法、先验合同或 C0–C6 的唯一变量。现有 500 轮三方结果是选择规则时已看过的**探索性标定证据**，不能作为预注册的确认性检验，也不能单独宣布 G0 通过。
+
+在同一验证时长 $h$，记 $B_h^{(1)},B_h^{(2)}$ 为两次独立启动的 exact-baseline 运行，$E_h$ 为一次独立启动的 E0 feature-off 运行。三次必须使用相同 GPU/runtime、canonical data snapshot、语义 seed、分辨率和训练配置；仅允许事先声明的 commit、输出/private-view 路径及 E0 元数据参数差异。
+
+**严格不变量不使用噪声容差：** 输入与初始化 prior hash、共同有效配置、feature-off legacy dispatch、seed/RNG 与相机采样轨迹合同、checkpoint schema/字段/dtype/shape、Gaussian 数量、optimizer groups/hyperparameters/state keys/step counters，以及该验证时长内未激活或未更新的字段，均须严格一致。每个运行的 commit 必须分别匹配其批准的 exact SHA，而非要求 baseline/E0 commit 相同。缺失必需证据不能算通过。500 轮的 SH rest/app 等未激活字段 exact，不意味着它们在 8k 激活后仍归入未激活字段。
+
+对其余有限且同形状的已更新参数张量、densification proxy 和 optimizer moments，按相同字段及存储顺序分别计算：
+
+$$
+D_{\mathrm{RMSE}}(x,y)=\sqrt{\frac{1}{n}\sum_{j=1}^n(x_j-y_j)^2},
+\qquad
+D_{\mathrm{MAE}}(x,y)=\frac{1}{n}\sum_{j=1}^n|x_j-y_j|.
+$$
+
+对每个字段 $x$ 和每一种距离 $D$，定义：
+
+$$
+d_B=D\!\left(x(B_h^{(1)}),x(B_h^{(2)})\right),
+\qquad
+d_E=\min_{k\in\{1,2\}}D\!\left(x(E_h),x(B_h^{(k)})\right).
+$$
+
+固定接受条件为：
+
+$$
+\begin{cases}
+d_E=0\ \text{且字段 exact},&d_B=0,\\
+d_E\le 2d_B,&d_B>0.
+\end{cases}
+$$
+
+RMSE 与 MAE 必须分别通过；两种距离各自取最近 baseline，不以跨字段平均掩盖失败。对预先指定的每个标量 loss/评价指标，使用绝对差作为 $D$，沿用同一规则。保留三组 pairwise 距离和最近参照身份，以便审计。`max_abs`、mismatch count 和已学习结果文件的 SHA 仅作诊断，不单独决定数值等价；输入/prior 的 SHA 仍属于严格不变量。
+
+在后续独立 **8k 三次运行（baseline、baseline repeat、E0 all-off）** 开始前冻结本规则。8k 使用其自身同 horizon 的 baseline self-distance，不沿用 500 轮的绝对误差数值；必须覆盖 densify 首次 600、multi-view trim 首次 1000、Ray-Color 首次 5001、ALR 首次 7001 的实际 baseline 分支。启动命令、比较字段/评价点、日志与资源证据清单须在运行前固定。
+
+只有严格不变量、所有数值门与安全门均通过，才可接受该确认性验证。若 Gaussian 数量/shape 不一致、某字段超界、$d_B=0$ 却不 exact、出现 NaN/Inf、额外重复 backward 或显存持续增长，立即停止并报告；不得删字段、截断/补齐张量、事后选参照组合或提高系数来通过。该 2 倍规则是工程验收合同，不是统计置信区间，也不证明不同环境/场景下的普遍等价。
+
+本合同只处理独立训练轨迹的 G0 验收，**不替代或放宽 C1 的同一状态 GPU 单步 residual decomposition gradient oracle**。本次批准仅同步规格与规划文档；8k 启动、D0/C1、方法源码和 tag 仍须遵守各自授权关口。
+
 未通过 G0 不得解释任何方法收益。
 
 ### G1：诊断有效性

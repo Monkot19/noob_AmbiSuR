@@ -30,7 +30,7 @@
 - 新 Gaussian 在 topology 提交时强制 `ell_i=Probation`，至少保持 `C_prob=500` 个 optimizer iteration；期间 `s_i` 可计算/记录但不得覆盖 `ell_i`。满 500 轮后只在下一次证据刷新按当时稳定 `s_i` 完成首次映射；`d_i` 只按证据刷新计数，生命周期变化时重置为 1。
 - **Probation truncation 澄清 A（2026-09-02 已批准）：** Core C6 不设置或迁移逐 Gaussian truncation 状态；Probation 与全部 Gaussian 一样原样沿用 baseline 全局 `--trunc_sigma/--disable_trunc`（当前默认 `trunc_sigma=2.0`）。Core 不新增 truncation Tensor、不按 `ell_i` 改写全局参数、不修改 renderer/CUDA truncation 接口；设计 §9.4 仅为 G0–G2 后可独立立项、tag 和消融的 Supporting 候选。
 - 任何 GPU 实验前记录 40 位 SHA、空 `git status --short`、`git diff --exit-code=0`、resolved config、seed、scene、命令和环境。
-- 完整 Core 实施计划仍未获最终批准；不得修改方法源码或创建/移动 branch/tag/commit/push。用户已于 2026-09-02 单独批准先运行一次 Tool Room clean-baseline；该有限授权只覆盖服务器只读 preflight 通过后的 `seed 0 / -r 4 / 8000 iterations` 新目录运行，不授权 E0 方法改动或其他实验。
+- 完整 Core 计划已于 2026-09-03 获批准，但执行授权仅限已批准的 E0 工程范围与逐次批准的实验；2026-09-04 的 G0 方案 A 选择仅同步设计/规划文档，不授权方法源码、8k、D0/C1 或新 tag。既往 r4/8k、C0/30k 与 paired-500/self-repeat 授权不自动覆盖下一次运行。
 - 服务器操作固定采用 user-operated terminal：助手一次给出可审计命令，用户复制执行并回传完整输出，助手复核通过后才给下一步；助手不直接控制浏览器、SSH 或服务器终端。
 
 ---
@@ -68,7 +68,7 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** awaiting_g0_numerical_equivalence_clarification
+- **Status:** g0_A_approved_pending_written_spec_review
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -138,6 +138,8 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-03 | E0 all-off 500 正常训练但 strict equivalence gate 失败 | 1 | 立即停止 8k/D0/C1；首个 semantic mismatch 为 checkpoint capture `_xyz`，L1 `+2.2673e-5`、PSNR `-0.0050125 dB`、PLY SHA 不同，points/peak/exit/source/Git 相同。先做只读逐字段误差与 RNG sentinel 诊断，不调整容差或代码 |
 | 2026-09-03 | 首次逐字段 checkpoint 审计在打印 NumPy 标量比较结果时触发 `bool_ is not JSON serializable` | 1 | 已输出的字段有效：private prior PLY、`knn_f`、`features_rest`、`max_weight` exact；learned params/proxy 不同且均 finite。修正版显式把 NumPy scalar 转 Python scalar，再补 optimizer/app/config 与 RNG sentinel；不重跑训练 |
 | 2026-09-03 | 三方语义审计复用了未规范化的 scalar JSON 分支，在 `spatial_lr_scale` 后因 NumPy `bool_` 再次停止 | 1 | Gaussian 参数与 densification proxy 三方统计已完整输出且有效；错误发生在只读报告层，未触碰训练/输出/Git。下一命令删除已完成部分，只对 scalar、optimizer、strict full-state、app 与 metrics 使用显式 Python scalar 转换后补跑 |
+| 2026-09-04 | 只读符号检索把 comparator 路径误写成 `scripts/compare_feature_off.py` | 1 | 依据现有计划定位 `scripts/diagnostics/compare_feature_off.py` 后完整读取；未改变文件或运行训练 |
+| 2026-09-04 | 文档覆盖断言错误要求四份文件都含 `64/64`，而设计稿只定义合同、不承载探索性结果 | 1 | 未改设计内容；把断言拆成设计合同 markers 与三份记录文件的 500 回代 markers，再重新运行完整检查 |
 
 ### 2026-09-03 E0 paired-500 authorization
 
@@ -154,7 +156,21 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 - [x] 执行获批的 baseline self-repeat：训练/数据/Git/artifact 安全门全部 PASS；同一 exact baseline 的第二次 PLY/checkpoint SHA 也与第一次不同，证明 baseline 路径自身不是 bitwise deterministic。
 - [x] 对 baseline-1↔baseline-2、baseline-1↔E0、baseline-2↔E0 完成同一套 checkpoint 参数、optimizer state、densification proxy 与指标误差尺度审计；报告脚本 remainder exit 0。
 - [x] 证据确认 baseline CUDA 路径自身非 bitwise deterministic；E0 未出现配置/RNG/结构/未激活字段差异，已训练参数、proxy 与 optimizer moment 的 pairwise 误差总体与 baseline self-distance 同阶。
-- [ ] Architectural clarification：批准非确定 baseline 下的 G0 数值等价判据；确认前不把 E0 标记 PASS，不运行 8k/D0/C1，也不修改最终设计稿。
+- [x] 用户于 2026-09-04 选择 G0 architectural clarification 方案 A；已将严格不变量 + baseline 自波动 2 倍数值门写入设计 §13 与三份规划文件。500 轮仅为探索性标定，不回写原 strict FAIL，也不宣布 G0 PASS。
+- [ ] 用户审阅方案 A 书面规格；随后细化只读 comparator 的 TDD 与独立 8k 三次运行计划，实验须另行批准。
+
+### 2026-09-04 G0 方案 A：冻结的验收合同与待办
+
+- 对同 horizon 的 baseline 两次运行 B1/B2 和 E0 全关运行 E，逐字段、逐距离定义 `d_B=D(B1,B2)`、`d_E=min(D(E,B1),D(E,B2))`。RMSE、MAE 各自满足 `d_E<=2*d_B`；`d_B=0` 时必须 exact；标量指标用绝对差。三组距离均保留，不能跨字段平均放行。
+- 配置/输入/prior hash、legacy dispatch、RNG/相机轨迹、checkpoint schema/dtype/shape、optimizer groups/hyperparameters/keys/steps、未激活字段、Gaussian 数量仍 exact；各 run 的 commit 对照各自批准 SHA。缺失证据、shape/count 差异、nonfinite 或任一超界均停止。
+- 已学习结果 SHA、max-abs、mismatch count 仅诊断；输入 SHA 仍是硬门。8k 已激活的 SH/app 不沿用 500 轮的“未激活字段”分类。
+- 现有 500 三次运行用于标定；新 8k 三次独立启动用于确认，使用 8k 自身 baseline self-distance。先固定规则与字段/评价点，再运行；不复用旧 r4/8k 或 30k 结果，不得事后提高 2 倍系数。此工程规则不替代 C1 单步 gradient oracle。
+- [ ] **先写失败测试（待书面规格审阅后）：** 在 `tests/test_compare_feature_off.py` 增加 `test_envelope_accepts_boundary`、`test_envelope_rejects_over_boundary`、`test_zero_self_distance_requires_exact`、`test_rmse_and_mae_must_both_pass`、`test_each_distance_uses_nearest_baseline`、`test_exact_invariant_mismatch_rejected`、`test_missing_nonfinite_or_shape_mismatch_rejected`、`test_learned_hash_only_diagnostic`、`test_legacy_comparator_unchanged`；测试名为计划，不代表已经实现。
+- [ ] **最小实现（本轮不做）：** 仅在 `scripts/diagnostics/compare_feature_off.py` 新增显式三方入口/纯数值判定函数，保留原 `compare_runs` strict 行为；按字段输出三组距离、界限、exact/数值门失败项与 run 身份。不触碰 `train.py`、renderer/CUDA、loss/backward/optimizer/topology。
+- [ ] **CPU/只读复核：** 新测试先 RED 后 GREEN，标准库 `unittest` full non-GPU suite 与静态检查；再由用户终端对三份现有 500 artifact 运行只读复核。不得把仅有汇总数值当作新的 artifact 审计。
+- [ ] **8k 前固定运行单：** baseline `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 两次、E0 `a26082154889ed539322425347af5a57a859a52f` 一次；Tool Room `-r 2`/seed 0、同 snapshot/GPU/runtime，串行、三个独立 private view/output；预先列明评价点、checkpoint/资源/采样轨迹证据与磁盘预算，用户批准后才给启动命令。
+- [ ] **晋级/停止：** 覆盖 600/1000/5001/7001 后按设计 §13 逐门验收；全部通过才接受确认性 G0，任何 count/shape/字段/安全门失败立即停止，不跳进 D0/C1。不通过时保留全部结果，报告是否为 baseline 自重复本身破坏严格不变量。
+- **建议后续 commits：** `test: define G0 empirical envelope contract`、`feat: add read-only three-run equivalence comparator`；验证文档用 `docs:`。不新增 E0 tag，不移动 `c0-baseline`。
 
 ## Scope Guardrails
 
@@ -334,6 +350,8 @@ def test_feature_off_checkpoint_uses_legacy_tuple_schema(legacy_components):
 - [x] 实现只读 comparator，比较两次新目录，不接触 baseline assets。
 
 **Feature-off / CPU / GPU：** CPU 检查 flags、seed、schema；AutoDL 500 iter c0 vs E0 all-off；Tool Room seed 0 快速等价运行建议 8k，必须覆盖 densify(600+)、trim(1000+)、Ray-Color(5001+) 与 ALR(7001+)。
+
+**G0 数值判据：** 采用设计 §13 与上文“2026-09-04 G0 方案 A”的 exact + 三方噪声包络合同；现有两方 strict comparator 保留作诊断，不能通过单纯调整 `rtol/atol` 冒充已实现方案 A。500 标定与独立 8k 确认分开报告；本轮只改文档。
 
 **晋级：** G0 通过；默认 loss/grad/checkpoint/Gaussian count 在确定的容差合同内等价；无额外 backward/显存增长。**停止：** baseline 本身在 7001 路径失败、DA3 artifact 缺失/重生成但未建立新 snapshot、source 被写、无冻结的分辨率/evaluator、测试环境不可用或工作树不净。
 
