@@ -139,6 +139,8 @@
 - [x] 只读回代现有 500 三方审计 JSON：32 个字段 × 2 种距离共 64 门全部落在批准界内，最大比值约 `1.99`；L1/PSNR 最近 baseline 比值约 `0.293/0.174`。该数据在规则冻结前已观察，只能标为探索性标定，原 strict comparator 结果仍为 FAIL，G0 尚未通过。
 - [x] 用户已确认方案 A 书面规格并要求尽快推进；`writing-plans` 详细计划写入 `docs/superpowers/plans/2026-09-04-g0-triplet-equivalence.md`。用户既定禁用多代理，因此执行路径固定为 inline。
 - [ ] 下一步按计划 Task 1 先写三方 gate 失败测试；独立 8k baseline/baseline-repeat/E0 确认运行仍需单独批准。
+- [x] Task 1 已完成 RED→GREEN：新增 API 首次运行精确因 import 缺失失败；最小实现后目标 comparator suite 13/13 PASS，全部 28 项本地 non-GPU tests PASS，`py_compile`/diff check 返回 0。Commit `286d67f`；既有两方 strict comparator 保持原行为。
+- [x] Task 2 的六项 AutoDL CPU-Torch 合同测试已先写入；本机无 Torch 因而整类 skip。下一步在服务器 clean exact test commit 上观察缺少 `audit_feature_off_triplet` 的预期 RED，尚未实现 extractor。
 - **Scope:** 本轮只同步四份文档；不实现 D0/C1，不修改方法源码/renderer/CUDA，不创建 tag，不安装依赖，不启动 8k 或正式实验。
 
 ## Experiment Readiness

@@ -34,7 +34,7 @@
 - Produces: `evaluate_numeric_field(field_report, factor=2.0) -> dict`, `evaluate_scalar_triplet(name, b1, b2, e0, factor=2.0) -> dict`, and `evaluate_triplet_report(report, factor=2.0) -> dict`.
 - `evaluate_triplet_report` returns `equivalent`, `factor`, `exact_failures`, `numeric_failures`, `numeric_results`, and `diagnostics`; its output metric keys are `rmse` and `mae` even though the normalized input pair statistic is named `mean_abs`. It never mutates its input.
 
-- [ ] **Step 1: Add focused failing tests**
+- [x] **Step 1: Add focused failing tests**
 
 Add tests that construct tiny normalized dictionaries and assert:
 
@@ -48,7 +48,7 @@ self.assertEqual(evaluate_numeric_field(_b2_is_nearest())["metrics"]["rmse"]["ne
 
 Also test that missing/non-finite/shape-mismatched data fail, an exact invariant mismatch fails, learned PLY SHA differences remain in diagnostics without failing an otherwise valid report, and the four existing `compare_runs` tests still pass.
 
-- [ ] **Step 2: Observe RED locally**
+- [x] **Step 2: Observe RED locally**
 
 Run:
 
@@ -58,7 +58,7 @@ python -B -m unittest tests.test_compare_feature_off -v
 
 Expected: import failure for the new three-run function names while the existing comparator tests remain collectable.
 
-- [ ] **Step 3: Implement the minimal pure gate**
+- [x] **Step 3: Implement the minimal pure gate**
 
 For each of `rmse` and `mean_abs`, compute:
 
@@ -71,7 +71,7 @@ candidate_distance = candidate_pairs[nearest][metric]
 
 Reject absent values, booleans masquerading as numbers, negative distances and non-finite numbers. If `self_distance == 0`, require baseline-self exact and the selected candidate pair exact with distance zero; otherwise require `candidate_distance <= 2.0 * self_distance`. Require both metrics. Keep `max_abs`, mismatch count and hashes only in the returned diagnostics.
 
-- [ ] **Step 4: Observe GREEN and run the complete local suite**
+- [x] **Step 4: Observe GREEN and run the complete local suite**
 
 Run:
 
@@ -84,7 +84,7 @@ git diff --check
 
 Expected: all local non-GPU tests pass; compilation and diff checks return 0. Local discovery may continue to exclude `tests/gpu` when Torch is unavailable; record the exact count rather than claiming the AutoDL suite ran locally.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```powershell
 git add tests/test_compare_feature_off.py scripts/diagnostics/compare_feature_off.py
@@ -106,7 +106,7 @@ git commit -m "test: define G0 empirical envelope contract"
 - `load_checkpoint(run_dir, iteration)` requires `chkpnt<iteration>.pth` and validates the legacy outer tuple `(capture, iteration)` plus the 16-field `GaussianModel.capture()` tuple from `scene/gaussian_model.py::capture`.
 - Capture names by index: `active_sh_degree`, `xyz`, `knn_f`, `features_dc`, `features_rest`, `scaling`, `rotation`, `opacity`, `max_radii2D`, `max_weight`, `xyz_gradient_accum`, `xyz_gradient_accum_abs`, `denom`, `denom_abs`, `optimizer`, `spatial_lr_scale`.
 
-- [ ] **Step 1: Write the AutoDL-oriented failing tests without creating fake CUDA state**
+- [x] **Step 1: Write the AutoDL-oriented failing tests without creating fake CUDA state**
 
 Use `unittest.mock` and small CPU Torch tensors to verify `tensor_pair_stats`, capture-length rejection, outer checkpoint-schema rejection, dtype/shape/count exact gates, optimizer group-name/hyperparameter/state-key/step extraction, and report exit code (`0` pass, `1` gate failure, `2` malformed/missing evidence). Use `@unittest.skipUnless(torch.cuda.is_available(), ...)` only for a one-test checkpoint load smoke; pure CPU Torch tests must not be skipped on AutoDL.
 

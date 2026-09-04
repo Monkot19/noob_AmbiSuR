@@ -142,6 +142,9 @@ Phase 0 已完成；2026-09-03 起仅按用户批准的 E0 边界进入测试与
 | 2026-09-04 | 文档覆盖断言错误要求四份文件都含 `64/64`，而设计稿只定义合同、不承载探索性结果 | 1 | 未改设计内容；把断言拆成设计合同 markers 与三份记录文件的 500 回代 markers，再重新运行完整检查 |
 | 2026-09-04 | 首次读取 `writing-plans` skill 的命令含错误 workdir 和不存在的 `Get-GenericContent` | 1 | 进程未启动、仓库未变；改用正确仓库路径和 `Get-Content` 后完整读取 skill，再开始计划 |
 | 2026-09-04 | G0 计划自审补丁的多段上下文首次未匹配 | 1 | 补丁事务未应用；用 `rg` 取得精确行后按稳定的逐行上下文重试，明确 baseline 无 E0-only `run_identity.json`、历史 500 不伪造新 provenance 文件 |
+| 2026-09-04 | Task 1 首轮 GREEN 暴露三个旧 comparator 测试回归 | 1 | systematic-debugging 定位为新 test helper 被插入 `_write_run` 中间，导致原 fixture 后半段落到 `_field` 的 return 后；只移动测试代码恢复函数边界，随后目标 suite 13/13 PASS |
+| 2026-09-04 | 本机 full discovery 导入 `tests/gpu/test_feature_off_dispatch.py` 时无 Torch | 1 | 与既有环境边界一致，非 Task 1 回归；显式运行全部 28 项 non-GPU modules、`py_compile` 与 diff check 均通过，完整 GPU discovery留给 AutoDL |
+| 2026-09-04 | Task 2 测试与计划状态的首个补丁重复更新同一计划文件，工具拒绝 | 1 | 补丁未写入；拆成测试/记录与单独计划状态两个事务，未接触生产代码 |
 
 ### 2026-09-03 E0 paired-500 authorization
 
