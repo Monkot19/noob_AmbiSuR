@@ -219,6 +219,8 @@
 - 本地随后只新增 `scripts/diagnostics/audit_feature_off_triplet.py`，并为 exact invariant 增加 role-specific expected-value 支持；实现使用 CPU `torch.load(..., weights_only=False)`、分块 float64 RMSE/MAE、严格 legacy 16-field capture、optimizer structure/tensor 分离及 exploratory 永不晋级 G0 的 gate。
 - 本机 Python 3.14.7 仍缺 Torch/NumPy：新 6 项 Torch 测试只能确认为 6 项 skip；完整 discovery 的两个 import error 分别是既知缺少 `torch` 与 `numpy`，不是本次实现结论。服务器 GREEN 之前，该实现状态只能写为“等待验证”。
 - AutoDL clean `research/core-routing@de732f232997677e03f27f07f0e5d07b56b6ae3a` 已给出定向 6/6、完整 39/39、compile 与 post-test clean 的 GREEN 证据。随后按完成前 review 对照 `scene/gaussian_model.py::training_setup` 与 `reliability/runtime.py::collect_run_identity`，发现测试遗漏的两个真实合同：`knn_f` 可以没有 Adam state；E0 metadata 字段实际为 `git_commit/git_dirty`。在 artifact replay 前已停止并先补回归测试，不能用首轮 39/39 掩盖该覆盖缺口。
+- 修正提交 `3db69bb3b5a7ae86d082e16158dd2d58609f5b29` 的 AutoDL hardened gate 已通过：定向 10/10、完整 43/43、compile 和 post-test clean；只读加载真实 B1 `chkpnt500.pth` 得到 16-field capture、200,000 Gaussians、7 个 optimizer groups 和 18 个 optimizer tensors。真实 `knn_f` 为 `state_keys=[]/step=None`，其余 6 组均为 `exp_avg/exp_avg_sq/step=499`，与修正合同一致。
+- 版本化审计器随后在三个既有 500-run 只读资产上完成 replay：exact failures `0`，32 个 tensor/state 字段的 64 个 RMSE/MAE 门全部通过，2 个训练标量门通过；最大 tensor ratio=`1.9854507624`（`optimizer.opacity.exp_avg_sq`/RMSE/nearest B1），L1/PSNR ratio=`0.2934525192/0.1736334405`（nearest B2），与冻结前手工审计一致。报告 SHA256=`5598ab13615f2540c80c2909b7820d45dddb8cc65bfa3288bc2cef910cb0126b`。该结果严格标记 `exploratory=true`、`g0_equivalent=false`，不能作为 G0 晋级结论。
 
 ## Decisions
 

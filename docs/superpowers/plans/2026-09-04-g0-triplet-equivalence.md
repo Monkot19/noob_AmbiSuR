@@ -136,7 +136,7 @@ Exact gates:
 
 Numeric gates: capture parameter/proxy tensors, optimizer `exp_avg`/`exp_avg_sq`, `app_model/iteration_<iteration>/app.pth::appear_ab`, and every predeclared evaluation scalar present in all three logs. If an 8k field is exact, it naturally enters the zero-self exact branch; do not maintain a 500-specific inactive-field allowlist.
 
-- [ ] **Step 4: Run targeted and full AutoDL tests**
+- [x] **Step 4: Run targeted and full AutoDL tests**
 
 ```bash
 /root/miniconda3/envs/ambisur/bin/python -B -m unittest tests.gpu.test_feature_off_triplet_audit -v
@@ -147,7 +147,7 @@ git status --short --untracked-files=all
 
 Expected: all tests pass and the worktree contains only the committed implementation under review.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```powershell
 git add scripts/diagnostics/audit_feature_off_triplet.py tests/gpu/test_feature_off_triplet_audit.py tests/test_compare_feature_off.py
@@ -169,19 +169,19 @@ git commit -m "feat: add read-only three-run equivalence comparator"
   - E0: `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/e0_a2608215`
 - Output: a new diagnostics JSON outside all three run directories; no artifact is edited.
 
-- [ ] **Step 1: Server preflight and component suite**
+- [x] **Step 1: Server preflight and component suite**
 
 Verify server branch/HEAD, clean status, Python 3.10.21/Torch 2.7.1, the three run directories, and all `chkpnt500.pth`, app weights, logs and safety files. Run the full suite before consuming results.
 
-- [ ] **Step 2: Run the versioned comparator once**
+- [x] **Step 2: Run the versioned comparator once**
 
 Use `--iteration 500 --exploratory` and write to `/root/autodl-tmp/ambisur_diagnostics/e0-g0-a-500-replay-<commit8>.json`. Expected exploratory result is 64/64 numeric checks under the already approved rule while final `g0_equivalent` remains false; a different output is an implementation/debugging signal, not permission to alter the artifacts or gate. Historical launcher safety evidence may be cross-referenced, but newly introduced `g0_run_contract.json` files must not be fabricated inside old run directories.
 
-- [ ] **Step 3: Reconcile against the original audit**
+- [x] **Step 3: Reconcile against the original audit**
 
 Require the same 32 recorded tensor/state fields, maximum ratio approximately 1.99 for `optimizer.opacity.exp_avg_sq` RMSE, and L1/PSNR nearest/self ratios approximately 0.293/0.174. Preserve the historical strict comparator FAIL and label this replay exploratory.
 
-- [ ] **Step 4: Record and commit evidence**
+- [x] **Step 4: Record and commit evidence**
 
 ```powershell
 git add findings.md progress.md task_plan.md

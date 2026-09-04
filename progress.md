@@ -145,8 +145,8 @@
 
 ## Experiment Readiness
 
-- **当前阶段：** Phase 0、Tool Room C0 锚点、E0 工程组件门与 500 三方诊断已完成；G0 方案 A 已获批准并写入文档，正等待用户审阅书面规格。D0/C1–C6 尚未开始。
-- **最早可启动的下一项：** 书面规格获确认后，先按 TDD 扩展只读三方 comparator；随后另行批准并运行独立 8k baseline/baseline-repeat/E0 确认组。它仍是 E0/G0 工程实验，不是 D0/C1 方法实验。
+- **当前阶段：** Phase 0、Tool Room C0、E0 工程、三元 comparator 和既有 500-run 探索性 replay 均已完成；当前等待独立 8k baseline/baseline-repeat/E0 确认组的明确实验授权。D0/C1–C6 尚未开始。
+- **最早可启动的下一项：** 获得单独授权后运行冻结的 Tool Room 8k B1→B2→E0 确认组。它仍是 E0/G0 工程实验，不是 D0/C1 方法实验。
 - **E0 当前门：** 500 三方结果按新规则探索性回代为 64/64 数值门通过，但 G0 尚未通过。仍需以预先冻结的同一规则在 8k 新三次运行中确认，并同时通过 Gaussian 数量/shape、配置/输入、未激活字段、optimizer 结构、资源和错误等严格门。
 - **首个诊断实验：** E0/G0 通过后运行 D0 Tool Room seed 0（正式时序到 7k），只记录证据/状态；G1 不通过则停止。
 - **首个方法实验：** D0/G1 通过且 C1 single-step gradient oracle 全部通过后，才运行 C1 Tool Room seed 0 quick。C2–C6 依次按上一阶段 tag 晋级，不能并行跳级。
@@ -158,10 +158,12 @@
 - [x] AutoDL expected RED：clean `research/core-routing@32f192997ac11b8f03d2b20c9d8656e437fa62f6`，6/6 新测试均因缺少 `scripts.diagnostics.audit_feature_off_triplet` 报错，符合 TDD 合同。
 - [x] 本地最小实现已写入；role-specific exact invariant 新测试先失败后通过，comparator 定向 suite 14/14 PASS，脚本与相关测试 `py_compile` PASS，`git diff --check` 无 whitespace error。
 - [x] AutoDL 对 `de732f2` 的首轮 GREEN 已执行；本机仍缺 Torch/NumPy，不能用本地 skip 代替服务器证据。完成前 review 后产生的修正需要新的服务器复验。
-- [ ] 尚未运行 500 artifact replay、尚未启动 8k、尚未改方法源码或创建 tag。
+- [x] 500 artifact replay 已在只读输入上通过；尚未启动 8k、尚未改方法源码或创建 tag。
 - [x] AutoDL 首轮实现验证：`de732f2` 定向 6/6、完整 39/39、compile、post-test clean 均 PASS。
 - [x] 完成前单代理 code review 对照真实 optimizer/metadata producer；发现 `knn_f` 无 state 与 `git_commit/git_dirty` 两项覆盖缺口，已在 replay 前暂停。
 - [x] 三项回归合同与一项 Torch-optional import 合同均先观察 RED；最小修正后本地 4/4 新测试与 14/14 comparator 测试 PASS。服务器复验尚未执行，故 Task 2 仍未关闭。
+- [x] AutoDL hardened 复验关闭 Task 2：clean `3db69bb` 上定向 10/10、完整 43/43、compile、post-test clean 与真实 B1 checkpoint schema probe 全部 PASS；下一步只读 replay 三个既有 500-run artifact。
+- [x] Task 3 replay：报告 `/root/autodl-tmp/ambisur_diagnostics/e0-g0-a-500-replay-3db69bb.json`，SHA256 `5598ab13…cb0126b`；exact `0` failure、32 字段/64 tensor 门与 2 scalar 门全部通过，且 `exploratory=true/g0_equivalent=false`。下一步必须单独批准独立 8k triplet。
 
 ## Verification Log
 
@@ -190,6 +192,7 @@
 | 2026-09-03 | E0 paired-500 all-off half | `a26082154889ed539322425347af5a57a859a52f` | identical Tool Room protocol + `--seed 0`/Core default-off；semantic checkpoint/app compare + read-only comparator | training/metadata/source/Git PASS；strict equivalence FAIL at `_xyz`, L1/PSNR/PLY SHA；8k stopped pending diagnosis | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/e0_a2608215/manifest.md` |
 | 2026-09-03 | E0 remainder/RNG read-only audit | baseline `d6f15c8`; E0 `a260821` | existing checkpoints/configs + fresh-process post-logger RNG states + simulated 500-step camera trace；no training | spatial LR/config/optimizer hyperparameters and RNG/camera trace exact；learned states diverge during training；baseline self-repeat still required | same pair; sentinel `/root/autodl-tmp/e0-rng-sentinel.hTwRyR` |
 | 2026-09-04 | G0 方案 A 文档化与 500 探索性回代 | docs branch `a2c6e5a` + 当前文档 diff；实验仍为 baseline `d6f15c8` / E0 `a260821` | 解析既有两份三方审计输出；逐字段重算 RMSE/MAE 2× envelope；文档合同检查 | 32 字段/64 数值门探索性通过，最大比值约 1.99；不构成 G0 PASS；无训练/方法源码/tag | 三个既有 500 run，路径见 findings |
+| 2026-09-04 | G0 500 versioned exploratory replay | comparator `3db69bb`; runs `d6f15c8`/`d6f15c8`/`a260821` | versioned read-only audit + frozen reconciliation assertions | exact 0 failure；64/64 tensor checks + 2/2 scalar checks PASS；max ratio 1.98545；exploratory only，G0 remains pending | `/root/autodl-tmp/ambisur_diagnostics/e0-g0-a-500-replay-3db69bb.json` |
 
 ## Cloud Runs
 
