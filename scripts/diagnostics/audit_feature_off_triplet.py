@@ -25,6 +25,15 @@ from scripts.diagnostics.compare_feature_off import (  # noqa: E402
 
 
 ROLES = ("b1", "b2", "e0")
+GAUSSIAN_QUANTILES = (
+    ("q01", 0.01),
+    ("q05", 0.05),
+    ("q25", 0.25),
+    ("q50", 0.50),
+    ("q75", 0.75),
+    ("q95", 0.95),
+    ("q99", 0.99),
+)
 CAPTURE_NAMES = (
     "active_sh_degree",
     "xyz",
@@ -79,6 +88,135 @@ def _sha256(path):
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _tensor_sha256(tensor, *, chunk_size=1_000_000):
+    """Hash contiguous CPU tensor bytes without materializing one large byte string."""
+    _require_torch()
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    contiguous = tensor.detach().cpu().contiguous()
+    byte_view = contiguous.view(torch.uint8).reshape(-1)
+    digest = hashlib.sha256()
+    for start in range(0, byte_view.numel(), chunk_size):
+        stop = min(start + chunk_size, byte_view.numel())
+        digest.update(byte_view[start:stop].numpy().tobytes())
+    return digest.hexdigest()
+
+
+def _sorted_scalar_summary(values):
+    """Return the frozen scalar statistics from one canonical float64 ordering."""
+    _require_torch()
+    values = values.detach().reshape(-1).cpu().to(torch.float64)
+    if values.numel() == 0:
+        raise ValueError("Gaussian summary cannot consume an empty tensor")
+    if not bool(torch.isfinite(values).all()):
+        raise ValueError("Gaussian summary requires finite values")
+
+    ordered = torch.sort(values).values
+    result = {
+        "mean": float(ordered.mean().item()),
+        "std": float(ordered.std(unbiased=False).item()),
+    }
+    last = ordered.numel() - 1
+    for label, quantile in GAUSSIAN_QUANTILES:
+        position = last * quantile
+        lower = math.floor(position)
+        upper = math.ceil(position)
+        if lower == upper:
+            value = ordered[lower]
+        else:
+            value = (
+                (upper - position) * ordered[lower]
+                + (position - lower) * ordered[upper]
+            )
+        result[label] = float(value.item())
+    return result
+
+
+def summarize_gaussian_tensor(tensor):
+    """Summarize a Gaussian-indexed tensor without aligning Gaussian rows."""
+    _require_torch()
+    if not torch.is_tensor(tensor):
+        raise TypeError("Gaussian summary requires a Torch tensor")
+    if tensor.ndim < 1:
+        raise ValueError("Gaussian dimension must be present")
+    if tensor.shape[0] == 0 or tensor.numel() == 0:
+        raise ValueError("Gaussian summary cannot consume an empty tensor")
+
+    cpu_tensor = tensor.detach().cpu()
+    if not bool(torch.isfinite(cpu_tensor).all()):
+        raise ValueError("Gaussian summary requires finite values")
+    flat64 = cpu_tensor.reshape(cpu_tensor.shape[0], -1).to(torch.float64)
+
+    summary_values = {}
+    for channel_index in range(flat64.shape[1]):
+        prefix = f"channel_{channel_index:03d}"
+        for statistic, value in _sorted_scalar_summary(
+            flat64[:, channel_index]
+        ).items():
+            summary_values[f"{prefix}.{statistic}"] = value
+    row_l2 = torch.linalg.vector_norm(flat64, dim=1)
+    for statistic, value in _sorted_scalar_summary(row_l2).items():
+        summary_values[f"row_l2.{statistic}"] = value
+
+    return {
+        "dtype": str(cpu_tensor.dtype),
+        "trailing_shape": list(cpu_tensor.shape[1:]),
+        "leading_count": int(cpu_tensor.shape[0]),
+        "values": summary_values,
+        "diagnostics": {
+            "shape": list(cpu_tensor.shape),
+            "element_count": int(cpu_tensor.numel()),
+            "min": float(flat64.min().item()),
+            "max": float(flat64.max().item()),
+            "sha256": _tensor_sha256(cpu_tensor),
+        },
+    }
+
+
+def gaussian_summary_metrics(name, tensors_by_role):
+    """Build independent scalar records for one tensor across B1/B2/E0."""
+    if (
+        not isinstance(tensors_by_role, dict)
+        or set(tensors_by_role) != set(ROLES)
+    ):
+        raise ValueError("Gaussian summary metrics require exactly b1, b2, and e0")
+
+    summaries = {
+        role: summarize_gaussian_tensor(tensors_by_role[role]) for role in ROLES
+    }
+    diagnostics = {
+        "summary_keys_equal": False,
+        "roles": {
+            role: {
+                "dtype": summaries[role]["dtype"],
+                "trailing_shape": summaries[role]["trailing_shape"],
+                "leading_count": summaries[role]["leading_count"],
+                **summaries[role]["diagnostics"],
+            }
+            for role in ROLES
+        },
+    }
+
+    summary_keys = [set(summaries[role]["values"]) for role in ROLES]
+    diagnostics["summary_keys_equal"] = all(
+        keys == summary_keys[0] for keys in summary_keys[1:]
+    )
+    if not diagnostics["summary_keys_equal"]:
+        return [], diagnostics
+
+    metrics = [
+        {
+            "name": f"{name}.{component}",
+            **{
+                role: summaries[role]["values"][component]
+                for role in ROLES
+            },
+        }
+        for component in sorted(summary_keys[0])
+    ]
+    return metrics, diagnostics
 
 
 def tensor_pair_stats(left, right, *, chunk_size=1_000_000):
