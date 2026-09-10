@@ -146,9 +146,9 @@
 
 ## Experiment Readiness
 
-- **当前阶段：** Phase 0、Tool Room C0、E0 工程、三元 comparator 和既有 500-run 探索性 replay 均已完成；独立 8k baseline/baseline-repeat/E0 确认组已获批准，下一步为不启动训练的服务器 preflight。D0/C1–C6 尚未开始。
-- **最早可启动的下一项：** preflight 通过后按冻结顺序运行 Tool Room 8k B1→审计→B2→审计→E0→审计→comparator。它仍是 E0/G0 工程实验，不是 D0/C1 方法实验。
-- **E0 当前门：** 500 三方结果按新规则探索性回代为 64/64 数值门通过，但 G0 尚未通过。仍需以预先冻结的同一规则在 8k 新三次运行中确认，并同时通过 Gaussian 数量/shape、配置/输入、未激活字段、optimizer 结构、资源和错误等严格门。
+- **当前阶段：** Phase 0、Tool Room C0、E0 工程、topology-aware comparator RED→GREEN、AutoDL 组件门及 B1/B2 schema-2 dry audit 均已完成。当前冻结并推送规格/计划/证据文档；E0 8k 尚未启动，D0/C1–C6 尚未开始。
+- **下一项：** 文档提交推送并让服务器 fast-forward 到精确 approval-record commit；随后按既有授权运行 E0 8k launch gate，不改变 factor、数据、B1/B2 或训练协议。
+- **E0 当前门：** 500 三方结果仍仅为探索性；8k B1/B2 是确认组的自重复参照。topology-aware helper、显式 schema v2 integration、AutoDL full GREEN 与 B1/B2 dry audit 已完成；文档同步与 server clean/exact-commit 门通过后即可启动 E0，并在完成后同时检查 count/summary 数值门及配置/输入/trailing-shape/optimizer structure/资源/错误 strict gates。
 - **首个诊断实验：** E0/G0 通过后运行 D0 Tool Room seed 0（正式时序到 7k），只记录证据/状态；G1 不通过则停止。
 - **首个方法实验：** D0/G1 通过且 C1 single-step gradient oracle 全部通过后，才运行 C1 Tool Room seed 0 quick。C2–C6 依次按上一阶段 tag 晋级，不能并行跳级。
 - **当前数据事实：** 服务器 Tool source/DA3/GT 已通过文件数、basename、数值、COLMAP、scale 与 hash preflight，并完成 C0；Utility 尚未上传且本地版本仍需从 FISHEYE 转为 PINHOLE/SIMPLE_PINHOLE。它不阻塞 E0/D0/C1 Tool quick，但阻塞 G2 多场景结论。旧协议为全部相机训练，无 `split.json`，且旧结果没有 ScanNet++ GT geometry metric。
@@ -166,7 +166,44 @@
 - [x] AutoDL hardened 复验关闭 Task 2：clean `3db69bb` 上定向 10/10、完整 43/43、compile、post-test clean 与真实 B1 checkpoint schema probe 全部 PASS；下一步只读 replay 三个既有 500-run artifact。
 - [x] Task 3 replay：报告 `/root/autodl-tmp/ambisur_diagnostics/e0-g0-a-500-replay-3db69bb.json`，SHA256 `5598ab13…cb0126b`；exact `0` failure、32 字段/64 tensor 门与 2 scalar 门全部通过，且 `exploratory=true/g0_equivalent=false`。下一步必须单独批准独立 8k triplet。
 - [x] 用户已单独批准 Task 4 独立 8k triplet；对 500 最大比值接近 2.0 的担忧已记录。factor 继续冻结为 `2.0`，8k 超界时按失败处理而不事后放宽。
-- [ ] Task 4 Step 2：执行纯只读/不启动训练的服务器 preflight，确认 Git/commit/tag/runtime/GPU/磁盘/数据 manifest/目标目录合同；通过后才给 B1 启动命令。
+- [x] Task 4 Step 2：用户回传 preflight PASS，Git/commit/tag/runtime/GPU/磁盘/数据 manifest/目标目录合同满足；随后按冻结顺序分别启动 B1、B2。
+
+### 2026-09-04 G0 8k baseline pair strict-gate stop
+
+- [x] B1 完成：exit=0，454 s，peak=11,968 MiB；pre log/PLY=1,502,365，post checkpoint=1,360,857；5 个评价点齐全，canonical/prior hash 不变。一次性 deep audit 的 pre/post 混用断言经 baseline 代码和用户只读 reconciliation 纠正，PASS；方法/审计器源码未改。
+- [x] B2 完成：exit=0，439 s，peak=10,626 MiB；最终日志/launcher 点数=1,509,961；`B2_COMPLETION_GATE=PASS`，恢复 clean `research/core-routing@5fc8866d6afe287b4e27a341b2a9ecb69d266c74`。
+- [x] 识别同口径 pre-topology 数量 exact 门失败（差 7,596），停止 E0。两次都是 baseline；不能据此说 E0 实现错误。完整三元 comparator 未运行，factor=2.0 保持冻结。
+- [x] B1/B2 只读对照：actual args/opts/normalized command/launcher contract、optimizer structure/step、输入记录 hash 均相同，health errors=[]；post checkpoint 分别 1,360,857/1,366,889，全部依赖点数的 capture/Adam 张量仅第一维 shape 不同；最早显示差异在首次 densify 的 600 轮（差 1）。
+- [x] 用户批准 topology-aware G0 原则：目标为 feature-off 不增加超出 baseline 自重复范围的偏差；动态 topology count/第一维 shape 不再 exact，其余 provenance/schema/structure/safety 门保持 exact。
+- [x] 用户批准具体方案 A；最终设计 §13 与独立书面规格已同步：pre/post count 独立 scalar envelope；Gaussian-indexed Tensor 每通道/row-L2 的 mean、population std、7 quantiles 各自独立判门；trailing shape/dtype exact；fixed app 直接 RMSE/MAE；无 row matching/pad/truncate。
+- [x] 用户书面 review 后已编写并批准最小实施计划；factor=2.0 不调整，D0/C1 未开始。计划中的 RED→GREEN、AutoDL suite 与 B1/B2 dry audit 已完成。
+- [x] 用户已回复“规格通过”；implementation plan 已创建并自审，路径为 `docs/superpowers/plans/2026-09-04-g0-topology-aware-comparator.md`。
+- [x] 用户已批准 inline execution；test-only RED commit 已推送并由用户在 AutoDL 执行。
+- [x] 用户批准 inline execution；本地 baseline comparator 14/14 PASS、相关 py_compile 与 diff check 返回 0。当前专用 `research/core-routing` 分支原地执行（普通 checkout，非 linked worktree），保留已批准文档改动。
+- [x] Task 1 先写 6 项 CPU-Torch 行为测试：固定 summary/quantile、行置换不变、scalar/empty/nonfinite 拒绝、dtype/trailing shape 保留、不同 leading count 独立指标、incompatible channels 不对齐。生产 comparator 尚未修改，等待 AutoDL 观察 RED。
+- [x] test-only RED commit `59ae1c9` 已只包含 `tests/gpu/test_feature_off_triplet_audit.py` 并推送到 `origin/research/core-routing`；本地无 Torch，12 项仅能确认 collect/skip，不能冒充 RED。下一步由用户在 AutoDL Python 3.10/Torch 环境运行定向 suite，预期新增 6 项仅因两个接口缺失而 ERROR，既有 6 项继续 PASS。
+- [x] AutoDL expected RED 已观察：clean `59ae1c9` 上 12 项中既有 6 项 PASS，新增 6 项仅因 `summarize_gaussian_tensor` / `gaussian_summary_metrics` 尚不存在而 ERROR；return code 1 符合预注册预期，post-test worktree clean。首次 GitHub HTTP/2/RPC 失败未运行测试；启用 network turbo 后重试成功。
+- [ ] Task 2 summary helper GREEN：本地最小实现、静态/非 Torch 回归后提交推送，再由用户在 AutoDL 运行同一 12 项 suite。
+- [x] Task 2 Steps 1–4：只在只读 auditor 新增固定 quantile、CPU-float64 canonical scalar summary、channel/row-L2 summary、role-wise metrics 与 bounded raw SHA diagnostics；未接入 `build_report`/CLI。local Torch suite 12 项全部明确 skip，既有 comparator 14/14 PASS，相关 `py_compile` 与 `git diff --check` 返回 0（仅 CRLF warning）；不能把 local skip 计作 GREEN。
+- [ ] Task 2 Steps 5–6：审查 planned-file diff 后提交/推送 helper candidate，再由用户在 exact commit 的 AutoDL Torch 环境运行 focused 12-test GREEN。
+- [x] Task 2 Step 5：单文件 helper candidate `a1643abc31e0dd423a363b9a5ca12d21ce90918a`（`feat: add topology-invariant Gaussian summaries`）已推送；commit 只含 `scripts/diagnostics/audit_feature_off_triplet.py` 138 行，未混入设计/规划文档。
+- [x] Task 2 Step 6：AutoDL clean exact `a1643abc31e0dd423a363b9a5ca12d21ce90918a`，Python 3.10.21/Torch 2.7.1+cu128/CUDA available；focused suite 12/12 PASS（0.042 s），return code 0，post-test clean。Task 2 正式完成。
+- [x] Task 3 完成：pure topology-aware report assembly、optimizer moment classification、单一 summary failure 与显式 schema-v2 mode 已按预注册 RED→GREEN 实现并完成 AutoDL 组件验证。
+- [x] Task 3 Steps 1–3：新增 4 项 Torch integration tests，覆盖 pure evidence、optimizer moment/step/unknown suffix、真实 synthetic artifact 的 schema1/schema2 分流及 CLI 输出；新增 1 项非 Torch independent-q99 failure gate。production integration 未改。本地 Torch 16 项明确 skip，非 Torch comparator 15/15 PASS，test compile/diff check 返回 0。
+- [x] Task 3 Step 4：两份测试文件已提交/推送，并在 AutoDL exact test commit 上观察到预期 RED 后才实施 schema 2。
+- [x] Task 3 Step 4a：test-only `8c54a539df4de93e4b8dfe664ab150aa0a246966` 已推送；commit 仅含两份测试文件共 280 行。本地 comparator 15/15 PASS、test compile/diff check 返回 0。
+- [x] Task 3 Step 4b：AutoDL focused suite RED 已按预注册缺口完成并复核。
+- [x] Task 3 Step 4b：AutoDL clean `8c54a539...` 共运行 31 项；27 项 PASS，4 项仅因 assembly helper、`topology_aware` keyword、CLI flag 缺失而 ERROR；return code 1、post-test clean，完全符合预注册 RED。
+- [x] Task 3 Steps 5–6 candidate：pure evidence、schema 1/2 显式分流与 CLI wiring 已完成；dependency-free local suite 32/32、comparator 15/15、compile/diff check PASS。Full discovery 仅因本机已知缺 Torch/NumPy 产生 2 import ERROR，16 Torch tests skip；不计作 GREEN。
+- [x] Task 3 Step 7：单文件 integration candidate `e781fef23f4f2adec5382808108e7e7e3331e11a`（`fix: make G0 comparison topology-aware`）已推送，未混入训练/方法或规划文档。
+- [x] Task 3 Step 8：AutoDL clean `e781fef23f4f2adec5382808108e7e7e3331e11a` focused 16/16 PASS（0.139 s）、full discovery 54/54 PASS（0.449 s）；compile/help rc=0、CLI flag present、post-test clean、`training_started=NO`。
+- [x] Task 4 Step 1：不可变 B1/B2 artifact 的显式 `--topology-aware --exploratory` summary-only dry audit 与现有报告 post-validation 均已 PASS；schema/cardinality/resource/hash/clean-status 合格，`g0_equivalent=false`，未把 B2-as-E0 解释为 G0。
+- [x] Task 4 Step 1a 环境修正：用户报告 AutoDL 无 `/usr/bin/time`、仅有 Bash `time`。原 dry-audit 未执行；修订命令使用 Python 标准库在 audit 同一进程内记录 wall time 与 Linux `ru_maxrss`，其余 artifact hash、schema、cardinality、factor=2.0 和 clean-status 门保持不变。
+- [x] Task 4 Step 1b：对既有 report 的轻量 post-validation 返回 0；91 exact、1 fixed numeric、1,938 scalar、25 Gaussian fields（13 capture + 12 Adam moments）、1,926 summaries 与资源记录全部命中，repo clean。核心 audit 未重跑，E0/训练未启动。
+- [x] Task 4 Step 2：cardinality/output review 通过；report 954,155 bytes，wall 91.350 s、peak RSS 3961.5 MiB，无缺失或重复 summary；factor=2.0、字段和统计均未事后调整。
+- [x] Task 4 Step 3：冻结的 topology-aware G0 规格、计划与证据文档进入独立 `docs:` 提交并推送；提交范围白名单仅为七份文档，不包含方法/训练源码，不创建 tag。
+- [ ] Task 4 Step 4：让 server fast-forward 到该文档提交，复核 exact commit、clean status、B1/B2/数据 hash、磁盘和无并行训练后，才启动已批准的 E0 8k。
+- **Scope:** 当前只允许修改只读 comparator helper、对应测试与规划记录；不改训练/renderer/CUDA/方法设计，不创建 tag，不直接操作服务器，不启动 E0/D0/C1。
 
 ## Verification Log
 
@@ -196,11 +233,14 @@
 | 2026-09-03 | E0 remainder/RNG read-only audit | baseline `d6f15c8`; E0 `a260821` | existing checkpoints/configs + fresh-process post-logger RNG states + simulated 500-step camera trace；no training | spatial LR/config/optimizer hyperparameters and RNG/camera trace exact；learned states diverge during training；baseline self-repeat still required | same pair; sentinel `/root/autodl-tmp/e0-rng-sentinel.hTwRyR` |
 | 2026-09-04 | G0 方案 A 文档化与 500 探索性回代 | docs branch `a2c6e5a` + 当前文档 diff；实验仍为 baseline `d6f15c8` / E0 `a260821` | 解析既有两份三方审计输出；逐字段重算 RMSE/MAE 2× envelope；文档合同检查 | 32 字段/64 数值门探索性通过，最大比值约 1.99；不构成 G0 PASS；无训练/方法源码/tag | 三个既有 500 run，路径见 findings |
 | 2026-09-04 | G0 500 versioned exploratory replay | comparator `3db69bb`; runs `d6f15c8`/`d6f15c8`/`a260821` | versioned read-only audit + frozen reconciliation assertions | exact 0 failure；64/64 tensor checks + 2/2 scalar checks PASS；max ratio 1.98545；exploratory only，G0 remains pending | `/root/autodl-tmp/ambisur_diagnostics/e0-g0-a-500-replay-3db69bb.json` |
+| 2026-09-10 | G0 8k topology-aware B1/B2 dry audit | comparator `e781fef`; B1/B2 frozen runs, B2 reused only as exploratory E0 role | schema-2 summary audit + stdlib resource record + immutable artifact after-hash + corrected JSON post-validation | audit/post-validation rc=0；91 exact、1 fixed numeric、1,938 scalar、25 Gaussian fields、1,926 summaries；0 failures；wall 91.350 s、peak 3961.5 MiB；repo clean；`exploratory=true/g0_equivalent=false` | `/root/autodl-tmp/ambisur_diagnostics/g0_8k_topology_aware_dry_e781fef_r2.json` |
 
 ## Cloud Runs
 
 | Date | Scene | Stage | Commit | Seed | Result path | Decision |
 |---|---|---|---|---:|---|---|
+| 2026-09-04 | Tool Room | G0 8k B1 | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/g0-triplet-8k/g0_8k_r2_seed0_20260904_v1/b1_d6f15c88` | training complete；save-order reconciliation PASS；pre=1,502,365/post=1,360,857 |
+| 2026-09-04 | Tool Room | G0 8k B2 | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/g0-triplet-8k/g0_8k_r2_seed0_20260904_v1/b2_d6f15c88` | completion PASS；pre=1,509,961/post=1,366,889；baseline-pair topology exact FAIL，配置/来源/optimizer 对照相同，STOP before E0 |
 | 2026-09-02 | Tool Room | baseline-pathcheck-r4-8k | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/baseline-pathcheck-r4-8k/d6f15c88/seed_0/attempt_20260902T074545Z` | path-check accepted；not C0 reproduced |
 | 2026-09-02 | Tool Room | c0-candidate-r2-30k | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z` | complete C0 reference accepted；annotated tag pending user approval |
 | 2026-09-03 | Tool Room | E0 paired-500 baseline | `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` | 0 | `/root/autodl-tmp/ambisur_runs/Tool_Room/e0-paired-500/pair_20260903T090116Z/baseline_d6f15c88` | baseline half PASS；等待同 pair E0 all-off |
@@ -210,7 +250,7 @@
 ## Current Blocker
 
 1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
-2. 完整 Core 计划已批准；当前执行边界仍为 E0/G0。三方 comparator 和 500 探索性 replay 已结束，独立 8k 确认已获批准并等待 preflight；D0/C1 与其他正式实验尚未获执行授权。
+2. 当前执行边界仍为 E0/G0；schema-v2 comparator 组件门和 B1/B2 summary-only dry audit 已通过。当前顺序步骤是冻结并同步文档证据，随后执行既有 E0 8k launch gate；E0 未启动，不放宽 2×，不启动 D0/C1。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；当前 E0 suite 可由标准库 `unittest` 完整执行，pytest 缺失不再阻塞 E0 component 验证，后续若测试使用 pytest-only fixture 再单独申请安装。
-5. 当前本地分支为 `research/core-routing`；`main` 与 `c0-baseline` 均保持 baseline SHA，服务器 C0 commit 保持 clean。
+5. 当前本地、remote 与 server 均位于 `research/core-routing@e781fef23f4f2adec5382808108e7e7e3331e11a`；server 组件 GREEN 且 clean。本地保留已批准但尚未统一提交的设计/规划文档改动；`main`/`c0-baseline` 未移动。

@@ -971,9 +971,9 @@ $$
 
 在同一验证时长 $h$，记 $B_h^{(1)},B_h^{(2)}$ 为两次独立启动的 exact-baseline 运行，$E_h$ 为一次独立启动的 E0 feature-off 运行。三次必须使用相同 GPU/runtime、canonical data snapshot、语义 seed、分辨率和训练配置；仅允许事先声明的 commit、输出/private-view 路径及 E0 元数据参数差异。
 
-**严格不变量不使用噪声容差：** 输入与初始化 prior hash、共同有效配置、feature-off legacy dispatch、seed/RNG 与相机采样轨迹合同、checkpoint schema/字段/dtype/shape、Gaussian 数量、optimizer groups/hyperparameters/state keys/step counters，以及该验证时长内未激活或未更新的字段，均须严格一致。每个运行的 commit 必须分别匹配其批准的 exact SHA，而非要求 baseline/E0 commit 相同。缺失必需证据不能算通过。500 轮的 SH rest/app 等未激活字段 exact，不意味着它们在 8k 激活后仍归入未激活字段。
+**严格不变量不使用噪声容差：** 输入与初始化 prior hash、共同有效配置、feature-off legacy dispatch、seed/RNG 与相机采样合同、checkpoint schema/字段/dtype、Gaussian-indexed Tensor 的 trailing shape、optimizer groups/hyperparameters/state keys/step counters，以及不以动态 Gaussian 集合为索引的固定形状未更新字段，均须严格一致。每个运行的 commit 必须分别匹配其批准的 exact SHA，而非要求 baseline/E0 commit 相同。缺失必需证据不能算通过。动态 topology 后的 Gaussian 数量及所有 Gaussian-indexed Tensor 的第一维不再属于 strict invariant；其余维度仍必须 exact。500 轮的 SH rest/app 等未激活字段 exact，不意味着它们在 8k 激活后仍归入未激活字段。
 
-对其余有限且同形状的已更新参数张量、densification proxy 和 optimizer moments，按相同字段及存储顺序分别计算：
+对不以 Gaussian 为索引且保持同形状的已更新张量，仍按相同字段及存储顺序直接计算：
 
 $$
 D_{\mathrm{RMSE}}(x,y)=\sqrt{\frac{1}{n}\sum_{j=1}^n(x_j-y_j)^2},
@@ -1000,9 +1000,27 @@ $$
 
 RMSE 与 MAE 必须分别通过；两种距离各自取最近 baseline，不以跨字段平均掩盖失败。对预先指定的每个标量 loss/评价指标，使用绝对差作为 $D$，沿用同一规则。保留三组 pairwise 距离和最近参照身份，以便审计。`max_abs`、mismatch count 和已学习结果文件的 SHA 仅作诊断，不单独决定数值等价；输入/prior 的 SHA 仍属于严格不变量。
 
-在后续独立 **8k 三次运行（baseline、baseline repeat、E0 all-off）** 开始前冻结本规则。8k 使用其自身同 horizon 的 baseline self-distance，不沿用 500 轮的绝对误差数值；必须覆盖 densify 首次 600、multi-view trim 首次 1000、Ray-Color 首次 5001、ALR 首次 7001 的实际 baseline 分支。启动命令、比较字段/评价点、日志与资源证据清单须在运行前固定。
+对于动态 topology 后的 Gaussian-indexed Tensor $X\in\mathbb R^{n\times d_1\times\cdots\times d_k}$，禁止按行比较、排序、匹配、截断或补齐。将非 Gaussian 维展平为 $\widetilde X\in\mathbb R^{n\times d}$，对每个语义通道 $j$ 以及逐行范数 $u_i=\lVert\widetilde X_{i,:}\rVert_2$ 分别计算固定的 permutation-invariant summary：
 
-只有严格不变量、所有数值门与安全门均通过，才可接受该确认性验证。若 Gaussian 数量/shape 不一致、某字段超界、$d_B=0$ 却不 exact、出现 NaN/Inf、额外重复 backward 或显存持续增长，立即停止并报告；不得删字段、截断/补齐张量、事后选参照组合或提高系数来通过。该 2 倍规则是工程验收合同，不是统计置信区间，也不证明不同环境/场景下的普遍等价。
+$$
+\psi(z)=\left(
+\operatorname{mean}(z),
+\operatorname{std}_{\mathrm{pop}}(z),
+Q_{0.01}(z),Q_{0.05}(z),Q_{0.25}(z),Q_{0.50}(z),Q_{0.75}(z),Q_{0.95}(z),Q_{0.99}(z)
+\right).
+$$
+
+每个 `field/channel-or-row-norm/statistic` 都是独立命名的标量门，使用绝对差和同一个 $d_E\le 2d_B$ 规则；不得先在通道、分位数或 Tensor 之间平均再决定通过。实现须先把每个标量样本序列独立转换到 CPU float64 并升序排列，再从同一规范序列计算 mean、population standard deviation（固定 `unbiased=False`）和 quantile，使摘要不受 Gaussian 行顺序影响；这里的标量值排序只用于统计，不构造或比较 Gaussian 对应关系。对升序 $z_{(0)},\ldots,z_{(n-1)}$，quantile 固定使用线性插值：令 $a=(n-1)q$、$l=\lfloor a\rfloor$、$u=\lceil a\rceil$，则 $Q_q=(u-a)z_{(l)}+(a-l)z_{(u)}$；$l=u$ 时即取该 order statistic。空 Tensor、非有限值、trailing-shape/dtype 不一致均直接失败。原始 Tensor/optimizer moment 的 SHA、元素数和范围保留为诊断，但不能代替上述门。
+
+topology 前日志/PLY 数量、topology 后 checkpoint 数量分别作为两个独立标量门，使用绝对差及相同 envelope；不得混用保存时点。固定形状的 `app_model` Tensor 继续直接逐元素计算 RMSE/MAE，不转成分布摘要。optimizer 的结构、超参数、state keys 和 step 仍 exact；只有 Gaussian-indexed `exp_avg/exp_avg_sq` 数值进入 summary 门。
+
+原 factor、运行协议和比较字段是在独立 **8k 三次运行（baseline、baseline repeat、E0 all-off）** 前冻结的。B1/B2 暴露动态 topology exact 合同不可满足后，E0 在启动前停止；本次仅把 Gaussian-indexed 比较改成上述预先列举的 summary，并在观察任何 E0 artifact 前再次冻结。8k 使用其自身同 horizon 的 baseline self-distance，不沿用 500 轮的绝对误差数值；必须覆盖 densify 首次 600、multi-view trim 首次 1000、Ray-Color 首次 5001、ALR 首次 7001 的实际 baseline 分支。E0 继续沿用原已冻结命令、评价点、日志与资源证据清单。
+
+只有严格不变量、所有 topology-aware 数值门与安全门均通过，才可接受该确认性验证。若 trailing shape/schema/dtype/结构不一致、count 或任一 summary/标量字段超界、$d_B=0$ 却不 exact、出现 NaN/Inf、额外重复 backward 或显存持续增长，立即停止并报告；不得删 summary、截断/补齐/排序/匹配 Gaussian、事后选参照组合或提高系数来通过。该 2 倍规则是工程验收合同，不是统计置信区间，也不证明不同环境/场景下的普遍等价。
+
+本修订由 8k baseline 自重复证据触发：B1/B2 在相同配置、输入、命令和 optimizer 合同下，于首次 eligible densification 的 iteration 600 已出现 1 个 Gaussian 的最早日志分叉；iteration 8000 的 topology 前/后数量分别相差 7,596/6,032。因此原先把动态 count 和第一维 shape 设为 exact 的 8k 尝试继续记录为原合同 FAIL，不能追溯改写成 PASS。由于 E0 尚未运行，可在冻结本 summary 字段和测试后复用现有 B1/B2 作为 baseline envelope，再启动唯一的 E0；不得观察 E0 后改变 summary 或 factor。
+
+审计器必须通过显式 `--topology-aware` 选择本合同并输出 schema version 2；默认 schema-1 路径继续保留既有 500 exploratory replay 和旧调用语义。8k 确认命令缺少该显式开关时不得按本修订判为 G0 PASS。
 
 本合同只处理独立训练轨迹的 G0 验收，**不替代或放宽 C1 的同一状态 GPU 单步 residual decomposition gradient oracle**。本次批准仅同步规格与规划文档；8k 启动、D0/C1、方法源码和 tag 仍须遵守各自授权关口。
 

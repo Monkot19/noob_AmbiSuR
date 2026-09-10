@@ -210,13 +210,19 @@ Stop if the replay differs; use `superpowers:systematic-debugging` before changi
 
 User explicitly approved the independent 8k triplet on 2026-09-04. The observed 500 replay maximum ratio `1.9854507624` does not change the preregistered factor: it is the maximum of 64 exploratory checks selected after observation, while factor `2.0` already permits twice the baseline self-distance. Keep `factor=2.0`; if the independent 8k triplet exceeds it, record failure and investigate without post-hoc relaxation. Present the final safety-gated shell command and estimated disk/time budget before launch.
 
-- [ ] **Step 2: Run one preflight command**
+- [x] **Step 2: Run one preflight command**
 
 Require at least 35 GiB free, clean repository, exact local commit objects/tags, Python/Torch/CUDA/GPU match, 406 image/depth/conf basename match, canonical manifest match, and no pre-existing target directories. Do not fetch after the preflight begins; network failure must not contaminate the run decision.
+
+User-returned preflight on 2026-09-04 passed at `5fc8866d6afe287b4e27a341b2a9ecb69d266c74`, with 46,968,476 KB free, expected canonical manifest and aligned-prior SHA `69a21ab8756f43834a5357f27ca6cf40c6b7b15695e0e8cade1914fe70956977`.
 
 - [ ] **Step 3: Launch B1, audit completion, then B2, then E**
 
 Each role uses a private copy of `sparse_da3_aligned` and read-only links/copies for the other canonical inputs. Before launch, the wrapper writes a new `g0_run_contract.json` in that new output directory with role, exact commit, clean flag, command, runtime and input hashes. Record start/end UTC, exit code, peak GPU memory, environment, source hashes and full log. Never overlap roles on the GPU. Stop the sequence immediately on a failed role.
+
+**Execution STOP (2026-09-04):** B1 and B2 training completed with exit 0 and restored clean approval HEAD. B1's one-off within-run count assertion was corrected by read-only save-order reconciliation: log/PLY are pre-topology (1,502,365), checkpoint is post-topology (1,360,857). B2's final log/launcher count is 1,509,961: the same-stage cross-run `run.final_points` exact invariant already fails by 7,596. E has not launched; Step 3 remains incomplete. Next action is a read-only comparison of actual B1/B2 configs, provenance, checkpoint counts/shapes/optimizer and logged count traces. Do not normalize away count differences, raise the factor or launch E pending diagnosis. This is a failed necessary strict condition, not a completed triplet comparison or proof of an E0 regression.
+
+**Diagnosis update:** B2 post-topology count is 1,366,889 versus B1 1,360,857. Actual args/optimization, normalized command, launcher contract, optimizer structure/steps, input hashes and log health match; the earliest displayed count difference is one Gaussian at iteration 600, the first eligible densification. The original topology-count/first-dimension exact invariant is therefore unsatisfiable by the baseline self-repeat in this runtime. Keep the original run classified FAIL under its frozen contract and keep E stopped until a separately approved topology-aware G0 contract is written and tested; do not alter factor 2.0 or claim a CUDA root operator without further evidence.
 
 - [ ] **Step 4: Run the triplet comparator**
 
