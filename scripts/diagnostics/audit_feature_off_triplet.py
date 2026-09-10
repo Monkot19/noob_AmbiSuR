@@ -423,6 +423,152 @@ def _tensor_field(name, tensors):
     }
 
 
+def _scalar_metric(name, values):
+    return {"name": name, **{role: _json_safe(values[role]) for role in ROLES}}
+
+
+def _require_role_mapping(name, mapping):
+    if not isinstance(mapping, dict) or set(mapping) != set(ROLES):
+        raise ValueError(f"{name} requires exactly b1, b2, and e0")
+
+
+def build_topology_aware_tensor_evidence(
+    captures,
+    optimizer_tensors,
+    app_tensors,
+    snapshots,
+    learned_ply,
+):
+    """Classify topology-aware tensor evidence without aligning Gaussian rows."""
+    for name, mapping in (
+        ("captures", captures),
+        ("optimizer_tensors", optimizer_tensors),
+        ("app_tensors", app_tensors),
+        ("snapshots", snapshots),
+        ("learned_ply", learned_ply),
+    ):
+        _require_role_mapping(name, mapping)
+
+    if not all("xyz" in captures[role] for role in ROLES):
+        raise ValueError("topology-aware evidence requires capture xyz")
+
+    exact_invariants = []
+    scalar_metrics = [
+        _scalar_metric(
+            "checkpoint.gaussian_count",
+            {role: int(captures[role]["xyz"].shape[0]) for role in ROLES},
+        ),
+        _scalar_metric(
+            "run.final_points",
+            {role: snapshots[role].get("final_points") for role in ROLES},
+        ),
+    ]
+    numeric_fields = []
+    gaussian_diagnostics = {}
+
+    same_stage_count_matches = {
+        role: (
+            isinstance(learned_ply[role], dict)
+            and snapshots[role].get("final_points")
+            == learned_ply[role].get("vertices")
+        )
+        for role in ROLES
+    }
+    exact_invariants.append(
+        _exact(
+            "run.final_points_matches_ply",
+            same_stage_count_matches,
+            {role: True for role in ROLES},
+        )
+    )
+
+    capture_keys = sorted(set.intersection(*(set(captures[role]) for role in ROLES)))
+    for key in capture_keys:
+        tensors = {role: captures[role][key] for role in ROLES}
+        field_name = f"capture.{key}"
+        exact_invariants.extend(
+            [
+                _exact(
+                    f"{field_name}.dtype",
+                    {role: str(tensors[role].dtype) for role in ROLES},
+                ),
+                _exact(
+                    f"{field_name}.trailing_shape",
+                    {role: list(tensors[role].shape[1:]) for role in ROLES},
+                ),
+            ]
+        )
+        metrics, diagnostics = gaussian_summary_metrics(field_name, tensors)
+        scalar_metrics.extend(metrics)
+        gaussian_diagnostics[field_name] = diagnostics
+
+    optimizer_keys = sorted(
+        set.union(*(set(optimizer_tensors[role]) for role in ROLES))
+    )
+    for key in optimizer_keys:
+        state_name = key.rsplit(".", 1)[-1]
+        if state_name not in ("step", "exp_avg", "exp_avg_sq"):
+            raise ValueError(f"unsupported optimizer tensor state: {key}")
+        if key not in set.intersection(
+            *(set(optimizer_tensors[role]) for role in ROLES)
+        ):
+            continue
+        tensors = {role: optimizer_tensors[role][key] for role in ROLES}
+        if state_name == "step":
+            exact_invariants.extend(
+                [
+                    _exact(
+                        f"{key}.dtype",
+                        {role: str(tensors[role].dtype) for role in ROLES},
+                    ),
+                    _exact(
+                        f"{key}.shape",
+                        {role: list(tensors[role].shape) for role in ROLES},
+                    ),
+                ]
+            )
+            continue
+        exact_invariants.extend(
+            [
+                _exact(
+                    f"{key}.dtype",
+                    {role: str(tensors[role].dtype) for role in ROLES},
+                ),
+                _exact(
+                    f"{key}.trailing_shape",
+                    {role: list(tensors[role].shape[1:]) for role in ROLES},
+                ),
+            ]
+        )
+        metrics, diagnostics = gaussian_summary_metrics(key, tensors)
+        scalar_metrics.extend(metrics)
+        gaussian_diagnostics[key] = diagnostics
+
+    app_keys = sorted(set.intersection(*(set(app_tensors[role]) for role in ROLES)))
+    for key in app_keys:
+        tensors = {role: app_tensors[role][key] for role in ROLES}
+        exact_invariants.extend(
+            [
+                _exact(
+                    f"application.{key}.dtype",
+                    {role: str(tensors[role].dtype) for role in ROLES},
+                ),
+                _exact(
+                    f"application.{key}.shape",
+                    {role: list(tensors[role].shape) for role in ROLES},
+                ),
+            ]
+        )
+        numeric_fields.append(_tensor_field(key, tensors))
+
+    return {
+        "exact_invariants": exact_invariants,
+        "numeric_fields": numeric_fields,
+        "scalar_metrics": scalar_metrics,
+        "diagnostics": {"gaussian_tensors": gaussian_diagnostics},
+    }
+
+
 def _read_json(path):
     path = Path(path)
     if not path.is_file():
@@ -575,6 +721,7 @@ def build_report(
     iteration,
     *,
     exploratory=False,
+    topology_aware=False,
     evaluation_iterations=None,
     expected_baseline_commit=None,
     expected_e0_commit=None,
@@ -625,10 +772,6 @@ def build_report(
                 "spatial_lr_scale",
                 {role: captures[role]["spatial_lr_scale"] for role in ROLES},
             ),
-            _exact(
-                "gaussian_count",
-                {role: int(captures[role]["xyz"].shape[0]) for role in ROLES},
-            ),
             _exact("optimizer.structure", optimizer_structures),
             _exact(
                 "optimizer.tensor_keys",
@@ -640,42 +783,54 @@ def build_report(
             ),
         ]
     )
+    if not topology_aware:
+        exact_invariants.insert(
+            4,
+            _exact(
+                "gaussian_count",
+                {role: int(captures[role]["xyz"].shape[0]) for role in ROLES},
+            ),
+        )
 
     capture_tensor_names = CAPTURE_NAMES[1:14]
     for name in capture_tensor_names:
         if not all(torch.is_tensor(captures[role][name]) for role in ROLES):
             raise ValueError(f"capture field {name!r} is not a tensor in every run")
-        exact_invariants.append(
-            _exact(
-                f"capture.{name}.dtype",
-                {role: str(captures[role][name].dtype) for role in ROLES},
+        if not topology_aware:
+            exact_invariants.append(
+                _exact(
+                    f"capture.{name}.dtype",
+                    {role: str(captures[role][name].dtype) for role in ROLES},
+                )
             )
-        )
-        exact_invariants.append(
-            _exact(
-                f"capture.{name}.shape",
-                {role: list(captures[role][name].shape) for role in ROLES},
+            exact_invariants.append(
+                _exact(
+                    f"capture.{name}.shape",
+                    {role: list(captures[role][name].shape) for role in ROLES},
+                )
             )
-        )
 
-    for family_name, family in (
-        ("optimizer", optimizer_tensors),
-        ("application", app_tensors),
-    ):
-        common_keys = sorted(set.intersection(*(set(family[role]) for role in ROLES)))
-        for key in common_keys:
-            exact_invariants.append(
-                _exact(
-                    f"{family_name}.{key}.dtype",
-                    {role: str(family[role][key].dtype) for role in ROLES},
-                )
+    if not topology_aware:
+        for family_name, family in (
+            ("optimizer", optimizer_tensors),
+            ("application", app_tensors),
+        ):
+            common_keys = sorted(
+                set.intersection(*(set(family[role]) for role in ROLES))
             )
-            exact_invariants.append(
-                _exact(
-                    f"{family_name}.{key}.shape",
-                    {role: list(family[role][key].shape) for role in ROLES},
+            for key in common_keys:
+                exact_invariants.append(
+                    _exact(
+                        f"{family_name}.{key}.dtype",
+                        {role: str(family[role][key].dtype) for role in ROLES},
+                    )
                 )
-            )
+                exact_invariants.append(
+                    _exact(
+                        f"{family_name}.{key}.shape",
+                        {role: list(family[role][key].shape) for role in ROLES},
+                    )
+                )
 
     required_artifacts = {
         role: {
@@ -714,12 +869,15 @@ def build_report(
                 {role: snapshots[role]["exit_code"] for role in ROLES},
                 {role: 0 for role in ROLES},
             ),
+        ]
+    )
+    if not topology_aware:
+        exact_invariants.append(
             _exact(
                 "run.final_points",
                 {role: snapshots[role]["final_points"] for role in ROLES},
-            ),
-        ]
-    )
+            )
+        )
     for safety_key in _ERROR_PATTERNS:
         exact_invariants.append(
             _exact(
@@ -741,19 +899,40 @@ def build_report(
         expected_prior_sha=expected_prior_sha,
     )
 
-    numeric_fields = [
-        _tensor_field(
-            f"capture.{name}",
-            {role: captures[role][name] for role in ROLES},
+    learned_ply = {
+        role: _point_cloud_diagnostic(snapshots[role], iteration) for role in ROLES
+    }
+    topology_evidence = None
+    if topology_aware:
+        capture_tensors = {
+            role: {name: captures[role][name] for name in capture_tensor_names}
+            for role in ROLES
+        }
+        topology_evidence = build_topology_aware_tensor_evidence(
+            capture_tensors,
+            optimizer_tensors,
+            app_tensors,
+            snapshots,
+            learned_ply,
         )
-        for name in capture_tensor_names
-    ]
-    for family in (optimizer_tensors, app_tensors):
-        common_keys = sorted(set.intersection(*(set(family[role]) for role in ROLES)))
-        numeric_fields.extend(
-            _tensor_field(key, {role: family[role][key] for role in ROLES})
-            for key in common_keys
-        )
+        exact_invariants.extend(topology_evidence["exact_invariants"])
+        numeric_fields = topology_evidence["numeric_fields"]
+    else:
+        numeric_fields = [
+            _tensor_field(
+                f"capture.{name}",
+                {role: captures[role][name] for role in ROLES},
+            )
+            for name in capture_tensor_names
+        ]
+        for family in (optimizer_tensors, app_tensors):
+            common_keys = sorted(
+                set.intersection(*(set(family[role]) for role in ROLES))
+            )
+            numeric_fields.extend(
+                _tensor_field(key, {role: family[role][key] for role in ROLES})
+                for key in common_keys
+            )
 
     evaluation_iterations = (
         sorted(set(evaluation_iterations)) if evaluation_iterations else [iteration]
@@ -767,7 +946,9 @@ def build_report(
             if key[0] in evaluation_iterations
         }
     )
-    scalar_metrics = []
+    scalar_metrics = (
+        list(topology_evidence["scalar_metrics"]) if topology_evidence else []
+    )
     for eval_iteration in evaluation_iterations:
         keys_at_iteration = [key for key in requested_keys if key[0] == eval_iteration]
         exact_invariants.append(
@@ -794,11 +975,34 @@ def build_report(
                     }
                 )
 
-    learned_ply = {
-        role: _point_cloud_diagnostic(snapshots[role], iteration) for role in ROLES
+    diagnostics = {
+        "checkpoint": checkpoint_diagnostics,
+        "learned_ply": learned_ply,
+        "application_sha256": {
+            role: _sha256(
+                run_directories[role]
+                / "app_model"
+                / f"iteration_{iteration}"
+                / "app.pth"
+            )
+            for role in ROLES
+        },
+        "cfg_args_sha256": {
+            role: _sha256(run_directories[role] / "cfg_args") for role in ROLES
+        },
+        "cfg_opts_sha256": {
+            role: _sha256(run_directories[role] / "cfg_opts") for role in ROLES
+        },
+        "required_artifacts": required_artifacts,
+        "log_safety": safety,
+        "contract_files_present": {
+            role: contracts[role] is not None for role in ROLES
+        },
     }
+    if topology_evidence:
+        diagnostics.update(topology_evidence["diagnostics"])
     report = {
-        "schema_version": 1,
+        "schema_version": 2 if topology_aware else 1,
         "iteration": iteration,
         "runs": {
             role: {
@@ -813,30 +1017,7 @@ def build_report(
         "exact_invariants": exact_invariants,
         "numeric_fields": numeric_fields,
         "scalar_metrics": scalar_metrics,
-        "diagnostics": {
-            "checkpoint": checkpoint_diagnostics,
-            "learned_ply": learned_ply,
-            "application_sha256": {
-                role: _sha256(
-                    run_directories[role]
-                    / "app_model"
-                    / f"iteration_{iteration}"
-                    / "app.pth"
-                )
-                for role in ROLES
-            },
-            "cfg_args_sha256": {
-                role: _sha256(run_directories[role] / "cfg_args") for role in ROLES
-            },
-            "cfg_opts_sha256": {
-                role: _sha256(run_directories[role] / "cfg_opts") for role in ROLES
-            },
-            "required_artifacts": required_artifacts,
-            "log_safety": safety,
-            "contract_files_present": {
-                role: contracts[role] is not None for role in ROLES
-            },
-        },
+        "diagnostics": diagnostics,
     }
     return report
 
@@ -858,6 +1039,7 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--evaluation-iterations", type=int, nargs="*")
     parser.add_argument("--exploratory", action="store_true")
+    parser.add_argument("--topology-aware", action="store_true")
     parser.add_argument("--expected-baseline-commit")
     parser.add_argument("--expected-e0-commit")
     parser.add_argument("--expected-dataset-sha")
@@ -878,6 +1060,7 @@ def main(argv=None):
             run_directories,
             args.iteration,
             exploratory=args.exploratory,
+            topology_aware=args.topology_aware,
             evaluation_iterations=args.evaluation_iterations,
             expected_baseline_commit=args.expected_baseline_commit,
             expected_e0_commit=args.expected_e0_commit,
