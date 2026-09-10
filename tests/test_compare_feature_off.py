@@ -149,6 +149,33 @@ class FeatureOffComparatorTests(unittest.TestCase):
 
 
 class ThreeRunEnvelopeTests(unittest.TestCase):
+    def test_one_summary_failure_cannot_be_averaged_away(self):
+        failed_name = "capture.xyz.channel_000.q99"
+        report = {
+            "exact_invariants": [],
+            "numeric_fields": [],
+            "scalar_metrics": [
+                {
+                    "name": "capture.xyz.channel_000.mean",
+                    "b1": 0.0,
+                    "b2": 1.0,
+                    "e0": 1.5,
+                },
+                {
+                    "name": failed_name,
+                    "b1": 0.0,
+                    "b2": 1.0,
+                    "e0": 3.1,
+                },
+            ],
+            "diagnostics": {},
+        }
+
+        result = evaluate_triplet_report(report)
+
+        self.assertFalse(result["equivalent"])
+        self.assertEqual(result["numeric_failures"], [failed_name])
+
     def test_envelope_accepts_exact_two_times_boundary(self):
         result = evaluate_numeric_field(
             _field(b1_rmse=2.0, b1_mae=2.0, b2_rmse=3.0, b2_mae=3.0)
