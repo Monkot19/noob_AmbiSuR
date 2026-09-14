@@ -584,6 +584,71 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
         self.assertTrue(report["gate"]["exploratory"])
         self.assertFalse(report["gate"]["g0_equivalent"])
 
+    def test_cli_behavioral_exploratory_writes_schema_three_without_g0_pass(self):
+        # Catches a schema-3 CLI that silently falls back to the schema-2 gate.
+        from scripts.diagnostics.audit_feature_off_triplet import main
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            runs = self._write_synthetic_triplet(root)
+            output = root / "behavioral-report.json"
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                return_code = main([
+                    str(runs["b1"]), str(runs["b2"]), str(runs["e0"]),
+                    "--iteration", "8", "--evaluation-iterations", "8",
+                    "--topology-aware", "--behavioral-g0", "--exploratory",
+                    "--output", str(output),
+                ])
+            report = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(return_code, 0)
+        self.assertEqual(report["schema_version"], 3)
+        self.assertTrue(report["gate"]["audit_completed"])
+        self.assertFalse(report["gate"]["g0_equivalent"])
+        self.assertTrue(report["diagnostic_scalar_metrics"])
+        self.assertEqual(
+            {item["name"] for item in report["diagnostic_scalar_metrics"]},
+            set(report["expected_diagnostic_names"]),
+        )
+
+    def test_cli_behavioral_without_topology_is_malformed_before_artifact_read(self):
+        # Catches accepting an ambiguous mode or reading missing runs first.
+        from scripts.diagnostics.audit_feature_off_triplet import main
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            output = root / "report.json"
+            stderr = io.StringIO()
+            with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                return_code = main([
+                    str(root / "b1"), str(root / "b2"), str(root / "e0"),
+                    "--iteration", "8", "--behavioral-g0", "--exploratory",
+                    "--output", str(output),
+                ])
+
+        self.assertEqual(return_code, 2)
+        self.assertIn("topology-aware", stderr.getvalue())
+        self.assertFalse(output.exists())
+
+    def test_cli_behavioral_confirmation_requires_hash_pinned_contract(self):
+        # Catches promoting a retrospective or unpinned report to formal G0.
+        from scripts.diagnostics.audit_feature_off_triplet import main
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            output = root / "report.json"
+            stderr = io.StringIO()
+            with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                return_code = main([
+                    str(root / "b1"), str(root / "b2"), str(root / "e0"),
+                    "--iteration", "8", "--topology-aware", "--behavioral-g0",
+                    "--output", str(output),
+                ])
+
+        self.assertEqual(return_code, 2)
+        self.assertIn("confirmation contract", stderr.getvalue())
+        self.assertFalse(output.exists())
+
     def test_tensor_pair_stats_uses_float64_rmse_and_mae(self):
         from scripts.diagnostics.audit_feature_off_triplet import tensor_pair_stats
 
