@@ -432,6 +432,74 @@ def _require_role_mapping(name, mapping):
         raise ValueError(f"{name} requires exactly b1, b2, and e0")
 
 
+_BEHAVIORAL_MOMENT_GROUPS = (
+    "xyz", "f_dc", "f_rest", "opacity", "scaling", "rotation"
+)
+_BEHAVIORAL_STATISTICS = (
+    "mean", "std", "q01", "q05", "q25", "q50", "q75", "q95", "q99"
+)
+
+
+def behavioral_summary_name_set(topology_evidence, capture_tensors, optimizer_tensors):
+    """Derive the diagnostic-name contract from frozen tensor fields, not metrics."""
+    _require_role_mapping("capture_tensors", capture_tensors)
+    _require_role_mapping("optimizer_tensors", optimizer_tensors)
+    expected_capture = {f"capture.{name}" for name in CAPTURE_NAMES[1:14]}
+    expected_moments = {
+        f"optimizer.{group}.{moment}"
+        for group in _BEHAVIORAL_MOMENT_GROUPS
+        for moment in ("exp_avg", "exp_avg_sq")
+    }
+    optimizer_fields = {
+        role: {
+            key for key in optimizer_tensors[role]
+            if key.endswith((".exp_avg", ".exp_avg_sq"))
+        }
+        for role in ROLES
+    }
+    if any(not fields <= expected_moments for fields in optimizer_fields.values()):
+        raise ValueError("unexpected Gaussian-indexed optimizer moment field")
+    if len({frozenset(fields) for fields in optimizer_fields.values()}) != 1:
+        raise ValueError("optimizer moment fields differ between runs")
+
+    fields = {}
+    for name in CAPTURE_NAMES[1:14]:
+        prefix = f"capture.{name}"
+        if any(name not in capture_tensors[role] for role in ROLES):
+            raise ValueError(f"missing behavioral capture field: {name}")
+        fields[prefix] = {role: capture_tensors[role][name] for role in ROLES}
+    if set(fields) != expected_capture:
+        raise ValueError("behavioral capture field contract mismatch")
+    for prefix in sorted(optimizer_fields["b1"]):
+        fields[prefix] = {role: optimizer_tensors[role][prefix] for role in ROLES}
+
+    expected_names = set()
+    for prefix, tensors in fields.items():
+        widths = []
+        for role in ROLES:
+            tensor = tensors[role]
+            if not torch.is_tensor(tensor) or tensor.ndim < 1 or tensor.numel() == 0:
+                raise ValueError(f"empty or invalid behavioral tensor: {prefix} {role}")
+            widths.append(math.prod(tensor.shape[1:]))
+        if len(set(widths)) != 1:
+            raise ValueError(f"behavioral trailing channel count mismatch: {prefix}")
+        for channel in range(widths[0]):
+            for statistic in _BEHAVIORAL_STATISTICS:
+                expected_names.add(f"{prefix}.channel_{channel:03d}.{statistic}")
+        for statistic in _BEHAVIORAL_STATISTICS:
+            expected_names.add(f"{prefix}.row_l2.{statistic}")
+
+    diagnostics = topology_evidence["diagnostics"]["gaussian_tensors"]
+    if set(diagnostics) != set(fields) or any(
+        not diagnostics[field]["summary_keys_equal"] for field in fields
+    ):
+        raise ValueError("behavioral Gaussian fields or summary keys are incomplete")
+    actual_names = [item["name"] for item in topology_evidence["scalar_metrics"][2:]]
+    if len(actual_names) != len(expected_names) or set(actual_names) != expected_names:
+        raise ValueError("missing, duplicate or unexpected behavioral summaries")
+    return expected_names
+
+
 def build_topology_aware_tensor_evidence(
     captures,
     optimizer_tensors,
@@ -630,6 +698,126 @@ def _feature_off_metadata_valid(resolved_config, run_identity, contract):
     )
 
 
+def _behavioral_safety_invariants(
+    run_directories, snapshots, resolved_configs, run_identities, contracts,
+    optimizer_structures, evaluation_iterations, iteration,
+):
+    """Add hard completion, artifact, legacy-path and resource checks for schema 3."""
+    checks = []
+    common_paths = {
+        "checkpoint": f"chkpnt{iteration}.pth",
+        "application": f"app_model/iteration_{iteration}/app.pth",
+        "point_cloud": f"point_cloud/iteration_{iteration}/point_cloud.ply",
+        "log": "train.log",
+        "exit_code": "exit_code.txt",
+        "cfg_args": "cfg_args",
+        "cfg_opts": "cfg_opts",
+        "launcher_contract": "g0_run_contract.json",
+        "launcher_log": "launcher.log",
+        "start_utc": "start_utc.txt",
+        "end_utc": "end_utc.txt",
+        "gpu_peak_mib": "gpu_peak_mib.txt",
+    }
+    for name, relative in common_paths.items():
+        checks.append(_exact(
+            f"artifact.{name}.nonempty",
+            {
+                role: (run_directories[role] / relative).is_file()
+                and (run_directories[role] / relative).stat().st_size > 0
+                for role in ROLES
+            },
+            {role: True for role in ROLES},
+        ))
+    for name, relative in (
+        ("resolved_config", "resolved_config.json"),
+        ("run_identity", "run_identity.json"),
+    ):
+        path = run_directories["e0"] / relative
+        checks.append(_exact(
+            f"artifact.{name}.nonempty",
+            {"b1": True, "b2": True, "e0": path.is_file() and path.stat().st_size > 0},
+            {role: True for role in ROLES},
+        ))
+
+    checks.append(_exact(
+        "log.training_complete_count",
+        {
+            role: (run_directories[role] / "train.log")
+            .read_text(encoding="utf-8", errors="replace")
+            .count("Training complete.")
+            for role in ROLES
+        },
+        {role: 1 for role in ROLES},
+    ))
+    for eval_iteration in evaluation_iterations:
+        checks.append(_exact(
+            f"evaluation.iteration_{eval_iteration}.train_count",
+            {
+                role: sum(
+                    entry["iteration"] == eval_iteration and entry["split"] == "train"
+                    for entry in snapshots[role]["evaluations"]
+                )
+                for role in ROLES
+            },
+            {role: 1 for role in ROLES},
+        ))
+    e0_resolved = resolved_configs["e0"]
+    checks.append(_exact(
+        "e0.feature_off_legacy_path",
+        {
+            "b1": True,
+            "b2": True,
+            "e0": isinstance(e0_resolved, dict)
+            and e0_resolved.get("training_path") == "legacy"
+            and _feature_off_metadata_valid(
+                e0_resolved, run_identities["e0"], contracts["e0"]
+            ),
+        },
+        {role: True for role in ROLES},
+    ))
+    checks.append(_exact(
+        "optimizer.supported_state_keys",
+        {
+            role: all(
+                set(group["state_keys"]) <= {"step", "exp_avg", "exp_avg_sq"}
+                and (
+                    not {"exp_avg", "exp_avg_sq"} & set(group["state_keys"])
+                    or (
+                        set(group["state_keys"]) == {"step", "exp_avg", "exp_avg_sq"}
+                        and isinstance(group["step"], (int, float))
+                        and math.isfinite(group["step"])
+                        and group["step"] >= 0
+                    )
+                )
+                for group in optimizer_structures[role]["groups"].values()
+            )
+            for role in ROLES
+        },
+        {role: True for role in ROLES},
+    ))
+    checks.append(_exact(
+        "resource.gpu_peak_below_22gib",
+        {
+            role: isinstance(snapshots[role]["gpu_peak_mib"], int)
+            and 0 < snapshots[role]["gpu_peak_mib"] < 22 * 1024
+            for role in ROLES
+        },
+        {role: True for role in ROLES},
+    ))
+    walls = {role: snapshots[role]["wall_time_seconds"] for role in ROLES}
+    valid_walls = all(
+        isinstance(wall, (int, float)) and math.isfinite(wall) and wall > 0
+        for wall in walls.values()
+    )
+    checks.append(_exact(
+        "resource.e0_wall_within_baseline_2x",
+        {"b1": valid_walls, "b2": valid_walls,
+         "e0": valid_walls and walls["e0"] <= 2.0 * max(walls["b1"], walls["b2"])},
+        {role: True for role in ROLES},
+    ))
+    return checks
+
+
 def _add_contract_invariants(
     exact_invariants,
     contracts,
@@ -722,6 +910,8 @@ def build_report(
     *,
     exploratory=False,
     topology_aware=False,
+    behavioral_g0=False,
+    confirmation_contract=None,
     evaluation_iterations=None,
     expected_baseline_commit=None,
     expected_e0_commit=None,
@@ -729,6 +919,8 @@ def build_report(
     expected_prior_sha=None,
 ):
     """Normalize three immutable run directories into the versioned audit schema."""
+    if behavioral_g0 and not topology_aware:
+        raise ValueError("behavioral G0 requires topology-aware mode")
     run_directories = {role: Path(run_directories[role]).resolve() for role in ROLES}
     for role, directory in run_directories.items():
         if not directory.is_dir():
@@ -1001,8 +1193,28 @@ def build_report(
     }
     if topology_evidence:
         diagnostics.update(topology_evidence["diagnostics"])
+    if behavioral_g0:
+        expected_names = behavioral_summary_name_set(
+            topology_evidence, capture_tensors, optimizer_tensors
+        )
+        if not exploratory and (len(expected_names) != 1926 or len(
+            topology_evidence["diagnostics"]["gaussian_tensors"]
+        ) != 25):
+            raise ValueError("formal behavioral G0 requires 25 fields and 1,926 summaries")
+        diagnostic_metrics = list(topology_evidence["scalar_metrics"][2:])
+        hard_metric_names = {
+            "checkpoint.gaussian_count", "run.final_points"
+        }
+        scalar_metrics = [
+            metric for metric in scalar_metrics if metric["name"] in hard_metric_names
+            or metric["name"].startswith("evaluation[")
+        ]
+        exact_invariants.extend(_behavioral_safety_invariants(
+            run_directories, snapshots, resolved_configs, run_identities,
+            contracts, optimizer_structures, evaluation_iterations, iteration,
+        ))
     report = {
-        "schema_version": 2 if topology_aware else 1,
+        "schema_version": 3 if behavioral_g0 else 2 if topology_aware else 1,
         "iteration": iteration,
         "runs": {
             role: {
@@ -1019,6 +1231,9 @@ def build_report(
         "scalar_metrics": scalar_metrics,
         "diagnostics": diagnostics,
     }
+    if behavioral_g0:
+        report["diagnostic_scalar_metrics"] = diagnostic_metrics
+        report["expected_diagnostic_names"] = sorted(expected_names)
     return report
 
 

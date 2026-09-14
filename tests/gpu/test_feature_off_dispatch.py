@@ -4,6 +4,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 try:
     import pytest
@@ -22,6 +23,22 @@ from train import (
 
 
 class FeatureOffDispatchTests(unittest.TestCase):
+    def test_all_off_dispatches_legacy_once_before_training_setup(self):
+        class StopBeforeTrainingSetup(Exception):
+            pass
+
+        config = CoreConfig()
+        with patch("train.select_training_path", wraps=select_training_path) as dispatch:
+            with patch(
+                "train.prepare_output_and_logger",
+                side_effect=StopBeforeTrainingSetup,
+            ) as setup:
+                with self.assertRaises(StopBeforeTrainingSetup):
+                    training(None, None, None, [], [], [], None, -1, core_config=config)
+
+        dispatch.assert_called_once_with(config)
+        setup.assert_called_once()
+
     def test_train_module_exposes_legacy_dispatch(self):
         self.assertEqual(select_training_path(CoreConfig()), "legacy")
 
