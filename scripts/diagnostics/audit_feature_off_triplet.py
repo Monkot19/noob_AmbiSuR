@@ -1096,6 +1096,11 @@ def build_report(
     }
     topology_evidence = None
     if topology_aware:
+        if behavioral_g0:
+            for role in ROLES:
+                for name, tensor in app_tensors[role].items():
+                    if tensor.numel() == 0:
+                        raise ValueError(f"empty application tensor: {name} {role}")
         capture_tensors = {
             role: {name: captures[role][name] for name in capture_tensor_names}
             for role in ROLES
