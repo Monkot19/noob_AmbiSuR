@@ -22,7 +22,12 @@ from scripts.diagnostics.compare_feature_off import (  # noqa: E402
     evaluate_triplet_report,
     load_run,
 )
-from scripts.diagnostics.behavioral_g0 import evaluate_behavioral_report  # noqa: E402
+from scripts.diagnostics.behavioral_g0 import (  # noqa: E402
+    confirmation_invariants,
+    evaluate_behavioral_report,
+    fingerprint_immutable_inputs,
+    load_confirmation_contract,
+)
 
 
 ROLES = ("b1", "b2", "e0")
@@ -1276,18 +1281,33 @@ def main(argv=None):
         "e0": args.e0.resolve(),
     }
     try:
+        formal_behavioral = args.behavioral_g0 and not args.exploratory
         if args.behavioral_g0 and not args.topology_aware:
             raise ValueError("behavioral G0 requires topology-aware mode")
-        if args.behavioral_g0 and not args.exploratory:
+        if formal_behavioral:
             if not args.confirmation_contract or not args.expected_confirmation_sha:
                 raise ValueError("formal behavioral G0 requires a hash-pinned confirmation contract")
-            raise ValueError("formal behavioral G0 confirmation is not yet implemented")
         if (args.confirmation_contract or args.expected_confirmation_sha) and not args.behavioral_g0:
             raise ValueError("confirmation contract requires behavioral G0 mode")
+        confirmation_contract = (
+            load_confirmation_contract(
+                args.confirmation_contract, args.expected_confirmation_sha
+            ) if formal_behavioral else None
+        )
+        if formal_behavioral and not all((
+            args.expected_baseline_commit, args.expected_e0_commit,
+            args.expected_dataset_sha, args.expected_prior_sha,
+        )):
+            raise ValueError("formal behavioral G0 requires expected commits and input hashes")
         if args.iteration <= 0:
             raise ValueError("iteration must be positive")
         if not _output_is_outside_runs(args.output, run_directories):
             raise ValueError("output must be outside all input run directories")
+        fingerprints_before = (
+            fingerprint_immutable_inputs(
+                confirmation_contract, run_directories, args.iteration
+            ) if formal_behavioral else None
+        )
         report = build_report(
             run_directories,
             args.iteration,
@@ -1300,6 +1320,41 @@ def main(argv=None):
             expected_dataset_sha=args.expected_dataset_sha,
             expected_prior_sha=args.expected_prior_sha,
         )
+        if formal_behavioral:
+            run_contracts = {
+                role: _read_json(directory / "g0_run_contract.json")
+                for role, directory in run_directories.items()
+            }
+            resolved_configs = {
+                role: _read_json(directory / "resolved_config.json")
+                for role, directory in run_directories.items()
+            }
+            fingerprints_after = fingerprint_immutable_inputs(
+                confirmation_contract, run_directories, args.iteration
+            )
+            report["exact_invariants"].extend(confirmation_invariants(
+                confirmation_contract, run_directories, run_contracts,
+                resolved_configs, fingerprints_before,
+                iteration=args.iteration,
+                evaluation_iterations=(sorted(set(args.evaluation_iterations))
+                    if args.evaluation_iterations else [args.iteration]),
+                expected_baseline_commit=args.expected_baseline_commit,
+                expected_e0_commit=args.expected_e0_commit,
+                expected_dataset_sha=args.expected_dataset_sha,
+                expected_prior_sha=args.expected_prior_sha,
+            ))
+            for name, before in fingerprints_before.items():
+                after = fingerprints_after[name]
+                report["exact_invariants"].append(_exact(
+                    f"confirmation.immutable.{name}",
+                    {role: after for role in ROLES},
+                    {role: before for role in ROLES},
+                ))
+            report["diagnostics"]["confirmation"] = {
+                "contract_sha256": args.expected_confirmation_sha,
+                "fingerprints_before": fingerprints_before,
+                "fingerprints_after": fingerprints_after,
+            }
         gate = (
             evaluate_behavioral_report(report, set(report["expected_diagnostic_names"]))
             if args.behavioral_g0 else evaluate_triplet_report(report)
