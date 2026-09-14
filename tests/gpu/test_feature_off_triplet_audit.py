@@ -1,4 +1,5 @@
 from contextlib import redirect_stderr, redirect_stdout
+import hashlib
 import io
 import json
 import math
@@ -130,6 +131,89 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
             )
             run_directories[role] = directory
         return run_directories
+
+    def _write_formal_behavioral_fixture(self, root):
+        from scripts.diagnostics.behavioral_g0 import fingerprint_immutable_inputs
+
+        runs = self._write_synthetic_triplet(root)
+        group_names = ("xyz", "f_dc", "f_rest", "opacity", "scaling", "rotation")
+        for role, directory in runs.items():
+            checkpoint = directory / "chkpnt8.pth"
+            capture, iteration = torch.load(
+                checkpoint, map_location="cpu", weights_only=False
+            )
+            count = capture[1].shape[0]
+            states = {}
+            groups = []
+            for index, name in enumerate(group_names):
+                states[index] = {
+                    "step": torch.tensor(8.0),
+                    "exp_avg": torch.ones(count, 14),
+                    "exp_avg_sq": torch.ones(
+                        count, 22 if index == len(group_names) - 1 else 14
+                    ),
+                }
+                groups.append({"name": name, "params": [index], "lr": 0.1})
+            expanded = list(capture)
+            expanded[14] = {"state": states, "param_groups": groups}
+            torch.save((tuple(expanded), iteration), checkpoint)
+
+        source = root / "canonical_source"
+        prior = root / "canonical_prior"
+        source.mkdir()
+        prior.mkdir()
+        (source / "sample.txt").write_text("source\n", encoding="utf-8")
+        (prior / "sample.txt").write_text("prior\n", encoding="utf-8")
+        contract = {
+            "canonical_source_root": str(source.resolve()),
+            "canonical_aligned_prior_root": str(prior.resolve()),
+        }
+        fingerprints = fingerprint_immutable_inputs(contract, runs, 8)
+        contract.update({
+            "contract_version": 1,
+            "confirmation_id": "synthetic-unseen-e0",
+            "preflight_utc": "2026-09-13T23:59:00Z",
+            "e0_output_absent_at_preflight": True,
+            "paths": {role: str(path.resolve()) for role, path in runs.items()},
+            "commits": {
+                "b1": "baseline-test-commit",
+                "b2": "baseline-test-commit",
+                "e0": "e0-test-commit",
+            },
+            "normalized_commands": {
+                role: json.loads((path / "g0_run_contract.json").read_text(
+                    encoding="utf-8"
+                ))["command"] for role, path in runs.items()
+            },
+            "dataset_sha256": "d" * 64,
+            "prior_sha256": "e" * 64,
+            "seed": 0,
+            "resolution": 2,
+            "iteration": 8,
+            "evaluation_iterations": [8],
+            "canonical_source_tree_sha256": fingerprints["canonical_source_tree_sha256"],
+            "canonical_prior_tree_sha256": fingerprints["canonical_prior_tree_sha256"],
+            "baseline_artifact_fingerprints": {
+                role: fingerprints[f"runs.{role}"] for role in ("b1", "b2")
+            },
+        })
+        contract_path = root / "confirmation.json"
+        contract_path.write_text(
+            json.dumps(contract, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+        common = [
+            str(runs["b1"]), str(runs["b2"]), str(runs["e0"]),
+            "--iteration", "8", "--evaluation-iterations", "8",
+            "--topology-aware", "--behavioral-g0",
+            "--confirmation-contract", str(contract_path),
+            "--expected-confirmation-sha", contract_sha,
+            "--expected-baseline-commit", "baseline-test-commit",
+            "--expected-e0-commit", "e0-test-commit",
+            "--expected-dataset-sha", "d" * 64,
+            "--expected-prior-sha", "e" * 64,
+        ]
+        return runs, common
 
     def test_gaussian_summary_uses_frozen_statistics_and_names(self):
         from scripts.diagnostics.audit_feature_off_triplet import (
@@ -648,6 +732,80 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
         self.assertEqual(return_code, 2)
         self.assertIn("confirmation contract", stderr.getvalue())
         self.assertFalse(output.exists())
+
+    def test_cli_formal_behavioral_confirmation_uses_hard_gate_only(self):
+        # Catches a fully evidenced formal run being stuck in exploratory mode.
+        from scripts.diagnostics.audit_feature_off_triplet import main
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            _, args = self._write_formal_behavioral_fixture(root)
+            output = root / "formal-report.json"
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                return_code = main(args + ["--output", str(output)])
+            report = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(return_code, 0)
+        self.assertEqual(report["schema_version"], 3)
+        self.assertEqual(len(report["diagnostic_scalar_metrics"]), 1926)
+        self.assertFalse(report["gate"]["exploratory"])
+        self.assertTrue(report["gate"]["hard_equivalent"])
+        self.assertTrue(report["gate"]["g0_equivalent"])
+
+    def test_cli_formal_behavioral_confirmation_rejects_wrong_contract_sha(self):
+        # Catches reading run artifacts despite a forged contract-content hash.
+        from scripts.diagnostics.audit_feature_off_triplet import main
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            contract = root / "confirmation.json"
+            contract.write_text("{}\n", encoding="utf-8")
+            output = root / "report.json"
+            stderr = io.StringIO()
+            with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                return_code = main([
+                    str(root / "b1"), str(root / "b2"), str(root / "e0"),
+                    "--iteration", "8", "--topology-aware", "--behavioral-g0",
+                    "--confirmation-contract", str(contract),
+                    "--expected-confirmation-sha", "0" * 64,
+                    "--output", str(output),
+                ])
+
+        self.assertEqual(return_code, 2)
+        self.assertIn("SHA256 mismatch", stderr.getvalue())
+        self.assertFalse(output.exists())
+
+    def test_cli_formal_behavioral_confirmation_detects_input_mutation(self):
+        # Catches a changed consumed artifact being ignored after preflight hashing.
+        from scripts.diagnostics.audit_feature_off_triplet import main
+        from scripts.diagnostics.behavioral_g0 import fingerprint_immutable_inputs
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            runs, args = self._write_formal_behavioral_fixture(root)
+            output = root / "mutated-report.json"
+            calls = 0
+
+            def fingerprint_then_mutate(*parameters, **options):
+                nonlocal calls
+                result = fingerprint_immutable_inputs(*parameters, **options)
+                calls += 1
+                if calls == 1:
+                    with (runs["e0"] / "cfg_opts").open("a", encoding="utf-8") as stream:
+                        stream.write("mutated\n")
+                return result
+
+            with patch(
+                "scripts.diagnostics.audit_feature_off_triplet.fingerprint_immutable_inputs",
+                side_effect=fingerprint_then_mutate,
+            ), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                return_code = main(args + ["--output", str(output)])
+            report = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(calls, 2)
+        self.assertEqual(return_code, 1)
+        self.assertFalse(report["gate"]["g0_equivalent"])
+        self.assertIn("confirmation.immutable.runs.e0", report["gate"]["exact_failures"])
 
     def test_tensor_pair_stats_uses_float64_rmse_and_mae(self):
         from scripts.diagnostics.audit_feature_off_triplet import tensor_pair_stats
