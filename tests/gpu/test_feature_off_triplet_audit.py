@@ -516,6 +516,23 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
         failures = evaluate_triplet_report(report)["exact_failures"]
         self.assertIn("artifact.cfg_opts.nonempty", failures)
 
+    def test_behavioral_empty_application_tensor_is_malformed(self):
+        # Catches vacuous equality when the required fixed app tensor has zero elements.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+
+        with TemporaryDirectory() as temporary_directory:
+            runs = self._write_synthetic_triplet(Path(temporary_directory))
+            for directory in runs.values():
+                torch.save(
+                    {"appear_ab": torch.empty(0)},
+                    directory / "app_model" / "iteration_8" / "app.pth",
+                )
+            with self.assertRaisesRegex(ValueError, "empty application tensor"):
+                build_report(
+                    runs, 8, exploratory=True,
+                    topology_aware=True, behavioral_g0=True,
+                )
+
     def test_behavioral_gpu_peak_and_wall_time_are_hard_safety_gates(self):
         # Catches allowing a feature-off resource regression as diagnostic only.
         from scripts.diagnostics.audit_feature_off_triplet import build_report
