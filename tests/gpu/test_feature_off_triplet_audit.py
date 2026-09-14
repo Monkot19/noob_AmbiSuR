@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 try:
     import torch
@@ -14,7 +15,7 @@ except ModuleNotFoundError:
 
 @unittest.skipIf(torch is None, "Torch is required for checkpoint audit tests")
 class FeatureOffTripletAuditTests(unittest.TestCase):
-    def _write_synthetic_run(self, root, *, count, final_points, iteration):
+    def _write_synthetic_run(self, root, *, role, count, final_points, iteration):
         root.mkdir()
         gaussian = torch.ones(count, 1, dtype=torch.float32)
         optimizer = {
@@ -58,6 +59,59 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
         (root / "exit_code.txt").write_text("0\n", encoding="utf-8")
         (root / "cfg_args").write_text("synthetic\n", encoding="utf-8")
         (root / "cfg_opts").write_text("synthetic\n", encoding="utf-8")
+        (root / "start_utc.txt").write_text(
+            "2026-09-14T00:00:00Z\n", encoding="utf-8"
+        )
+        (root / "end_utc.txt").write_text(
+            "2026-09-14T00:01:00Z\n", encoding="utf-8"
+        )
+        (root / "gpu_peak_mib.txt").write_text("1024\n", encoding="utf-8")
+        commit = "e0-test-commit" if role == "e0" else "baseline-test-commit"
+        launcher = {
+            "role": role,
+            "commit": commit,
+            "dirty": False,
+            "command": f"python train.py --model_path {root} -r 2",
+            "python": "3.10.21",
+            "torch": "2.7.1+cu128",
+            "gpu": "NVIDIA GeForce RTX 4090",
+            "dataset_manifest_sha256": "d" * 64,
+            "aligned_prior_sha256": "e" * 64,
+            "training_config": {
+                "semantic_seed": 0,
+                "resolution": 2,
+                "iterations": iteration,
+                "evaluation_iterations": [iteration],
+            },
+        }
+        (root / "g0_run_contract.json").write_text(
+            json.dumps(launcher, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        (root / "launcher.log").write_text("completed\n", encoding="utf-8")
+        if role == "e0":
+            core = {
+                "seed": 0,
+                "core_shadow_mode": False,
+                "enable_observation_calibration": False,
+                "enable_dual_reliability": False,
+                "enable_abstention": False,
+                "enable_parameter_routing": False,
+                "enable_gradient_projection": False,
+                "enable_reliability_lifecycle": False,
+            }
+            resolved = {
+                "training_path": "legacy",
+                "model": {"resolution": 2},
+                "optimization": {"iterations": iteration},
+                "core": core,
+            }
+            identity = {"git_commit": commit, "git_dirty": False, "seed": 0}
+            (root / "resolved_config.json").write_text(
+                json.dumps(resolved, sort_keys=True) + "\n", encoding="utf-8"
+            )
+            (root / "run_identity.json").write_text(
+                json.dumps(identity, sort_keys=True) + "\n", encoding="utf-8"
+            )
 
     def _write_synthetic_triplet(self, root, *, iteration=8):
         run_directories = {}
@@ -69,6 +123,7 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
             directory = root / role
             self._write_synthetic_run(
                 directory,
+                role=role,
                 count=count,
                 final_points=final_points,
                 iteration=iteration,
@@ -358,6 +413,127 @@ class FeatureOffTripletAuditTests(unittest.TestCase):
         self.assertNotIn("gaussian_count", topology_exact)
         self.assertIn("capture.xyz.trailing_shape", topology_exact)
         self.assertIn("checkpoint.gaussian_count", topology_scalars)
+
+    def test_behavioral_schema_three_keeps_old_modes_and_partitions_metrics(self):
+        # Catches a global gate change or silent deletion of internal summaries.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+
+        with TemporaryDirectory() as temporary_directory:
+            runs = self._write_synthetic_triplet(Path(temporary_directory))
+            schema_one = build_report(runs, 8, exploratory=True)
+            schema_two = build_report(runs, 8, exploratory=True, topology_aware=True)
+            schema_three = build_report(
+                runs, 8, exploratory=True, topology_aware=True, behavioral_g0=True
+            )
+
+        self.assertEqual(schema_one["schema_version"], 1)
+        self.assertEqual(schema_two["schema_version"], 2)
+        self.assertEqual(schema_three["schema_version"], 3)
+        old_by_name = {item["name"]: item for item in schema_two["scalar_metrics"]}
+        hard = {item["name"] for item in schema_three["scalar_metrics"]}
+        diagnostic = {
+            item["name"]: item for item in schema_three["diagnostic_scalar_metrics"]
+        }
+        self.assertEqual(
+            hard,
+            {"checkpoint.gaussian_count", "run.final_points",
+             "evaluation[8:train].l1", "evaluation[8:train].psnr"},
+        )
+        self.assertIn("capture.xyz.channel_000.mean", diagnostic)
+        self.assertIn("optimizer.xyz.exp_avg.row_l2.q99", diagnostic)
+        self.assertEqual(set(old_by_name), hard | set(diagnostic))
+        self.assertFalse(hard & set(diagnostic))
+        for name, item in diagnostic.items():
+            self.assertEqual(item, old_by_name[name])
+        self.assertEqual(schema_three["numeric_fields"], schema_two["numeric_fields"])
+
+    def test_behavioral_without_topology_rejects_before_checkpoint_loading(self):
+        # Catches accepting an ambiguous schema-3 invocation after artifact reads.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+
+        with TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            runs = {role: root / role for role in ("b1", "b2", "e0")}
+            with patch(
+                "scripts.diagnostics.audit_feature_off_triplet.load_checkpoint",
+                side_effect=AssertionError("checkpoint was read"),
+            ) as load:
+                with self.assertRaisesRegex(ValueError, "topology-aware"):
+                    build_report(runs, 8, exploratory=True, behavioral_g0=True)
+                load.assert_not_called()
+
+    def test_behavioral_missing_completion_is_a_hard_failure(self):
+        # Catches treating an incomplete training log as an internal diagnostic.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+        from scripts.diagnostics.compare_feature_off import evaluate_triplet_report
+
+        with TemporaryDirectory() as temporary_directory:
+            runs = self._write_synthetic_triplet(Path(temporary_directory))
+            log = runs["e0"] / "train.log"
+            log.write_text(
+                log.read_text(encoding="utf-8").replace("Training complete.\n", ""),
+                encoding="utf-8",
+            )
+            report = build_report(
+                runs, 8, exploratory=True, topology_aware=True, behavioral_g0=True
+            )
+
+        failures = evaluate_triplet_report(report)["exact_failures"]
+        self.assertIn("log.training_complete_count", failures)
+
+    def test_behavioral_duplicate_train_evaluation_is_a_hard_failure(self):
+        # Catches a duplicated boundary record that the old presence-only gate misses.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+        from scripts.diagnostics.compare_feature_off import evaluate_triplet_report
+
+        with TemporaryDirectory() as temporary_directory:
+            runs = self._write_synthetic_triplet(Path(temporary_directory))
+            log = runs["e0"] / "train.log"
+            log.write_text(
+                log.read_text(encoding="utf-8")
+                + "[ITER 8] Evaluating train: L1 0.1 PSNR 20.0\n",
+                encoding="utf-8",
+            )
+            report = build_report(
+                runs, 8, exploratory=True, topology_aware=True, behavioral_g0=True
+            )
+
+        failures = evaluate_triplet_report(report)["exact_failures"]
+        self.assertIn("evaluation.iteration_8.train_count", failures)
+
+    def test_behavioral_empty_required_artifact_is_a_hard_failure(self):
+        # Catches treating mere path existence as complete evidence.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+        from scripts.diagnostics.compare_feature_off import evaluate_triplet_report
+
+        with TemporaryDirectory() as temporary_directory:
+            runs = self._write_synthetic_triplet(Path(temporary_directory))
+            (runs["e0"] / "cfg_opts").write_bytes(b"")
+            report = build_report(
+                runs, 8, exploratory=True, topology_aware=True, behavioral_g0=True
+            )
+
+        failures = evaluate_triplet_report(report)["exact_failures"]
+        self.assertIn("artifact.cfg_opts.nonempty", failures)
+
+    def test_behavioral_gpu_peak_and_wall_time_are_hard_safety_gates(self):
+        # Catches allowing a feature-off resource regression as diagnostic only.
+        from scripts.diagnostics.audit_feature_off_triplet import build_report
+        from scripts.diagnostics.compare_feature_off import evaluate_triplet_report
+
+        with TemporaryDirectory() as temporary_directory:
+            runs = self._write_synthetic_triplet(Path(temporary_directory))
+            (runs["e0"] / "gpu_peak_mib.txt").write_text("23000\n", encoding="utf-8")
+            (runs["e0"] / "end_utc.txt").write_text(
+                "2026-09-14T00:03:01Z\n", encoding="utf-8"
+            )
+            report = build_report(
+                runs, 8, exploratory=True, topology_aware=True, behavioral_g0=True
+            )
+
+        failures = evaluate_triplet_report(report)["exact_failures"]
+        self.assertIn("resource.gpu_peak_below_22gib", failures)
+        self.assertIn("resource.e0_wall_within_baseline_2x", failures)
 
     def test_cli_topology_aware_writes_exploratory_schema_two(self):
         from scripts.diagnostics.audit_feature_off_triplet import main
