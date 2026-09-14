@@ -22,6 +22,7 @@ from scripts.diagnostics.compare_feature_off import (  # noqa: E402
     evaluate_triplet_report,
     load_run,
 )
+from scripts.diagnostics.behavioral_g0 import evaluate_behavioral_report  # noqa: E402
 
 
 ROLES = ("b1", "b2", "e0")
@@ -1260,6 +1261,9 @@ def main(argv=None):
     parser.add_argument("--evaluation-iterations", type=int, nargs="*")
     parser.add_argument("--exploratory", action="store_true")
     parser.add_argument("--topology-aware", action="store_true")
+    parser.add_argument("--behavioral-g0", action="store_true")
+    parser.add_argument("--confirmation-contract", type=Path)
+    parser.add_argument("--expected-confirmation-sha")
     parser.add_argument("--expected-baseline-commit")
     parser.add_argument("--expected-e0-commit")
     parser.add_argument("--expected-dataset-sha")
@@ -1272,6 +1276,14 @@ def main(argv=None):
         "e0": args.e0.resolve(),
     }
     try:
+        if args.behavioral_g0 and not args.topology_aware:
+            raise ValueError("behavioral G0 requires topology-aware mode")
+        if args.behavioral_g0 and not args.exploratory:
+            if not args.confirmation_contract or not args.expected_confirmation_sha:
+                raise ValueError("formal behavioral G0 requires a hash-pinned confirmation contract")
+            raise ValueError("formal behavioral G0 confirmation is not yet implemented")
+        if (args.confirmation_contract or args.expected_confirmation_sha) and not args.behavioral_g0:
+            raise ValueError("confirmation contract requires behavioral G0 mode")
         if args.iteration <= 0:
             raise ValueError("iteration must be positive")
         if not _output_is_outside_runs(args.output, run_directories):
@@ -1281,15 +1293,18 @@ def main(argv=None):
             args.iteration,
             exploratory=args.exploratory,
             topology_aware=args.topology_aware,
+            behavioral_g0=args.behavioral_g0,
             evaluation_iterations=args.evaluation_iterations,
             expected_baseline_commit=args.expected_baseline_commit,
             expected_e0_commit=args.expected_e0_commit,
             expected_dataset_sha=args.expected_dataset_sha,
             expected_prior_sha=args.expected_prior_sha,
         )
-        report["gate"] = finalize_gate(
-            evaluate_triplet_report(report), exploratory=args.exploratory
+        gate = (
+            evaluate_behavioral_report(report, set(report["expected_diagnostic_names"]))
+            if args.behavioral_g0 else evaluate_triplet_report(report)
         )
+        report["gate"] = finalize_gate(gate, exploratory=args.exploratory)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
             json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
