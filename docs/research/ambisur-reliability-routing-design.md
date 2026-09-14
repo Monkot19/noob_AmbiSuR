@@ -1022,6 +1022,22 @@ topology 前日志/PLY 数量、topology 后 checkpoint 数量分别作为两个
 
 审计器必须通过显式 `--topology-aware` 选择本合同并输出 schema version 2；默认 schema-1 路径继续保留既有 500 exploratory replay 和旧调用语义。8k 确认命令缺少该显式开关时不得按本修订判为 G0 PASS。
 
+#### 可观测行为等价修订（2026-09-11 已批准方案 A）
+
+2026-09-10 的正式 schema-2 结果保持原合同下的有效 FAIL，不追溯改写：105 个 exact invariants、固定形状 Tensor、五个 evaluation 边界及 topology 前/后 count 均通过，但 1,926 个 Gaussian capture/Adam moment summaries 中 343 个超过逐项 $2d_B$ 门。失败全部位于内部随机数值轨迹，并未观察到外显质量、运行安全、配置或 provenance 回归。该结果暴露出：仅用两次 baseline 为大量相关内部统计分别估计局部随机尺度，并要求全部零失败，会被近零 $d_B$ 与多重全合取极值支配，超出了 G0“Core 全关时无可观测训练语义或质量回归”的目标。
+
+因此，后续 G0 使用显式 behavioral-equivalence 合同。以下三类仍是**硬门**：
+
+1. exact/provenance：角色 commit、clean 状态、canonical data/prior SHA、共同有效配置、seed、Core 全关与 `training_path=legacy`、checkpoint schema/字段/dtype、Gaussian trailing shape、optimizer groups/hyperparameters/state keys/steps，以及在 unseen E0 启动前冻结的 confirmation contract identity/路径/命令；
+2. safety/completeness：必需 artifact、训练与五个评价边界完整、零 error/nonfinite、无额外重复 backward、资源无异常持续增长、审计前后输入和运行 artifact 不变；
+3. observable numeric：iteration 500、1000、5001、7001、8000 的 L1/PSNR，topology 前日志/PLY count、topology 后 checkpoint count，以及非 Gaussian 索引的固定形状 `app_model` Tensor。标量用绝对差，固定 Tensor 用 RMSE/MAE，继续采用既有 $d_B=0$ 时 exact、$d_B>0$ 时 $d_E\le 2d_B$，不得事后提高 factor。
+
+13 个 Gaussian capture Tensor 与 12 个 Gaussian-indexed Adam `exp_avg/exp_avg_sq` 仍须完整生成既定 1,926 个 permutation-invariant summaries，保留每项 $d_B,d_E$、最近 baseline、ratio、绝对距离与 outlier 标记；但这些**内部数值 outlier 仅作诊断**，单项或多项超过 $2d_B$ 不再否决 G0。其字段存在性、名称唯一性、数量、dtype、trailing shape、optimizer 结构/step、空值与 finite 检查仍属于硬门；不得删减失败 summary、匹配/补齐/截断 Gaussian，或把 diagnostic-only 解释为无需计算。
+
+审计器新增显式 behavioral 模式并输出新的 schema version 3；默认 schema-1 与显式 `--topology-aware` schema-2 的历史行为保持不变。schema-3 必须将 hard failures 与 diagnostic outliers 分栏，最终 `g0_equivalent` 只由上述 exact/safety/observable hard gates 决定，同时完整报告内部 outlier。缺少 behavioral 显式开关不得按本修订判定通过。
+
+由于本修订是在观察首个 E0 8k 后形成，该 E0 只作为 retrospective evidence，不能用来确认新合同。规格、测试与 comparator 在任何新结果产生前冻结后，必须先以 preflight 记录新的 confirmation id、B1/B2/E0 绝对路径、exact commits、数据/prior SHA、seed、分辨率、迭代/评价点和 normalized commands，并证明新 E0 输出路径尚不存在；该 confirmation contract 的内容哈希随批准记录冻结。随后复用不可变 B1/B2 baseline envelope，只补跑一个 exact `a26082154889ed539322425347af5a57a859a52f` 的全新 Tool Room r2/seed0/8k E0；其 runtime、数据、配置、评价点和 private-view 纪律保持不变。非 exploratory 的 schema-3 审计必须消费并逐项核对这份 contract，现有 E0 因没有对应的 pre-launch contract 永远只能以 exploratory/retrospective 身份回放。只有该 unseen E0 的所有 hard gates 通过，才接受修订后的 G0；任何 hard failure 均停止并报告，不再修改合同。G0 PASS 只允许请求 D0 执行，不自动授权 D0/C1、tag 或方法源码改动。
+
 本合同只处理独立训练轨迹的 G0 验收，**不替代或放宽 C1 的同一状态 GPU 单步 residual decomposition gradient oracle**。本次批准仅同步规格与规划文档；8k 启动、D0/C1、方法源码和 tag 仍须遵守各自授权关口。
 
 未通过 G0 不得解释任何方法收益。

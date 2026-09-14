@@ -1,6 +1,6 @@
 # G0 Topology-Aware Feature-Off Equivalence Design
 
-**Status:** approved approach A; written specification awaiting user review
+**Status:** historical schema-2 acceptance contract; its 2026-09-10 formal FAIL remains valid. For future G0 acceptance, its per-summary numeric hard gate is superseded by the approved behavioral-equivalence amendment in `2026-09-11-g0-behavioral-equivalence-design.md`. Summary construction and diagnostics remain active.
 
 **Authority:** `docs/research/ambisur-reliability-routing-design.md` §13 remains the highest-priority method specification. This file records the implementation-facing form of its 2026-09-04 topology-aware amendment.
 

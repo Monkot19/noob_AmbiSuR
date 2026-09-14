@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0 已完成；E0 工程、既有三元审计器与 500-run 探索性回放已完成。独立 Tool Room 8k 的 B1/B2 已确认 baseline 自重复在首次 eligible densification 后发生 topology 分叉。经批准的 topology-aware comparator 已完成 RED→GREEN，并在 clean AutoDL `e781fef23f4f2adec5382808108e7e7e3331e11a` 通过 focused 16/16、全仓 54/54、编译、CLI 与 clean-status 组件门；B1/B2 schema-2 dry audit 及纠正 post-validation 也已通过。当前冻结文档证据并准备既有 E0 8k 启动门；E0 尚未启动，factor=2.0 未放宽，也不开始 D0/C1。
+Phase 0、E0 工程及 Tool Room 8k B1/B2/E0 均已完成；正式 schema-2 G0 因 343/1,938 项内部数值 summary 失败保持有效 `G0=FAIL`，D0/C1 仍停止。用户已批准 behavioral schema-3 合同及只读比较器 TDD。schema-3 exploratory CLI 在 AutoDL targeted 3/3、full 75/75 PASS；历史 schema-2 报告 SHA 逐字节重现、343 项失败未改，旧 E0 的 schema-3 exploratory 保留 1,926 诊断/343 outlier 且不晋级、输入 hash 不变。正式合同 test-only `ac910266b97247517900968ed2f42c6e2c344b6e` 得到预期 RED，接线 `301e69781861c32e61100251e5ebe150940a4e7c` 在 AutoDL formal targeted 3/3、full 78/78 PASS、Git clean、无训练。下一门是冻结并审查 pre-launch 合同、运行一个全新 Tool Room E0 8k、执行正式 schema-3 G0；硬门通过后才可申请 D0。当前 G0 仍 FAIL，D0/C1 未授权。
 
 ## Phases
 
@@ -68,7 +68,7 @@ Phase 0 已完成；E0 工程、既有三元审计器与 500-run 探索性回放
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
 - [ ] 验证所有新增开关关闭时等价
-- **Status:** g0_8k_baseline_pair_strict_count_failure_pending_diagnosis
+- **Status:** g0_schema3_tasks1_2_local_green_task3_gpu_red_pending_test_only_sync
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计
@@ -109,6 +109,12 @@ Phase 0 已完成；E0 工程、既有三元审计器与 500-run 探索性回放
 
 | Date | Error | Attempt | Resolution |
 |---|---|---:|---|
+| 2026-09-14 | 本地全仓 `unittest discover` 的 64 项中 2 个模块导入错误、21 项跳过 | 1 | `Python 3.14.7` 的 `importlib.util.find_spec` 显示 Torch/NumPy 均不存在；失败栈分别起于既有 `train.py::import torch` 和 `tests/test_seed_contract.py::import numpy`，相关文件本轮未改。未安装依赖或改测试；纯比较器分组单独验证，Torch RED 留待用户 AutoDL。初次组合命令最终 rc 被后续检查覆盖，已按测试输出明确记为全仓失败 |
+| 2026-09-14 | Windows 本地 symlink 逃逸用例被系统权限拒绝创建 | 1 | 单测显式 skip；不把该安全边界写为本地通过，列为 AutoDL Linux 必测 |
+| 2026-09-14 | 纯判定器 Task 1 完成后尝试以部分行匹配勾选实施计划，`apply_patch` 未匹配到含完整正文的 checkbox 行 | 1 | 未写入任何内容；改为在 Task 1 标题下增加独立执行状态，保留原始计划正文和未来服务器复核 checklist |
+| 2026-09-14 | 实施计划只读 `rg` 首次把不存在的 `core` 目录列入搜索目标 | 1 | 该调用返回路径不存在但其余只读输出有效；以已确认的 `reliability/runtime.py`、`train.py` 和现有测试定位真实配置字段，未改变源码或实验资产 |
+| 2026-09-11 | 文档自审的占位符正则先误判 `progress.md` 的历史检查术语，收窄后又命中本错误记录列出的 sentinel 示例 | 2 | 两轮自审均停止且未提交；保留严格 sentinel 扫描，但错误日志不再逐字复述被检查标记，随后从 allowlist 起完整重跑 |
+| 2026-09-11 | 规格自审 `rg` 同时引用了不存在的 `tests/gpu/test_feature_off_triplet_cli.py`，该路径返回 file-not-found | 1 | 只读调用未改变仓库；随后以 `rg --files tests/gpu` 确认当前只有 `test_feature_off_triplet_audit.py` 承载 CLI 测试，后续计划使用实际文件名 |
 | 2026-09-10 | 文档提交前 allowlist PowerShell 把 tracked/untracked 两组输出构造成嵌套数组，产生假 mismatch | 1 | 检查在暂存/提交前停止，仓库内容未变；改为分别追加到扁平字符串数组后再 `Sort-Object -Unique`，不重复嵌套写法 |
 | 2026-09-10 | 首次 stdlib dry-audit 外围验证命令含异常文本污染：正确 JSON 键与 Bash `-eq 0` 被改写 | 1 | 核心 audit 本身 exit 0、schema 2、exact/numeric failure 均 0，artifact after-hash 全 OK；保留现有 report/resource，仅运行短小的只读 post-validation，不重跑 91 s 核心审计 |
 | 2026-09-10 | AutoDL 不提供 `/usr/bin/time`，只有 Bash `time` 关键字 | 1 | 用户在 dry-audit preflight 前报告环境差异；未执行 comparator 或训练。资源测量改为同一 Python 进程内的标准库 `time.perf_counter()` 与 `resource.getrusage(RUSAGE_SELF).ru_maxrss`，不安装依赖、不改变 schema/hash/cardinality 门 |
@@ -189,7 +195,7 @@ Phase 0 已完成；E0 工程、既有三元审计器与 500-run 探索性回放
 - [x] **失败测试与最小实现：** 三方 envelope、zero-self exact、双距离、nearest baseline、exact invariant、缺失/nonfinite/shape、learned-hash diagnostic、legacy comparator 兼容和真实 checkpoint 合同均已按 RED→GREEN 实现；版本化 comparator 为 `3db69bb3b5a7ae86d082e16158dd2d58609f5b29`。
 - [x] **CPU/只读复核：** AutoDL hardened suite 43/43 PASS，真实 B1 checkpoint schema probe PASS；版本化 500 replay exact failure 0、64/64 tensor 门与 2/2 scalar 门通过，且强制 `exploratory=true/g0_equivalent=false`。
 - [x] **8k 运行单与授权：** baseline `d6f15c8891a53800d5e3100f95817a7dd7f98e2f` 两次、E0 `a26082154889ed539322425347af5a57a859a52f` 一次；Tool Room `-r 2`/seed 0、同 snapshot/GPU/runtime，串行、三个独立 private view/output；评价点 `500 1000 5001 7001 8000`，save/checkpoint 仅 8000。用户已于 2026-09-04 明确批准；下一步仅执行不启动训练的 preflight，复核后再逐次给 B1/B2/E 命令。
-- [ ] **晋级/停止：** 覆盖 600/1000/5001/7001 后按设计 §13 逐门验收；全部 exact、count、permutation-invariant summary、fixed-shape、评价与安全门通过才接受确认性 G0。任一门失败即停止，不跳进 D0/C1并保留全部结果。
+- [x] **原 schema-2 晋级/停止合同已执行：** 8k 覆盖 600/1000/5001/7001；正式审计因 343 个内部 numerical summaries 超过逐项门而按当时冻结合同停止并保留全部结果。该历史 FAIL 不追溯改写。
 - [x] **8k 已执行证据（2026-09-04）：** preflight PASS；B1 exit=0、completion gate 与保存顺序 reconciliation PASS；B2 exit=0、completion gate PASS，server 恢复 clean `research/core-routing@5fc8866d6afe287b4e27a341b2a9ecb69d266c74`。证据均为用户终端回传。
 - [x] **当前停止：** B1/B2 topology 前日志/launcher 点数分别 1,502,365/1,509,961，已违反同阶段跨 run 数量 exact 门；E0 未运行，完整三元 comparator 未运行，不能声明 G0 等价或 E0 实现失败。factor=2.0 只处理数值距离，不能消除此严格失败。
 - [x] **只读诊断完成：** B2 post checkpoint=1,366,889，B1=1,360,857（差 6,032，0.443%）；所有 Gaussian/Adam 张量仅在由点数导致的第一维不同，dtype 均为 float32。完整 `cfg_args/cfg_opts`、normalized command、launcher contract、optimizer group/structure/step 全相同，输入 before/after hash 相同，两个日志均无错误/nonfinite；显示日志从 600 轮开始为 206,147/206,146。该证据支持“baseline 自重复在首次 densification 产生 topology 分叉”，但不证明底层 CUDA 非确定性的具体来源。
@@ -198,7 +204,11 @@ Phase 0 已完成；E0 工程、既有三元审计器与 500-run 探索性回放
 - [x] **书面规格 review 与 TDD RED：** 用户已批准规格和 inline execution；test-only `59ae1c9` 在 AutoDL Python 3.10/Torch 上运行 12 项，既有 6 项 PASS，新增 6 项仅因 `summarize_gaussian_tensor` / `gaussian_summary_metrics` 缺失而 ERROR，符合预期 RED；测试后工作树 clean。
 - [x] **topology-aware comparator 与 dry audit GREEN：** summary helpers 与显式 `--topology-aware` / schema v2 已按 RED→GREEN 实现；clean AutoDL `e781fef...` focused 16/16、全仓 54/54、编译/CLI/clean-status 全部通过。B1/B2 exploratory dry audit 的 schema、cardinality、资源、artifact hash 与 clean-status 门也已通过；冻结文档证据后即可回到既有 E0 8k 启动门。
 - [x] **书面规格与执行已通过：** 用户回复“规格通过”并批准执行；`docs/superpowers/plans/2026-09-04-g0-topology-aware-comparator.md` 中的 test-only RED、summary helper、schema-2 integration、AutoDL full GREEN 和 B1/B2 exploratory dry audit 已全部完成，未改方法/训练源码或创建 tag。
-- **建议后续 commits：** `test: define G0 empirical envelope contract`、`feat: add read-only three-run equivalence comparator`；验证文档用 `docs:`。不新增 E0 tag，不移动 `c0-baseline`。
+- [x] **E0 8k 完成（2026-09-10）：** exact `a260821...`、Tool Room r2/seed0/8k；五个评价边界、checkpoint/PLY/app、feature-off metadata、canonical/private-prior after-hash、零 error/nonfinite 和 clean branch restore 全部通过。最终 L1 `0.0297361705`、PSNR `26.0293182`、pre-topology points `1,496,374`、peak GPU `11,902 MiB`。
+- [x] **正式 G0 报告有效但数值门失败：** schema 2、105 exact invariants、1 fixed numeric、1,938 scalar、25 Gaussian fields/1,926 summaries；exact/fixed/count/evaluation/provenance 无失败，343 个失败全部为 capture（122）或 Adam moment（221）。报告 hash `7f513603171c28ae546760e3a979616aa7bb39cdec404e9c06a3bf6428fd9e5f`；artifact before/after 全部一致。
+- [x] **architectural clarification 已批准并写入规格：** behavioral schema-3 的 exact/provenance、safety/completeness、observable numeric 与 internal-structure hard gates 已冻结；1,926 个 capture/Adam numerical summaries 全量 diagnostic-only。当前 E0 只作 retrospective evidence；冻结 B1/B2 与一个 unseen E0 组成新 confirmation。书面规格 review、实施计划、TDD comparator 与新 E0 通过前，不得回写既有 FAIL 或进入 D0/C1。
+- [x] **书面规格已确认，实施计划已写：** 用户 2026-09-14 回复“确认”；`docs/superpowers/plans/2026-09-14-g0-behavioral-comparator.md` 将 schema-3 pure gate、pre-launch contract、报告分层/安全门、CLI/旧报告回放及 unseen E0 preflight 分为五个可审查任务。当前仅计划文件，不授权 TDD 源码改动或服务器操作。
+- **建议后续 commits：** 规格批准后先用 `test: define behavioral G0 acceptance contract` 固定 schema-1/2 兼容与 schema-3 RED，再以 `feat: add schema-3 behavioral G0 mode` 最小实现；文档使用独立 `docs:` commit。不新增 E0 tag，不移动 `c0-baseline`。
 
 ## Scope Guardrails
 
