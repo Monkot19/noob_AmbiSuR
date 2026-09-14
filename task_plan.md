@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0 工程及 Tool Room 8k B1/B2/E0 均已完成；正式 schema-2 G0 因 343/1,938 项内部数值 summary 失败保持有效 `G0=FAIL`，D0/C1 仍停止。用户已批准 behavioral schema-3 合同及只读比较器 TDD。schema-3 exploratory CLI 在 AutoDL targeted 3/3、full 75/75 PASS；历史 schema-2 报告 SHA 逐字节重现、343 项失败未改，旧 E0 的 schema-3 exploratory 保留 1,926 诊断/343 outlier 且不晋级、输入 hash 不变。正式合同 test-only `ac910266b97247517900968ed2f42c6e2c344b6e` 得到预期 RED，接线 `301e69781861c32e61100251e5ebe150940a4e7c` 在 AutoDL formal targeted 3/3、full 78/78 PASS、Git clean、无训练。下一门是冻结并审查 pre-launch 合同、运行一个全新 Tool Room E0 8k、执行正式 schema-3 G0；硬门通过后才可申请 D0。当前 G0 仍 FAIL，D0/C1 未授权。
+Phase 0、E0 工程及 Tool Room 8k B1/B2/E0 均已完成；正式 schema-2 G0 因 343/1,938 项内部数值 summary 失败保持有效 `G0=FAIL`，D0/C1 仍停止。用户已批准 behavioral schema-3 合同及只读比较器 TDD。schema-3 exploratory CLI 在 AutoDL targeted 3/3、full 75/75 PASS；历史 schema-2 报告 SHA 逐字节重现、343 项失败未改，旧 E0 的 schema-3 exploratory 保留 1,926 诊断/343 outlier 且不晋级、输入 hash 不变。正式合同接线 `301e69781861c32e61100251e5ebe150940a4e7c` 在 AutoDL formal targeted 3/3、full 78/78 PASS；规格/计划已冻结到 `ff319d5a4ddc35ec48914111899da3146d86fc31`。新 unseen E0 的 pre-launch 合同已在服务器 diagnostics 下冻结，ID `g0_schema3_unseen_e0_20260914T080510Z_4fc982625600`、合同 SHA `16ec0f8c9161ec5254c337ab918eda096023af07aceca5e6a2a80a6a823b0ab3`、独立预检记录 SHA `9f2051937e740bdfbe501601ad51c17eeffc09f52dd0f6f20bd0a13ac920882f`；run/view 尚未创建，未训练。下一门是用户单独批准一次新 Tool Room E0 8k、完成后正式 schema-3 G0；硬门通过后才可申请 D0。当前 G0 仍 FAIL，D0/C1 未授权。
 
 ## Phases
 
