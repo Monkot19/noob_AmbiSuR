@@ -479,6 +479,8 @@ def test_feature_off_never_computes_or_consumes_joint_gate(core_off_spy):
 
 **Feature-off / CPU / GPU：** all D0 flags off 重跑 E0 500；GPU accumulator 对 oracle；500-iter D0 smoke 用 refresh interval 100 仅作工程测试；Tool Room seed 0 正式 D0 运行到 7k，默认 refresh 1000，GT 只离线分析。
 
+**2026-09-15 真实 shadow 工程 smoke（PASS，非正式 D0）：** 用户在 clean `research/core-routing@3a54a881193701759ca9c55d6e70384d627f302c` 运行 Tool Room r2/seed0/150 iteration，`--core_shadow_mode --d0_refresh_interval 100`。唯一 refresh 位于 iteration 100；训练 exit 0、82 s、峰值 4,828 MiB、0 error/nonfinite、无 GT 引用、canonical dataset/private prior after-SHA 不变、Git clean。`iteration_000100.npz` 为 200,000 行且字段/shape/dtype/finite 合同通过；checkpoint 100/150 均为 200,000 Gaussian、runtime refresh count=1/last=100，21 个 evidence state tensors 在无第二次刷新时逐项 exact 保持，optimizer step 分别 100/149。首次刷新 `V_g=0` 且 stable 全 Bypass，与 first-history invalid 和 `H_enter=3` 合同相容，但尚未由后续刷新证明 G channel 激活，故不得据此晋级 G1 或解释方法质量。下一工程门应使用 refresh interval 100 的 500 iteration run 获得五次刷新且仍早于首次 densification 600；正式 D0 仍按 7k/default 1000 与离线 GT 合同另行批准。
+
 **晋级：** G1：N AUROC>0.60 且比 `max(A,1-S)` 对应较优单项至少+0.03；risk-coverage合理、状态不被 Bypass/Abstain单一占据；D0 reconstruction/grad/topology等价。**停止：** G1失败、joint coverage 近零或导致几乎全 Abstain、state collapse、CUDA accumulator不等于 oracle、任何 GT 路径进入训练/checkpoint。coverage 失败只报告，不得自动改用 Delta、降低 `tau_Z` 或绕过 validity。
 
 **Commits/tags:** `test: specify Core evidence and arbitration`; `feat: add forward-only Gaussian evidence accumulation`; `feat: add D0 shadow reliability diagnostics`. No D0 tag.
