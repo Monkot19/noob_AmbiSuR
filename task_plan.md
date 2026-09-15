@@ -75,7 +75,7 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 - [ ] 实现双可靠性、K、Delta
 - [ ] 实现五状态和日志，但不改变训练
 - [ ] 通过 G1
-- **Status:** in_progress_steps1_2_green_step3_cuda_red_observed_green_candidate
+- **Status:** in_progress_steps1_2_3_green_step4_state_container_red
 
 ### Phase 3：C1–C3 粗粒度执行
 - [ ] C1 需求门控
@@ -166,6 +166,7 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 | 2026-09-04 | Task 2 测试与计划状态的首个补丁重复更新同一计划文件，工具拒绝 | 1 | 补丁未写入；拆成测试/记录与单独计划状态两个事务，未接触生产代码 |
 | 2026-09-04 | Task 2 首轮 39/39 GREEN 后 code review 发现真实 producer 合同未被 fixture 覆盖 | 1 | 对照 `GaussianModel.training_setup` 确认 `knn_f` 可无 Adam state，对照 `collect_run_identity` 确认字段是 `git_commit/git_dirty`；在 500 replay 前新增真实结构回归测试并修正，未读取或修改实验资产 |
 | 2026-09-04 | Task 3 记录补丁误用了不存在的重复 findings 上下文，事务拒绝 | 1 | 补丁未写入；重新读取精确上下文后分文件更新，未影响 comparator、实验资产或 Git 状态 |
+| 2026-09-15 | D0 CUDA GREEN 首次构建安全门找不到 `nvcc` | 1 | 构建前停止、未改仓库/环境包。只读审计确认 Toolkit 12.8 位于 `/usr/local/cuda-12.8`，只是 shell `PATH/CUDA_HOME` 未导出；第二次仅临时导出环境并从 private temp copy 构建，随后 focused 5/5 与 full 116/116 PASS |
 
 ### 2026-09-03 E0 paired-500 authorization
 
