@@ -5,6 +5,7 @@ from reliability.config import CoreConfig
 from reliability.runtime import (
     build_checkpoint_payload,
     core_config_from_namespace,
+    parse_checkpoint_payload,
     select_training_path,
 )
 
@@ -49,6 +50,31 @@ class CoreRuntimeTests(unittest.TestCase):
         self.assertIs(payload["gaussian_state"], gaussian_state)
         self.assertEqual(payload["iteration"], 7001)
         self.assertIs(payload["core_state"], core_state)
+
+    def test_checkpoint_parser_preserves_legacy_and_core_contracts(self):
+        legacy_state = object()
+        legacy = parse_checkpoint_payload(
+            (legacy_state, 7001), CoreConfig()
+        )
+        self.assertEqual(legacy, (legacy_state, 7001, None))
+
+        core_state = {"schema_version": 1, "refresh_count": 7}
+        core_config = CoreConfig(core_shadow_mode=True)
+        payload = build_checkpoint_payload(
+            legacy_state, 7001, core_config, core_state=core_state
+        )
+        core = parse_checkpoint_payload(payload, core_config)
+        self.assertEqual(core, (legacy_state, 7001, core_state))
+
+    def test_checkpoint_parser_rejects_path_schema_mismatch(self):
+        with self.assertRaisesRegex(ValueError, "legacy checkpoint"):
+            parse_checkpoint_payload(
+                {"schema_version": 1}, CoreConfig()
+            )
+        with self.assertRaisesRegex(ValueError, "Core checkpoint"):
+            parse_checkpoint_payload(
+                (object(), 1000), CoreConfig(core_shadow_mode=True)
+            )
 
     def test_namespace_conversion_ignores_unrelated_options(self):
         namespace = SimpleNamespace(
