@@ -69,6 +69,11 @@ namespace FORWARD
 		int* out_observe,
 		float* out_all_map,
 		float* out_plane_depth,
+		const float* evidence_values,
+		const bool* evidence_validity,
+		const int evidence_channels,
+		float* evidence_numerator,
+		float* evidence_denominator,
 		const bool render_geo,
 		const float trunc_sigma,
 		const bool disable_trunc);

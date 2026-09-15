@@ -292,6 +292,11 @@ renderCUDA(
 	int* __restrict__ out_observe,
 	float* __restrict__ out_all_map,
 	float* __restrict__ out_plane_depth,
+	const float* __restrict__ evidence_values,
+	const bool* __restrict__ evidence_validity,
+	const int evidence_channels,
+	float* __restrict__ evidence_numerator,
+	float* __restrict__ evidence_denominator,
 	const bool render_geo,
 	const float trunc_sigma,
 	const bool disable_trunc)
@@ -382,6 +387,24 @@ renderCUDA(
 				continue;
 			}
 
+			// D0 diagnostics consume the same accepted alpha-compositing
+			// weight as color/all_map.  These atomics are forward-only and
+			// are disabled completely when evidence_channels is zero.
+			if (evidence_channels > 0)
+			{
+				const float weight = alpha * T;
+				for (int ch = 0; ch < evidence_channels; ch++)
+				{
+					const int pixel_offset = ch * H * W + pix_id;
+					if (evidence_validity[pixel_offset])
+					{
+						const int gaussian_offset = collected_id[j] * evidence_channels + ch;
+						atomicAdd(&(evidence_numerator[gaussian_offset]), weight * evidence_values[pixel_offset]);
+						atomicAdd(&(evidence_denominator[gaussian_offset]), weight);
+					}
+				}
+			}
+
 			// Eq. (3) from 3D Gaussian splatting paper.
 			for (int ch = 0; ch < CHANNELS; ch++)
 				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
@@ -449,6 +472,11 @@ void FORWARD::render(
 	int* out_observe,
 	float* out_all_map,
 	float* out_plane_depth,
+	const float* evidence_values,
+	const bool* evidence_validity,
+	const int evidence_channels,
+	float* evidence_numerator,
+	float* evidence_denominator,
 	const bool render_geo,
 	const float trunc_sigma,
 	const bool disable_trunc)
@@ -473,6 +501,11 @@ void FORWARD::render(
 		out_observe,
 		out_all_map,
 		out_plane_depth,
+		evidence_values,
+		evidence_validity,
+		evidence_channels,
+		evidence_numerator,
+		evidence_denominator,
 		render_geo,
 		trunc_sigma,
 		disable_trunc);

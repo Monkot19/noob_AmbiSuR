@@ -121,12 +121,135 @@ RasterizeGaussiansCUDA(
 		out_observe.contiguous().data<int>(),
 		out_all_map.contiguous().data<float>(),
 		out_plane_depth.contiguous().data<float>(),
+		nullptr,
+		nullptr,
+		0,
+		nullptr,
+		nullptr,
 		render_geo,
 		trunc_sigma,
 		disable_trunc,
 		debug);
   }
   return std::make_tuple(rendered, out_color, radii, out_observe, out_all_map, out_plane_depth, geomBuffer, binningBuffer, imgBuffer);
+}
+
+// D0-only forward bridge.  It reuses the exact rasterization weights but
+// exposes only detached weighted sums; the legacy autograd function and
+// backward ABI remain untouched.
+std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+RasterizeGaussiansWithEvidenceCUDA(
+	const torch::Tensor& background,
+	const torch::Tensor& means3D,
+    const torch::Tensor& colors,
+    const torch::Tensor& opacity,
+	const torch::Tensor& scales,
+	const torch::Tensor& rotations,
+	const float scale_modifier,
+	const torch::Tensor& cov3D_precomp,
+	const torch::Tensor& all_map,
+	const torch::Tensor& viewmatrix,
+	const torch::Tensor& projmatrix,
+	const float tan_fovx,
+	const float tan_fovy,
+    const int image_height,
+    const int image_width,
+	const torch::Tensor& sh,
+	const int degree,
+	const torch::Tensor& campos,
+	const bool prefiltered,
+	const bool render_geo,
+	const float trunc_sigma,
+	const bool disable_trunc,
+	const bool debug,
+	const torch::Tensor& evidence_values,
+	const torch::Tensor& evidence_validity)
+{
+  if (means3D.ndimension() != 2 || means3D.size(1) != 3) {
+    AT_ERROR("means3D must have dimensions (num_points, 3)");
+  }
+  TORCH_CHECK(evidence_values.is_cuda(), "evidence_values must be CUDA");
+  TORCH_CHECK(evidence_validity.is_cuda(), "evidence_validity must be CUDA");
+  TORCH_CHECK(evidence_values.scalar_type() == at::kFloat,
+      "evidence_values must be float32");
+  TORCH_CHECK(evidence_validity.scalar_type() == at::kBool,
+      "evidence_validity must be bool");
+  TORCH_CHECK(evidence_values.dim() == 3,
+      "evidence_values must have shape [E,H,W]");
+  TORCH_CHECK(evidence_validity.sizes() == evidence_values.sizes(),
+      "evidence_validity must match evidence_values");
+  TORCH_CHECK(evidence_values.size(1) == image_height &&
+      evidence_values.size(2) == image_width,
+      "evidence inputs must match raster dimensions");
+  TORCH_CHECK(evidence_values.device() == means3D.device() &&
+      evidence_validity.device() == means3D.device(),
+      "evidence inputs must share the means3D device");
+
+  const int P = means3D.size(0);
+  const int H = image_height;
+  const int W = image_width;
+  const int E = evidence_values.size(0);
+  auto float_opts = means3D.options().dtype(torch::kFloat32);
+
+  torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
+  torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
+  torch::Tensor out_observe = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
+  torch::Tensor out_all_map = torch::full({NUM_ALL_MAP, H, W}, 0, float_opts);
+  torch::Tensor out_plane_depth = torch::full({1, H, W}, 0, float_opts);
+  torch::Tensor evidence_numerator = torch::zeros({P, E}, float_opts);
+  torch::Tensor evidence_denominator = torch::zeros({P, E}, float_opts);
+
+  torch::Device device(torch::kCUDA);
+  torch::TensorOptions options(torch::kByte);
+  torch::Tensor geomBuffer = torch::empty({0}, options.device(device));
+  torch::Tensor binningBuffer = torch::empty({0}, options.device(device));
+  torch::Tensor imgBuffer = torch::empty({0}, options.device(device));
+  std::function<char*(size_t)> geomFunc = resizeFunctional(geomBuffer);
+  std::function<char*(size_t)> binningFunc = resizeFunctional(binningBuffer);
+  std::function<char*(size_t)> imgFunc = resizeFunctional(imgBuffer);
+
+  int rendered = 0;
+  if (P != 0)
+  {
+    int M = 0;
+    if (sh.size(0) != 0)
+      M = sh.size(1);
+
+    rendered = CudaRasterizer::Rasterizer::forward(
+      geomFunc, binningFunc, imgFunc,
+      P, degree, M,
+      background.contiguous().data<float>(),
+      W, H,
+      means3D.contiguous().data<float>(),
+      sh.contiguous().data_ptr<float>(),
+      colors.contiguous().data<float>(),
+      opacity.contiguous().data<float>(),
+      scales.contiguous().data_ptr<float>(),
+      scale_modifier,
+      rotations.contiguous().data_ptr<float>(),
+      cov3D_precomp.contiguous().data<float>(),
+      all_map.contiguous().data<float>(),
+      viewmatrix.contiguous().data<float>(),
+      projmatrix.contiguous().data<float>(),
+      campos.contiguous().data<float>(),
+      tan_fovx, tan_fovy, prefiltered,
+      out_color.contiguous().data<float>(),
+      radii.contiguous().data<int>(),
+      out_observe.contiguous().data<int>(),
+      out_all_map.contiguous().data<float>(),
+      out_plane_depth.contiguous().data<float>(),
+      evidence_values.contiguous().data<float>(),
+      evidence_validity.contiguous().data<bool>(),
+      E,
+      evidence_numerator.contiguous().data<float>(),
+      evidence_denominator.contiguous().data<float>(),
+      render_geo, trunc_sigma, disable_trunc, debug);
+  }
+
+  return std::make_tuple(
+      rendered, out_color, radii, out_observe, out_all_map,
+      out_plane_depth, evidence_numerator, evidence_denominator,
+      geomBuffer, binningBuffer, imgBuffer);
 }
 
 // Backward 桥：分配各输入的梯度 Tensor；截断配置只控制配对筛选，本身不会出现在返回的梯度 tuple 中。

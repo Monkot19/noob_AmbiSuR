@@ -45,6 +45,74 @@ def rasterize_gaussians(
         raster_settings,
     )
 
+def rasterize_gaussians_with_evidence(
+    means3D,
+    means2D,
+    means2D_abs,
+    sh,
+    colors_precomp,
+    opacities,
+    scales,
+    rotations,
+    cov3Ds_precomp,
+    all_map,
+    evidence_values,
+    evidence_validity,
+    raster_settings,
+):
+    """Run the D0 forward-only rasterizer and return detached sums."""
+    del means2D, means2D_abs  # The forward bridge computes screen means.
+    args = (
+        raster_settings.bg,
+        means3D,
+        colors_precomp,
+        opacities,
+        scales,
+        rotations,
+        raster_settings.scale_modifier,
+        cov3Ds_precomp,
+        all_map,
+        raster_settings.viewmatrix,
+        raster_settings.projmatrix,
+        raster_settings.tanfovx,
+        raster_settings.tanfovy,
+        raster_settings.image_height,
+        raster_settings.image_width,
+        sh,
+        raster_settings.sh_degree,
+        raster_settings.campos,
+        raster_settings.prefiltered,
+        raster_settings.render_geo,
+        raster_settings.trunc_sigma,
+        raster_settings.disable_trunc,
+        raster_settings.debug,
+        evidence_values.contiguous(),
+        evidence_validity.contiguous(),
+    )
+    with torch.no_grad():
+        (
+            _,
+            color,
+            radii,
+            out_observe,
+            out_all_map,
+            out_plane_depth,
+            evidence_numerator,
+            evidence_denominator,
+            _,
+            _,
+            _,
+        ) = _C.rasterize_gaussians_with_evidence(*args)
+    return (
+        color,
+        radii,
+        out_observe,
+        out_all_map,
+        out_plane_depth,
+        evidence_numerator,
+        evidence_denominator,
+    )
+
 class _RasterizeGaussians(torch.autograd.Function):
     @staticmethod
     def forward(
@@ -221,7 +289,21 @@ class GaussianRasterizer(nn.Module):
             
         return visible
 
-    def forward(self, means3D, means2D, means2D_abs, opacities, shs = None, colors_precomp = None, scales = None, rotations = None, cov3D_precomp = None, all_map=None):
+    def forward(
+        self,
+        means3D,
+        means2D,
+        means2D_abs,
+        opacities,
+        shs=None,
+        colors_precomp=None,
+        scales=None,
+        rotations=None,
+        cov3D_precomp=None,
+        all_map=None,
+        evidence_values=None,
+        evidence_validity=None,
+    ):
         
         raster_settings = self.raster_settings
 
@@ -244,6 +326,53 @@ class GaussianRasterizer(nn.Module):
             cov3D_precomp = torch.Tensor([])
         if all_map is None:
             all_map = torch.Tensor([])
+
+        evidence_requested = (
+            evidence_values is not None or evidence_validity is not None
+        )
+        if evidence_requested:
+            if evidence_values is None or evidence_validity is None:
+                raise ValueError(
+                    "evidence_values and evidence_validity must be provided together"
+                )
+            if evidence_values.requires_grad:
+                raise ValueError("evidence_values must not require gradients")
+            if evidence_values.ndim != 3 or evidence_validity.ndim != 3:
+                raise ValueError("evidence inputs must have shape [E,H,W]")
+            if evidence_values.shape != evidence_validity.shape:
+                raise ValueError("evidence inputs must have matching shapes")
+            expected_shape = (
+                raster_settings.image_height,
+                raster_settings.image_width,
+            )
+            if tuple(evidence_values.shape[1:]) != expected_shape:
+                raise ValueError("evidence inputs must match raster dimensions")
+            if evidence_values.dtype != torch.float32:
+                raise ValueError("evidence_values must be float32")
+            if evidence_validity.dtype != torch.bool:
+                raise ValueError("evidence_validity must be bool")
+            if not evidence_values.is_cuda or not evidence_validity.is_cuda:
+                raise ValueError("evidence inputs must be CUDA tensors")
+            if (
+                evidence_values.device != means3D.device
+                or evidence_validity.device != means3D.device
+            ):
+                raise ValueError("evidence inputs must share the Gaussian device")
+            return rasterize_gaussians_with_evidence(
+                means3D,
+                means2D,
+                means2D_abs,
+                shs,
+                colors_precomp,
+                opacities,
+                scales,
+                rotations,
+                cov3D_precomp,
+                all_map,
+                evidence_values,
+                evidence_validity,
+                raster_settings,
+            )
 
         # Invoke C++/CUDA rasterization routine
         return rasterize_gaussians(
