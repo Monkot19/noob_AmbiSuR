@@ -75,7 +75,7 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 - [ ] 实现双可靠性、K、Delta
 - [ ] 实现五状态和日志，但不改变训练
 - [ ] 通过 G1
-- **Status:** in_progress_step1_green_step2_geometry_and_topology_red
+- **Status:** in_progress_steps1_2_green_step3_renderer_cuda_contract_audit
 
 ### Phase 3：C1–C3 粗粒度执行
 - [ ] C1 需求门控
