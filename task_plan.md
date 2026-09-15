@@ -75,7 +75,7 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 - [x] 实现并验证真实 `sg(alpha*T)` CUDA evidence accumulation 与持久 EvidenceAccumulator state
 - [ ] 接通 high-level renderer、训练 shadow refresh、checkpoint/topology state migration 和日志，但不改变训练
 - [ ] 通过 G1
-- **Status:** in_progress_steps1_2_3_4_5_green_step6_red_observed_green_pending
+- **Status:** in_progress_steps1_2_3_4_5_6_green_step7_collector_topology_training_red_pending
 
 ### Phase 3：C1–C3 粗粒度执行
 - [ ] C1 需求门控
