@@ -282,6 +282,7 @@
 | 2026-09-15 | D0 第 7 步 integration RED 与内存合同 RED | test-only `4f4de53061e9da94357154161cd2baed9246c99a`、refinement `7845edac934d26624cde51380a2c4a321b200ec3`；AutoDL Torch/CUDA | 原始四项精确命中 collector/topology/CLI/guard 缺失；复审追加 CPU bool hit matrix + bounded GPU chunk 测试，精确因 `chunk_size` 不存在 RED；两次均 server clean、无训练 | 发现 bool CUDA validity 不能承载 P/G 多视图计数，故六个概念量需 8 个内部 transport channels 分别保存分子/分母；同时识别 §3.2 A/S/T EMA 尚缺。当前仅允许 Step 7 最小 GREEN，正式 D0 仍阻塞 | 用户本轮回传 |
 | 2026-09-15 | D0 第 7 步 collector/topology/training integration 组件 GREEN | `0efb534ecc40026da6cc543f5380c74564f795c2`；AutoDL Python 3.10.21/Torch 2.7.1+cu128 | focused 35/35；全仓 146/146；`py_compile`、Git diff/clean；`training_started=NO` | Step 7 组件合同通过：8-channel bool transport、CPU-hit/GPU-chunk、world-normal、topology composition、shadow dispatch 均获证据。尚未运行真实 collector；§3.2 A/S/T EMA 缺口先进入独立 TDD | 用户回传 `fad6fb1c-674a-40ba-bf86-f4817b66889a/pasted-text.txt` |
 | 2026-09-15 | D0 第 8 步 A/S/T EMA test-only 准备 | local after `0efb534ecc40026da6cc543f5380c74564f795c2` | 新增 RED 锁定通用 masked EMA、A/S 每刷新有效、T 只在对应 V 有效时更新、N 从平滑 A/S 重算、invalid T 历史保留但 r 归零、topology 新点清零与 state round-trip | 当前生产仅有 K EMA，预期 import/state/数值测试失败；未改生产 evidence、未训练 | local pending test-only diff |
+| 2026-09-15 | D0 第 8 步 A/S/T EMA RED→GREEN | test-only `3a17a9fb165203246ca20ce31ce9789cd9f6124b`；implementation `97c76e892825fd82470fbe390758fd5a5d21be2e`；AutoDL Torch 2.7.1+cu128 | RED 精确为缺少 `EMAState/a_ema/s_ema/t_p_ema/t_g_ema`；GREEN focused 33/33、全仓 150/150、静态与 clean gate；无训练 | §3.2 EMA 合同补齐，evidence state schema 升为 2，legacy checkpoint 不变。下一门为真实 100–500 iteration shadow smoke，须单独获得训练授权 | 用户回传 `383067f4-63d1-4fe7-9461-65d111cb4302`、`75992aee-ee29-47e9-8579-834621d650d6` |
 
 ## Cloud Runs
 
@@ -299,7 +300,7 @@
 ## Current Blocker
 
 1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
-2. 历史 schema-2 G0 的 343 项内部 summary FAIL 原样保留；按后来批准且预先冻结的 behavioral schema-3 合同，独立 unseen E0 正式审计已经 `g0_equivalent=true`，hard exact/numeric failures `0/0`，因此 Phase 1 的 behavioral G0 门已通过。346 项内部 outlier 仍是诊断证据，不解释为内部轨迹一致。用户已经授权 D0 TDD；当前 D0 Steps 1–6 已在 AutoDL 通过 focused/full 回归门。Step 7 的 collector/topology/training RED 与追加的 CPU-hit/GPU-chunk 内存安全 RED 均已观察；当前阻塞是其最小 GREEN、A/S/T EMA 独立 TDD、真实 shadow smoke 与 G1 隔离验证。C1、Supporting、阶段 tag 和正式 D0 训练仍未获准。
+2. 历史 schema-2 G0 的 343 项内部 summary FAIL 原样保留；按后来批准且预先冻结的 behavioral schema-3 合同，独立 unseen E0 正式审计已经 `g0_equivalent=true`，hard exact/numeric failures `0/0`，因此 Phase 1 的 behavioral G0 门已通过。346 项内部 outlier 仍是诊断证据，不解释为内部轨迹一致。用户已经授权 D0 TDD；当前 D0 Steps 1–8 均已在 AutoDL 通过 focused/full 组件回归门。当前阻塞是需要单独授权的真实 shadow GPU smoke、其训练隔离审计及 G1；C1、Supporting、阶段 tag 和正式 D0 实验仍未获准。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；当前 E0 suite 可由标准库 `unittest` 完整执行，pytest 缺失不再阻塞 E0 component 验证，后续若测试使用 pytest-only fixture 再单独申请安装。
-5. 用户回传的最新服务器验证提交为 clean `research/core-routing@7845edac934d26624cde51380a2c4a321b200ec3`；内存安全测试精确因 `compute_observation_sufficiency` 尚无 `chunk_size` 而 RED，且 `training_started=NO`。当前本地只实现 Step 7 GREEN 候选；不修改 baseline/结果资产，不创建 tag，也不启动 D0/C1 实验。
+5. 用户回传的最新服务器验证提交为 clean `research/core-routing@97c76e892825fd82470fbe390758fd5a5d21be2e`；A/S/T EMA focused 33/33、全仓 150/150、静态与安全检查通过，`training_started=NO`。当前本地只同步验证记录并准备 shadow smoke 协议；不修改 baseline/结果资产，不创建 tag，也不启动正式 D0/C1 实验。
