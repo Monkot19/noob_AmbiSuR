@@ -13,6 +13,12 @@ class CoreConfig:
     enable_parameter_routing: bool = False
     enable_gradient_projection: bool = False
     enable_reliability_lifecycle: bool = False
+    tau_n: float = 0.5
+    tau_p: float = 0.5
+    tau_g: float = 0.5
+    tau_k: float = 0.6
+    reliability_delta: float = 0.1
+    arbitration_enter_count: int = 3
 
     def enabled_features(self):
         features = []
