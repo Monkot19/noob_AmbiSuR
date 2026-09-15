@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0 工程及 Tool Room 8k B1/B2/E0 均已完成；正式 schema-2 G0 因 343/1,938 项内部数值 summary 失败保持有效 `G0=FAIL`，D0/C1 仍停止。用户已批准 behavioral schema-3 合同及只读比较器 TDD。schema-3 exploratory CLI 在 AutoDL targeted 3/3、full 75/75 PASS；历史 schema-2 报告 SHA 逐字节重现、343 项失败未改，旧 E0 的 schema-3 exploratory 保留 1,926 诊断/343 outlier 且不晋级、输入 hash 不变。正式合同接线 `301e69781861c32e61100251e5ebe150940a4e7c` 在 AutoDL formal targeted 3/3、full 78/78 PASS；规格/计划已冻结到 `ff319d5a4ddc35ec48914111899da3146d86fc31`。新 unseen E0 的 pre-launch 合同已在服务器 diagnostics 下冻结，ID `g0_schema3_unseen_e0_20260914T080510Z_4fc982625600`、合同 SHA `16ec0f8c9161ec5254c337ab918eda096023af07aceca5e6a2a80a6a823b0ab3`、独立预检记录 SHA `9f2051937e740bdfbe501601ad51c17eeffc09f52dd0f6f20bd0a13ac920882f`；run/view 尚未创建，未训练。下一门是用户单独批准一次新 Tool Room E0 8k、完成后正式 schema-3 G0；硬门通过后才可申请 D0。当前 G0 仍 FAIL，D0/C1 未授权。
+Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；用户批准的 behavioral schema-3 使用预先冻结的独立合同和 unseen E0。2026-09-14 用户操作 AutoDL 完成唯一一次 Tool Room r2/seed0/8k unseen E0：训练 exit 0、输入 after-SHA 匹配、峰值 10,770 MiB、仓库 clean 恢复。正式 schema-3 报告 `g0_schema3_unseen_e0_20260914T080510Z_4fc982625600.formal-schema3.json`：`schema_version=3`、`exploratory=false`、`g0_equivalent=true`、hard exact/numeric failure 均为 0，报告 SHA256 `3f6f7e7a9bf302e192ffe48694a1df0ac05c9cb957da76bd909d0b7a6f9879a8`。346 项内部 summary outlier 仍保留为诊断，不改写为零差异。E0/G0 的已批准 behavioral gate 通过；下一阶段仅可在用户单独批准 D0 范围后按 TDD 开始。C1、tag、Supporting、正式新训练均未授权。
 
 ## Phases
 
@@ -67,8 +67,8 @@ Phase 0、E0 工程及 Tool Room 8k B1/B2/E0 均已完成；正式 schema-2 G0 �
 ### Phase 1：E0 与测试基础
 - [x] 锁定 `c0-baseline` annotated tag 于 `d6f15c8891a53800d5e3100f95817a7dd7f98e2f`，并从该提交创建累计分支 `research/core-routing`
 - [x] 建立 19 项可由标准库 `unittest`/pytest 共同执行的非 GPU 合同测试，以及服务器 `train.py` integration test 入口
-- [ ] 验证所有新增开关关闭时等价
-- **Status:** g0_schema3_tasks1_2_local_green_task3_gpu_red_pending_test_only_sync
+- [x] 按已批准 behavioral schema-3 合同验证所有新增开关关闭时的可观测训练语义等价；历史 schema-2 FAIL 独立保留
+- **Status:** complete_g0_schema3_formal_pass_d0_approval_pending
 
 ### Phase 2：D0 影子证据
 - [ ] 实现 A/S/N 统计

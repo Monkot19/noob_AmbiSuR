@@ -1,5 +1,7 @@
 # G0 Behavioral Schema-3 Comparator Implementation Plan
 
+**Completion status (2026-09-14):** Implemented and verified through the approved formal confirmation. AutoDL component regression reached 78/78 PASS before launch; the historical schema-2 report reproduced its original SHA and FAIL; the hash-pinned preflight then preceded one authorized unseen E0. The final non-exploratory schema-3 report has hard exact/numeric failures `0/0`, `g0_equivalent=true`, 346 retained diagnostic outliers, and SHA256 `3f6f7e7a9bf302e192ffe48694a1df0ac05c9cb957da76bd909d0b7a6f9879a8`. This closes this comparator/G0 plan only; D0 requires separate authorization.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. The user selected inline, single-agent work and user-operated AutoDL commands; do not dispatch subagents or control the server directly.
 
 **Goal:** Add a read-only, explicit schema-3 G0 audit in which observable behavior and structural safety remain hard gates while all 1,926 internal Gaussian/Adam numerical summaries remain complete diagnostics.
@@ -187,12 +189,12 @@ Before using `expected_diagnostic_names`, Task 3 must have derived and checked t
 
 - [x] **Step 2: Write and freeze the contract outside runs.** The future user-operated preflight writes JSON under `/root/autodl-tmp/ambisur_diagnostics/`, records its SHA256 and UTC time in the returned terminal output, and records exactly the B1/B2/new-E0 directories, resolved canonical source/prior roots and their independent content-tree SHA256 values, role commits (`d6f15c8891a53800d5e3100f95817a7dd7f98e2f` twice; `a26082154889ed539322425347af5a57a859a52f` once), normalized per-role commands, data/prior SHA, seed 0, resolution 2, iteration 8000 and evaluation list `[500,1000,5001,7001,8000]`. Return the output for assistant review; freeze its path/hash in a reviewed planning record before any E0 launch.
 
-- [ ] **Step 3: Stop at authorization boundary.** Ask for separate approval of exactly one unseen E0 8k run. If approved, provide its launcher command only after reading the preflight output and verifying the new paths still absent. After it completes, audit the new E0 safety/input hashes, run one schema-3 confirmation against frozen B1/B2, and stop on any hard failure. Do not start D0/C1 or create a tag without further approval.
+- [x] **Step 3: Stop at authorization boundary.** User separately approved exactly one unseen E0 8k after the frozen preflight. The run completed with exit 0 and matching input after-hashes; formal schema-3 confirmation returned `g0_equivalent=true`, hard failures `0/0`, report SHA `3f6f7e7a9bf302e192ffe48694a1df0ac05c9cb957da76bd909d0b7a6f9879a8`. D0/C1 and tags remain outside that authorization.
 
 ## Verification and acceptance checklist
 
-- [ ] All new pure tests are observed RED before implementation and GREEN afterward; old schema-1/2 tests never regress.
-- [ ] AutoDL focused and full standard-library suites, compile and CLI checks pass on an exact clean commit. The server is operated by the user, one command/output review at a time.
-- [ ] Historical schema-2 report remains the original FAIL with the original report SHA; old E0 schema-3 replay is exploratory only.
-- [ ] Schema-3 hard evidence and all 1,926 diagnostics are complete, named and finite; numerical outlier count may be nonzero without changing the hard Boolean.
-- [ ] Only after comparator freeze may a new pre-launch contract and new E0 be requested. Revised G0 is not claimed until the unseen triplet passes every hard gate.
+- [x] All new pure tests were observed RED before implementation and GREEN afterward; old schema-1/2 tests did not regress in the recorded suites and historical replay.
+- [x] AutoDL focused and full standard-library suites, compile and CLI checks passed on exact clean commits. The server was operated by the user, one command/output review at a time.
+- [x] Historical schema-2 report remains the original FAIL with the original report SHA; old E0 schema-3 replay is exploratory only.
+- [x] Schema-3 hard evidence and all 1,926 diagnostics are complete, named and finite; numerical outlier count may be nonzero without changing the hard Boolean.
+- [x] Only after comparator freeze was the pre-launch contract and new E0 requested; the unseen triplet passed every schema-3 hard gate before revised G0 was recorded.
