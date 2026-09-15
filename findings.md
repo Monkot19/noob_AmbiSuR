@@ -305,3 +305,4 @@
 
 - `reliability/evidence.py::EvidenceAccumulator` 在 AutoDL `a90dd92bfe2bb16a01305005bb6c5e5e0585638f` 通过 focused 38/38 与全仓 121/121；已验证 detached snapshot、joint-invalid 时历史 K 保留但当前禁止消费、H-enter=3、显式 topology migration 和 versioned state round-trip。该证据只覆盖持久状态容器，不等于 D0 训练接线或 G1 已完成。
 - 当前 `gaussian_renderer.__init__.py::render` 仍没有 `evidence_values/evidence_validity` 参数，且 `return_plane=False` 固定解包 rasterizer 五输出；因此底层已验证的七输出 evidence path 尚不能由训练侧公共 renderer 消费。下一最小接口改动应只在显式 evidence 请求时暴露 detached `[P,E]` numerator/denominator，feature-off 路径必须继续调用并返回既有五输出合同。
+- Step 5 AutoDL RED 将故障边界精确定位在 `gaussian_renderer.__init__.py::render`：feature-off 真实 GPU 调用继续通过，两个 evidence 调用都在进入底层前因缺少 public keyword 抛 `TypeError`。因此无需重编译或修改已验证 CUDA；最小修复是假设底层七输出合同成立，只为显式 evidence 请求转发输入并附加 numerator/denominator，未验证前不能称 GREEN。

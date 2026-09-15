@@ -36,12 +36,23 @@ def render_normal(viewpoint_cam, depth, offset=None, normal=None, scale=1):
     return normal_ref
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, 
-           app_model: AppModel=None, return_plane = True, return_depth_normal = True, ray_reg = False, opt = None):
+           app_model: AppModel=None, return_plane = True, return_depth_normal = True, ray_reg = False, opt = None,
+           evidence_values = None, evidence_validity = None):
     """
     Render the scene. 
     
     Background tensor (bg_color) must be on GPU!
     """
+    evidence_requested = (
+        evidence_values is not None or evidence_validity is not None
+    )
+    if evidence_requested and (
+        evidence_values is None or evidence_validity is None
+    ):
+        raise ValueError(
+            "evidence_values and evidence_validity must be provided together"
+        )
+
     # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means
     # 这两个全零张量不是实际二维坐标，而是给自定义光栅化 backward 承接屏幕空间梯度的“桥”。
     # 前向渲染使用它们，反向后训练循环读取其 .grad，判断哪些 Gaussian 需要 densification。
@@ -116,7 +127,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     rasterizer = PlaneGaussianRasterizer(raster_settings=raster_settings)
 
     if not return_plane:
-        rendered_image, radii, out_observe, _, _ = rasterizer(
+        raster_inputs = dict(
             means3D = means3D,
             means2D = means2D,
             means2D_abs = means2D_abs,
@@ -126,6 +137,13 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             scales = scales,
             rotations = rotations,
             cov3D_precomp = cov3D_precomp)
+        if evidence_requested:
+            raster_inputs.update(
+                evidence_values=evidence_values,
+                evidence_validity=evidence_validity,
+            )
+        raster_outputs = rasterizer(**raster_inputs)
+        rendered_image, radii, out_observe, _, _ = raster_outputs[:5]
         
         return_dict =  {"render": rendered_image,
                         "viewspace_points": screenspace_points,
@@ -133,6 +151,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
                         "visibility_filter" : radii > 0,
                         "radii": radii,
                         "out_observe": out_observe}
+        if evidence_requested:
+            return_dict.update({
+                "evidence_numerator": raster_outputs[5],
+                "evidence_denominator": raster_outputs[6],
+            })
         if app_model is not None and pc.use_app:
             appear_ab = app_model.appear_ab[torch.tensor(viewpoint_camera.uid).cuda()]
             app_image = torch.exp(appear_ab[0]) * rendered_image + appear_ab[1]
@@ -166,7 +189,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     input_all_map[:, 6] = depth_z
 
     # 此处进行光栅化渲染，返回 RGB、深度、法线、alpha 等训练所需结果。
-    rendered_image, radii, out_observe, out_all_map, plane_depth = rasterizer(
+    raster_inputs = dict(
         means3D = means3D,
         means2D = means2D,
         means2D_abs = means2D_abs,
@@ -177,6 +200,14 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         rotations = rotations,
         all_map = input_all_map,
         cov3D_precomp = cov3D_precomp)
+    if evidence_requested:
+        raster_inputs.update(
+            evidence_values=evidence_values,
+            evidence_validity=evidence_validity,
+        )
+    raster_outputs = rasterizer(**raster_inputs)
+    rendered_image, radii, out_observe, out_all_map, plane_depth = \
+        raster_outputs[:5]
 
     rendered_normal = out_all_map[0:3]
     rendered_alpha = out_all_map[3:4, ]
@@ -199,6 +230,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
                     "rendered_unc": rendered_unc,
                     # "expected_depth": expected_depth,
                     }
+    if evidence_requested:
+        return_dict.update({
+            "evidence_numerator": raster_outputs[5],
+            "evidence_denominator": raster_outputs[6],
+        })
     
     if app_model is not None and pc.use_app:
         appear_ab = app_model.appear_ab[torch.tensor(viewpoint_camera.uid).cuda()]
