@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 import torch
 
+from reliability.arbitration import (
+    ArbitrationState,
+    ArbitrationStateMachine,
+    candidate_state,
+)
+from reliability.topology import migrate_tensor
+
 
 @dataclass(frozen=True)
 class ObservationSufficiency:
@@ -36,6 +43,64 @@ class Reliability:
 class GeometryStability:
     score: torch.Tensor
     valid: torch.Tensor
+
+
+@dataclass(frozen=True)
+class EvidenceRefreshInputs:
+    sh_coefficients: torch.Tensor
+    sh_degree: int
+    pixel_hits: torch.Tensor
+    camera_centers: torch.Tensor
+    centers: torch.Tensor
+    normals: torch.Tensor
+    scale_reference: torch.Tensor
+    prior_confidence: torch.Tensor
+    prior_multiview: torch.Tensor
+    prior_support_views: torch.Tensor
+    geometry_multiview: torch.Tensor
+    geometry_depth_normal: torch.Tensor
+    geometry_support_views: torch.Tensor
+    pg_weighted_support: torch.Tensor
+    pg_depth_error_sum: torch.Tensor
+    pg_normal_error_sum: torch.Tensor
+
+
+@dataclass(frozen=True)
+class EvidenceSnapshot:
+    A: torch.Tensor
+    S: torch.Tensor
+    N: torch.Tensor
+    T_p: torch.Tensor
+    V_p: torch.Tensor
+    r_p: torch.Tensor
+    T_g: torch.Tensor
+    V_g: torch.Tensor
+    r_g: torch.Tensor
+    Z_pg: torch.Tensor
+    V_pg: torch.Tensor
+    K: torch.Tensor
+    delta: torch.Tensor
+    candidate: torch.Tensor
+    stable: torch.Tensor
+
+    def tensors(self):
+        return (
+            self.A,
+            self.S,
+            self.N,
+            self.T_p,
+            self.V_p,
+            self.r_p,
+            self.T_g,
+            self.V_g,
+            self.r_g,
+            self.Z_pg,
+            self.V_pg,
+            self.K,
+            self.delta,
+            self.candidate,
+            self.stable,
+        )
 
 
 def active_non_dc(coefficients, degree):
@@ -343,3 +408,220 @@ class KEMAState:
             + (1.0 - self.beta) * raw[continuing]
         )
         self.initialized[valid] = True
+
+
+class EvidenceAccumulator:
+    """Persistent, detached D0 evidence and arbitration state."""
+
+    STATE_VERSION = 1
+
+    def __init__(self, point_count, *, cfg, device=None, k_beta=0.9):
+        if point_count < 0:
+            raise ValueError("point_count must be nonnegative")
+        cfg.validate()
+        self.cfg = cfg
+        self.point_count = int(point_count)
+        self.k_ema = KEMAState(
+            self.point_count, beta=k_beta, device=device
+        )
+        self.arbitration = ArbitrationStateMachine(
+            self.point_count,
+            initial_state=ArbitrationState.BYPASS,
+            enter_count=cfg.arbitration_enter_count,
+            device=device,
+        )
+        self.previous_centers = torch.zeros(
+            (self.point_count, 3), dtype=torch.float32, device=device
+        )
+        self.previous_normals = torch.zeros(
+            (self.point_count, 3), dtype=torch.float32, device=device
+        )
+        self.history_valid = torch.zeros(
+            self.point_count, dtype=torch.bool, device=device
+        )
+        self.latest = None
+
+    def _validate_inputs(self, inputs):
+        if inputs.centers.shape != (self.point_count, 3):
+            raise ValueError("centers must match accumulator point count")
+        if inputs.normals.shape != (self.point_count, 3):
+            raise ValueError("normals must match accumulator point count")
+        if inputs.centers.device != self.previous_centers.device:
+            raise ValueError("refresh inputs must share the accumulator device")
+
+    @torch.no_grad()
+    def refresh(self, inputs):
+        self._validate_inputs(inputs)
+        ambiguity = compute_appearance_ambiguity(
+            inputs.sh_coefficients, inputs.sh_degree
+        )
+        sufficiency = compute_observation_sufficiency(
+            inputs.pixel_hits,
+            inputs.camera_centers,
+            inputs.centers,
+        )
+        need = compute_need(ambiguity, sufficiency.S)
+        prior = combine_prior_reliability(
+            inputs.prior_confidence,
+            inputs.prior_multiview,
+            inputs.prior_support_views,
+        )
+        stability = compute_geometry_stability(
+            inputs.centers,
+            self.previous_centers,
+            inputs.normals,
+            self.previous_normals,
+            inputs.scale_reference,
+            self.history_valid,
+        )
+        geometry = combine_geometry_reliability(
+            inputs.geometry_multiview,
+            inputs.geometry_depth_normal,
+            stability.score,
+            inputs.geometry_support_views,
+            stability.valid,
+        )
+        pg = compute_pg_consistency(
+            inputs.pg_weighted_support,
+            inputs.pg_depth_error_sum,
+            inputs.pg_normal_error_sum,
+        )
+        raw_k = pg.K_raw if bool(pg.V_pg.any()) else None
+        self.k_ema.update(raw_k, pg.V_pg)
+        delta = prior.r - geometry.r
+
+        placeholder = torch.zeros(
+            self.point_count,
+            dtype=torch.int8,
+            device=inputs.centers.device,
+        )
+        snapshot = EvidenceSnapshot(
+            ambiguity,
+            sufficiency.S,
+            need,
+            prior.T,
+            prior.V,
+            prior.r,
+            geometry.T,
+            geometry.V,
+            geometry.r,
+            pg.Z_pg,
+            pg.V_pg,
+            self.k_ema.value.clone(),
+            delta,
+            placeholder,
+            self.arbitration.stable_state.clone(),
+        )
+        candidate = candidate_state(snapshot, self.cfg)
+        stable = self.arbitration.update(candidate)
+        self.previous_centers.copy_(inputs.centers.detach())
+        self.previous_normals.copy_(inputs.normals.detach())
+        self.history_valid.fill_(True)
+        self.latest = EvidenceSnapshot(
+            snapshot.A,
+            snapshot.S,
+            snapshot.N,
+            snapshot.T_p,
+            snapshot.V_p,
+            snapshot.r_p,
+            snapshot.T_g,
+            snapshot.V_g,
+            snapshot.r_g,
+            snapshot.Z_pg,
+            snapshot.V_pg,
+            snapshot.K,
+            snapshot.delta,
+            candidate,
+            stable,
+        )
+        return self.latest
+
+    @torch.no_grad()
+    def on_topology_change(self, change):
+        self.k_ema.value = migrate_tensor(
+            self.k_ema.value, change, fill_value=0.0
+        )
+        self.k_ema.initialized = migrate_tensor(
+            self.k_ema.initialized, change, fill_value=False
+        )
+        self.k_ema.current_valid = migrate_tensor(
+            self.k_ema.current_valid, change, fill_value=False
+        )
+        self.arbitration.stable_state = migrate_tensor(
+            self.arbitration.stable_state,
+            change,
+            fill_value=int(ArbitrationState.BYPASS),
+        )
+        self.arbitration.candidate_state = migrate_tensor(
+            self.arbitration.candidate_state,
+            change,
+            fill_value=int(ArbitrationState.BYPASS),
+        )
+        self.arbitration.consecutive_count = migrate_tensor(
+            self.arbitration.consecutive_count, change, fill_value=0
+        )
+        self.previous_centers = migrate_tensor(
+            self.previous_centers, change, fill_value=0.0
+        )
+        self.previous_normals = migrate_tensor(
+            self.previous_normals, change, fill_value=0.0
+        )
+        self.history_valid = migrate_tensor(
+            self.history_valid, change, fill_value=False
+        )
+        self.point_count = int(change.new_to_old.shape[0])
+        self.latest = None
+
+    def state_dict(self):
+        def clone(value):
+            return value.detach().clone()
+
+        return {
+            "version": self.STATE_VERSION,
+            "point_count": self.point_count,
+            "k_beta": self.k_ema.beta,
+            "k_value": clone(self.k_ema.value),
+            "k_initialized": clone(self.k_ema.initialized),
+            "k_current_valid": clone(self.k_ema.current_valid),
+            "stable_state": clone(self.arbitration.stable_state),
+            "candidate_state": clone(self.arbitration.candidate_state),
+            "consecutive_count": clone(
+                self.arbitration.consecutive_count
+            ),
+            "previous_centers": clone(self.previous_centers),
+            "previous_normals": clone(self.previous_normals),
+            "history_valid": clone(self.history_valid),
+        }
+
+    @torch.no_grad()
+    def load_state_dict(self, state):
+        if state.get("version") != self.STATE_VERSION:
+            raise ValueError("unsupported evidence state version")
+        if state.get("point_count") != self.point_count:
+            raise ValueError("evidence state point count mismatch")
+        if float(state.get("k_beta")) != self.k_ema.beta:
+            raise ValueError("evidence state K EMA beta mismatch")
+
+        destinations = {
+            "k_value": self.k_ema.value,
+            "k_initialized": self.k_ema.initialized,
+            "k_current_valid": self.k_ema.current_valid,
+            "stable_state": self.arbitration.stable_state,
+            "candidate_state": self.arbitration.candidate_state,
+            "consecutive_count": self.arbitration.consecutive_count,
+            "previous_centers": self.previous_centers,
+            "previous_normals": self.previous_normals,
+            "history_valid": self.history_valid,
+        }
+        for name, destination in destinations.items():
+            value = state.get(name)
+            if not isinstance(value, torch.Tensor):
+                raise ValueError(f"missing evidence state tensor: {name}")
+            if value.shape != destination.shape:
+                raise ValueError(f"evidence state shape mismatch: {name}")
+            destination.copy_(
+                value.detach().to(
+                    device=destination.device, dtype=destination.dtype
+                )
+            )
+        self.latest = None
