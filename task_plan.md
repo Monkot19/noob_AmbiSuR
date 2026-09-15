@@ -71,11 +71,11 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 - **Status:** complete_g0_schema3_formal_pass_d0_approval_pending
 
 ### Phase 2：D0 影子证据
-- [ ] 实现 A/S/N 统计
-- [ ] 实现双可靠性、K、Delta
-- [ ] 实现五状态和日志，但不改变训练
+- [x] 实现并验证 pure A/S/N、双可靠性、K/Delta、五状态候选与迟滞
+- [x] 实现并验证真实 `sg(alpha*T)` CUDA evidence accumulation 与持久 EvidenceAccumulator state
+- [ ] 接通 high-level renderer、训练 shadow refresh、checkpoint/topology state migration 和日志，但不改变训练
 - [ ] 通过 G1
-- **Status:** in_progress_steps1_2_3_green_step4_state_container_red
+- **Status:** in_progress_steps1_2_3_4_green_step5_renderer_adapter_red_pending
 
 ### Phase 3：C1–C3 粗粒度执行
 - [ ] C1 需求门控

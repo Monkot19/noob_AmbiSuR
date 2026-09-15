@@ -300,3 +300,8 @@
 | 2026-09-11 | 用户批准 behavioral G0 的最终 hard/diagnostic 划分与 schema-3 独立确认合同 | 三次连续 A 选择已分别冻结目标、内部层角色与 unseen E0；最后的“批准”确认 exact/provenance、safety、observable numeric、internal structure 为 hard，内部 numerical summaries 为 diagnostic-only | 设计 §13 与新 implementation-facing spec 正式同步；旧 schema-2 FAIL 保留。下一门是书面规格 review，之后才可写实施计划和按 TDD 修改 comparator；D0/C1 仍未授权 |
 | 2026-09-14 | 用户确认 schema-3 书面规格并进入 `writing-plans` | 用户回复“确认”；本地 `research/core-routing@3a1ef87...` 的源码仍未修改 | 允许编写只读 comparator 的 TDD 实施计划，不视为批准提交/推送、AutoDL 命令、unseen E0 或 D0/C1；计划须单独等待执行授权 |
 | 2026-09-14 | 用户批准 schema-3 比较器 TDD 实施 | 用户针对五任务实施计划回复“批准”；本地仍为 `research/core-routing@3a1ef87...`，既有 7 份未提交文档被保留 | 仅可按已确认 schema-3 规格修改只读比较器及测试；不包含 Git 提交/推送、用户服务器执行、新 E0、D0/C1、tag 或方法源码改动 |
+
+### D0 实施证据更新（2026-09-15）
+
+- `reliability/evidence.py::EvidenceAccumulator` 在 AutoDL `a90dd92bfe2bb16a01305005bb6c5e5e0585638f` 通过 focused 38/38 与全仓 121/121；已验证 detached snapshot、joint-invalid 时历史 K 保留但当前禁止消费、H-enter=3、显式 topology migration 和 versioned state round-trip。该证据只覆盖持久状态容器，不等于 D0 训练接线或 G1 已完成。
+- 当前 `gaussian_renderer.__init__.py::render` 仍没有 `evidence_values/evidence_validity` 参数，且 `return_plane=False` 固定解包 rasterizer 五输出；因此底层已验证的七输出 evidence path 尚不能由训练侧公共 renderer 消费。下一最小接口改动应只在显式 evidence 请求时暴露 detached `[P,E]` numerator/denominator，feature-off 路径必须继续调用并返回既有五输出合同。

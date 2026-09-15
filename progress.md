@@ -271,6 +271,8 @@
 | 2026-09-15 | D0 第 3 步 CUDA accumulator GREEN | `5e653b4b521b29a7850573fb9d2d2a7b3499ddf7`；AutoDL Torch 2.7.1+cu128/CUDA Toolkit 12.8.93/RTX 4090 | private temp copy wheel build rc=0；新 binding present；focused CUDA oracle 5/5；全仓 116/116；`py_compile`/diff check；server clean | 全部 PASS、无训练。证明真实 `alpha*T` weighted sums、legacy五输出 exact、empty-E、输入合同和 detached outputs；D0 第 3 步完成，尚未证明 shadow runtime/gradient/topology isolation | 用户回传 `df2f2bf6-5cb9-4122-b1fe-cbe4def03c3a/pasted-text.txt` |
 | 2026-09-15 | D0 第 4 步 EvidenceAccumulator state test-only 准备 | local after `5e653b4b521b29a7850573fb9d2d2a7b3499ddf7` | 新增 CPU RED 锁定 refresh snapshot、H-enter=3、joint-invalid 历史隔离、survivor/new-row topology migration、versioned state round-trip 与无 GT/mesh 输入 | 当前仅测试/文档，生产 `EvidenceAccumulator/EvidenceRefreshInputs` 尚不存在；未改 renderer/train/GaussianModel，未训练 | local pending test-only diff |
 | 2026-09-15 | D0 第 4 步 state RED 已观察与最小 GREEN 候选 | test-only `910b1c1b74976063eb3418680fb3e47e1e415803`；AutoDL Torch runtime | 模块精确因 `EvidenceAccumulator` 缺失产生 1 import ERROR，rc=1、server clean、无训练 | 本地候选仅在 `reliability/evidence.py` 组合已验证纯函数，保存 K/迟滞/几何历史，支持显式 topology migration 与 versioned state dict；尚须 AutoDL focused/full GREEN | local uncommitted production candidate |
+| 2026-09-15 | D0 第 4 步 persistent state GREEN | `a90dd92bfe2bb16a01305005bb6c5e5e0585638f`；AutoDL Python 3.10.21/Torch 2.7.1+cu128 | focused state/evidence/geometry/arbitration/topology 38/38；全仓 121/121；静态/工作树检查 clean；`training_started=NO` | Step 4 完成：snapshot detached、joint-invalid K history 隔离、H-enter=3、显式 topology migration 与 versioned state round-trip 均获服务器证据；尚未接 high-level renderer 或训练 shadow path | 用户回传 `eb718cd7-c9a6-46ea-a6aa-a6f90a52f871/pasted-text.txt` |
+| 2026-09-15 | D0 第 5 步 high-level renderer adapter test-only 准备 | local after `a90dd92bfe2bb16a01305005bb6c5e5e0585638f` | 新增真实 GPU boundary RED：feature-off 公共返回键不变；可选 evidence 输入返回 `[P,E]` detached numerator/denominator；Gaussian 参数 `.grad` 与 densification state 不写；单边输入 fail-closed | 当前仅测试/文档，`gaussian_renderer.render` 尚不接受 evidence 参数；须先在 AutoDL 观察预期 keyword RED，再补最小适配。未改训练、未启动实验 | local pending test-only diff |
 
 ## Cloud Runs
 
@@ -288,7 +290,7 @@
 ## Current Blocker
 
 1. Tool Room C0 reference、`c0-baseline` 与 `research/core-routing` 已完成 local/remote 锁定；Git 基线不再是 E0 blocker。
-2. 历史 schema-2 G0 的 343 项内部 summary FAIL 原样保留；按后来批准且预先冻结的 behavioral schema-3 合同，独立 unseen E0 正式审计已经 `g0_equivalent=true`，hard exact/numeric failures `0/0`，因此 Phase 1 的 behavioral G0 门已通过。346 项内部 outlier 仍是诊断证据，不解释为内部轨迹一致。当前阻塞改为：D0 尚未获得单独实施授权；在授权前不修改 evidence/renderer/CUDA/训练方法源码，也不创建阶段 tag 或启动 D0 smoke。
+2. 历史 schema-2 G0 的 343 项内部 summary FAIL 原样保留；按后来批准且预先冻结的 behavioral schema-3 合同，独立 unseen E0 正式审计已经 `g0_equivalent=true`，hard exact/numeric failures `0/0`，因此 Phase 1 的 behavioral G0 门已通过。346 项内部 outlier 仍是诊断证据，不解释为内部轨迹一致。用户已经授权 D0 TDD；当前 D0 Steps 1–4 已在 AutoDL 分别通过 pure formulas/arbitration、geometry/topology、真实 CUDA accumulator 和 persistent state 的 focused/full 回归门。当前阻塞是 high-level renderer 与训练 shadow 接线尚未完成；C1、Supporting、阶段 tag 和正式 D0 训练仍未获准。
 3. Utility 未上传不阻塞本次 Tool run，但 G2 跨场景与最终主实验前必须上传并完成 PINHOLE/SIMPLE_PINHOLE undistortion；ScanNet++ GT evaluator 仍需在解释几何结果前冻结。
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；当前 E0 suite 可由标准库 `unittest` 完整执行，pytest 缺失不再阻塞 E0 component 验证，后续若测试使用 pytest-only fixture 再单独申请安装。
-5. 用户回传的最新服务器状态为 clean `research/core-routing@ff319d5a4ddc35ec48914111899da3146d86fc31`，相对 origin 落后 1 个文档提交；这不影响已完成审计。当前本地只修改 G0 结论相关的 `task_plan.md`、`findings.md`、`progress.md` 与 schema-3 实施计划，尚未提交/推送；方法源码、结果资产和 tag 未改变。
+5. 用户回传的最新服务器状态为 clean `research/core-routing@a90dd92bfe2bb16a01305005bb6c5e5e0585638f`。当前本地只准备 Step 5 high-level renderer RED 及同步记录；服务器没有训练进程，不修改 baseline/结果资产，不创建 tag，也不启动 D0/C1 实验。
