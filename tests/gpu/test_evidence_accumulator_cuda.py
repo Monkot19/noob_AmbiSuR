@@ -6,6 +6,7 @@ from diff_plane_rasterization_ambisur import (
     GaussianRasterizationSettings,
     GaussianRasterizer,
 )
+from reliability.evidence import compute_observation_sufficiency
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
@@ -161,6 +162,27 @@ class EvidenceAccumulatorCudaTests(unittest.TestCase):
                 evidence_values=values,
                 evidence_validity=validity,
             )
+
+    def test_observation_sufficiency_accepts_cpu_hit_matrix_in_chunks(self):
+        pixel_hits = torch.tensor(
+            [[True, True, False], [True, False, True]], device="cpu"
+        )
+        camera_centers = torch.tensor(
+            [[0.0, 0.0, 1.0], [0.0, 0.0, -1.0]],
+            device=self.device,
+        )
+        gaussian_centers = torch.zeros((3, 3), device=self.device)
+
+        result = compute_observation_sufficiency(
+            pixel_hits,
+            camera_centers,
+            gaussian_centers,
+            chunk_size=2,
+        )
+
+        self.assertEqual(result.M_obs.device.type, "cuda")
+        self.assertEqual(result.M_obs.tolist(), [2, 1, 1])
+        self.assertTrue(torch.isfinite(result.S).all())
 
 
 if __name__ == "__main__":

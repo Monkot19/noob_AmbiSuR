@@ -88,6 +88,7 @@ class D0CollectorTests(unittest.TestCase):
         gaussians = SyntheticGaussians()
         grad_modes = []
         evidence_shapes = []
+        evidence_validity_dtypes = []
 
         def render_fn(camera, _gaussians, _pipe, _background, **kwargs):
             grad_modes.append(torch.is_grad_enabled())
@@ -102,6 +103,7 @@ class D0CollectorTests(unittest.TestCase):
             validity = kwargs.get("evidence_validity")
             if values is not None:
                 evidence_shapes.append(tuple(values.shape))
+                evidence_validity_dtypes.append(validity.dtype)
                 common["evidence_numerator"] = (
                     values * validity
                 ).sum(dim=(1, 2)).unsqueeze(0)
@@ -128,7 +130,13 @@ class D0CollectorTests(unittest.TestCase):
         self.assertGreater(inputs.pg_weighted_support.item(), 0.0)
         torch.testing.assert_close(inputs.pg_depth_error_sum, torch.zeros(1))
         torch.testing.assert_close(inputs.pg_normal_error_sum, torch.zeros(1))
-        self.assertEqual(evidence_shapes, [(6, 2, 2), (6, 2, 2)])
+        # Six conceptual evidence quantities require eight transport
+        # channels because the bool CUDA validity mask cannot carry the
+        # multi-view numerator and denominator counts itself.
+        self.assertEqual(evidence_shapes, [(8, 2, 2), (8, 2, 2)])
+        self.assertEqual(
+            evidence_validity_dtypes, [torch.bool, torch.bool]
+        )
         self.assertEqual(grad_modes, [False, False, False, False])
 
     def test_collector_boundary_has_no_gt_or_mesh_argument(self):
