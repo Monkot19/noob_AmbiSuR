@@ -75,7 +75,7 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 - [ ] 实现双可靠性、K、Delta
 - [ ] 实现五状态和日志，但不改变训练
 - [ ] 通过 G1
-- **Status:** pending
+- **Status:** in_progress_pure_evidence_and_arbitration_red_tests
 
 ### Phase 3：C1–C3 粗粒度执行
 - [ ] C1 需求门控
@@ -216,7 +216,7 @@ Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数�
 - GT mesh 不进入训练。
 - C0–C6 每阶段必须对应独立 commit 和验证 tag。
 - 服务器不修改代码。
-- 当前授权允许 E0 工程、只读 comparator，以及已单独批准的 Tool Room 独立 8k B1→B2→E0 G0 确认组；仍禁止 D0/C1、renderer/CUDA、Supporting、阶段 tag、依赖安装和其他正式实验。
+- 2026-09-15 用户在正式 behavioral G0 通过后授权开始 D0 TDD。当前允许按本计划修改 D0 测试与 Core evidence/arbitration 实现；服务器仍由用户操作，D0 GPU smoke/训练须另行给出并复核命令。C1、Supporting、阶段 tag、依赖安装和其他正式实验仍禁止。
 
 ## Planned File Boundaries and Interfaces
 
