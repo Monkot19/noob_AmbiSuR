@@ -109,6 +109,13 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
         restored.load_state_dict(state)
 
         torch.testing.assert_close(restored.k_ema.value, accumulator.k_ema.value)
+        for name in ("a_ema", "s_ema", "t_p_ema", "t_g_ema"):
+            actual = getattr(restored, name)
+            expected = getattr(accumulator, name)
+            torch.testing.assert_close(actual.value, expected.value)
+            self.assertTrue(
+                torch.equal(actual.initialized, expected.initialized)
+            )
         self.assertTrue(
             torch.equal(restored.k_ema.initialized, accumulator.k_ema.initialized)
         )
@@ -127,6 +134,90 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
                 accumulator.arbitration.consecutive_count,
             )
         )
+
+    def test_snapshot_uses_smoothed_a_s_t_and_recomputes_need(self):
+        accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+        first_inputs = replace(
+            self.inputs(),
+            camera_centers=torch.tensor([
+                [1.0, 0.0, 0.0],
+                [-1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, -1.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ]),
+        )
+        first = accumulator.refresh(first_inputs)
+        first_a = first.A.clone()
+        first_s = first.S.clone()
+        torch.testing.assert_close(first.T_p, torch.ones(2))
+        self.assertEqual(
+            accumulator.t_g_ema.initialized.tolist(), [False, False]
+        )
+
+        second_coefficients = first_inputs.sh_coefficients.flip(0)
+        second_inputs = replace(
+            first_inputs,
+            sh_coefficients=second_coefficients,
+            pixel_hits=torch.tensor([
+                [1, 0],
+                [0, 0],
+                [0, 0],
+                [0, 0],
+                [0, 0],
+            ]),
+            prior_confidence=torch.full((2,), 0.25),
+            prior_multiview=torch.full((2,), 0.25),
+            geometry_multiview=torch.full((2,), 0.5),
+            geometry_depth_normal=torch.full((2,), 0.5),
+            geometry_support_views=torch.full((2,), 2),
+        )
+        second = accumulator.refresh(second_inputs)
+
+        expected_a = 0.9 * first_a + 0.1 * first_a.flip(0)
+        expected_s = 0.9 * first_s
+        torch.testing.assert_close(second.A, expected_a)
+        torch.testing.assert_close(second.S, expected_s)
+        torch.testing.assert_close(
+            second.N, 1.0 - expected_s * (1.0 - expected_a)
+        )
+        torch.testing.assert_close(second.T_p, torch.full((2,), 0.925))
+        expected_t_g = torch.full((2,), 0.25 ** (1.0 / 3.0))
+        torch.testing.assert_close(second.T_g, expected_t_g)
+        torch.testing.assert_close(second.r_p, second.V_p * second.T_p)
+        torch.testing.assert_close(second.r_g, second.V_g * second.T_g)
+
+    def test_invalid_reliability_refresh_retains_t_history_but_zeros_r(self):
+        accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+        accumulator.refresh(self.inputs())
+        historical = accumulator.t_p_ema.value.clone()
+        invalid = replace(
+            self.inputs(),
+            prior_confidence=torch.zeros(2),
+            prior_multiview=torch.zeros(2),
+            prior_support_views=torch.zeros(2, dtype=torch.int64),
+        )
+
+        snapshot = accumulator.refresh(invalid)
+
+        torch.testing.assert_close(snapshot.T_p, historical)
+        self.assertEqual(snapshot.V_p.tolist(), [False, False])
+        torch.testing.assert_close(snapshot.r_p, torch.zeros(2))
+
+    def test_topology_migration_resets_all_ema_rows_for_new_gaussians(self):
+        accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+        accumulator.refresh(self.inputs())
+        change = TopologyChange(
+            new_to_old=torch.tensor([1, -1, 0], dtype=torch.int64),
+            is_new=torch.tensor([False, True, False]),
+        )
+
+        accumulator.on_topology_change(change)
+
+        for name in ("a_ema", "s_ema", "t_p_ema", "t_g_ema", "k_ema"):
+            state = getattr(accumulator, name)
+            self.assertFalse(state.initialized[1].item())
+            self.assertEqual(state.value[1].item(), 0.0)
 
     def test_refresh_contract_has_no_gt_or_mesh_input(self):
         names = set(inspect.signature(EvidenceAccumulator.refresh).parameters)

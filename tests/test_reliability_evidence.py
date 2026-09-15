@@ -4,6 +4,7 @@ import unittest
 import torch
 
 from reliability.evidence import (
+    EMAState,
     KEMAState,
     active_non_dc,
     compute_appearance_ambiguity,
@@ -13,6 +14,28 @@ from reliability.evidence import (
     normalize_prior_confidence,
     view_count,
 )
+
+
+class EMAStateTests(unittest.TestCase):
+    def test_first_valid_initializes_later_valid_smooths_and_invalid_holds(self):
+        state = EMAState(point_count=2, beta=0.9, device="cpu")
+
+        state.update(
+            torch.tensor([0.2, 0.8]), torch.tensor([True, False])
+        )
+        self.assertEqual(state.initialized.tolist(), [True, False])
+        torch.testing.assert_close(state.value, torch.tensor([0.2, 0.0]))
+
+        state.update(
+            torch.tensor([0.8, 0.4]), torch.tensor([True, True])
+        )
+        torch.testing.assert_close(state.value, torch.tensor([0.26, 0.4]))
+
+        state.update(
+            torch.tensor([1.0, 1.0]), torch.tensor([False, False])
+        )
+        torch.testing.assert_close(state.value, torch.tensor([0.26, 0.4]))
+        self.assertEqual(state.current_valid.tolist(), [False, False])
 
 
 class ObservationEvidenceTests(unittest.TestCase):
