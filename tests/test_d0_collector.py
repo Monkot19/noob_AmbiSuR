@@ -6,6 +6,7 @@ import torch
 
 from reliability.collector import (
     D0EvidenceCollector,
+    camera_to_world_normal,
     reproject_depth_normal_maps,
 )
 
@@ -82,6 +83,20 @@ class D0CollectorTests(unittest.TestCase):
         )
 
         self.assertFalse(result.valid.any())
+
+    def test_camera_frame_normals_are_rotated_to_world_frame(self):
+        camera = SyntheticCamera(0, [])
+        camera.world_view_transform[:3, :3] = torch.tensor(
+            [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
+        )
+        local = torch.zeros(3, 2, 2)
+        local[0] = 1.0
+
+        world = camera_to_world_normal(camera, local)
+
+        expected = torch.zeros_like(world)
+        expected[1] = 1.0
+        torch.testing.assert_close(world, expected)
 
     def test_two_pass_collector_builds_exact_refresh_input_contract(self):
         cameras = [SyntheticCamera(0, [1]), SyntheticCamera(1, [0])]

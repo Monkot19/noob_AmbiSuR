@@ -137,10 +137,11 @@ def compute_observation_sufficiency(
     *,
     k_c=5,
     theta_c_degrees=30.0,
+    chunk_size=8192,
     eps=1e-8,
 ):
     hits = pixel_hits.detach()
-    cameras = camera_centers.detach()
+    cameras = camera_centers.detach().to(device=gaussian_centers.device)
     gaussians = gaussian_centers.detach()
     if hits.ndim != 2:
         raise ValueError("pixel hits must have shape [V, P]")
@@ -150,21 +151,40 @@ def compute_observation_sufficiency(
         raise ValueError("Gaussian centers must have shape [P, 3]")
     if k_c <= 0:
         raise ValueError("k_c must be positive")
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
 
-    observed = hits > 0
-    counts = observed.sum(dim=0)
-    directions = cameras[:, None, :] - gaussians[None, :, :]
-    directions = directions / directions.norm(dim=-1, keepdim=True).clamp_min(eps)
-    direction_sum = (directions * observed[..., None]).sum(dim=0)
+    count_chunks = []
+    dispersion_chunks = []
+    for start in range(0, gaussians.shape[0], chunk_size):
+        end = min(start + chunk_size, gaussians.shape[0])
+        observed = (hits[:, start:end] > 0).to(device=gaussians.device)
+        counts = observed.sum(dim=0)
+        directions = cameras[:, None, :] - gaussians[None, start:end, :]
+        directions = directions / directions.norm(
+            dim=-1, keepdim=True
+        ).clamp_min(eps)
+        direction_sum = (directions * observed[..., None]).sum(dim=0)
+        count_float = counts.to(dtype=gaussians.dtype)
+        numerator = count_float.square() - direction_sum.square().sum(dim=-1)
+        denominator = 2.0 * count_float * (count_float - 1.0)
+        dispersion = torch.where(
+            counts >= 2,
+            numerator / denominator.clamp_min(eps),
+            torch.zeros_like(count_float),
+        ).clamp(0.0, 1.0)
+        count_chunks.append(counts)
+        dispersion_chunks.append(dispersion)
 
+    counts = torch.cat(count_chunks) if count_chunks else torch.empty(
+        0, dtype=torch.int64, device=gaussians.device
+    )
+    dispersion = (
+        torch.cat(dispersion_chunks)
+        if dispersion_chunks
+        else torch.empty(0, dtype=gaussians.dtype, device=gaussians.device)
+    )
     count_float = counts.to(dtype=gaussians.dtype)
-    numerator = count_float.square() - direction_sum.square().sum(dim=-1)
-    denominator = 2.0 * count_float * (count_float - 1.0)
-    dispersion = torch.where(
-        counts >= 2,
-        numerator / denominator.clamp_min(eps),
-        torch.zeros_like(count_float),
-    ).clamp(0.0, 1.0)
 
     theta = torch.as_tensor(
         theta_c_degrees * torch.pi / 180.0,

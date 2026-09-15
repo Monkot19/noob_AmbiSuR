@@ -152,6 +152,7 @@ class OptimizationParams(ParamGroup):
 
         # Core stages are strictly nested and default to the legacy path.
         self.core_shadow_mode = False
+        self.d0_refresh_interval = 1000
         self.enable_observation_calibration = False
         self.enable_dual_reliability = False
         self.enable_abstention = False

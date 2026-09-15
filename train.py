@@ -47,9 +47,13 @@ from reliability.runtime import (
     build_resolved_config,
     collect_run_identity,
     core_config_from_namespace,
+    parse_checkpoint_payload,
     select_training_path,
     write_run_metadata,
 )
+from reliability.collector import D0EvidenceCollector
+from reliability.diagnostics import write_snapshot
+from reliability.shadow import create_shadow_runtime
 
 
 def setup_seed(seed):
@@ -97,7 +101,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
     if core_config is None:
         core_config = CoreConfig()
     training_path = select_training_path(core_config)
-    if training_path != "legacy":
+    if training_path != "legacy" and not core_config.core_shadow_mode:
         raise NotImplementedError("Core training path is not implemented in E0")
 
     first_iter = 0
@@ -124,13 +128,35 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
     first_iter = 0
     
+    core_state = None
     if checkpoint:
-        (model_params, first_iter) = torch.load(checkpoint)
+        model_params, first_iter, core_state = parse_checkpoint_payload(
+            torch.load(checkpoint), core_config
+        )
         gaussians.restore(model_params, opt)
         app_model.load_weights(scene.model_path)
 
     bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+    shadow_runtime = create_shadow_runtime(
+        core_config,
+        point_count=gaussians.get_xyz.shape[0],
+        device=gaussians.get_xyz.device,
+        refresh_interval=opt.d0_refresh_interval,
+    )
+    evidence_collector = None
+    if shadow_runtime is not None:
+        if core_state is not None:
+            shadow_runtime.load_state_dict(core_state)
+        evidence_collector = D0EvidenceCollector(
+            scene.getTrainCameras(),
+            gaussians,
+            render,
+            pipe,
+            background,
+            opt,
+            normal_from_depth_fn=render_normal,
+        )
 
     iter_start = torch.cuda.Event(enable_timing = True)
     iter_end = torch.cuda.Event(enable_timing = True)
@@ -508,8 +534,19 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     # 精读风险（服务器待验证）：densify/prune 在 optimizer.step() 前重建 Gaussian Parameter，
                     # 只迁移 Adam 动量而未显式迁移旧 .grad；发生替换的本轮可能跳过部分或全部 Gaussian 参数更新。
-                    gaussians.densify_and_prune(opt.densify_grad_threshold, opt.densify_abs_grad_threshold, 
-                                                opt.opacity_cull_threshold, scene.cameras_extent, size_threshold)
+                    if shadow_runtime is None:
+                        gaussians.densify_and_prune(opt.densify_grad_threshold, opt.densify_abs_grad_threshold,
+                                                    opt.opacity_cull_threshold, scene.cameras_extent, size_threshold)
+                    else:
+                        topology_change = gaussians.densify_and_prune(
+                            opt.densify_grad_threshold,
+                            opt.densify_abs_grad_threshold,
+                            opt.opacity_cull_threshold,
+                            scene.cameras_extent,
+                            size_threshold,
+                            return_topology_change=True,
+                        )
+                        shadow_runtime.on_topology_change(topology_change)
             
             # multi-view observe trim
             if opt.use_multi_view_trim and iteration % 1000 == 0 and iteration < opt.densify_until_iter:
@@ -521,7 +558,13 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     observe_cnt[out_observe > 0] += 1
                 prune_mask = (observe_cnt < observe_the).squeeze()
                 if prune_mask.sum() > 0:
-                    gaussians.prune_points(prune_mask)
+                    if shadow_runtime is None:
+                        gaussians.prune_points(prune_mask)
+                    else:
+                        topology_change = gaussians.prune_points(
+                            prune_mask, return_topology_change=True
+                        )
+                        shadow_runtime.on_topology_change(topology_change)
 
             # reset_opacity
             if iteration < opt.densify_until_iter:
@@ -537,11 +580,25 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 gaussians.optimizer.zero_grad(set_to_none = True)
                 app_model.optimizer.zero_grad(set_to_none = True)
 
+            if shadow_runtime is not None:
+                snapshot = shadow_runtime.maybe_refresh(
+                    iteration, evidence_collector
+                )
+                if snapshot is not None:
+                    write_snapshot(scene.model_path, iteration, snapshot)
+
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save(
                     build_checkpoint_payload(
-                        gaussians.capture(), iteration, core_config
+                        gaussians.capture(),
+                        iteration,
+                        core_config,
+                        core_state=(
+                            shadow_runtime.state_dict()
+                            if shadow_runtime is not None
+                            else None
+                        ),
                     ),
                     scene.model_path + "/chkpnt" + str(iteration) + ".pth",
                 )

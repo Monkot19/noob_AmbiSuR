@@ -23,6 +23,12 @@ from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
 from pytorch3d.transforms import quaternion_to_matrix
+from reliability.topology import (
+    append_topology_change,
+    compose_topology_changes,
+    identity_topology_change,
+    prune_topology_change,
+)
 
 def dilate(bin_img, ksize=5):
     pad = (ksize - 1) // 2
@@ -355,7 +361,12 @@ class GaussianModel:
                 optimizable_tensors[group["name"]] = group["params"][0]
         return optimizable_tensors
 
-    def prune_points(self, mask):
+    def prune_points(self, mask, return_topology_change=False):
+        topology_change = (
+            prune_topology_change(mask)
+            if return_topology_change
+            else None
+        )
         valid_points_mask = ~mask
         optimizable_tensors = self._prune_optimizer(valid_points_mask)
 
@@ -374,6 +385,7 @@ class GaussianModel:
         self.denom_abs = self.denom_abs[valid_points_mask]
         self.max_radii2D = self.max_radii2D[valid_points_mask]
         self.max_weight = self.max_weight[valid_points_mask]
+        return topology_change
 
     def cat_tensors_to_optimizer(self, tensors_dict):
         optimizable_tensors = {}
@@ -397,7 +409,8 @@ class GaussianModel:
 
         return optimizable_tensors
 
-    def densification_postfix(self, new_xyz, new_knn_f, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation):
+    def densification_postfix(self, new_xyz, new_knn_f, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, return_topology_change=False):
+        old_count = self.get_xyz.shape[0]
         d = {"xyz": new_xyz,
         "knn_f": new_knn_f,
         "f_dc": new_features_dc,
@@ -420,8 +433,13 @@ class GaussianModel:
         self.denom_abs = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
         self.max_weight = torch.zeros((self.get_xyz.shape[0]), device="cuda")
+        if return_topology_change:
+            return append_topology_change(
+                old_count, new_xyz.shape[0], device=self.get_xyz.device
+            )
+        return None
 
-    def densify_and_split(self, grads, grad_threshold, grads_abs, grad_abs_threshold, scene_extent, max_radii2D, N=2):
+    def densify_and_split(self, grads, grad_threshold, grads_abs, grad_abs_threshold, scene_extent, max_radii2D, N=2, return_topology_change=False):
         n_init_points = self.get_xyz.shape[0]
         # Extract points that satisfy the gradient condition
         padded_grad = torch.zeros((n_init_points), device="cuda")
@@ -475,12 +493,27 @@ class GaussianModel:
         new_opacity = self._opacity[selected_pts_mask].repeat(N,1)
         new_knn_f = self._knn_f[selected_pts_mask].repeat(N,1)
 
-        self.densification_postfix(new_xyz, new_knn_f, new_features_dc, new_features_rest, new_opacity, new_scaling, new_rotation)
+        append_change = self.densification_postfix(
+            new_xyz,
+            new_knn_f,
+            new_features_dc,
+            new_features_rest,
+            new_opacity,
+            new_scaling,
+            new_rotation,
+            return_topology_change=return_topology_change,
+        )
 
         prune_filter = torch.cat((selected_pts_mask, torch.zeros(N * selected_pts_mask.sum(), device="cuda", dtype=bool)))
-        self.prune_points(prune_filter)
+        prune_change = self.prune_points(
+            prune_filter,
+            return_topology_change=return_topology_change,
+        )
+        if return_topology_change:
+            return compose_topology_changes(append_change, prune_change)
+        return None
 
-    def densify_and_clone(self, grads, grad_threshold, scene_extent):
+    def densify_and_clone(self, grads, grad_threshold, scene_extent, return_topology_change=False):
         n_init_points = self.get_xyz.shape[0]
         # Extract points that satisfy the gradient condition
         selected_pts_mask = torch.where(torch.norm(grads, dim=-1) >= grad_threshold, True, False)
@@ -520,17 +553,44 @@ class GaussianModel:
             new_rotation = self._rotation[selected_pts_mask]
             new_knn_f = self._knn_f[selected_pts_mask]
 
-            self.densification_postfix(new_xyz, new_knn_f, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation)
+            return self.densification_postfix(
+                new_xyz,
+                new_knn_f,
+                new_features_dc,
+                new_features_rest,
+                new_opacities,
+                new_scaling,
+                new_rotation,
+                return_topology_change=return_topology_change,
+            )
+        if return_topology_change:
+            return identity_topology_change(
+                n_init_points, device=self.get_xyz.device
+            )
+        return None
 
-    def densify_and_prune(self, max_grad, abs_max_grad, min_opacity, extent, max_screen_size):
+    def densify_and_prune(self, max_grad, abs_max_grad, min_opacity, extent, max_screen_size, return_topology_change=False):
         grads = self.xyz_gradient_accum / self.denom
         grads_abs = self.xyz_gradient_accum_abs / self.denom_abs
         grads[grads.isnan()] = 0.0
         grads_abs[grads_abs.isnan()] = 0.0
         max_radii2D = self.max_radii2D.clone()
 
-        self.densify_and_clone(grads, max_grad, extent)
-        self.densify_and_split(grads, max_grad, grads_abs, abs_max_grad, extent, max_radii2D)
+        clone_change = self.densify_and_clone(
+            grads,
+            max_grad,
+            extent,
+            return_topology_change=return_topology_change,
+        )
+        split_change = self.densify_and_split(
+            grads,
+            max_grad,
+            grads_abs,
+            abs_max_grad,
+            extent,
+            max_radii2D,
+            return_topology_change=return_topology_change,
+        )
 
         prune_mask = (self.get_opacity < min_opacity).squeeze()
 
@@ -538,9 +598,16 @@ class GaussianModel:
             big_points_vs = self.max_radii2D > max_screen_size
             big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
             prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
-        self.prune_points(prune_mask)
+        prune_change = self.prune_points(
+            prune_mask,
+            return_topology_change=return_topology_change,
+        )
         # print(f"all points {self._xyz.shape[0]}")
         torch.cuda.empty_cache()
+        if return_topology_change:
+            change = compose_topology_changes(clone_change, split_change)
+            return compose_topology_changes(change, prune_change)
+        return None
 
     def add_densification_stats(self, viewspace_point_tensor, viewspace_point_tensor_abs, update_filter):
         # 只统计可见 Gaussian：累计两种屏幕空间梯度前两维的 L2 范数，denom 记录被观察次数以便之后求均值。
