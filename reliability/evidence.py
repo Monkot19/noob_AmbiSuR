@@ -396,7 +396,7 @@ def compute_pg_consistency(
     return PGConsistency(support, valid, raw)
 
 
-class KEMAState:
+class EMAState:
     def __init__(self, point_count, *, beta=0.9, device=None):
         if point_count < 0:
             raise ValueError("point_count must be nonnegative")
@@ -416,10 +416,10 @@ class KEMAState:
         if not valid.any():
             return
         if raw is None:
-            raise ValueError("raw K is required for valid joint observations")
+            raise ValueError("raw value is required for valid EMA observations")
         raw = raw.detach().to(device=self.value.device, dtype=self.value.dtype)
         if raw.shape != self.value.shape:
-            raise ValueError("raw K must match EMA state")
+            raise ValueError("raw value must match EMA state")
         first = valid & ~self.initialized
         continuing = valid & self.initialized
         self.value[first] = raw[first]
@@ -430,17 +430,41 @@ class KEMAState:
         self.initialized[valid] = True
 
 
+class KEMAState(EMAState):
+    """Joint-validity-gated EMA retained as a named public contract."""
+
+
 class EvidenceAccumulator:
     """Persistent, detached D0 evidence and arbitration state."""
 
-    STATE_VERSION = 1
+    STATE_VERSION = 2
 
-    def __init__(self, point_count, *, cfg, device=None, k_beta=0.9):
+    def __init__(
+        self,
+        point_count,
+        *,
+        cfg,
+        device=None,
+        ema_beta=0.9,
+        k_beta=0.9,
+    ):
         if point_count < 0:
             raise ValueError("point_count must be nonnegative")
         cfg.validate()
         self.cfg = cfg
         self.point_count = int(point_count)
+        self.a_ema = EMAState(
+            self.point_count, beta=ema_beta, device=device
+        )
+        self.s_ema = EMAState(
+            self.point_count, beta=ema_beta, device=device
+        )
+        self.t_p_ema = EMAState(
+            self.point_count, beta=ema_beta, device=device
+        )
+        self.t_g_ema = EMAState(
+            self.point_count, beta=ema_beta, device=device
+        )
         self.k_ema = KEMAState(
             self.point_count, beta=k_beta, device=device
         )
@@ -480,7 +504,6 @@ class EvidenceAccumulator:
             inputs.camera_centers,
             inputs.centers,
         )
-        need = compute_need(ambiguity, sufficiency.S)
         prior = combine_prior_reliability(
             inputs.prior_confidence,
             inputs.prior_multiview,
@@ -501,6 +524,20 @@ class EvidenceAccumulator:
             inputs.geometry_support_views,
             stability.valid,
         )
+        all_valid = torch.ones(
+            self.point_count,
+            dtype=torch.bool,
+            device=inputs.centers.device,
+        )
+        self.a_ema.update(ambiguity, all_valid)
+        self.s_ema.update(sufficiency.S, all_valid)
+        self.t_p_ema.update(prior.T, prior.V)
+        self.t_g_ema.update(geometry.T, geometry.V)
+        need = compute_need(self.a_ema.value, self.s_ema.value)
+        prior_r = prior.V.to(self.t_p_ema.value.dtype) * self.t_p_ema.value
+        geometry_r = (
+            geometry.V.to(self.t_g_ema.value.dtype) * self.t_g_ema.value
+        )
         pg = compute_pg_consistency(
             inputs.pg_weighted_support,
             inputs.pg_depth_error_sum,
@@ -508,7 +545,7 @@ class EvidenceAccumulator:
         )
         raw_k = pg.K_raw if bool(pg.V_pg.any()) else None
         self.k_ema.update(raw_k, pg.V_pg)
-        delta = prior.r - geometry.r
+        delta = prior_r - geometry_r
 
         placeholder = torch.zeros(
             self.point_count,
@@ -516,15 +553,15 @@ class EvidenceAccumulator:
             device=inputs.centers.device,
         )
         snapshot = EvidenceSnapshot(
-            ambiguity,
-            sufficiency.S,
+            self.a_ema.value.clone(),
+            self.s_ema.value.clone(),
             need,
-            prior.T,
+            self.t_p_ema.value.clone(),
             prior.V,
-            prior.r,
-            geometry.T,
+            prior_r,
+            self.t_g_ema.value.clone(),
             geometry.V,
-            geometry.r,
+            geometry_r,
             pg.Z_pg,
             pg.V_pg,
             self.k_ema.value.clone(),
@@ -558,15 +595,22 @@ class EvidenceAccumulator:
 
     @torch.no_grad()
     def on_topology_change(self, change):
-        self.k_ema.value = migrate_tensor(
-            self.k_ema.value, change, fill_value=0.0
-        )
-        self.k_ema.initialized = migrate_tensor(
-            self.k_ema.initialized, change, fill_value=False
-        )
-        self.k_ema.current_valid = migrate_tensor(
-            self.k_ema.current_valid, change, fill_value=False
-        )
+        for state in (
+            self.a_ema,
+            self.s_ema,
+            self.t_p_ema,
+            self.t_g_ema,
+            self.k_ema,
+        ):
+            state.value = migrate_tensor(
+                state.value, change, fill_value=0.0
+            )
+            state.initialized = migrate_tensor(
+                state.initialized, change, fill_value=False
+            )
+            state.current_valid = migrate_tensor(
+                state.current_valid, change, fill_value=False
+            )
         self.arbitration.stable_state = migrate_tensor(
             self.arbitration.stable_state,
             change,
@@ -599,7 +643,20 @@ class EvidenceAccumulator:
         return {
             "version": self.STATE_VERSION,
             "point_count": self.point_count,
+            "ema_beta": self.a_ema.beta,
             "k_beta": self.k_ema.beta,
+            "a_value": clone(self.a_ema.value),
+            "a_initialized": clone(self.a_ema.initialized),
+            "a_current_valid": clone(self.a_ema.current_valid),
+            "s_value": clone(self.s_ema.value),
+            "s_initialized": clone(self.s_ema.initialized),
+            "s_current_valid": clone(self.s_ema.current_valid),
+            "t_p_value": clone(self.t_p_ema.value),
+            "t_p_initialized": clone(self.t_p_ema.initialized),
+            "t_p_current_valid": clone(self.t_p_ema.current_valid),
+            "t_g_value": clone(self.t_g_ema.value),
+            "t_g_initialized": clone(self.t_g_ema.initialized),
+            "t_g_current_valid": clone(self.t_g_ema.current_valid),
             "k_value": clone(self.k_ema.value),
             "k_initialized": clone(self.k_ema.initialized),
             "k_current_valid": clone(self.k_ema.current_valid),
@@ -619,10 +676,24 @@ class EvidenceAccumulator:
             raise ValueError("unsupported evidence state version")
         if state.get("point_count") != self.point_count:
             raise ValueError("evidence state point count mismatch")
+        if float(state.get("ema_beta")) != self.a_ema.beta:
+            raise ValueError("evidence state EMA beta mismatch")
         if float(state.get("k_beta")) != self.k_ema.beta:
             raise ValueError("evidence state K EMA beta mismatch")
 
         destinations = {
+            "a_value": self.a_ema.value,
+            "a_initialized": self.a_ema.initialized,
+            "a_current_valid": self.a_ema.current_valid,
+            "s_value": self.s_ema.value,
+            "s_initialized": self.s_ema.initialized,
+            "s_current_valid": self.s_ema.current_valid,
+            "t_p_value": self.t_p_ema.value,
+            "t_p_initialized": self.t_p_ema.initialized,
+            "t_p_current_valid": self.t_p_ema.current_valid,
+            "t_g_value": self.t_g_ema.value,
+            "t_g_initialized": self.t_g_ema.initialized,
+            "t_g_current_valid": self.t_g_ema.current_valid,
             "k_value": self.k_ema.value,
             "k_initialized": self.k_ema.initialized,
             "k_current_valid": self.k_ema.current_valid,
