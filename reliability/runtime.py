@@ -35,6 +35,27 @@ def build_checkpoint_payload(
     }
 
 
+def parse_checkpoint_payload(payload, config):
+    if select_training_path(config) == "legacy":
+        if not isinstance(payload, tuple) or len(payload) != 2:
+            raise ValueError("legacy checkpoint must be a two-item tuple")
+        gaussian_state, iteration = payload
+        return gaussian_state, iteration, None
+
+    if not isinstance(payload, dict):
+        raise ValueError("Core checkpoint must be a versioned mapping")
+    if payload.get("schema_version") != 1:
+        raise ValueError("unsupported Core checkpoint schema version")
+    required = {"gaussian_state", "iteration", "core_state"}
+    if not required.issubset(payload):
+        raise ValueError("Core checkpoint is missing required fields")
+    return (
+        payload["gaussian_state"],
+        payload["iteration"],
+        payload["core_state"],
+    )
+
+
 def _jsonable(value):
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
