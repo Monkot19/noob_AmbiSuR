@@ -40,12 +40,143 @@ class G1IterationInputs:
     snapshot_sha256: str
 
 
+@dataclass(frozen=True)
+class ValidatedMesh:
+    vertices: np.ndarray
+    triangles: np.ndarray
+    source_vertex_count: int
+    source_triangle_count: int
+    nonfinite_vertex_count: int
+    rejected_nonfinite_triangle_count: int
+    rejected_degenerate_triangle_count: int
+
+    @property
+    def rejected_triangle_count(self):
+        return (
+            self.rejected_nonfinite_triangle_count
+            + self.rejected_degenerate_triangle_count
+        )
+
+
 def sha256_file(path):
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def validate_mesh_arrays(vertices, triangles):
+    vertices = np.asarray(vertices, dtype=np.float64)
+    triangles = np.asarray(triangles)
+    if vertices.ndim != 2 or vertices.shape[1] != 3:
+        raise ValueError("GT vertices must have shape [V,3]")
+    if triangles.ndim != 2 or triangles.shape[1] != 3:
+        raise ValueError("GT triangles must have shape [F,3]")
+    if not np.issubdtype(triangles.dtype, np.integer):
+        raise ValueError("GT triangle indices must be integers")
+    triangles = triangles.astype(np.int64, copy=False)
+    if triangles.shape[0] == 0:
+        raise ValueError("GT mesh has no valid GT triangles")
+    if triangles.min() < 0 or triangles.max() >= vertices.shape[0]:
+        raise ValueError("triangle index out of range")
+
+    finite_vertices = np.isfinite(vertices).all(axis=1)
+    finite_triangles = finite_vertices[triangles].all(axis=1)
+    finite_faces = triangles[finite_triangles]
+    degenerate = np.zeros(finite_faces.shape[0], dtype=np.bool_)
+    if finite_faces.shape[0]:
+        a = vertices[finite_faces[:, 0]]
+        b = vertices[finite_faces[:, 1]]
+        c = vertices[finite_faces[:, 2]]
+        cross = np.cross(b - a, c - a)
+        degenerate = np.einsum("ij,ij->i", cross, cross) == 0.0
+    valid_faces = finite_faces[~degenerate]
+    if valid_faces.shape[0] == 0:
+        raise ValueError("GT mesh has no valid GT triangles")
+
+    used_vertices, compact_indices = np.unique(
+        valid_faces.reshape(-1), return_inverse=True
+    )
+    compact_vertices = np.ascontiguousarray(vertices[used_vertices])
+    compact_triangles = np.ascontiguousarray(
+        compact_indices.reshape(-1, 3).astype(np.int64, copy=False)
+    )
+    compact_vertices.setflags(write=False)
+    compact_triangles.setflags(write=False)
+    return ValidatedMesh(
+        vertices=compact_vertices,
+        triangles=compact_triangles,
+        source_vertex_count=int(vertices.shape[0]),
+        source_triangle_count=int(triangles.shape[0]),
+        nonfinite_vertex_count=int((~finite_vertices).sum()),
+        rejected_nonfinite_triangle_count=int((~finite_triangles).sum()),
+        rejected_degenerate_triangle_count=int(degenerate.sum()),
+    )
+
+
+def _require_open3d():
+    try:
+        import open3d as o3d
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("Open3D is required for GT mesh evaluation") from exc
+    return o3d
+
+
+def load_valid_mesh(path):
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"GT mesh is missing: {path}")
+    o3d = _require_open3d()
+    mesh = o3d.io.read_triangle_mesh(str(path))
+    vertices = np.asarray(mesh.vertices)
+    triangles = np.asarray(mesh.triangles)
+    if vertices.size == 0 or triangles.size == 0:
+        raise ValueError(f"GT mesh has no triangle surface: {path}")
+    return validate_mesh_arrays(vertices, triangles)
+
+
+def closest_triangle_distances(points, mesh, chunk_size=65536):
+    points64 = np.asarray(points, dtype=np.float64)
+    if points64.ndim != 2 or points64.shape[1] != 3:
+        raise ValueError("query points must have shape [P,3]")
+    if points64.shape[0] == 0:
+        raise ValueError("query points must not be empty")
+    if not np.isfinite(points64).all():
+        raise ValueError("query points must be finite")
+    chunk_size = int(chunk_size)
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    if not isinstance(mesh, ValidatedMesh):
+        raise TypeError("mesh must be a ValidatedMesh")
+
+    o3d = _require_open3d()
+    legacy = o3d.geometry.TriangleMesh(
+        o3d.utility.Vector3dVector(mesh.vertices),
+        o3d.utility.Vector3iVector(mesh.triangles),
+    )
+    tensor_mesh = o3d.t.geometry.TriangleMesh.from_legacy(
+        legacy,
+        vertex_dtype=o3d.core.Dtype.Float32,
+        triangle_dtype=o3d.core.Dtype.Int64,
+    )
+    scene = o3d.t.geometry.RaycastingScene()
+    scene.add_triangles(tensor_mesh)
+
+    distances = np.empty(points64.shape[0], dtype=np.float64)
+    for start in range(0, points64.shape[0], chunk_size):
+        stop = min(start + chunk_size, points64.shape[0])
+        query = o3d.core.Tensor(
+            points64[start:stop].astype(np.float32, copy=False)
+        )
+        result = scene.compute_closest_points(query)
+        closest = result["points"].numpy().astype(np.float64, copy=False)
+        distances[start:stop] = np.linalg.norm(
+            points64[start:stop] - closest, axis=1
+        )
+    if not np.isfinite(distances).all():
+        raise ValueError("nonfinite GT distance")
+    return distances
 
 
 def _as_numpy(value):
