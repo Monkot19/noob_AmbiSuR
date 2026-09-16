@@ -130,7 +130,7 @@ git commit -m "feat: add offline G1 input contracts"
 - Produces: `ValidatedMesh`, `load_valid_mesh(path: Path) -> ValidatedMesh`, `closest_triangle_distances(points, mesh, chunk_size=65536) -> np.ndarray`.
 - Open3D selects the closest triangle/point through its BVH; returned closest points and original centers are converted to float64 before Euclidean distance is computed.
 
-- [ ] **Step 1: Write synthetic face/edge/vertex RED tests**
+- [x] **Step 1: Write synthetic face/edge/vertex RED tests**
 
 ```python
 def test_closest_triangle_distance_covers_face_edge_and_vertex(self):
@@ -152,13 +152,13 @@ def test_closest_triangle_distance_covers_face_edge_and_vertex(self):
 
 Add tests proving invalid indices, nonfinite vertices, and exact zero-area triangles are rejected and counted; all-invalid mesh and nonfinite query points raise errors; chunk sizes produce identical values.
 
-- [ ] **Step 2: Run the focused geometry tests and verify RED**
+- [x] **Step 2: Run the focused geometry tests and verify RED**
 
 Run: `python -B -m unittest tests.test_g1_geometry -v`
 
 Expected: missing mesh/query symbols.
 
-- [ ] **Step 3: Implement validation and chunked surface queries**
+- [x] **Step 3: Implement validation and chunked surface queries**
 
 ```python
 def closest_triangle_distances(points, mesh, chunk_size=65536):
@@ -181,13 +181,13 @@ def closest_triangle_distances(points, mesh, chunk_size=65536):
     return distances
 ```
 
-- [ ] **Step 4: Run tests with the server dependency versions**
+- [x] **Step 4: Run tests with the server dependency versions**
 
 Run: `python -B -m unittest tests.test_g1_geometry -v`
 
 Expected: all PASS on CPU; no CUDA allocation.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add reliability/offline_g1.py tests/test_g1_geometry.py

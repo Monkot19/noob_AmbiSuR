@@ -487,6 +487,8 @@ def test_feature_off_never_computes_or_consumes_joint_gate(core_off_spy):
 
 **G1 evaluator Task 1（PASS，2026-09-16）：** `reliability/offline_g1.py` 已在 implementation commit `7b2dbb570db3510dd40508890d7c1e3a662949e0` 建立 versioned Core checkpoint/no-GT snapshot 的同轮只读 join。AutoDL 真实 Torch I/O 与相关回归共 27/27 PASS；严格拒绝 schema/iteration/row-count/field/dtype/nonfinite/同长度行置换错误，逐行核对 checkpoint evidence state，并仅记录非有限中心排除索引。下一 TDD 单变量为 full valid GT triangle surface distance；尚未实现 G1 metric/visualization/CLI，也未授权正式 7k。
 
+**G1 evaluator Task 2（PASS，2026-09-16）：** implementation commit `61a22deebb6631b36609bba240a28ec17e677d43` 在 AutoDL Open3D 0.18.0 完成 26/26 GREEN。`ValidatedMesh` 只保留完整 mesh 中 finite、非零面积三角面并报告拒绝数，越界索引/空有效面 fail closed；`closest_triangle_distances` 通过 BVH 查询三角面表面最近点并以 float64 重算中心距离，face/edge/vertex、chunk invariance 和 PLY I/O 均实测通过。下一 TDD 单变量为冻结 G1 metrics/gate；尚未生成 GT 指标或图片，未授权正式 7k。
+
 **晋级：** G1：iteration 7000 的 `N AUROC>0.60` 且比 `max(A,1-S)` 对应较优单项至少 `+0.03`；主要 5 cm 标签 prevalence 位于 `[5%,95%]`；固定 risk-coverage 曲线完整且有限；稳定状态未被单一 Bypass 或单一 Abstain 100% 占据；D0 reconstruction/grad/topology 等价。**停止：** G1 硬门失败或不可评估、state exact collapse、CUDA accumulator 不等于 oracle、任何 GT 路径进入训练/checkpoint。joint coverage/risk-coverage 异常只按冻结诊断报告，不得自动改用 Delta、降低 `tau_Z`、改变阈值或绕过 validity。
 
 **Commits/tags:** `test: specify Core evidence and arbitration`; `feat: add forward-only Gaussian evidence accumulation`; `feat: add D0 shadow reliability diagnostics`. No D0 tag.
