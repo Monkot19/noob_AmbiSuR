@@ -204,7 +204,7 @@ git commit -m "feat: compute full-mesh Gaussian GT distances"
 - Produces: `binary_curves`, `fixed_risk_coverage`, `summarize_states`, `evaluate_g1_gate`.
 - `evaluate_g1_gate(snapshot, distances, iteration) -> dict` always records primary/sensitivity metrics but sets `g1_evaluable/g1_pass` only for iteration 7000.
 
-- [ ] **Step 1: Write metric and anti-cherry-picking RED tests**
+- [x] **Step 1: Write metric and anti-cherry-picking RED tests**
 
 ```python
 def test_primary_gate_uses_n_against_better_component(self):
@@ -229,13 +229,13 @@ def test_iteration_3000_can_never_pass(self):
 
 Also test score ties, all-equal scores, prevalence 4.9%/5%/95%/95.1%, strict `>0.05`, N rejection direction, rP/rG retention direction and validity masks, coverage grid, 100% single Bypass/Abstain stop, finite-output enforcement, and sensitivity labels not affecting `g1_pass`.
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 Run: `python -B -m unittest tests.test_g1_metrics -v`
 
 Expected: import failure for `reliability.g1_metrics`.
 
-- [ ] **Step 3: Implement dependency-free tie-safe metrics**
+- [x] **Step 3: Implement dependency-free tie-safe metrics**
 
 ```python
 PRIMARY_THRESHOLD_M = 0.05
@@ -264,13 +264,13 @@ def evaluate_g1_gate(snapshot, distances, iteration):
     }
 ```
 
-- [ ] **Step 4: Run metrics plus arbitration tests**
+- [x] **Step 4: Run metrics plus arbitration tests**
 
 Run: `python -B -m unittest tests.test_g1_metrics tests.test_arbitration tests.test_reliability_evidence -v`
 
 Expected: all PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add reliability/g1_metrics.py tests/test_g1_metrics.py

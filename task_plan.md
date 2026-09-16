@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0 与 E0 工程已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；用户批准的 behavioral schema-3 使用预先冻结的独立合同和 unseen E0。2026-09-14 用户操作 AutoDL 完成唯一一次 Tool Room r2/seed0/8k unseen E0：训练 exit 0、输入 after-SHA 匹配、峰值 10,770 MiB、仓库 clean 恢复。正式 schema-3 报告 `g0_schema3_unseen_e0_20260914T080510Z_4fc982625600.formal-schema3.json`：`schema_version=3`、`exploratory=false`、`g0_equivalent=true`、hard exact/numeric failure 均为 0，报告 SHA256 `3f6f7e7a9bf302e192ffe48694a1df0ac05c9cb957da76bd909d0b7a6f9879a8`。346 项内部 summary outlier 仍保留为诊断，不改写为零差异。E0/G0 的已批准 behavioral gate 通过；下一阶段仅可在用户单独批准 D0 范围后按 TDD 开始。C1、tag、Supporting、正式新训练均未授权。
+Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-16，offline G1 evaluator Tasks 1–3 已按 TDD 完成 snapshot/checkpoint join、full-triangle distance 与 frozen metrics/gate，并在 AutoDL exact `9948dc58c849bd4a4f859b80407d2b1c4f5ec8f9` 通过 58/58 focused regression、静态与 clean gate。当前实施 Task 4 deterministic visualization；CLI/archive、500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
 
 ## Phases
 
