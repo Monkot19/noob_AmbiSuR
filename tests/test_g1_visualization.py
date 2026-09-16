@@ -1,4 +1,6 @@
 from pathlib import Path
+import importlib.util
+import json
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -7,11 +9,19 @@ import numpy as np
 
 from reliability.g1_visualization import (
     camera_quartile_indices,
+    cast_gt_depth,
     scalar_colors,
     select_static_cameras,
     state_colors,
     write_colored_ply,
+    write_gt_overlay,
+    write_metric_figures,
 )
+from reliability.offline_g1 import ValidatedMesh
+
+
+HAS_OPEN3D = importlib.util.find_spec("open3d") is not None
+HAS_MATPLOTLIB = importlib.util.find_spec("matplotlib") is not None
 
 
 class G1VisualizationTests(unittest.TestCase):
@@ -105,6 +115,160 @@ class G1VisualizationTests(unittest.TestCase):
                     np.zeros((2, 3), dtype=np.float64),
                     np.zeros((1, 3), dtype=np.uint8),
                 )
+
+    @unittest.skipUnless(HAS_OPEN3D, "Open3D is required")
+    def test_gt_depth_casts_full_frame_pixel_center_rays(self):
+        camera = self.full_frame_camera()
+        mesh = self.front_plane_mesh()
+
+        depth, metadata = cast_gt_depth(camera, mesh)
+
+        self.assertEqual(depth.shape, (4, 4))
+        np.testing.assert_allclose(depth, 2.0, rtol=0, atol=1e-5)
+        self.assertEqual(metadata["camera_image_name"], "frozen-camera")
+        self.assertEqual(metadata["camera_colmap_id"], 17)
+        self.assertEqual(metadata["image_shape"], [4, 4])
+        self.assertEqual(metadata["hit_fraction"], 1.0)
+        self.assertAlmostEqual(metadata["depth_min_m"], 2.0, places=5)
+        self.assertAlmostEqual(metadata["depth_max_m"], 2.0, places=5)
+
+    @unittest.skipUnless(HAS_OPEN3D, "Open3D is required")
+    def test_gt_overlay_uses_frozen_camera_without_crop(self):
+        camera = self.full_frame_camera()
+        gaussian_rgb = np.zeros((4, 4, 3), dtype=np.uint8)
+        gaussian_rgb[..., 1] = 64
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "gt-overlay.png"
+            metadata = write_gt_overlay(
+                camera,
+                self.front_plane_mesh(),
+                gaussian_rgb,
+                path,
+            )
+            from PIL import Image
+
+            with Image.open(path) as image:
+                saved_shape = [image.height, image.width, len(image.getbands())]
+            sidecar = json.loads(path.with_suffix(".json").read_text())
+
+        self.assertEqual(saved_shape, [4, 4, 3])
+        self.assertEqual(metadata["image_shape"], [4, 4, 3])
+        self.assertEqual(metadata["camera_image_name"], "frozen-camera")
+        self.assertEqual(sidecar, metadata)
+
+    @unittest.skipUnless(HAS_MATPLOTLIB, "matplotlib is required")
+    def test_metric_figures_export_png_svg_pdf_and_source_data(self):
+        report = self.metric_report()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            paths = write_metric_figures(
+                report,
+                Path(temporary_directory),
+                prefix="iteration_007000",
+            )
+            names = sorted(path.name for path in paths)
+            sizes = {path.name: path.stat().st_size for path in paths}
+
+        expected_stems = (
+            "iteration_007000_primary_curves",
+            "iteration_007000_risk_coverage",
+            "iteration_007000_state_error",
+        )
+        expected_names = sorted(
+            f"{stem}.{suffix}"
+            for stem in expected_stems
+            for suffix in ("csv", "json", "pdf", "png", "svg")
+        )
+        self.assertEqual(names, expected_names)
+        self.assertTrue(all(size > 0 for size in sizes.values()))
+
+    @staticmethod
+    def full_frame_camera():
+        intrinsic = np.array(
+            [[1.0, 0.0, 2.0], [0.0, 1.0, 2.0], [0.0, 0.0, 1.0]],
+            dtype=np.float32,
+        )
+        camera_to_world = np.eye(4, dtype=np.float32)
+        return SimpleNamespace(
+            image_width=4,
+            image_height=4,
+            image_name="frozen-camera",
+            colmap_id=17,
+            get_calib_matrix_nerf=lambda scale=1.0: (
+                intrinsic,
+                camera_to_world,
+            ),
+        )
+
+    @staticmethod
+    def front_plane_mesh():
+        return ValidatedMesh(
+            vertices=np.array(
+                [
+                    [-10.0, -10.0, 2.0],
+                    [10.0, -10.0, 2.0],
+                    [10.0, 10.0, 2.0],
+                    [-10.0, 10.0, 2.0],
+                ],
+                dtype=np.float64,
+            ),
+            triangles=np.array([[0, 1, 2], [0, 2, 3]], dtype=np.int64),
+            rejected_triangle_count=0,
+        )
+
+    @staticmethod
+    def metric_report():
+        curve = {
+            "fpr": np.array([0.0, 0.0, 1.0]),
+            "tpr": np.array([0.0, 1.0, 1.0]),
+            "recall": np.array([0.0, 1.0, 1.0]),
+            "precision": np.array([1.0, 1.0, 0.5]),
+            "auroc": 1.0,
+            "auprc": 1.0,
+        }
+        risk_points = [
+            {
+                "coverage": coverage,
+                "count": index + 1,
+                "mean_distance": 0.01 + 0.01 * index,
+                "high_error_rate": 0.1 * index,
+            }
+            for index, coverage in enumerate((0.25, 0.5, 0.75, 1.0))
+        ]
+        return {
+            "iteration": 7000,
+            "primary": {
+                "curves": {"N": curve, "A": curve, "one_minus_S": curve}
+            },
+            "risk_coverage": {
+                name: {"direction": direction, "points": risk_points}
+                for name, direction in (
+                    ("N", "retain_low"),
+                    ("r_p", "retain_high"),
+                    ("r_g", "retain_high"),
+                )
+            },
+            "state": {
+                "per_state": {
+                    name: {
+                        "count": count,
+                        "fraction": count / 100.0,
+                        "mean_distance": 0.01 * state_id,
+                        "high_error_rate": 0.05 * state_id,
+                    }
+                    for state_id, (name, count) in enumerate(
+                        (
+                            ("Bypass", 10),
+                            ("Consensus", 20),
+                            ("Prior-led", 30),
+                            ("Geometry-led", 25),
+                            ("Abstain", 15),
+                        )
+                    )
+                }
+            },
+        }
 
 
 if __name__ == "__main__":
