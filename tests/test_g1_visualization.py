@@ -214,7 +214,11 @@ class G1VisualizationTests(unittest.TestCase):
                 dtype=np.float64,
             ),
             triangles=np.array([[0, 1, 2], [0, 2, 3]], dtype=np.int64),
-            rejected_triangle_count=0,
+            source_vertex_count=4,
+            source_triangle_count=2,
+            nonfinite_vertex_count=0,
+            rejected_nonfinite_triangle_count=0,
+            rejected_degenerate_triangle_count=0,
         )
 
     @staticmethod
