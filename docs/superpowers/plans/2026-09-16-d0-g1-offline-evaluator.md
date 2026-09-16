@@ -288,7 +288,7 @@ git commit -m "feat: add frozen G1 metrics and gate"
 - Produces: `camera_quartile_indices`, `scalar_colors`, `state_colors`, `write_colored_ply`, `cast_gt_depth`, `write_gt_overlay`, `write_metric_figures`, `required_artifacts`.
 - Fixed scalar maps use `viridis` for `[0,1]`; GT distance uses `magma` over `[0,0.10]`; states use a constant five-row uint8 palette ordered Bypass/Consensus/Prior-led/Geometry-led/Abstain.
 
-- [ ] **Step 1: Write deterministic artifact RED tests**
+- [x] **Step 1: Write deterministic artifact RED tests**
 
 ```python
 def test_camera_indices_are_frozen_for_406_views(self):
@@ -310,7 +310,7 @@ def test_gt_overlay_uses_the_frozen_camera_without_crop(self):
 
 The GPU test must patch/inspect the renderer call to prove `override_color` is used under `torch.no_grad()`, no backward/optimizer step occurs, and rendering does not mutate captured Gaussian parameters.
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 Run CPU: `python -B -m unittest tests.test_g1_visualization -v`
 
@@ -318,7 +318,7 @@ Run GPU on AutoDL: `python -B -m unittest tests.gpu.test_g1_override_render -v`
 
 Expected: missing visualization module/functions.
 
-- [ ] **Step 3: Implement palettes, PLY, CSV and figure writers**
+- [ ] **Step 3: Implement palettes, PLY, CSV, figure writers and required-artifact inventory**
 
 ```python
 STATE_PALETTE = np.array([
@@ -339,7 +339,7 @@ Write every chart once as PNG, SVG and PDF from the same matplotlib figure objec
 
 Implement GT depth without a GUI: build pixel-center camera rays from `Fx/Fy/Cx/Cy`, rotate directions and origins by `camera.get_calib_matrix_nerf()[1]` (the repository's camera-to-world transform), call `RaycastingScene.cast_rays`, and overlay finite GT hits/contours on the same full-frame Gaussian render. Record the selected image name, COLMAP ID, intrinsic matrix, camera-to-world matrix, hit fraction and depth range in JSON; never change the selected camera because of the hit fraction.
 
-- [ ] **Step 4: Implement and verify renderer integration**
+- [x] **Step 4: Implement and verify renderer integration**
 
 Restore the checkpoint into `GaussianModel`, sort train cameras by COLMAP image ID with image name as deterministic tie-breaker, call existing `gaussian_renderer.render(..., override_color=color_tensor)` under `torch.no_grad()`, and save the three full-frame PNGs for every field. Do not modify renderer/CUDA source.
 

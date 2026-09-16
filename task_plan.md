@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-16，offline G1 evaluator Tasks 1–3 已按 TDD 完成 snapshot/checkpoint join、full-triangle distance 与 frozen metrics/gate，并在 AutoDL exact `9948dc58c849bd4a4f859b80407d2b1c4f5ec8f9` 通过 58/58 focused regression、静态与 clean gate。当前实施 Task 4 deterministic visualization；CLI/archive、500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
+Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-16，offline G1 evaluator Tasks 1–3 已完成；Task 4 的 GT raycast/overlay、图表和真实 CUDA renderer 在 AutoDL exact `688d00321a61f3e65ff6884498bd17f44183cde2` 通过 focused 2/2 和完整 31/31 回归，但逐项复核发现计划内 `required_artifacts` 清单尚未实现，故 Task 4 仍需一个 inventory RED→GREEN 才能关闭。Task 5 CLI/archive、500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
 
 ## Phases
 
