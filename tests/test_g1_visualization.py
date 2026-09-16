@@ -10,6 +10,7 @@ import numpy as np
 from reliability.g1_visualization import (
     camera_quartile_indices,
     cast_gt_depth,
+    required_artifacts,
     scalar_colors,
     select_static_cameras,
     state_colors,
@@ -25,6 +26,31 @@ HAS_MATPLOTLIB = importlib.util.find_spec("matplotlib") is not None
 
 
 class G1VisualizationTests(unittest.TestCase):
+    def test_required_artifacts_freeze_complete_relative_inventory(self):
+        names = required_artifacts()
+
+        self.assertEqual(names, tuple(sorted(names)))
+        self.assertEqual(len(names), len(set(names)))
+        self.assertTrue(all(not Path(name).is_absolute() for name in names))
+        self.assertTrue(all(".." not in Path(name).parts for name in names))
+        self.assertIn("report.json", names)
+        self.assertIn("inputs.json", names)
+        for iteration in (3000, 7000):
+            root = f"iteration_{iteration:06d}"
+            for field in ("A", "S", "N", "T_p", "T_g", "K", "state", "gt_distance"):
+                self.assertIn(f"{root}/fields/{field}.ply", names)
+                for view in ("q25", "q50", "q75"):
+                    self.assertIn(f"{root}/views/{field}_{view}.png", names)
+            for view in ("q25", "q50", "q75"):
+                self.assertIn(f"{root}/overlays/gt_{view}.png", names)
+                self.assertIn(f"{root}/overlays/gt_{view}.json", names)
+        for stem in ("primary_curves", "risk_coverage", "state_error"):
+            for suffix in ("png", "svg", "pdf", "csv", "json"):
+                self.assertIn(f"metrics/iteration_007000_{stem}.{suffix}", names)
+        for stem in ("state_proportion", "state_transition", "joint_coverage"):
+            for suffix in ("png", "svg", "pdf", "csv", "json"):
+                self.assertIn(f"timeline/{stem}.{suffix}", names)
+
     def test_camera_indices_are_frozen_for_406_views(self):
         self.assertEqual(camera_quartile_indices(406), (101, 202, 303))
         with self.assertRaisesRegex(ValueError, "at least four"):
