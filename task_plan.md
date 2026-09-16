@@ -109,6 +109,7 @@ Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 
 
 | Date | Error | Attempt | Resolution |
 |---|---|---:|---|
+| 2026-09-16 | `nature_figure_backend.py set python` 无法在受限本地环境创建 `%USERPROFILE%/.config/nature-skills` | 1 | 不绕过权限、不写工作区外；本项目已由批准实施计划显式锁定 Python/matplotlib，当前会话据此使用 Python-only 路径。偏好持久化失败不改变仓库代码、图形合同或 AutoDL runtime |
 | 2026-09-14 | 本地全仓 `unittest discover` 的 64 项中 2 个模块导入错误、21 项跳过 | 1 | `Python 3.14.7` 的 `importlib.util.find_spec` 显示 Torch/NumPy 均不存在；失败栈分别起于既有 `train.py::import torch` 和 `tests/test_seed_contract.py::import numpy`，相关文件本轮未改。未安装依赖或改测试；纯比较器分组单独验证，Torch RED 留待用户 AutoDL。初次组合命令最终 rc 被后续检查覆盖，已按测试输出明确记为全仓失败 |
 | 2026-09-14 | Windows 本地 symlink 逃逸用例被系统权限拒绝创建 | 1 | 单测显式 skip；不把该安全边界写为本地通过，列为 AutoDL Linux 必测 |
 | 2026-09-14 | 纯判定器 Task 1 完成后尝试以部分行匹配勾选实施计划，`apply_patch` 未匹配到含完整正文的 checkbox 行 | 1 | 未写入任何内容；改为在 Task 1 标题下增加独立执行状态，保留原始计划正文和未来服务器复核 checklist |
