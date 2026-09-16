@@ -46,7 +46,7 @@
 - Produces: `G1IterationInputs`, `load_g1_iteration(run_dir: Path, iteration: int) -> G1IterationInputs`, `sha256_file(path: Path) -> str`.
 - `G1IterationInputs.centers` is finite-filtered `float64 [M,3]`; `finite_row_indices` maps results back to original checkpoint/snapshot rows; `snapshot` contains all `SNAPSHOT_FIELDS` before filtering.
 
-- [ ] **Step 1: Write failing join tests**
+- [x] **Step 1: Write failing join tests**
 
 ```python
 def test_load_g1_iteration_joins_same_post_topology_rows(tmp_path):
@@ -66,13 +66,13 @@ def test_load_g1_iteration_rejects_row_count_mismatch(tmp_path):
 
 Also cover legacy tuple rejection, wrong checkpoint iteration, missing/extra snapshot fields, non-1D fields, duplicate output path, preservation/reporting of nonfinite center row indices, and exact equality between snapshot fields and their checkpoint `core_state` counterparts so a same-count row permutation cannot pass.
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `python -B -m unittest tests.test_g1_offline_inputs -v`
 
 Expected: import failure for `reliability.offline_g1`.
 
-- [ ] **Step 3: Implement the minimal immutable loader**
+- [x] **Step 3: Implement the minimal immutable loader**
 
 ```python
 @dataclass(frozen=True)
@@ -107,13 +107,13 @@ def load_g1_iteration(run_dir, iteration):
     # row map without filtering any other field.
 ```
 
-- [ ] **Step 4: Run focused and existing checkpoint tests**
+- [x] **Step 4: Run focused and existing checkpoint tests**
 
 Run: `python -B -m unittest tests.test_g1_offline_inputs tests.test_core_runtime tests.test_d0_diagnostics -v`
 
 Expected: all PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add reliability/offline_g1.py reliability/__init__.py tests/test_g1_offline_inputs.py
