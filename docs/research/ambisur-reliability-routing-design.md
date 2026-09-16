@@ -1044,13 +1044,54 @@ topology 前日志/PLY 数量、topology 后 checkpoint 数量分别作为两个
 
 ### G1：诊断有效性
 
-* $N$ 对高几何误差的 AUROC > 0.60；
+G1 使用独立的 **offline evaluator**。正式 D0 训练仍保持 GT-free：默认每 1000 iteration 写一次 no-GT evidence snapshot，保存 iteration 3000 与 7000 checkpoint；GT mesh 只能在训练结束后由 evaluator 读取，不得进入训练、evidence snapshot/cache 或 checkpoint。iteration 3000 是预注册 early diagnostic，iteration 7000 是唯一 G1 PASS 主门，不得跨时间选择更好的结果。
 
-* 相比 $A$ 或 $1-S$ 中较好的单一组成至少提高 0.03；
+对所选 checkpoint 中每个有限 Gaussian 中心 $x_i$，原始几何误差定义为
 
-* 双可靠性与 coverage-risk 呈合理单调关系；状态不是被 Bypass 或 Abstain 单一状态完全占据。
+$$
+e_i=d(x_i,M_{GT}),
+$$
 
-若 $N$ 无增益，停止扩展完整生命周期，先回到观测充分度定义。
+其中 $M_{GT}$ 是完整对齐 GT mesh 的全部有限、非退化三角面，$d$ 是世界坐标米制下到三角面表面的最近无符号欧氏距离。距离计算必须使用 float64 和分块 exact point-to-triangle query，不得用最近顶点距离近似。评价域包含 checkpoint 中全部有限 Gaussian 中心；不按 opacity、scaling、可见次数、视锥、AABB 或人工 crop 过滤。非有限 Gaussian 以及 GT 中非有限或零面积三角面仅允许被拒绝并计数；若没有有效 Gaussian 或有效三角面则停止。
+
+主要 high-error 标签固定为
+
+$$
+y_i=\mathbf 1[e_i>0.05\ \mathrm m].
+$$
+
+2 cm、10 cm 与场景内 top-20% 只作预注册 sensitivity outputs，不参与 G1 PASS，也不得在观察结果后替换主要标签。`mesh_aligned_0.05.ply` 文件名中的 `0.05` 表示官方 5% decimated mesh，不能作为 5 cm 阈值的来源。若 5 cm 标签阳性率小于 5% 或大于 95%，G1 记为 not evaluable 并停止，不得事后更换阈值。
+
+iteration 7000 的硬性预测效度门为
+
+$$
+\operatorname{AUROC}(N)>0.60,
+$$
+
+且
+
+$$
+\operatorname{AUROC}(N)-
+\max\{\operatorname{AUROC}(A),\operatorname{AUROC}(1-S)\}\ge 0.03.
+$$
+
+AUPRC、分位风险、iteration 3000 结果和敏感性标签均为诊断证据，不改变上述 PASS/FAIL。若 $N$ 无增益，停止扩展完整生命周期，先回到观测充分度定义。
+
+coverage-risk 使用冻结方向和网格：对 $N$ 从高到低拒绝并评价剩余低需求 Gaussian；对 $r^P,r^G$ 只在当前有效通道内按可靠性从高到低保留。coverage 固定为 5%、10%、……、100%，同时报告平均 $e_i$、$P(e_i>0.05\ \mathrm m)$、AURC、Spearman 相关性和逐区间单调违例数。曲线必须可计算且有限，但不再引入观察结果后决定的经验性能阈值。若 7000 的稳定状态被单一 Bypass 或单一 Abstain 100% 占据，则停止；joint coverage、joint-invalid、状态占比、转移矩阵、平均持续时间和抖动率必须完整报告。coverage 异常只能报告，不能降低 $\tau_Z$、绕过 validity 或更改仲裁规则。
+
+训练代码顺序固定为 topology 更新、optimizer step、D0 refresh/snapshot、checkpoint，因此 evaluator 连接同轮 `.npz` 与 `chkpnt*.pth`，而不是连接 topology 更新前保存的 point-cloud PLY。snapshot/checkpoint 的 Gaussian 数、行序合同、iteration、Core 配置、commit、seed 和输入哈希必须一致，否则立即停止。
+
+GT preflight 必须在计算主指标前核对 mesh SHA、坐标单位与对齐来源，审计 finite/degenerate triangles，报告 GT、相机和 Gaussian 的坐标范围，并从冻结视角生成 GT/Gaussian overlay。不得因为模型误差较大而反推 GT 有问题；若 provenance、变换链或固定 overlay 暴露覆盖/对齐异常，则停止并报告，不得裁剪、缩域或临时换 mask。
+
+可视化采用确定性合同。iteration 3000/7000 输出 $A,S,N,T^P,T^G,K$、五状态和 GT distance 的彩色 Gaussian PLY，以及用现有 Gaussian geometry/opacity/scaling 与 `override_color` 离线渲染的 PNG。静态视角固定为按 COLMAP image ID 排序后的 25%、50%、75% 三个相机，全画幅、无 crop，不得因画面不好替换。$A/S/N/T/K$ 色域固定为 $[0,1]$；GT distance 固定为 0–0.10 m 并对上溢饱和；状态使用固定离散 palette。7000 另输出主 ROC、PR、risk-coverage 和 state-error 图，1000–7000 输出状态比例、转移和 joint-coverage 时序；同步保存 SVG/PDF、CSV/JSON。
+
+所有 evaluator 产物必须写到训练目录之外的新路径：
+
+```text
+/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-g1/<confirmation_id>/
+```
+
+同级生成包含全部 PNG、SVG、PDF、彩色 PLY、CSV、JSON 和 manifest 的 `<confirmation_id>.tar.gz`，以及对应 `.sha256`。输出目录已存在、任何必需文件缺失或 archive manifest/hash 不一致时均停止，禁止覆盖旧结果。最终必须报告绝对服务器目录、archive 路径、大小和 SHA256，供下载与独立复核。
 
 ### G2：Core 几何收益
 
