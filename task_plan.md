@@ -783,5 +783,7 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] 首个正式候选 v1 训练安全完成，但现有 snapshots 无法跨 densify/prune 以行号恢复 temporal transitions；禁止离线行对齐近似。
 - [x] 用户选择并确认方案 A：transition=`stable(t-1)->stable(t)`，在 refresh 内使用已 topology-migrated 的旧稳定状态精确统计；clone/split 继承 mapped parent lineage。
 - [x] 冻结 `stable_age_refreshes`、`stable_transition_count`、5x5 count/fraction matrix 与 jitter 的 no-GT/no-grad 合同；`.npz` inventory 不变，summary 写 events，aligned tensors 进入 versioned D0 runtime state。
-- [ ] 书面规格 review 后编写独立 TDD 实施计划；先 CPU/state/topology/checkpoint/event tests，再服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
+- [x] 用户书面确认规格；独立逐项 TDD 实施计划已写入 `docs/superpowers/plans/2026-09-17-d0-temporal-transition-diagnostics.md`，并通过规格覆盖、placeholder、接口和 108-artifact inventory 自检。
+- [ ] 按既定“当前任务内逐项 TDD”执行 Task 1：先新增纯 temporal transition tracker 的失败测试，再实现最小 GREEN；尚未修改方法源码。
+- [ ] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring、formal timeline/orchestration；随后服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

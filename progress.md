@@ -338,3 +338,11 @@
 - [x] 产物审计发现跨 topology temporal transition 不可由相邻 snapshot 行严格恢复；v1 降为只读工程证据，训练本身不作废，但不得晋级 formal G1/C1。
 - [x] 用户选择并确认方案 A：refresh 内精确记录 topology-aligned `stable(t-1)->stable(t)`、age、transition count 与 jitter；不改变 `.npz` 字段、训练梯度或 topology 行为。
 - [x] 已同步最高优先级设计稿与独立实现规格；等待用户书面 review 后再写 TDD 实施计划，不修改生产代码。
+
+## 2026-09-17 Temporal Transition Implementation Plan
+
+- [x] 用户通过 architectural specification。
+- [x] 创建 `docs/superpowers/plans/2026-09-17-d0-temporal-transition-diagnostics.md`，定义五个逐项 RED→GREEN 任务及服务器 v2 验证门。
+- [x] 完成自检：规格覆盖完整、无 placeholder、跨任务接口一致；duration/jitter 合并到既有 `timeline/state_transition.*`，正式 inventory 仍严格为 108 项。
+- [ ] 下一动作：Task 1 仅新增 `tests/test_transition_diagnostics.py` 观察预期 RED；随后才写 `reliability/transition_diagnostics.py` 最小实现。
+- [ ] 尚未修改方法源码、未启动训练、未创建 tag；C1 继续等待 v2 D0 isolation 与正式 G1。
