@@ -30,7 +30,19 @@ class TopologyMigrationTests(unittest.TestCase):
 
         self.assertEqual(migrated.tolist(), [True, False])
 
-    def test_change_rejects_inconsistent_new_mask(self):
+    def test_mapped_new_child_still_resets_generic_evidence_state(self):
+        change = TopologyChange(
+            new_to_old=torch.tensor([0, 0, -1], dtype=torch.int64),
+            is_new=torch.tensor([False, True, True]),
+        )
+
+        migrated = migrate_tensor(
+            torch.tensor([7.0]), change, fill_value=0.0
+        )
+
+        self.assertEqual(migrated.tolist(), [7.0, 0.0, 0.0])
+
+    def test_change_rejects_unmapped_survivor(self):
         with self.assertRaisesRegex(ValueError, "is_new"):
             TopologyChange(
                 new_to_old=torch.tensor([0, -1], dtype=torch.int64),

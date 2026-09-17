@@ -17,8 +17,8 @@ class TopologyChange:
             raise ValueError("new_to_old and is_new must have the same shape")
         if (self.new_to_old < -1).any():
             raise ValueError("new_to_old may use only -1 for new rows")
-        if not torch.equal(self.is_new, self.new_to_old == -1):
-            raise ValueError("is_new must exactly identify new_to_old == -1")
+        if ((self.new_to_old == -1) & ~self.is_new).any():
+            raise ValueError("new_to_old=-1 requires is_new=True")
 
 
 @torch.no_grad()
