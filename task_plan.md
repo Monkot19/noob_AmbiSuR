@@ -777,3 +777,11 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [ ] 完成后依次执行 completion/input/Git 审计、七刷新状态/EMA/hysteresis/checkpoint/topology 深审计、D0 对 E0/baseline 的训练隔离检查，再运行正式 offline G1。
 - [ ] 当前 `scripts/diagnostics/evaluate_d0_g1.py::run_evaluator` 对非 exploratory 请求仍 fail-closed；正式 3000/7000 orchestration 必须在消费本次结果前按既有 108-artifact 合同完成 TDD，不能把 exploratory-500 入口用于正式结论。该缺口不改变或污染 GT-free 训练产物，因此不阻止已批准的 7k shadow training，但阻止正式 G1 判定与 C1 晋级。
 - [ ] 本次授权不包含 C1、Supporting、tag、阈值/评价域变更或任何 GT 进入训练；只有正式 G1 与 D0 隔离门通过后才可请求 C1 gradient-oracle 实施/实验授权。
+
+## 2026-09-17 Temporal Transition Diagnostics Clarification
+
+- [x] 首个正式候选 v1 训练安全完成，但现有 snapshots 无法跨 densify/prune 以行号恢复 temporal transitions；禁止离线行对齐近似。
+- [x] 用户选择并确认方案 A：transition=`stable(t-1)->stable(t)`，在 refresh 内使用已 topology-migrated 的旧稳定状态精确统计；clone/split 继承 mapped parent lineage。
+- [x] 冻结 `stable_age_refreshes`、`stable_transition_count`、5x5 count/fraction matrix 与 jitter 的 no-GT/no-grad 合同；`.npz` inventory 不变，summary 写 events，aligned tensors 进入 versioned D0 runtime state。
+- [ ] 书面规格 review 后编写独立 TDD 实施计划；先 CPU/state/topology/checkpoint/event tests，再服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
+- [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

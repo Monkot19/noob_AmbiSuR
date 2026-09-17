@@ -331,3 +331,10 @@
 - [x] 冻结训练合同：`--core_shadow_mode --d0_refresh_interval 1000 --iterations 7000 --seed 0`；1000–7000 evaluation/no-GT snapshots，3000/7000 checkpoints，GT 不进入训练。
 - [ ] 下一步只执行服务器同步与只读 preflight；收到 PASS 输出后才提供 private-view 创建和唯一训练启动命令。
 - [ ] 正式 G1 仍须先实现 `evaluate_d0_g1.py` 的非 exploratory 3000/7000 orchestration；该缺口不阻止生成正式 D0 训练资产，但阻止 G1 PASS、C1 与 tag。
+
+## 2026-09-17 D0-7k v1 Completion and Transition Clarification
+
+- [x] v1 完成：exit 0、628 s、peak 8,792 MiB、七 snapshots、3000/7000 checkpoints、0 error/nonfinite/GT reference、completion marker=1、sentinel absent、clean `1eba8db`。
+- [x] 产物审计发现跨 topology temporal transition 不可由相邻 snapshot 行严格恢复；v1 降为只读工程证据，训练本身不作废，但不得晋级 formal G1/C1。
+- [x] 用户选择并确认方案 A：refresh 内精确记录 topology-aligned `stable(t-1)->stable(t)`、age、transition count 与 jitter；不改变 `.npz` 字段、训练梯度或 topology 行为。
+- [x] 已同步最高优先级设计稿与独立实现规格；等待用户书面 review 后再写 TDD 实施计划，不修改生产代码。
