@@ -15,7 +15,7 @@
 - `docs/research/ambisur-reliability-routing-design.md` remains the highest-priority method contract.
 - Temporal transition means topology-aligned `stable(t-1) -> stable(t)` in the fixed order `Bypass, Consensus, Prior-led, Geometry-led, Abstain`.
 - `TopologyChange.new_to_old` is the only lineage identity contract; no row-index, nearest-neighbour, geometric, or synthetic-ID matching is allowed.
-- Clone/split children inherit mapped parent history; survivors preserve history; pruned rows disappear.
+- Clone/split children use `new_to_old=parent_index,is_new=True`; generic Evidence migration resets them, while temporal lineage migration inherits parent age/count. Unmapped new rows use `-1,True`; survivors use `old_index,False`; `-1,False` is invalid.
 - The existing `iteration_*.npz` field inventory must remain byte-for-byte identical in names and meaning.
 - Transition summaries belong only in `events.jsonl`; aligned age/count tensors belong only in versioned D0 runtime checkpoint state.
 - All calculations run without gradients and must not change parameters, `.grad`, Adam state, optimizer-step count, densification proxy, clone/split/prune/trim decisions, lifecycle, or random-number consumption.
@@ -29,6 +29,8 @@
 ## File Structure
 
 - Create `reliability/transition_diagnostics.py`: pure tensor state, update rules, topology migration, checkpoint mapping, and JSON-safe summary construction.
+- Modify `reliability/topology.py`: separate identity from reset semantics and provide explicit temporal-lineage migration without changing generic new-row reset behavior.
+- Modify `scene/gaussian_model.py`: emit clone/split parent indices while preserving baseline topology actions and random-call order.
 - Modify `reliability/evidence.py`: own the tracker, capture the pre-update stable state, update exactly once per refresh, migrate it, and version its checkpoint state.
 - Modify `reliability/shadow.py`: expose the most recent transition summary without changing the snapshot return type.
 - Modify `reliability/diagnostics.py`: append schema-2 event records while preserving the exact `.npz` inventory.
@@ -111,7 +113,7 @@ def test_topology_migration_inherits_mapped_parent_and_resets_unmapped_rows(self
 
 Run: `python -B -m unittest tests.test_transition_diagnostics tests.test_topology_migration -v`
 
-Expected: all tests pass, including mapped clone inheritance and unmapped-row zero initialization.
+Expected: all tests pass, including mapped clone inheritance and unmapped-row zero initialization. This test intentionally uses `new_to_old=1,is_new=True` for a clone child.
 
 - [ ] **Step 5: Verify detachment and commit**
 
@@ -131,6 +133,8 @@ git commit -m "feat: add temporal D0 transition tracker"
 ### Task 2: Evidence, Topology, and Checkpoint Integration
 
 **Files:**
+- Modify: `reliability/topology.py` (`TopologyChange.__post_init__`, `migrate_tensor`, new `migrate_lineage_tensor`, append/compose helpers)
+- Modify: `scene/gaussian_model.py` (`densification_postfix`, `densify_and_clone`, `densify_and_split`)
 - Modify: `reliability/evidence.py` (`EvidenceAccumulator.__init__`, `refresh`, `on_topology_change`, `state_dict`, `load_state_dict`)
 - Modify: `tests/test_evidence_accumulator_state.py`
 - Modify: `tests/test_d0_shadow_runtime.py`
@@ -140,6 +144,25 @@ git commit -m "feat: add temporal D0 transition tracker"
 - Consumes: `TemporalTransitionDiagnostics` from Task 1.
 - Produces: `EvidenceAccumulator.latest_transition_diagnostics: dict | None` and evidence checkpoint schema version `3` containing `temporal_transition_diagnostics`.
 - Preserves: `EvidenceSnapshot` fields and `refresh(inputs) -> EvidenceSnapshot`.
+
+- [ ] **Step 0: Write RED tests for approved identity/reset separation**
+
+```python
+def test_mapped_new_child_resets_generic_state_but_inherits_lineage_state(self):
+    change = TopologyChange(
+        new_to_old=torch.tensor([0, 0, -1]),
+        is_new=torch.tensor([False, True, True]),
+    )
+    source = torch.tensor([7])
+    self.assertEqual(migrate_tensor(source, change, fill_value=0).tolist(), [7, 0, 0])
+    self.assertEqual(migrate_lineage_tensor(source, change, fill_value=0).tolist(), [7, 7, 0])
+```
+
+Add GaussianModel mapping tests proving clone parents use selected old indices, split parents use `selected_indices.repeat(N)` in the exact child row order, composition preserves `is_new=True`, and feature-off action/random order is unchanged.
+
+Run: `python -B -m unittest tests.test_topology_migration tests.test_topology_composition tests.test_gaussian_topology_mapping -v`
+
+Expected: RED because `TopologyChange` rejects mapped new children and `migrate_lineage_tensor` does not exist.
 
 - [ ] **Step 1: Write RED tests that force exactly one update from pre-update stable state**
 
@@ -198,12 +221,12 @@ Expected: all tests pass; transition tensors reside on the accumulator device an
 
 - [ ] **Step 5: Run the reliability regression and commit**
 
-Run: `python -B -m unittest tests.test_reliability_evidence tests.test_arbitration tests.test_topology_migration tests.test_evidence_accumulator_state tests.test_d0_shadow_runtime -v`
+Run: `python -B -m unittest tests.test_reliability_evidence tests.test_arbitration tests.test_topology_migration tests.test_topology_composition tests.test_gaussian_topology_mapping tests.test_evidence_accumulator_state tests.test_d0_shadow_runtime -v`
 
 Commit:
 
 ```bash
-git add reliability/evidence.py tests/test_evidence_accumulator_state.py tests/test_d0_shadow_runtime.py tests/gpu/test_evidence_accumulator_cuda.py
+git add reliability/topology.py scene/gaussian_model.py reliability/evidence.py tests/test_topology_migration.py tests/test_topology_composition.py tests/test_gaussian_topology_mapping.py tests/test_evidence_accumulator_state.py tests/test_d0_shadow_runtime.py tests/gpu/test_evidence_accumulator_cuda.py
 git commit -m "feat: persist topology-aware D0 transitions"
 ```
 

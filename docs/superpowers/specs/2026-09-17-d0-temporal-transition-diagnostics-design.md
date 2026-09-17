@@ -39,6 +39,17 @@ The existing `TopologyChange.new_to_old` mapping is the sole identity contract. 
 
 This makes the transition diagnostic exact with respect to the topology mapping already used by D0 state migration and does not alter topology decisions.
 
+### Identity versus reset semantics
+
+The user approved clarification A on 2026-09-17. `TopologyChange` retains one `new_to_old` identity mapping, but `new_to_old` and `is_new` are no longer equivalent:
+
+- a clone/split child stores its old-domain parent index in `new_to_old` and has `is_new=True`;
+- a genuinely unmapped new row uses `new_to_old=-1` and `is_new=True`;
+- a survivor has `new_to_old>=0` and `is_new=False`;
+- `new_to_old=-1,is_new=False` is invalid.
+
+Generic Evidence/EMA/geometry-history/arbitration migration continues to reset every `is_new=True` row, even when a parent index is available. Temporal age/count lineage migration alone inherits from every valid `new_to_old>=0` parent. This preserves the pre-existing rule that new Gaussians do not inherit Evidence while satisfying the approved exact parent-lineage transition contract. No second identity map is introduced.
+
 ## Diagnostic state
 
 The shadow runtime maintains three no-gradient diagnostic tensors aligned to the current Gaussian rows:
@@ -102,6 +113,7 @@ Implementation must follow TDD and verify:
 
 - hand-checked temporal matrices, age updates, transition counts, and first-refresh behavior;
 - topology clone/split/prune migration;
+- clone/split parent lineage inheritance while all new-row Evidence/EMA/history remains reset;
 - checkpoint round-trip and resume equivalence;
 - unchanged `.npz` field inventory;
 - exact event schema and finite/summing fractions;

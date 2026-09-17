@@ -345,4 +345,5 @@
 - [x] 创建 `docs/superpowers/plans/2026-09-17-d0-temporal-transition-diagnostics.md`，定义五个逐项 RED→GREEN 任务及服务器 v2 验证门。
 - [x] 完成自检：规格覆盖完整、无 placeholder、跨任务接口一致；duration/jitter 合并到既有 `timeline/state_transition.*`，正式 inventory 仍严格为 108 项。
 - [ ] 下一动作：Task 1 仅新增 `tests/test_transition_diagnostics.py` 观察预期 RED；随后才写 `reliability/transition_diagnostics.py` 最小实现。
+- [x] 用户批准 topology identity/reset 方案 A；设计稿、实现规格和计划已同步，下一步仍从 Task 1 RED 开始。
 - [ ] 尚未修改方法源码、未启动训练、未创建 tag；C1 继续等待 v2 D0 isolation 与正式 G1。
