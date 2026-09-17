@@ -2,6 +2,8 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -19,6 +21,34 @@ from scripts.diagnostics.evaluate_d0_g1 import (
 
 
 class G1PublicationTests(unittest.TestCase):
+    def test_cli_help_exposes_every_frozen_argument(self):
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "diagnostics"
+            / "evaluate_d0_g1.py"
+        )
+        result = subprocess.run(
+            [sys.executable, "-B", str(script), "--help"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for flag in (
+            "--run-dir",
+            "--source-root",
+            "--gt-mesh",
+            "--output-root",
+            "--confirmation-id",
+            "--iterations",
+            "--expected-commit",
+            "--expected-dataset-sha",
+            "--expected-gt-sha",
+            "--exploratory",
+        ):
+            self.assertIn(flag, result.stdout)
+
     def make_contract(self, root):
         root = Path(root)
         run = root / "run"

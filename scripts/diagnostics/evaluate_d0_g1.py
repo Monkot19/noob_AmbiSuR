@@ -240,3 +240,13 @@ def build_parser():
     parser.add_argument("--expected-gt-sha", required=True)
     parser.add_argument("--exploratory", action="store_true")
     return parser
+
+
+def main(argv=None):
+    parser = build_parser()
+    parser.parse_args(argv)
+    parser.error("offline G1 evaluation orchestration is not implemented yet")
+
+
+if __name__ == "__main__":
+    main()
