@@ -43,6 +43,31 @@ _FALLBACK_MAPS = {
 
 _UNIT_INTERVAL_FIELDS = {"A", "S", "N", "T_p", "T_g", "K", "r_p", "r_g"}
 _STATE_NAMES = ("Bypass", "Consensus", "Prior-led", "Geometry-led", "Abstain")
+_ARTIFACT_ITERATIONS = (3000, 7000)
+_ARTIFACT_FIELDS = ("A", "S", "N", "T_p", "T_g", "K", "state", "gt_distance")
+_ARTIFACT_VIEWS = ("q25", "q50", "q75")
+_FIGURE_SUFFIXES = ("png", "svg", "pdf", "csv", "json")
+
+
+def required_artifacts():
+    """Return the frozen relative-file inventory required before publication."""
+    names = {"inputs.json", "report.json"}
+    for iteration in _ARTIFACT_ITERATIONS:
+        root = f"iteration_{iteration:06d}"
+        for field in _ARTIFACT_FIELDS:
+            names.add(f"{root}/fields/{field}.ply")
+            for view in _ARTIFACT_VIEWS:
+                names.add(f"{root}/views/{field}_{view}.png")
+        for view in _ARTIFACT_VIEWS:
+            names.add(f"{root}/overlays/gt_{view}.png")
+            names.add(f"{root}/overlays/gt_{view}.json")
+    for stem in ("primary_curves", "risk_coverage", "state_error"):
+        for suffix in _FIGURE_SUFFIXES:
+            names.add(f"metrics/iteration_007000_{stem}.{suffix}")
+    for stem in ("state_proportion", "state_transition", "joint_coverage"):
+        for suffix in _FIGURE_SUFFIXES:
+            names.add(f"timeline/{stem}.{suffix}")
+    return tuple(sorted(names))
 
 
 def camera_quartile_indices(count):
