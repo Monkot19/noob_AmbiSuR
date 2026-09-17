@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-17，offline G1 evaluator Tasks 1–4 已完成；Task 4 在 AutoDL exact `12780dfcc5b7fb305ab3eaba8b6e324c30d683f4` 验证 108 项 required-artifact inventory，并通过完整 32/32 回归、编译与 clean/no-training gate。当前进入 Task 5 fail-closed CLI/manifest/archive TDD；500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
+Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-17，offline G1 evaluator Tasks 1–4 已完成；Task 5 的发布 primitives/CLI 边界在 AutoDL exact `60a80b7df183dc5600c259b9f7cc421a09edcf8a` 通过 corrected 27/27、help 与 fail-closed gate。当前继续 Task 5 原子发布和 evaluator orchestration TDD；500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
 
 ## Phases
 
