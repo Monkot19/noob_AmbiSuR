@@ -765,6 +765,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] TDD RED：非单位外参测试精确因缺少 `camera_to_world_for_ray_cast` 导入失败。
 - [x] 最小本地 GREEN：只在 ray-cast 边界把 legacy W2C 求逆；focused 1/1、CPU G1 相关 56/56（8 dependency skips）、`py_compile` 与 `git diff --check` 通过。
 - [x] 提交/推送 test+fix+三份规划记录：`457c965796b752057935cd68d2f740c2bbf32ba4`；不改训练、GT、评价域或阈值。
-- [ ] AutoDL focused Open3D GREEN，必须覆盖非单位外参、真实 q25/q50/q75 depth cast，并核对三个 camera center 与 `camera.camera_center` 一致。
-- [ ] 使用新 confirmation id 重跑现有 checkpoint-500 的 offline evaluator；要求三个 overlay 命中/深度在视觉和几何上可解释、55 文件 manifest/archive 复核通过。无需重跑训练。
-- [ ] 只有修复后的 exploratory overlay audit 通过，才请求正式 Tool Room 7k D0 授权；旧 v3 的主距离指标保留为 exploratory evidence，但旧 overlay 不得用于正式报告。
+- [x] AutoDL focused Open3D GREEN：非单位 W2C 求逆、full-frame depth cast 与 overlay 3/3 PASS；clean branch、无训练。
+- [x] 使用新 confirmation id 重跑现有 checkpoint-500 offline evaluator；v4 三视角 hit fraction 为 0.96927/0.96648/0.93492，深度范围为 0.786–2.065/0.520–1.825/0.766–3.341 m；55/55 manifest 本地复核通过，v3/v4 report byte-identical。无需重跑训练。
+- [x] 修复后的 v4 overlay 本地逐图审计通过：场景表面与边界空间一致，旧悬浮带状结构消失，q75 恢复覆盖。现在可请求正式 Tool Room seed0 7k D0 授权；旧 v3 overlay 不得用于正式报告。

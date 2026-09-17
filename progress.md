@@ -323,3 +323,4 @@
 - 主 `gt_distance` 与全部数值 metric 在独立 BVH 最近三角面链路计算，不受 overlay 外参 bug 影响；旧 v3 仍是 exploratory 数值证据，但 overlay 作废。
 - 本地按 TDD 新增非单位 W2C 回归：RED 为缺失 helper；最小修复后 focused 1/1、CPU G1 相关 56/56（8 个本机缺 Open3D/matplotlib/Torch 的显式 skip）、`py_compile` 与 `git diff --check` 通过。修复与审计记录已以 `457c965796b752057935cd68d2f740c2bbf32ba4` 推送；尚未获服务器真实 Open3D GREEN，未启动训练。
 - 下一步：提交推送后让用户运行 focused server GREEN，再以新 confirmation id 只重跑 offline evaluator。正式 7k D0 与 C1 继续等待该门，不创建 tag。
+- AutoDL focused Open3D 3/3 与 v4 offline evaluator 已完成；外围首次 exit 1 已定位为 archive sidecar basename 的 cwd 校验错误，核心 evaluator 实际成功且无 OOM/staging。v4 report 与 v3 byte-identical，overlay metadata/视觉、55/55 manifest 本地复核均通过。exploratory evaluator 工程门现已关闭；下一步只在用户明确批准后启动正式 Tool Room seed0 7k D0，C1 仍未开始。
