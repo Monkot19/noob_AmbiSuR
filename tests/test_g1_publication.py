@@ -7,6 +7,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+import os
 
 from reliability.g1_visualization import required_artifacts
 from scripts.diagnostics.evaluate_d0_g1 import (
@@ -157,6 +158,43 @@ class G1PublicationTests(unittest.TestCase):
             "--exploratory",
         ):
             self.assertIn(flag, result.stdout)
+
+    def test_direct_script_entrypoint_resolves_repository_imports(self):
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "diagnostics"
+            / "evaluate_d0_g1.py"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            environment = dict(os.environ)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(script),
+                    "--run-dir", str(Path(directory) / "missing-run"),
+                    "--source-root", str(Path(directory) / "missing-source"),
+                    "--gt-mesh", str(Path(directory) / "missing-mesh.ply"),
+                    "--output-root", str(Path(directory) / "output"),
+                    "--confirmation-id", "entrypoint-test",
+                    "--iterations", "500",
+                    "--expected-commit", "a" * 40,
+                    "--expected-dataset-sha", "b" * 64,
+                    "--expected-gt-sha", "c" * 64,
+                    "--exploratory",
+                ],
+                cwd=directory,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("G1_EVALUATION_ERROR: ValueError: run directory is missing", result.stderr)
+        self.assertNotIn("ModuleNotFoundError", result.stderr)
 
     def make_contract(self, root):
         root = Path(root)

@@ -8,8 +8,15 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import shutil
+import sys
 import tarfile
 import uuid
+
+
+if __package__ in (None, ""):
+    repository_root = str(Path(__file__).resolve().parents[2])
+    if repository_root not in sys.path:
+        sys.path.insert(0, repository_root)
 
 
 FORMAL_ITERATIONS = (3000, 7000)
