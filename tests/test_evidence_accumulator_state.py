@@ -54,6 +54,12 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
             third.stable.tolist(),
             [ArbitrationState.PRIOR_LED, ArbitrationState.PRIOR_LED],
         )
+        self.assertEqual(
+            accumulator.latest_transition_diagnostics[
+                "transition_count_matrix"
+            ][ArbitrationState.BYPASS][ArbitrationState.PRIOR_LED],
+            2,
+        )
 
     def test_joint_invalid_retains_history_but_cannot_be_current(self):
         accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
@@ -218,6 +224,54 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
             state = getattr(accumulator, name)
             self.assertFalse(state.initialized[1].item())
             self.assertEqual(state.value[1].item(), 0.0)
+
+    def test_mapped_child_resets_evidence_but_inherits_temporal_lineage(self):
+        accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+        for _ in range(3):
+            accumulator.refresh(self.inputs())
+        old_age = accumulator.transition_diagnostics.stable_age_refreshes.clone()
+        old_count = (
+            accumulator.transition_diagnostics.stable_transition_count.clone()
+        )
+        change = TopologyChange(
+            new_to_old=torch.tensor([1, 1, -1, 0], dtype=torch.int64),
+            is_new=torch.tensor([False, True, True, False]),
+        )
+
+        accumulator.on_topology_change(change)
+
+        self.assertEqual(
+            accumulator.a_ema.initialized.tolist(),
+            [True, False, False, True],
+        )
+        self.assertEqual(
+            accumulator.transition_diagnostics.stable_age_refreshes.tolist(),
+            [old_age[1].item(), old_age[1].item(), 0, old_age[0].item()],
+        )
+        self.assertEqual(
+            accumulator.transition_diagnostics.stable_transition_count.tolist(),
+            [old_count[1].item(), old_count[1].item(), 0, old_count[0].item()],
+        )
+
+    def test_state_dict_round_trip_preserves_temporal_diagnostics(self):
+        accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+        for _ in range(3):
+            accumulator.refresh(self.inputs())
+        state = accumulator.state_dict()
+        restored = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+
+        restored.load_state_dict(state)
+
+        self.assertEqual(state["version"], 3)
+        self.assertIn("temporal_transition_diagnostics", state)
+        torch.testing.assert_close(
+            restored.transition_diagnostics.stable_age_refreshes,
+            accumulator.transition_diagnostics.stable_age_refreshes,
+        )
+        torch.testing.assert_close(
+            restored.transition_diagnostics.stable_transition_count,
+            accumulator.transition_diagnostics.stable_transition_count,
+        )
 
     def test_refresh_contract_has_no_gt_or_mesh_input(self):
         names = set(inspect.signature(EvidenceAccumulator.refresh).parameters)

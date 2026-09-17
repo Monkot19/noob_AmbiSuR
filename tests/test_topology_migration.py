@@ -2,7 +2,11 @@ import unittest
 
 import torch
 
-from reliability.topology import TopologyChange, migrate_tensor
+from reliability.topology import (
+    TopologyChange,
+    migrate_lineage_tensor,
+    migrate_tensor,
+)
 
 
 class TopologyMigrationTests(unittest.TestCase):
@@ -41,6 +45,18 @@ class TopologyMigrationTests(unittest.TestCase):
         )
 
         self.assertEqual(migrated.tolist(), [7.0, 0.0, 0.0])
+
+    def test_mapped_new_child_inherits_explicit_lineage_state(self):
+        change = TopologyChange(
+            new_to_old=torch.tensor([0, 0, -1], dtype=torch.int64),
+            is_new=torch.tensor([False, True, True]),
+        )
+
+        migrated = migrate_lineage_tensor(
+            torch.tensor([7]), change, fill_value=0
+        )
+
+        self.assertEqual(migrated.tolist(), [7, 7, 0])
 
     def test_change_rejects_unmapped_survivor(self):
         with self.assertRaisesRegex(ValueError, "is_new"):
