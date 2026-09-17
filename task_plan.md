@@ -43,6 +43,8 @@
 
 Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-17，offline G1 evaluator Tasks 1–4 已完成；Task 5 的发布 primitives/CLI 边界在 AutoDL exact `60a80b7df183dc5600c259b9f7cc421a09edcf8a` 通过 corrected 27/27、help 与 fail-closed gate。当前继续 Task 5 原子发布和 evaluator orchestration TDD；500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
 
+**2026-09-17 exploratory inventory clarification（APPROVED）：** 正式 `required_artifacts()` 继续冻结为 3000/7000 + timeline 的 108 项；显式 `--exploratory --iterations 500` 使用独立 55 项 inventory，仅含 iteration 500 的 field PLY、固定三视角 PNG/GT overlay、`iteration_000500` metrics 及 base JSON，不含 timeline，不伪造正式迭代，`g1_evaluable/g1_pass=null`。该选择只解决既有 500 smoke 与正式 inventory 的实现冲突，不改变正式 G1 门。
+
 ## Phases
 
 ### Phase 0：接管与规格核对

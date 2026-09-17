@@ -1085,6 +1085,8 @@ GT preflight 必须在计算主指标前核对 mesh SHA、坐标单位与对齐�
 
 可视化采用确定性合同。iteration 3000/7000 输出 $A,S,N,T^P,T^G,K$、五状态和 GT distance 的彩色 Gaussian PLY，以及用现有 Gaussian geometry/opacity/scaling 与 `override_color` 离线渲染的 PNG。静态视角固定为按 COLMAP image ID 排序后的 25%、50%、75% 三个相机，全画幅、无 crop，不得因画面不好替换。$A/S/N/T/K$ 色域固定为 $[0,1]$；GT distance 固定为 0–0.10 m 并对上溢饱和；状态使用固定离散 palette。7000 另输出主 ROC、PR、risk-coverage 和 state-error 图，1000–7000 输出状态比例、转移和 joint-coverage 时序；同步保存 SVG/PDF、CSV/JSON。
 
+**Exploratory evaluator clarification（2026-09-17，已批准）：** 正式模式的 3000/7000 与 1000–7000 timeline 合同及 108 项 required-artifact inventory 保持不变。仅为在既有 500-iteration shadow smoke 上验证 evaluator 工程链路，CLI 可在显式 `--exploratory --iterations 500` 时生成参数化的 55 项 inventory：`inputs.json`、`report.json`，iteration 500 的八类彩色 PLY、每类固定三视角 PNG、三视角 GT overlay PNG/JSON，以及带 `iteration_000500` 前缀的 ROC/PR、risk-coverage、state-error PNG/SVG/PDF/CSV/JSON。exploratory 包不要求也不得伪造 3000/7000 或正式 timeline；`exploratory=true`、`g1_evaluable=null`、`g1_pass=null`，只能证明 evaluator/renderer/publication 链路可执行，不参与 G1 PASS。manifest、archive、SHA、不可覆盖、输入前后指纹与路径安全规则与正式模式相同。
+
 所有 evaluator 产物必须写到训练目录之外的新路径：
 
 ```text

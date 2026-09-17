@@ -16,6 +16,7 @@
 - Primary error is unsigned world-meter distance from every finite checkpoint Gaussian center to the full valid GT triangle surface; no opacity/scaling/visibility/frustum/AABB/crop filtering.
 - Primary label is `distance > 0.05`; 0.02, 0.10, and scene top-20% are diagnostic only. Primary prevalence outside `[0.05, 0.95]` is not evaluable.
 - Iteration 7000 is the sole G1 pass gate; iteration 3000 is diagnostic only. Snapshots 1000–7000 support timelines.
+- Formal `required_artifacts()` remains exactly 108 paths. Explicit `--exploratory --iterations 500` uses exactly 55 paths for iteration 500 and exploratory metric figures, omits formal timelines, and writes `g1_evaluable=null`, `g1_pass=null`.
 - The evaluator must fail closed on provenance, iteration, schema, row-count/order-contract, required-output, nonfinite metric, or archive-manifest mismatch and must never overwrite an output directory.
 - Static cameras are image-ID-sorted quarter positions `((n-1)*q)//4` for `q in {1,2,3}`; no replacement or crop.
 - Output is `/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-g1/<confirmation_id>/` plus a sibling `.tar.gz` and `.tar.gz.sha256` containing all PNG/SVG/PDF, colored PLY, CSV/JSON, and manifest files.
@@ -27,7 +28,7 @@
 
 - `reliability/offline_g1.py`: immutable input contracts, snapshot/Core-checkpoint join, mesh validation, triangle-surface distance query, hashes.
 - `reliability/g1_metrics.py`: binary labels, ROC/PR, AUROC/AUPRC, fixed-grid risk-coverage, state/timeline summaries, hard G1 gate.
-- `reliability/g1_visualization.py`: fixed palettes/scales, camera selection, colored PLY writer, chart writers, required-artifact inventory.
+- `reliability/g1_visualization.py`: fixed palettes/scales, camera selection, colored PLY writer, chart writers, formal/exploratory required-artifact inventories.
 - `scripts/diagnostics/evaluate_d0_g1.py`: CLI orchestration, model/camera restoration for `override_color` renders, report/manifest/archive publication.
 - `tests/test_g1_offline_inputs.py`: malformed inputs, row joins, topology/order contract, GT isolation.
 - `tests/test_g1_geometry.py`: exact face/edge/vertex distance and invalid triangle/center handling.
@@ -285,7 +286,7 @@ git commit -m "feat: add frozen G1 metrics and gate"
 - Create: `tests/gpu/test_g1_override_render.py`
 
 **Interfaces:**
-- Produces: `camera_quartile_indices`, `scalar_colors`, `state_colors`, `write_colored_ply`, `cast_gt_depth`, `write_gt_overlay`, `write_metric_figures`, `required_artifacts`.
+- Produces: `camera_quartile_indices`, `scalar_colors`, `state_colors`, `write_colored_ply`, `cast_gt_depth`, `write_gt_overlay`, `write_metric_figures`, `required_artifacts(iterations=(3000, 7000), exploratory=False)`. Formal default returns exactly 108 paths; explicit `(500,), exploratory=True` returns exactly 55 paths and contains no `timeline/` member.
 - Fixed scalar maps use `viridis` for `[0,1]`; GT distance uses `magma` over `[0,0.10]`; states use a constant five-row uint8 palette ordered Bypass/Consensus/Prior-led/Geometry-led/Abstain.
 
 - [x] **Step 1: Write deterministic artifact RED tests**
@@ -390,7 +391,7 @@ def main(argv=None):
     # create deterministic tar.gz, hash it, then re-fingerprint all inputs.
 ```
 
-The archive must include at minimum `report.json`, `manifest.json`, `inputs.json`, metric CSV/JSON, all chart PNG/SVG/PDF, all field PLYs, three PNG views per field at 3000/7000, overlays, and timeline outputs.
+The formal archive must include `report.json`, `manifest.json`, `inputs.json`, metric CSV/JSON, all chart PNG/SVG/PDF, all field PLYs, three PNG views per field at 3000/7000, overlays, and timeline outputs. The explicit iteration-500 exploratory archive instead consumes the 55-path exploratory inventory and must not fabricate formal iteration or timeline members.
 
 - [ ] **Step 4: Add a static GT-leakage regression gate**
 
@@ -432,6 +433,7 @@ git commit -m "feat: add fail-closed offline G1 evaluator"
 **Interfaces:**
 - Consumes the immutable run `/root/autodl-tmp/ambisur_runs/Tool_Room/d0-shadow-smoke-500/d0_shadow_r2_seed0_500_20260915T084720Z`, its iteration-500 snapshot/checkpoint, and the existing Tool Room GT.
 - Produces an explicitly `exploratory=true`, `g1_pass=null` bundle. It must not pretend that iteration 500 is 3000 or 7000.
+- Its `required_artifacts(iterations=(500,), exploratory=True)` inventory is exactly 55 paths: two base JSON files, 38 iteration-500 field/view/overlay files, and 15 `iteration_000500` metric figure/source files; it contains no `timeline/` path.
 
 - [ ] **Step 1: Push an exact clean evaluator commit and verify the server checkout**
 
