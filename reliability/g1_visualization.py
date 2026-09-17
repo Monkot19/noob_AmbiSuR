@@ -222,6 +222,22 @@ def _as_numpy(value):
     return np.asarray(value)
 
 
+def camera_to_world_for_ray_cast(camera):
+    """Return intrinsics and C2W from Camera's legacy W2C calibration API."""
+    intrinsic, world_to_camera = camera.get_calib_matrix_nerf(scale=1.0)
+    intrinsic = _as_numpy(intrinsic).astype(np.float64, copy=False)
+    world_to_camera = _as_numpy(world_to_camera).astype(np.float64, copy=False)
+    if intrinsic.shape != (3, 3) or world_to_camera.shape != (4, 4):
+        raise ValueError("camera calibration matrices have invalid shapes")
+    if not np.isfinite(intrinsic).all() or not np.isfinite(world_to_camera).all():
+        raise ValueError("camera calibration matrices must be finite")
+    try:
+        camera_to_world = np.linalg.inv(world_to_camera)
+    except np.linalg.LinAlgError as exc:
+        raise ValueError("camera world-to-view matrix must be invertible") from exc
+    return intrinsic, camera_to_world
+
+
 def cast_gt_depth(camera, mesh):
     """Cast full-frame pixel-center camera rays against a validated GT mesh."""
     try:
@@ -233,13 +249,7 @@ def cast_gt_depth(camera, mesh):
     width = int(camera.image_width)
     if height <= 0 or width <= 0:
         raise ValueError("camera image dimensions must be positive")
-    intrinsic, camera_to_world = camera.get_calib_matrix_nerf(scale=1.0)
-    intrinsic = _as_numpy(intrinsic).astype(np.float64, copy=False)
-    camera_to_world = _as_numpy(camera_to_world).astype(np.float64, copy=False)
-    if intrinsic.shape != (3, 3) or camera_to_world.shape != (4, 4):
-        raise ValueError("camera calibration matrices have invalid shapes")
-    if not np.isfinite(intrinsic).all() or not np.isfinite(camera_to_world).all():
-        raise ValueError("camera calibration matrices must be finite")
+    intrinsic, camera_to_world = camera_to_world_for_ray_cast(camera)
     fx, fy = float(intrinsic[0, 0]), float(intrinsic[1, 1])
     cx, cy = float(intrinsic[0, 2]), float(intrinsic[1, 2])
     if fx <= 0.0 or fy <= 0.0:

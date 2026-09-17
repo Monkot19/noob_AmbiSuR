@@ -315,3 +315,11 @@
 4. 新服务器 Python/PyTorch/CUDA 与项目 import 已验证；当前 E0 suite 可由标准库 `unittest` 完整执行，pytest 缺失不再阻塞 E0 component 验证，后续若测试使用 pytest-only fixture 再单独申请安装。
 5. 用户回传的最新服务器验证提交为 clean `research/core-routing@9948dc58c849bd4a4f859b80407d2b1c4f5ec8f9`；offline evaluator Tasks 1–3 的 input join、triangle distance 与 frozen metrics/gate 组件均已通过 AutoDL focused gates。当前进入 Task 4 deterministic visualization TDD；不修改 baseline/结果资产，不创建 tag，也不把组件测试记为正式 D0/G1 或授权 C1。
 6. 已获准的 evaluator 输出目录为 `/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-g1/<confirmation_id>/`；同级 `.tar.gz` 必须包含全部 PNG/SVG/PDF、彩色 PLY、CSV/JSON 和 manifest，并打印 archive 大小与 SHA256。Tool Room GT 已在服务器，不需重新上传；正式 7k 启动仍等待 evaluator 实现与 exploratory smoke 单独通过。
+
+## 2026-09-17 Exploratory-500 Download Audit and Overlay Bug
+
+- 用户下载的 v3 bundle 已完成本地只读核验：manifest 55 项逐文件 size/SHA256 全部匹配，archive SHA 与服务器一致；30 PNG、8 PLY 与指标多格式产物齐全。
+- 视觉检查发现 q25/q50 GT overlay 出现非场景结构带状深度，q75 hit fraction=0。根因已由代码/矩阵证据定位为 ray caster 把 legacy W2C 当 C2W；这不是 GT mesh coverage/alignment 已失败的证据。
+- 主 `gt_distance` 与全部数值 metric 在独立 BVH 最近三角面链路计算，不受 overlay 外参 bug 影响；旧 v3 仍是 exploratory 数值证据，但 overlay 作废。
+- 本地按 TDD 新增非单位 W2C 回归：RED 为缺失 helper；最小修复后 focused 1/1、CPU G1 相关 56/56（8 个本机缺 Open3D/matplotlib/Torch 的显式 skip）、`py_compile` 与 `git diff --check` 通过。当前尚未提交/推送，也未获服务器真实 Open3D GREEN，未启动训练。
+- 下一步：提交推送后让用户运行 focused server GREEN，再以新 confirmation id 只重跑 offline evaluator。正式 7k D0 与 C1 继续等待该门，不创建 tag。

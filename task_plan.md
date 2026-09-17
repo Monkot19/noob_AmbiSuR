@@ -757,3 +757,14 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 3. 累计分支 `research/core-routing` 已从该 baseline 创建并切换；设计稿与三份规划文件在此分支以 `docs: add Core audit and implementation plan` 提交，不推进 main。
 4. C1–C6 tag 只在 CPU+GPU smoke+Tool seed0 quick通过后创建：`c1-need-gate`, `c2-coarse-arbitration`, `c3-abstain`, `c4-parameter-routing`, `c5-conflict-projection`, `c6-lifecycle`。
 5. D0无用户指定阶段tag；不新增/移动实验结果已引用tag。每个tag记录40位SHA和验证manifest。
+
+## 2026-09-17 D0/G1 Exploratory Overlay Correction
+
+- [x] 本地逐文件复核 downloaded exploratory-500 manifest 与 archive SHA；55/55 size+SHA 匹配。
+- [x] 用 sidecar 矩阵、`Camera.get_calib_matrix_nerf`、`getWorld2View2` 和 renderer 变换链定位 W2C 被误当 C2W 的根因。
+- [x] TDD RED：非单位外参测试精确因缺少 `camera_to_world_for_ray_cast` 导入失败。
+- [x] 最小本地 GREEN：只在 ray-cast 边界把 legacy W2C 求逆；focused 1/1、CPU G1 相关 56/56（8 dependency skips）、`py_compile` 与 `git diff --check` 通过。
+- [ ] 提交/推送 test+fix+三份规划记录；不改训练、GT、评价域或阈值。
+- [ ] AutoDL focused Open3D GREEN，必须覆盖非单位外参、真实 q25/q50/q75 depth cast，并核对三个 camera center 与 `camera.camera_center` 一致。
+- [ ] 使用新 confirmation id 重跑现有 checkpoint-500 的 offline evaluator；要求三个 overlay 命中/深度在视觉和几何上可解释、55 文件 manifest/archive 复核通过。无需重跑训练。
+- [ ] 只有修复后的 exploratory overlay audit 通过，才请求正式 Tool Room 7k D0 授权；旧 v3 的主距离指标保留为 exploratory evidence，但旧 overlay 不得用于正式报告。

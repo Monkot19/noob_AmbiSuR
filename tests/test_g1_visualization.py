@@ -8,6 +8,7 @@ import unittest
 import numpy as np
 
 from reliability.g1_visualization import (
+    camera_to_world_for_ray_cast,
     camera_quartile_indices,
     cast_gt_depth,
     required_artifacts,
@@ -26,6 +27,37 @@ HAS_MATPLOTLIB = importlib.util.find_spec("matplotlib") is not None
 
 
 class G1VisualizationTests(unittest.TestCase):
+    def test_ray_cast_inverts_the_camera_world_to_view_matrix(self):
+        intrinsic = np.array(
+            [[4.0, 0.0, 2.0], [0.0, 5.0, 3.0], [0.0, 0.0, 1.0]],
+            dtype=np.float32,
+        )
+        world_to_camera = np.array(
+            [
+                [0.0, -1.0, 0.0, 2.0],
+                [1.0, 0.0, 0.0, -3.0],
+                [0.0, 0.0, 1.0, 4.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        camera = SimpleNamespace(
+            get_calib_matrix_nerf=lambda scale=1.0: (
+                intrinsic,
+                world_to_camera,
+            )
+        )
+
+        actual_intrinsic, camera_to_world = camera_to_world_for_ray_cast(camera)
+
+        np.testing.assert_array_equal(actual_intrinsic, intrinsic)
+        np.testing.assert_allclose(
+            camera_to_world,
+            np.linalg.inv(world_to_camera),
+            rtol=0,
+            atol=1e-7,
+        )
+
     def test_required_artifacts_freeze_complete_relative_inventory(self):
         names = required_artifacts()
 
