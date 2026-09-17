@@ -2,6 +2,8 @@
 
 import torch
 
+from reliability.topology import migrate_lineage_tensor
+
 
 STATE_NAMES = (
     "Bypass",
@@ -26,6 +28,9 @@ class TemporalTransitionDiagnostics:
         )
         self.stable_transition_count = torch.zeros(
             self.point_count, dtype=torch.int64, device=device
+        )
+        self.previous_stable = torch.zeros(
+            self.point_count, dtype=torch.int8, device=device
         )
 
     def _validate_states(self, states, name):
@@ -54,6 +59,10 @@ class TemporalTransitionDiagnostics:
     def update(self, previous_stable, current_stable):
         previous = self._validate_states(previous_stable, "previous_stable")
         current = self._validate_states(current_stable, "current_stable")
+        if not torch.equal(previous, self.previous_stable):
+            raise ValueError(
+                "previous_stable must match topology-aligned temporal history"
+            )
         changed = current != previous
         self.stable_age_refreshes.copy_(
             torch.where(
@@ -82,6 +91,8 @@ class TemporalTransitionDiagnostics:
                 self.stable_transition_count, mask
             )
 
+        self.previous_stable.copy_(current)
+
         return {
             "transition_count_matrix": counts.cpu().tolist(),
             "transition_fraction_matrix": fractions.cpu().tolist(),
@@ -103,25 +114,16 @@ class TemporalTransitionDiagnostics:
 
     @torch.no_grad()
     def on_topology_change(self, change):
-        mapping = change.new_to_old.to(
-            device=self.stable_age_refreshes.device
+        self.stable_age_refreshes = migrate_lineage_tensor(
+            self.stable_age_refreshes, change, fill_value=0
         )
-        valid = mapping >= 0
-        if bool(valid.any()) and int(mapping[valid].max().item()) >= self.point_count:
-            raise ValueError("new_to_old source index is out of range")
-
-        def migrate(values):
-            result = torch.zeros(
-                mapping.shape[0], dtype=values.dtype, device=values.device
-            )
-            result[valid] = values[mapping[valid]]
-            return result
-
-        self.stable_age_refreshes = migrate(self.stable_age_refreshes)
-        self.stable_transition_count = migrate(
-            self.stable_transition_count
+        self.stable_transition_count = migrate_lineage_tensor(
+            self.stable_transition_count, change, fill_value=0
         )
-        self.point_count = int(mapping.shape[0])
+        self.previous_stable = migrate_lineage_tensor(
+            self.previous_stable, change, fill_value=0
+        )
+        self.point_count = int(change.new_to_old.shape[0])
 
     def state_dict(self):
         return {
@@ -129,6 +131,7 @@ class TemporalTransitionDiagnostics:
             "point_count": self.point_count,
             "stable_age_refreshes": self.stable_age_refreshes.clone(),
             "stable_transition_count": self.stable_transition_count.clone(),
+            "previous_stable": self.previous_stable.clone(),
         }
 
     @torch.no_grad()
@@ -142,6 +145,7 @@ class TemporalTransitionDiagnostics:
             "point_count",
             "stable_age_refreshes",
             "stable_transition_count",
+            "previous_stable",
         }
         if set(state) != expected_keys:
             raise ValueError("invalid temporal transition state fields")
@@ -161,3 +165,12 @@ class TemporalTransitionDiagnostics:
             getattr(self, name).copy_(
                 value.detach().to(device=self.stable_age_refreshes.device)
             )
+        previous = state["previous_stable"]
+        if not isinstance(previous, torch.Tensor):
+            raise ValueError("previous_stable must be a tensor")
+        if previous.dtype != torch.int8 or previous.shape != (self.point_count,):
+            raise ValueError("previous_stable must be an int8 point-count vector")
+        previous = previous.detach().to(device=self.previous_stable.device)
+        if bool(((previous < 0) | (previous >= len(STATE_NAMES))).any()):
+            raise ValueError("previous_stable values must be in [0, 4]")
+        self.previous_stable.copy_(previous)

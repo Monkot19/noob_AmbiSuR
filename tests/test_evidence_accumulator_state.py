@@ -252,6 +252,24 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
             accumulator.transition_diagnostics.stable_transition_count.tolist(),
             [old_count[1].item(), old_count[1].item(), 0, old_count[0].item()],
         )
+        self.assertEqual(
+            accumulator.transition_diagnostics.previous_stable.tolist(),
+            [
+                ArbitrationState.PRIOR_LED,
+                ArbitrationState.PRIOR_LED,
+                ArbitrationState.BYPASS,
+                ArbitrationState.PRIOR_LED,
+            ],
+        )
+        self.assertEqual(
+            accumulator.arbitration.stable_state.tolist(),
+            [
+                ArbitrationState.PRIOR_LED,
+                ArbitrationState.BYPASS,
+                ArbitrationState.BYPASS,
+                ArbitrationState.PRIOR_LED,
+            ],
+        )
 
     def test_state_dict_round_trip_preserves_temporal_diagnostics(self):
         accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
@@ -271,6 +289,10 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
         torch.testing.assert_close(
             restored.transition_diagnostics.stable_transition_count,
             accumulator.transition_diagnostics.stable_transition_count,
+        )
+        torch.testing.assert_close(
+            restored.transition_diagnostics.previous_stable,
+            accumulator.transition_diagnostics.previous_stable,
         )
 
     def test_refresh_contract_has_no_gt_or_mesh_input(self):

@@ -35,20 +35,56 @@ def migrate_tensor(old, change, *, fill_value=0):
     return migrated
 
 
+@torch.no_grad()
+def migrate_lineage_tensor(old, change, *, fill_value=0):
+    """Migrate by parent identity, including mapped newly created rows."""
+    if old.ndim == 0:
+        raise ValueError("state tensor must have a leading point dimension")
+    mapping = change.new_to_old.to(device=old.device)
+    mapped = mapping >= 0
+    if mapped.any() and mapping[mapped].max() >= old.shape[0]:
+        raise ValueError("new_to_old source index is out of range")
+    shape = (mapping.shape[0],) + tuple(old.shape[1:])
+    migrated = torch.full(shape, fill_value, dtype=old.dtype, device=old.device)
+    migrated[mapped] = old.detach()[mapping[mapped]]
+    return migrated
+
+
 def identity_topology_change(point_count, *, device=None):
     mapping = torch.arange(point_count, dtype=torch.int64, device=device)
     return TopologyChange(mapping, torch.zeros_like(mapping, dtype=torch.bool))
 
 
-def append_topology_change(old_count, appended_count, *, device=None):
+def append_topology_change(
+    old_count,
+    appended_count,
+    *,
+    parent_indices=None,
+    device=None,
+):
     if old_count < 0 or appended_count < 0:
         raise ValueError("topology counts must be nonnegative")
     old = torch.arange(old_count, dtype=torch.int64, device=device)
-    new = torch.full(
-        (appended_count,), -1, dtype=torch.int64, device=device
-    )
+    if parent_indices is None:
+        new = torch.full(
+            (appended_count,), -1, dtype=torch.int64, device=device
+        )
+    else:
+        new = parent_indices.detach().to(device=device)
+        if new.dtype != torch.int64 or new.shape != (appended_count,):
+            raise ValueError(
+                "parent_indices must be an int64 appended-count vector"
+            )
+        if ((new < 0) | (new >= old_count)).any():
+            raise ValueError("parent index is out of range")
     mapping = torch.cat((old, new))
-    return TopologyChange(mapping, mapping == -1)
+    is_new = torch.cat(
+        (
+            torch.zeros(old_count, dtype=torch.bool, device=device),
+            torch.ones(appended_count, dtype=torch.bool, device=device),
+        )
+    )
+    return TopologyChange(mapping, is_new)
 
 
 def prune_topology_change(prune_mask):
@@ -63,10 +99,14 @@ def prune_topology_change(prune_mask):
 def compose_topology_changes(first, second):
     """Compose old->intermediate and intermediate->new row mappings."""
     mapping = torch.full_like(second.new_to_old, -1)
-    survivors = second.new_to_old >= 0
-    if survivors.any():
-        indices = second.new_to_old[survivors].to(first.new_to_old.device)
+    mapped = second.new_to_old >= 0
+    if mapped.any():
+        indices = second.new_to_old[mapped].to(first.new_to_old.device)
         if indices.max() >= first.new_to_old.shape[0]:
             raise ValueError("topology composition index is out of range")
-        mapping[survivors] = first.new_to_old[indices].to(mapping.device)
-    return TopologyChange(mapping, mapping == -1)
+        mapping[mapped] = first.new_to_old[indices].to(mapping.device)
+    is_new = second.is_new.clone()
+    if mapped.any():
+        inherited_new = first.is_new[indices].to(is_new.device)
+        is_new[mapped] |= inherited_new
+    return TopologyChange(mapping, is_new)

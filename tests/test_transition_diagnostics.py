@@ -31,6 +31,7 @@ class TemporalTransitionDiagnosticsTests(unittest.TestCase):
         )
         self.assertEqual(tracker.stable_age_refreshes.tolist(), [1, 1, 1])
         self.assertEqual(tracker.stable_transition_count.tolist(), [0, 1, 1])
+        self.assertEqual(tracker.previous_stable.tolist(), [0, 2, 4])
         self.assertEqual(summary["jitter_count"], 2)
         self.assertAlmostEqual(summary["jitter_rate"], 2.0 / 3.0)
         self.assertEqual(summary["mean_stable_age_refreshes"], 1.0)
@@ -70,6 +71,10 @@ class TemporalTransitionDiagnosticsTests(unittest.TestCase):
 
     def test_topology_migration_inherits_parent_lineage_only_when_mapped(self):
         tracker = TemporalTransitionDiagnostics(2, device="cpu")
+        tracker.update(
+            torch.tensor([0, 0], dtype=torch.int8),
+            torch.tensor([2, 4], dtype=torch.int8),
+        )
         tracker.stable_age_refreshes.copy_(torch.tensor([3, 7]))
         tracker.stable_transition_count.copy_(torch.tensor([1, 4]))
         change = TopologyChange(
@@ -84,6 +89,7 @@ class TemporalTransitionDiagnosticsTests(unittest.TestCase):
         self.assertEqual(
             tracker.stable_transition_count.tolist(), [4, 4, 0, 1]
         )
+        self.assertEqual(tracker.previous_stable.tolist(), [4, 4, 0, 2])
 
     def test_state_round_trip_preserves_temporal_lineage(self):
         tracker = TemporalTransitionDiagnostics(3, device="cpu")
@@ -102,6 +108,9 @@ class TemporalTransitionDiagnosticsTests(unittest.TestCase):
         torch.testing.assert_close(
             restored.stable_transition_count,
             tracker.stable_transition_count,
+        )
+        torch.testing.assert_close(
+            restored.previous_stable, tracker.previous_stable
         )
         expected = tracker.update(
             torch.tensor([0, 2, 4], dtype=torch.int8),

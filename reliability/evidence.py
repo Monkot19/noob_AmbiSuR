@@ -8,6 +8,7 @@ from reliability.arbitration import (
     candidate_state,
 )
 from reliability.topology import migrate_tensor
+from reliability.transition_diagnostics import TemporalTransitionDiagnostics
 
 
 @dataclass(frozen=True)
@@ -437,7 +438,7 @@ class KEMAState(EMAState):
 class EvidenceAccumulator:
     """Persistent, detached D0 evidence and arbitration state."""
 
-    STATE_VERSION = 2
+    STATE_VERSION = 3
 
     def __init__(
         self,
@@ -474,6 +475,9 @@ class EvidenceAccumulator:
             enter_count=cfg.arbitration_enter_count,
             device=device,
         )
+        self.transition_diagnostics = TemporalTransitionDiagnostics(
+            self.point_count, device=device
+        )
         self.previous_centers = torch.zeros(
             (self.point_count, 3), dtype=torch.float32, device=device
         )
@@ -484,6 +488,7 @@ class EvidenceAccumulator:
             self.point_count, dtype=torch.bool, device=device
         )
         self.latest = None
+        self.latest_transition_diagnostics = None
 
     def _validate_inputs(self, inputs):
         if inputs.centers.shape != (self.point_count, 3):
@@ -571,6 +576,12 @@ class EvidenceAccumulator:
         )
         candidate = candidate_state(snapshot, self.cfg)
         stable = self.arbitration.update(candidate)
+        self.latest_transition_diagnostics = (
+            self.transition_diagnostics.update(
+                self.transition_diagnostics.previous_stable,
+                stable,
+            )
+        )
         self.previous_centers.copy_(inputs.centers.detach())
         self.previous_normals.copy_(inputs.normals.detach())
         self.history_valid.fill_(True)
@@ -633,8 +644,10 @@ class EvidenceAccumulator:
         self.history_valid = migrate_tensor(
             self.history_valid, change, fill_value=False
         )
+        self.transition_diagnostics.on_topology_change(change)
         self.point_count = int(change.new_to_old.shape[0])
         self.latest = None
+        self.latest_transition_diagnostics = None
 
     def state_dict(self):
         def clone(value):
@@ -668,6 +681,9 @@ class EvidenceAccumulator:
             "previous_centers": clone(self.previous_centers),
             "previous_normals": clone(self.previous_normals),
             "history_valid": clone(self.history_valid),
+            "temporal_transition_diagnostics": (
+                self.transition_diagnostics.state_dict()
+            ),
         }
 
     @torch.no_grad()
@@ -715,4 +731,9 @@ class EvidenceAccumulator:
                     device=destination.device, dtype=destination.dtype
                 )
             )
+        temporal_state = state.get("temporal_transition_diagnostics")
+        if not isinstance(temporal_state, dict):
+            raise ValueError("missing temporal transition diagnostics state")
+        self.transition_diagnostics.load_state_dict(temporal_state)
         self.latest = None
+        self.latest_transition_diagnostics = None
