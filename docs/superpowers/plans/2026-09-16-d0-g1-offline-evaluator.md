@@ -318,7 +318,7 @@ Run GPU on AutoDL: `python -B -m unittest tests.gpu.test_g1_override_render -v`
 
 Expected: missing visualization module/functions.
 
-- [ ] **Step 3: Implement palettes, PLY, CSV, figure writers and required-artifact inventory**
+- [x] **Step 3: Implement palettes, PLY, CSV, figure writers and required-artifact inventory**
 
 ```python
 STATE_PALETTE = np.array([
@@ -347,7 +347,7 @@ Run: `python -B -m unittest tests.test_g1_visualization tests.gpu.test_g1_overri
 
 Expected: all PASS and pre/post model tensor hashes identical.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add reliability/g1_visualization.py tests/test_g1_visualization.py tests/gpu/test_g1_override_render.py
@@ -358,6 +358,7 @@ git commit -m "feat: add deterministic D0 G1 visualizations"
 
 **Files:**
 - Create: `scripts/diagnostics/evaluate_d0_g1.py`
+- Create: `tests/test_g1_publication.py`
 - Modify: `tests/test_g1_offline_inputs.py`
 - Modify: `tests/test_g1_visualization.py`
 
