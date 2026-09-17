@@ -5,8 +5,11 @@ import gzip
 import hashlib
 import io
 import json
+import os
 from pathlib import Path, PurePosixPath
+import shutil
 import tarfile
+import uuid
 
 
 FORMAL_ITERATIONS = (3000, 7000)
@@ -225,6 +228,88 @@ def validate_archive(archive_path, manifest):
         if len(payload) != entry["bytes"] or hashlib.sha256(payload).hexdigest() != entry["sha256"]:
             raise ValueError(f"archive artifact mismatch: {entry['path']}")
     return tuple(sorted(names))
+
+
+def publication_exit_code(report, *, exploratory=False):
+    if exploratory:
+        if report.get("g1_evaluable") is not None or report.get("g1_pass") is not None:
+            raise ValueError("exploratory report must not carry a formal G1 decision")
+        return 0
+    evaluable = report.get("g1_evaluable")
+    passed = report.get("g1_pass")
+    if evaluable is not True:
+        return 2
+    if not isinstance(passed, bool):
+        raise ValueError("formal report must carry a boolean G1 decision")
+    return 0 if passed else 1
+
+
+def publish_atomically(output_root, confirmation_id, immutable_inputs, producer):
+    from reliability.g1_visualization import required_artifacts
+
+    output_root = _resolved(output_root)
+    confirmation_id = _safe_relative_name(confirmation_id)
+    if len(PurePosixPath(confirmation_id).parts) != 1:
+        raise ValueError("confirmation ID must be a single path component")
+    output_dir = output_root / confirmation_id
+    archive_path = output_root / f"{confirmation_id}.tar.gz"
+    archive_sha256_path = output_root / f"{confirmation_id}.tar.gz.sha256"
+    for path in (output_dir, archive_path, archive_sha256_path):
+        if path.exists():
+            raise FileExistsError(f"output already exists: {path}")
+
+    output_root.mkdir(parents=True, exist_ok=True)
+    token = uuid.uuid4().hex
+    staging = output_root / f".{confirmation_id}.tmp-{token}"
+    temporary_archive = output_root / f".{confirmation_id}.tmp-{token}.tar.gz"
+    temporary_sha = output_root / f".{confirmation_id}.tmp-{token}.tar.gz.sha256"
+    before = fingerprint_inputs(immutable_inputs)
+    published = []
+    try:
+        staging.mkdir()
+        producer(staging)
+        after = fingerprint_inputs(immutable_inputs)
+        assert_inputs_unchanged(before, after)
+        manifest = build_manifest(staging, required_artifacts())
+        manifest_path = staging / "manifest.json"
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        write_deterministic_archive(staging, temporary_archive, manifest)
+        validate_archive(temporary_archive, manifest)
+        archive_sha256 = _sha256_file(temporary_archive)
+        temporary_sha.write_text(
+            f"{archive_sha256}  {archive_path.name}\n", encoding="ascii"
+        )
+
+        os.replace(staging, output_dir)
+        published.append(output_dir)
+        os.replace(temporary_archive, archive_path)
+        published.append(archive_path)
+        os.replace(temporary_sha, archive_sha256_path)
+        published.append(archive_sha256_path)
+        return {
+            "output_dir": output_dir,
+            "archive_path": archive_path,
+            "archive_sha256_path": archive_sha256_path,
+            "archive_sha256": archive_sha256,
+            "manifest": manifest,
+            "inputs_before": before,
+            "inputs_after": after,
+        }
+    except BaseException:
+        for path in reversed(published):
+            if path.is_dir():
+                shutil.rmtree(path)
+            elif path.exists():
+                path.unlink()
+        if staging.exists():
+            shutil.rmtree(staging)
+        for path in (temporary_archive, temporary_sha):
+            if path.exists():
+                path.unlink()
+        raise
 
 
 def build_parser():
