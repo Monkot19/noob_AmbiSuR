@@ -244,10 +244,18 @@ def publication_exit_code(report, *, exploratory=False):
     return 0 if passed else 1
 
 
-def publish_atomically(output_root, confirmation_id, immutable_inputs, producer):
+def publish_atomically(
+    output_root,
+    confirmation_id,
+    immutable_inputs,
+    producer,
+    *,
+    required=None,
+):
     from reliability.g1_visualization import required_artifacts
 
     output_root = _resolved(output_root)
+    required = required_artifacts() if required is None else tuple(required)
     confirmation_id = _safe_relative_name(confirmation_id)
     if len(PurePosixPath(confirmation_id).parts) != 1:
         raise ValueError("confirmation ID must be a single path component")
@@ -270,7 +278,7 @@ def publish_atomically(output_root, confirmation_id, immutable_inputs, producer)
         producer(staging)
         after = fingerprint_inputs(immutable_inputs)
         assert_inputs_unchanged(before, after)
-        manifest = build_manifest(staging, required_artifacts())
+        manifest = build_manifest(staging, required)
         manifest_path = staging / "manifest.json"
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n",
@@ -312,6 +320,354 @@ def publish_atomically(output_root, confirmation_id, immutable_inputs, producer)
         raise
 
 
+def evaluate_iteration(inputs, mesh, *, distance_fn=None):
+    """Evaluate one joined checkpoint/snapshot without changing its row domain."""
+    import numpy as np
+
+    from reliability.g1_metrics import evaluate_g1_gate
+    from reliability.offline_g1 import closest_triangle_distances
+
+    if distance_fn is None:
+        distance_fn = closest_triangle_distances
+    distances = np.asarray(distance_fn(inputs.centers, mesh), dtype=np.float64)
+    if distances.ndim != 1 or distances.shape[0] != inputs.centers.shape[0]:
+        raise ValueError("distance row count must match finite Gaussian centers")
+    if not np.isfinite(distances).all() or np.any(distances < 0.0):
+        raise ValueError("distances must be finite and nonnegative")
+
+    finite_rows = np.asarray(inputs.finite_row_indices, dtype=np.int64)
+    snapshot = {
+        name: np.asarray(value)[finite_rows].copy()
+        for name, value in inputs.snapshot.items()
+    }
+    report = evaluate_g1_gate(snapshot, distances, inputs.iteration)
+    return {
+        "iteration": int(inputs.iteration),
+        "centers": np.asarray(inputs.centers).copy(),
+        "snapshot": snapshot,
+        "distances": distances,
+        "report": report,
+        "original_point_count": int(inputs.original_point_count),
+        "evaluated_center_count": int(inputs.centers.shape[0]),
+        "rejected_center_count": int(inputs.rejected_center_indices.size),
+        "checkpoint_sha256": inputs.checkpoint_sha256,
+        "snapshot_sha256": inputs.snapshot_sha256,
+    }
+
+
+def _jsonable(value):
+    import numpy as np
+
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, dict):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    raise TypeError(f"value is not JSON serializable: {type(value).__name__}")
+
+
+def _write_json(path, payload):
+    Path(path).write_text(
+        json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def canonical_tree_sha256(root):
+    """Match the frozen `find | sort -z | xargs sha256sum | sha256sum` contract."""
+    root = _resolved(root)
+    if not root.is_dir():
+        raise ValueError(f"tree is missing: {root}")
+    digest = hashlib.sha256()
+    for child in sorted(item for item in root.rglob("*") if item.is_file()):
+        relative = "./" + child.relative_to(root).as_posix()
+        digest.update(f"{_sha256_file(child)}  {relative}\n".encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _git_head(repository):
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def _load_render_runtime(run_dir, source_root, iteration):
+    """Restore checkpoint tensors and cameras without writing into the run."""
+    from types import SimpleNamespace
+
+    import torch
+
+    from scene.dataset_readers import sceneLoadTypeCallbacks
+    from scene.gaussian_model import GaussianModel
+    from utils.camera_utils import cameraList_from_camInfos
+
+    run_dir = Path(run_dir)
+    config = json.loads((run_dir / "resolved_config.json").read_text(encoding="utf-8"))
+    model_values = dict(config["model"])
+    optimization = SimpleNamespace(**config["optimization"])
+    pipeline = SimpleNamespace(**config["pipeline"])
+    model_values["source_path"] = str(source_root)
+    dataset = SimpleNamespace(**model_values)
+
+    payload = torch.load(
+        run_dir / f"chkpnt{int(iteration)}.pth",
+        map_location="cuda",
+        weights_only=False,
+    )
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        raise ValueError("G1 rendering requires a versioned Core checkpoint")
+    if int(payload.get("iteration", -1)) != int(iteration):
+        raise ValueError("render checkpoint iteration mismatch")
+
+    gaussians = GaussianModel(int(dataset.sh_degree))
+    gaussians.disable_trunc = bool(dataset.disable_trunc)
+    gaussians.trunc_sigma = float(dataset.trunc_sigma)
+    gaussians.restore(payload["gaussian_state"], optimization)
+
+    scene_info = sceneLoadTypeCallbacks["Colmap"](
+        str(source_root), dataset.images, bool(dataset.eval)
+    )
+    cameras = cameraList_from_camInfos(scene_info.train_cameras, 1.0, dataset)
+    background = torch.tensor(
+        [1.0, 1.0, 1.0] if dataset.white_background else [0.0, 0.0, 0.0],
+        dtype=torch.float32,
+        device="cuda",
+    )
+    return gaussians, cameras, pipeline, background
+
+
+def _save_rgb(path, image):
+    import numpy as np
+    from PIL import Image
+
+    if hasattr(image, "detach"):
+        image = image.detach().cpu().numpy()
+    image = np.asarray(image)
+    if image.ndim == 3 and image.shape[0] == 3:
+        image = np.moveaxis(image, 0, -1)
+    if image.ndim != 3 or image.shape[-1] != 3 or not np.isfinite(image).all():
+        raise ValueError("rendered RGB image is invalid")
+    rgb = np.rint(np.clip(image, 0.0, 1.0) * 255.0).astype(np.uint8)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.fromarray(rgb, mode="RGB").save(path)
+
+
+def _field_colors(evaluation):
+    from reliability.g1_visualization import scalar_colors, state_colors
+
+    snapshot = evaluation["snapshot"]
+    return {
+        "A": scalar_colors(snapshot["A"], "A"),
+        "S": scalar_colors(snapshot["S"], "S"),
+        "N": scalar_colors(snapshot["N"], "N"),
+        "T_p": scalar_colors(snapshot["T_p"], "T_p"),
+        "T_g": scalar_colors(snapshot["T_g"], "T_g"),
+        "K": scalar_colors(snapshot["K"], "K"),
+        "state": state_colors(snapshot["stable"]),
+        "gt_distance": scalar_colors(evaluation["distances"], "gt_distance"),
+    }
+
+
+def produce_exploratory_500(
+    staging,
+    *,
+    run_dir,
+    source_root,
+    gt_mesh,
+    provenance=None,
+    input_fingerprints=None,
+):
+    """Produce the approved 55-file exploratory-500 bundle."""
+    import numpy as np
+    import torch
+
+    from gaussian_renderer import render
+    from reliability.g1_visualization import (
+        render_override_color,
+        select_static_cameras,
+        write_colored_ply,
+        write_gt_overlay,
+        write_metric_figures,
+    )
+    from reliability.offline_g1 import load_g1_iteration, load_valid_mesh
+
+    iteration = 500
+    joined = load_g1_iteration(run_dir, iteration)
+    mesh = load_valid_mesh(gt_mesh)
+    evaluation = evaluate_iteration(joined, mesh)
+    colors_by_field = _field_colors(evaluation)
+    root = Path(staging) / f"iteration_{iteration:06d}"
+    for field, colors in colors_by_field.items():
+        write_colored_ply(
+            root / "fields" / f"{field}.ply",
+            evaluation["centers"],
+            colors,
+        )
+
+    gaussians, cameras, pipeline, background = _load_render_runtime(
+        run_dir, source_root, iteration
+    )
+    if gaussians.get_xyz.shape[0] != joined.original_point_count:
+        raise ValueError("render checkpoint row count mismatch")
+    selected = select_static_cameras(cameras)
+    view_names = ("q25", "q50", "q75")
+    finite_rows = torch.as_tensor(
+        joined.finite_row_indices, device="cuda", dtype=torch.long
+    )
+    for field, finite_colors in colors_by_field.items():
+        full_colors = torch.full(
+            (joined.original_point_count, 3),
+            127.0 / 255.0,
+            device="cuda",
+            dtype=gaussians.get_xyz.dtype,
+        )
+        full_colors[finite_rows] = torch.as_tensor(
+            finite_colors / 255.0,
+            device="cuda",
+            dtype=gaussians.get_xyz.dtype,
+        )
+        for view_name, camera in zip(view_names, selected):
+            image = render_override_color(
+                camera, gaussians, pipeline, background, full_colors
+            )
+            _save_rgb(root / "views" / f"{field}_{view_name}.png", image)
+
+    for view_name, camera in zip(view_names, selected):
+        with torch.no_grad():
+            gaussian_rgb = render(
+                camera,
+                gaussians,
+                pipeline,
+                background,
+                return_plane=False,
+            )["render"]
+        write_gt_overlay(
+            camera,
+            mesh,
+            gaussian_rgb,
+            root / "overlays" / f"gt_{view_name}.png",
+        )
+
+    write_metric_figures(
+        evaluation["report"],
+        Path(staging) / "metrics",
+        prefix="iteration_000500",
+    )
+    report = dict(evaluation["report"])
+    report.update(
+        exploratory=True,
+        evaluated_center_count=evaluation["evaluated_center_count"],
+        rejected_center_count=evaluation["rejected_center_count"],
+        mesh={
+            "source_vertex_count": mesh.source_vertex_count,
+            "source_triangle_count": mesh.source_triangle_count,
+            "valid_vertex_count": int(mesh.vertices.shape[0]),
+            "valid_triangle_count": int(mesh.triangles.shape[0]),
+            "rejected_triangle_count": mesh.rejected_triangle_count,
+        },
+    )
+    _write_json(Path(staging) / "report.json", report)
+    _write_json(
+        Path(staging) / "inputs.json",
+        {
+            "schema_version": 1,
+            "exploratory": True,
+            "iterations": [500],
+            "provenance": dict(provenance or {}),
+            "input_fingerprints": dict(input_fingerprints or {}),
+            "checkpoint_sha256": joined.checkpoint_sha256,
+            "snapshot_sha256": joined.snapshot_sha256,
+            "finite_row_indices": joined.finite_row_indices,
+            "rejected_center_indices": joined.rejected_center_indices,
+        },
+    )
+    return report
+
+
+def run_evaluator(args):
+    from reliability.g1_visualization import required_artifacts
+
+    run_dir = _resolved(args.run_dir)
+    source_root = _resolved(args.source_root)
+    gt_mesh = _resolved(args.gt_mesh)
+    output_root = _resolved(args.output_root)
+    iterations = tuple(args.iterations)
+    validate_publication_request(
+        run_dir,
+        source_root,
+        gt_mesh,
+        output_root,
+        args.confirmation_id,
+        iterations,
+        exploratory=args.exploratory,
+    )
+    commit = _git_head(Path(__file__).resolve().parents[2])
+    dataset_sha = canonical_tree_sha256(source_root)
+    gt_sha = _sha256_file(gt_mesh)
+    validate_provenance(
+        commit=commit,
+        dataset_sha=dataset_sha,
+        gt_sha=gt_sha,
+        expected_commit=args.expected_commit,
+        expected_dataset_sha=args.expected_dataset_sha,
+        expected_gt_sha=args.expected_gt_sha,
+    )
+    if not args.exploratory:
+        raise NotImplementedError("formal 3000/7000 orchestration is not implemented")
+
+    checkpoint = run_dir / "chkpnt500.pth"
+    snapshot = run_dir / "d0_evidence" / "iteration_000500.npz"
+    immutable = {
+        "checkpoint_500": checkpoint,
+        "snapshot_500": snapshot,
+        "resolved_config": run_dir / "resolved_config.json",
+        "source_root": source_root,
+        "gt_mesh": gt_mesh,
+    }
+    provenance = {
+        "commit": commit,
+        "dataset_sha256": dataset_sha,
+        "gt_mesh_sha256": gt_sha,
+    }
+    input_fingerprints = fingerprint_inputs(immutable)
+    required = required_artifacts(iterations=iterations, exploratory=True)
+    report_box = {}
+
+    def producer(staging):
+        report_box["report"] = produce_exploratory_500(
+            staging,
+            run_dir=run_dir,
+            source_root=source_root,
+            gt_mesh=gt_mesh,
+            provenance=provenance,
+            input_fingerprints=input_fingerprints,
+        )
+
+    publication = publish_atomically(
+        output_root,
+        args.confirmation_id,
+        immutable,
+        producer,
+        required=required,
+    )
+    return publication_exit_code(report_box["report"], exploratory=True), publication
+
+
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", required=True)
@@ -329,8 +685,25 @@ def build_parser():
 
 def main(argv=None):
     parser = build_parser()
-    parser.parse_args(argv)
-    parser.error("offline G1 evaluation orchestration is not implemented yet")
+    args = parser.parse_args(argv)
+    try:
+        exit_code, publication = run_evaluator(args)
+    except (FileNotFoundError, ValueError, RuntimeError, NotImplementedError) as exc:
+        parser.exit(2, f"G1_EVALUATION_ERROR: {type(exc).__name__}: {exc}\n")
+    print(
+        json.dumps(
+            {
+                "exit_code": exit_code,
+                "output_dir": str(publication["output_dir"]),
+                "archive_path": str(publication["archive_path"]),
+                "archive_sha256_path": str(publication["archive_sha256_path"]),
+                "archive_sha256": publication["archive_sha256"],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    raise SystemExit(exit_code)
 
 
 if __name__ == "__main__":

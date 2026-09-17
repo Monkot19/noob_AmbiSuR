@@ -49,10 +49,15 @@ _ARTIFACT_VIEWS = ("q25", "q50", "q75")
 _FIGURE_SUFFIXES = ("png", "svg", "pdf", "csv", "json")
 
 
-def required_artifacts():
-    """Return the frozen relative-file inventory required before publication."""
+def required_artifacts(*, iterations=_ARTIFACT_ITERATIONS, exploratory=False):
+    """Return the exact formal or exploratory publication inventory."""
+    iterations = tuple(int(value) for value in iterations)
+    expected = (500,) if exploratory else _ARTIFACT_ITERATIONS
+    if iterations != expected:
+        kind = "exploratory" if exploratory else "formal"
+        raise ValueError(f"{kind} iterations must be {expected}")
     names = {"inputs.json", "report.json"}
-    for iteration in _ARTIFACT_ITERATIONS:
+    for iteration in iterations:
         root = f"iteration_{iteration:06d}"
         for field in _ARTIFACT_FIELDS:
             names.add(f"{root}/fields/{field}.ply")
@@ -61,12 +66,16 @@ def required_artifacts():
         for view in _ARTIFACT_VIEWS:
             names.add(f"{root}/overlays/gt_{view}.png")
             names.add(f"{root}/overlays/gt_{view}.json")
+    metric_iteration = 500 if exploratory else 7000
     for stem in ("primary_curves", "risk_coverage", "state_error"):
         for suffix in _FIGURE_SUFFIXES:
-            names.add(f"metrics/iteration_007000_{stem}.{suffix}")
-    for stem in ("state_proportion", "state_transition", "joint_coverage"):
-        for suffix in _FIGURE_SUFFIXES:
-            names.add(f"timeline/{stem}.{suffix}")
+            names.add(
+                f"metrics/iteration_{metric_iteration:06d}_{stem}.{suffix}"
+            )
+    if not exploratory:
+        for stem in ("state_proportion", "state_transition", "joint_coverage"):
+            for suffix in _FIGURE_SUFFIXES:
+                names.add(f"timeline/{stem}.{suffix}")
     return tuple(sorted(names))
 
 
@@ -387,6 +396,8 @@ def write_metric_figures(report, output_dir, *, prefix):
     colors = {"N": "#D62728", "A": "#7F7F7F", "one_minus_S": "#1F77B4"}
     for name in ("N", "A", "one_minus_S"):
         curve = curves[name]
+        if curve is None:
+            continue
         axes[0].plot(curve["fpr"], curve["tpr"], label=labels[name], color=colors[name])
         axes[1].plot(
             curve["recall"], curve["precision"], label=labels[name], color=colors[name]
@@ -402,7 +413,8 @@ def write_metric_figures(report, output_dir, *, prefix):
     axes[0].plot([0, 1], [0, 1], linestyle="--", color="#BBBBBB", linewidth=0.8)
     axes[0].set(xlabel="False-positive rate", ylabel="True-positive rate", xlim=(0, 1), ylim=(0, 1))
     axes[1].set(xlabel="Recall", ylabel="Precision", xlim=(0, 1), ylim=(0, 1))
-    axes[0].legend()
+    if curve_rows:
+        axes[0].legend()
     written.extend(
         _save_figure_bundle(
             figure,
@@ -410,7 +422,11 @@ def write_metric_figures(report, output_dir, *, prefix):
             f"{prefix}_primary_curves",
             ("series", "curve", "x", "y"),
             curve_rows,
-            {"iteration": int(report["iteration"]), "panels": ["ROC", "PR"]},
+            {
+                "iteration": int(report["iteration"]),
+                "panels": ["ROC", "PR"],
+                "curves_available": bool(curve_rows),
+            },
         )
     )
     plt.close(figure)
@@ -440,7 +456,8 @@ def write_metric_figures(report, output_dir, *, prefix):
         )
     axes[0].set(xlabel="Coverage", ylabel="Mean GT distance (m)", xlim=(0, 1))
     axes[1].set(xlabel="Coverage", ylabel="High-error rate", xlim=(0, 1), ylim=(0, 1))
-    axes[0].legend()
+    if risk_rows:
+        axes[0].legend()
     written.extend(
         _save_figure_bundle(
             figure,
@@ -455,7 +472,11 @@ def write_metric_figures(report, output_dir, *, prefix):
                 "high_error_rate",
             ),
             risk_rows,
-            {"iteration": int(report["iteration"]), "coverage_range": [0.0, 1.0]},
+            {
+                "iteration": int(report["iteration"]),
+                "coverage_range": [0.0, 1.0],
+                "curves_available": bool(risk_rows),
+            },
         )
     )
     plt.close(figure)

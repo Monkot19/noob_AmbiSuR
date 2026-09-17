@@ -24,9 +24,10 @@ from scripts.diagnostics.evaluate_d0_g1 import (
 
 class G1PublicationTests(unittest.TestCase):
     @staticmethod
-    def materialize_artifacts(root, report=None):
+    def materialize_artifacts(root, report=None, required=None):
         root = Path(root)
-        for index, name in enumerate(required_artifacts()):
+        required = required_artifacts() if required is None else tuple(required)
+        for index, name in enumerate(required):
             path = root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             if name == "report.json":
@@ -64,6 +65,31 @@ class G1PublicationTests(unittest.TestCase):
             )
             manifest = json.loads((result["output_dir"] / "manifest.json").read_text())
             validate_archive(result["archive_path"], manifest)
+
+    def test_atomic_publication_accepts_frozen_exploratory_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "immutable.bin"
+            source.write_bytes(b"immutable")
+            required = required_artifacts(iterations=(500,), exploratory=True)
+
+            result = publish_atomically(
+                root / "output",
+                "exploratory-500",
+                {"source": source},
+                lambda staging: self.materialize_artifacts(
+                    staging,
+                    {"g1_evaluable": None, "g1_pass": None},
+                    required,
+                ),
+                required=required,
+            )
+
+            self.assertEqual(len(result["manifest"]["files"]), 55)
+            self.assertEqual(
+                tuple(entry["path"] for entry in result["manifest"]["files"]),
+                required,
+            )
 
     def test_atomic_publication_cleans_staging_on_failure_or_input_mutation(self):
         with tempfile.TemporaryDirectory() as directory:

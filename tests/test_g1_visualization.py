@@ -51,6 +51,24 @@ class G1VisualizationTests(unittest.TestCase):
             for suffix in ("png", "svg", "pdf", "csv", "json"):
                 self.assertIn(f"timeline/{stem}.{suffix}", names)
 
+        self.assertEqual(len(names), 108)
+
+    def test_exploratory_500_inventory_is_exact_and_has_no_formal_timeline(self):
+        names = required_artifacts(iterations=(500,), exploratory=True)
+
+        self.assertEqual(len(names), 55)
+        self.assertEqual(names, tuple(sorted(names)))
+        self.assertIn("iteration_000500/fields/N.ply", names)
+        self.assertIn("iteration_000500/views/N_q50.png", names)
+        self.assertIn("metrics/iteration_000500_primary_curves.png", names)
+        self.assertFalse(any(name.startswith("timeline/") for name in names))
+        self.assertFalse(any("003000" in name or "007000" in name for name in names))
+
+        with self.assertRaisesRegex(ValueError, "exploratory iterations"):
+            required_artifacts(iterations=(3000, 7000), exploratory=True)
+        with self.assertRaisesRegex(ValueError, "formal iterations"):
+            required_artifacts(iterations=(500,), exploratory=False)
+
     def test_camera_indices_are_frozen_for_406_views(self):
         self.assertEqual(camera_quartile_indices(406), (101, 202, 303))
         with self.assertRaisesRegex(ValueError, "at least four"):
@@ -208,6 +226,31 @@ class G1VisualizationTests(unittest.TestCase):
         )
         self.assertEqual(names, expected_names)
         self.assertTrue(all(size > 0 for size in sizes.values()))
+
+    @unittest.skipUnless(HAS_MATPLOTLIB, "matplotlib is required")
+    def test_metric_figures_still_publish_when_exploratory_curves_are_unavailable(self):
+        report = self.metric_report()
+        report["iteration"] = 500
+        report["primary"]["curves"] = {
+            "N": None,
+            "A": None,
+            "one_minus_S": None,
+        }
+        report["risk_coverage"] = {"N": None, "r_p": None, "r_g": None}
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            paths = write_metric_figures(
+                report,
+                Path(temporary_directory),
+                prefix="iteration_000500",
+            )
+            metadata = json.loads(
+                (Path(temporary_directory) / "iteration_000500_primary_curves.json")
+                .read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(len(paths), 15)
+        self.assertFalse(metadata["curves_available"])
 
     @staticmethod
     def full_frame_camera():
