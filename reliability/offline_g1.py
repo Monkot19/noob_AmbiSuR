@@ -136,6 +136,15 @@ def load_valid_mesh(path):
     return validate_mesh_arrays(vertices, triangles)
 
 
+def _writable_open3d_arrays(mesh):
+    if not isinstance(mesh, ValidatedMesh):
+        raise TypeError("mesh must be a ValidatedMesh")
+    return (
+        np.array(mesh.vertices, dtype=np.float64, order="C", copy=True),
+        np.array(mesh.triangles, dtype=np.int64, order="C", copy=True),
+    )
+
+
 def closest_triangle_distances(points, mesh, chunk_size=65536):
     points64 = np.asarray(points, dtype=np.float64)
     if points64.ndim != 2 or points64.shape[1] != 3:
@@ -151,9 +160,10 @@ def closest_triangle_distances(points, mesh, chunk_size=65536):
         raise TypeError("mesh must be a ValidatedMesh")
 
     o3d = _require_open3d()
+    vertices, triangles = _writable_open3d_arrays(mesh)
     legacy = o3d.geometry.TriangleMesh(
-        o3d.utility.Vector3dVector(mesh.vertices),
-        o3d.utility.Vector3iVector(mesh.triangles),
+        o3d.utility.Vector3dVector(vertices),
+        o3d.utility.Vector3iVector(triangles),
     )
     tensor_mesh = o3d.t.geometry.TriangleMesh.from_legacy(
         legacy,

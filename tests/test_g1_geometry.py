@@ -6,6 +6,7 @@ import numpy as np
 
 from reliability.offline_g1 import (
     ValidatedMesh,
+    _writable_open3d_arrays,
     closest_triangle_distances,
     load_valid_mesh,
     validate_mesh_arrays,
@@ -33,6 +34,33 @@ def one_triangle_mesh():
 
 
 class G1GeometryTests(unittest.TestCase):
+    def test_open3d_boundary_copies_read_only_validated_mesh_arrays(self):
+        vertices = np.array(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            dtype=np.float64,
+        )
+        triangles = np.array([[0, 1, 2]], dtype=np.int64)
+        vertices.setflags(write=False)
+        triangles.setflags(write=False)
+        mesh = ValidatedMesh(
+            vertices=vertices,
+            triangles=triangles,
+            source_vertex_count=3,
+            source_triangle_count=1,
+            nonfinite_vertex_count=0,
+            rejected_nonfinite_triangle_count=0,
+            rejected_degenerate_triangle_count=0,
+        )
+
+        writable_vertices, writable_triangles = _writable_open3d_arrays(mesh)
+
+        self.assertTrue(writable_vertices.flags.writeable)
+        self.assertTrue(writable_triangles.flags.writeable)
+        self.assertFalse(np.shares_memory(writable_vertices, vertices))
+        self.assertFalse(np.shares_memory(writable_triangles, triangles))
+        np.testing.assert_array_equal(writable_vertices, vertices)
+        np.testing.assert_array_equal(writable_triangles, triangles)
+
     def test_validation_rejects_nonfinite_and_zero_area_triangles(self):
         vertices = np.array(
             [
