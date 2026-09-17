@@ -321,5 +321,5 @@
 - 用户下载的 v3 bundle 已完成本地只读核验：manifest 55 项逐文件 size/SHA256 全部匹配，archive SHA 与服务器一致；30 PNG、8 PLY 与指标多格式产物齐全。
 - 视觉检查发现 q25/q50 GT overlay 出现非场景结构带状深度，q75 hit fraction=0。根因已由代码/矩阵证据定位为 ray caster 把 legacy W2C 当 C2W；这不是 GT mesh coverage/alignment 已失败的证据。
 - 主 `gt_distance` 与全部数值 metric 在独立 BVH 最近三角面链路计算，不受 overlay 外参 bug 影响；旧 v3 仍是 exploratory 数值证据，但 overlay 作废。
-- 本地按 TDD 新增非单位 W2C 回归：RED 为缺失 helper；最小修复后 focused 1/1、CPU G1 相关 56/56（8 个本机缺 Open3D/matplotlib/Torch 的显式 skip）、`py_compile` 与 `git diff --check` 通过。当前尚未提交/推送，也未获服务器真实 Open3D GREEN，未启动训练。
+- 本地按 TDD 新增非单位 W2C 回归：RED 为缺失 helper；最小修复后 focused 1/1、CPU G1 相关 56/56（8 个本机缺 Open3D/matplotlib/Torch 的显式 skip）、`py_compile` 与 `git diff --check` 通过。修复与审计记录已以 `457c965796b752057935cd68d2f740c2bbf32ba4` 推送；尚未获服务器真实 Open3D GREEN，未启动训练。
 - 下一步：提交推送后让用户运行 focused server GREEN，再以新 confirmation id 只重跑 offline evaluator。正式 7k D0 与 C1 继续等待该门，不创建 tag。
