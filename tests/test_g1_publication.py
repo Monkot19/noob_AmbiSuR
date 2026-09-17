@@ -13,6 +13,8 @@ from scripts.diagnostics.evaluate_d0_g1 import (
     assert_inputs_unchanged,
     build_manifest,
     fingerprint_inputs,
+    publication_exit_code,
+    publish_atomically,
     validate_archive,
     validate_provenance,
     validate_publication_request,
@@ -21,6 +23,87 @@ from scripts.diagnostics.evaluate_d0_g1 import (
 
 
 class G1PublicationTests(unittest.TestCase):
+    @staticmethod
+    def materialize_artifacts(root, report=None):
+        root = Path(root)
+        for index, name in enumerate(required_artifacts()):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if name == "report.json":
+                payload = json.dumps(report or {"g1_evaluable": True, "g1_pass": True})
+            elif name == "inputs.json":
+                payload = json.dumps({"schema_version": 1})
+            else:
+                payload = f"artifact-{index}"
+            path.write_text(payload + "\n", encoding="utf-8")
+
+    def test_atomic_publication_writes_directory_archive_and_sha(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "immutable.bin"
+            source.write_bytes(b"immutable")
+            output_root = root / "output"
+
+            result = publish_atomically(
+                output_root,
+                "confirmation-a",
+                {"source": source},
+                lambda staging: self.materialize_artifacts(staging),
+            )
+
+            self.assertTrue(result["output_dir"].is_dir())
+            self.assertTrue(result["archive_path"].is_file())
+            self.assertTrue(result["archive_sha256_path"].is_file())
+            self.assertEqual(
+                result["archive_sha256"],
+                hashlib.sha256(result["archive_path"].read_bytes()).hexdigest(),
+            )
+            self.assertEqual(
+                result["archive_sha256_path"].read_text().split()[0],
+                result["archive_sha256"],
+            )
+            manifest = json.loads((result["output_dir"] / "manifest.json").read_text())
+            validate_archive(result["archive_path"], manifest)
+
+    def test_atomic_publication_cleans_staging_on_failure_or_input_mutation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "immutable.bin"
+            source.write_bytes(b"immutable")
+            output_root = root / "output"
+
+            def fail(_staging):
+                raise RuntimeError("producer failed")
+
+            with self.assertRaisesRegex(RuntimeError, "producer failed"):
+                publish_atomically(
+                    output_root, "failed", {"source": source}, fail
+                )
+
+            def mutate(staging):
+                self.materialize_artifacts(staging)
+                source.write_bytes(b"mutated")
+
+            with self.assertRaisesRegex(RuntimeError, "input mutated"):
+                publish_atomically(
+                    output_root, "mutated", {"source": source}, mutate
+                )
+            self.assertFalse((output_root / "failed").exists())
+            self.assertFalse((output_root / "mutated").exists())
+            self.assertEqual(list(output_root.glob("*.tmp-*")), [])
+            self.assertEqual(list(output_root.glob("*.tar.gz")), [])
+
+    def test_publication_exit_code_preserves_formal_and_exploratory_roles(self):
+        self.assertEqual(publication_exit_code({"g1_evaluable": True, "g1_pass": True}), 0)
+        self.assertEqual(publication_exit_code({"g1_evaluable": True, "g1_pass": False}), 1)
+        self.assertEqual(publication_exit_code({"g1_evaluable": False, "g1_pass": False}), 2)
+        self.assertEqual(
+            publication_exit_code(
+                {"g1_evaluable": None, "g1_pass": None}, exploratory=True
+            ),
+            0,
+        )
+
     def test_cli_help_exposes_every_frozen_argument(self):
         script = (
             Path(__file__).resolve().parents[1]
