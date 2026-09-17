@@ -324,3 +324,10 @@
 - 本地按 TDD 新增非单位 W2C 回归：RED 为缺失 helper；最小修复后 focused 1/1、CPU G1 相关 56/56（8 个本机缺 Open3D/matplotlib/Torch 的显式 skip）、`py_compile` 与 `git diff --check` 通过。修复与审计记录已以 `457c965796b752057935cd68d2f740c2bbf32ba4` 推送；尚未获服务器真实 Open3D GREEN，未启动训练。
 - 下一步：提交推送后让用户运行 focused server GREEN，再以新 confirmation id 只重跑 offline evaluator。正式 7k D0 与 C1 继续等待该门，不创建 tag。
 - AutoDL focused Open3D 3/3 与 v4 offline evaluator 已完成；外围首次 exit 1 已定位为 archive sidecar basename 的 cwd 校验错误，核心 evaluator 实际成功且无 OOM/staging。v4 report 与 v3 byte-identical，overlay metadata/视觉、55/55 manifest 本地复核均通过。exploratory evaluator 工程门现已关闭；下一步只在用户明确批准后启动正式 Tool Room seed0 7k D0，C1 仍未开始。
+
+## 2026-09-17 Formal Tool Room D0-7k Authorization
+
+- [x] 用户明确批准正式 Tool Room、seed 0、`-r 2`、7000 iteration D0 shadow run。
+- [x] 冻结训练合同：`--core_shadow_mode --d0_refresh_interval 1000 --iterations 7000 --seed 0`；1000–7000 evaluation/no-GT snapshots，3000/7000 checkpoints，GT 不进入训练。
+- [ ] 下一步只执行服务器同步与只读 preflight；收到 PASS 输出后才提供 private-view 创建和唯一训练启动命令。
+- [ ] 正式 G1 仍须先实现 `evaluate_d0_g1.py` 的非 exploratory 3000/7000 orchestration；该缺口不阻止生成正式 D0 训练资产，但阻止 G1 PASS、C1 与 tag。

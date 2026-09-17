@@ -768,3 +768,12 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] AutoDL focused Open3D GREEN：非单位 W2C 求逆、full-frame depth cast 与 overlay 3/3 PASS；clean branch、无训练。
 - [x] 使用新 confirmation id 重跑现有 checkpoint-500 offline evaluator；v4 三视角 hit fraction 为 0.96927/0.96648/0.93492，深度范围为 0.786–2.065/0.520–1.825/0.766–3.341 m；55/55 manifest 本地复核通过，v3/v4 report byte-identical。无需重跑训练。
 - [x] 修复后的 v4 overlay 本地逐图审计通过：场景表面与边界空间一致，旧悬浮带状结构消失，q75 恢复覆盖。现在可请求正式 Tool Room seed0 7k D0 授权；旧 v3 overlay 不得用于正式报告。
+
+## 2026-09-17 Formal Tool Room D0 Authorization
+
+- [x] 用户明确批准启动 Tool Room、seed 0、`-r 2`、7000 iteration 的正式 D0 shadow run。
+- [ ] 先执行独立同步/只读 preflight：锁定 clean `research/core-routing` 精确 commit、canonical dataset/prior hash、空闲磁盘、无活动训练进程、目标 run/view/state 路径尚不存在；该步骤不创建 run/view、不启动训练。
+- [ ] preflight 通过后再单独创建 private view 并启动唯一训练：`--core_shadow_mode --d0_refresh_interval 1000 --iterations 7000 --seed 0`；保存 1000–7000 no-GT snapshots，checkpoint 仅 3000/7000，evaluation 记录 1000–7000，最终 point-cloud save 为 7000。
+- [ ] 完成后依次执行 completion/input/Git 审计、七刷新状态/EMA/hysteresis/checkpoint/topology 深审计、D0 对 E0/baseline 的训练隔离检查，再运行正式 offline G1。
+- [ ] 当前 `scripts/diagnostics/evaluate_d0_g1.py::run_evaluator` 对非 exploratory 请求仍 fail-closed；正式 3000/7000 orchestration 必须在消费本次结果前按既有 108-artifact 合同完成 TDD，不能把 exploratory-500 入口用于正式结论。该缺口不改变或污染 GT-free 训练产物，因此不阻止已批准的 7k shadow training，但阻止正式 G1 判定与 C1 晋级。
+- [ ] 本次授权不包含 C1、Supporting、tag、阈值/评价域变更或任何 GT 进入训练；只有正式 G1 与 D0 隔离门通过后才可请求 C1 gradient-oracle 实施/实验授权。
