@@ -64,32 +64,15 @@ def _is_within(path, parent):
     return True
 
 
-def collect_component_arrays(refresh_inputs):
-    """Expose current raw collector components; history stability is unavailable."""
+def _assemble_component_arrays(refresh_inputs, sufficiency, consistency):
+    """Convert the frozen collector component contract to independent arrays."""
     import numpy as np
-    import torch
-
-    from reliability.evidence import (
-        compute_observation_sufficiency,
-        compute_pg_consistency,
-    )
 
     def as_numpy(value):
         return np.asarray(value.detach().cpu().numpy()).copy()
 
-    with torch.no_grad():
-        sufficiency = compute_observation_sufficiency(
-            refresh_inputs.pixel_hits,
-            refresh_inputs.camera_centers,
-            refresh_inputs.centers,
-        )
-        consistency = compute_pg_consistency(
-            refresh_inputs.pg_weighted_support,
-            refresh_inputs.pg_depth_error_sum,
-            refresh_inputs.pg_normal_error_sum,
-        )
     return {
-        "view_count": as_numpy(sufficiency.M),
+        "view_count": as_numpy(sufficiency.M_obs),
         "s_count": as_numpy(sufficiency.S_count),
         "s_angle": as_numpy(sufficiency.S_angle),
         "s_raw": as_numpy(sufficiency.S),
@@ -105,6 +88,29 @@ def collect_component_arrays(refresh_inputs):
         ),
         "pg_raw_k": as_numpy(consistency.K_raw),
     }
+
+
+def collect_component_arrays(refresh_inputs):
+    """Expose current raw collector components; history stability is unavailable."""
+    import torch
+
+    from reliability.evidence import (
+        compute_observation_sufficiency,
+        compute_pg_consistency,
+    )
+
+    with torch.no_grad():
+        sufficiency = compute_observation_sufficiency(
+            refresh_inputs.pixel_hits,
+            refresh_inputs.camera_centers,
+            refresh_inputs.centers,
+        )
+        consistency = compute_pg_consistency(
+            refresh_inputs.pg_weighted_support,
+            refresh_inputs.pg_depth_error_sum,
+            refresh_inputs.pg_normal_error_sum,
+        )
+    return _assemble_component_arrays(refresh_inputs, sufficiency, consistency)
 
 
 def _collect_runtime_components(run_dir, source_root, iteration):
@@ -283,6 +289,9 @@ def run_diagnostic(args, *, dependencies=None):
         "original_point_count": int(joined.original_point_count),
         "evaluated_center_count": int(joined.centers.shape[0]),
         "rejected_center_count": int(joined.rejected_center_indices.size),
+        "current_component_observation": (
+            "post_training_recomputation_at_iteration_7000"
+        ),
         "historical_geometry_stability_note": (
             "post-refresh checkpoint history cannot reconstruct the pre-refresh "
             "stability value used at iteration 7000"

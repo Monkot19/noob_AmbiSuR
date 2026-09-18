@@ -9,6 +9,7 @@ import numpy as np
 
 from reliability.g1_component_diagnostics import RAW_COMPONENTS
 from scripts.diagnostics.diagnose_d0_g1_components import (
+    _assemble_component_arrays,
     build_parser,
     collect_component_arrays,
     run_diagnostic,
@@ -17,6 +18,19 @@ from tests.test_g1_component_diagnostics import valid_components, valid_snapshot
 
 
 class G1ComponentDiagnosticCliTests(unittest.TestCase):
+    class FakeTensor:
+        def __init__(self, values):
+            self.values = np.asarray(values)
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.values
+
     @staticmethod
     def make_request(root, confirmation_id="component-diagnostic"):
         root = Path(root)
@@ -106,6 +120,10 @@ class G1ComponentDiagnosticCliTests(unittest.TestCase):
         self.assertIsNone(report["g1_decision"])
         self.assertFalse(report["historical_geometry_stability_reconstructable"])
         self.assertEqual(
+            report["metadata"]["current_component_observation"],
+            "post_training_recomputation_at_iteration_7000",
+        )
+        self.assertEqual(
             {item["path"] for item in manifest["files"]},
             {"report.json", "risk_bins.csv", "inputs.json"},
         )
@@ -146,6 +164,31 @@ class G1ComponentDiagnosticCliTests(unittest.TestCase):
         self.assertEqual(args.confirmation_id, "diagnosis")
         self.assertFalse(hasattr(args, "iterations"))
         self.assertFalse(hasattr(args, "g1_threshold"))
+
+    def test_component_assembly_uses_the_observation_count_contract_name(self):
+        tensor = self.FakeTensor
+        refresh = SimpleNamespace(
+            prior_confidence=tensor([0.8, 0.6]),
+            prior_multiview=tensor([0.7, 0.5]),
+            prior_support_views=tensor([2, 1]),
+            geometry_multiview=tensor([0.4, 0.3]),
+            geometry_depth_normal=tensor([0.9, 0.8]),
+            geometry_support_views=tensor([2, 1]),
+        )
+        sufficiency = SimpleNamespace(
+            M_obs=tensor([2, 1]),
+            S_count=tensor([0.4, 0.2]),
+            S_angle=tensor([0.9, 0.8]),
+            S=tensor([0.6, 0.4]),
+        )
+        consistency = SimpleNamespace(K_raw=tensor([0.75, 0.25]))
+
+        arrays = _assemble_component_arrays(
+            refresh, sufficiency, consistency
+        )
+
+        self.assertEqual(set(arrays), set(RAW_COMPONENTS))
+        np.testing.assert_array_equal(arrays["view_count"], [2, 1])
 
     @unittest.skipUnless(importlib.util.find_spec("torch"), "Torch is unavailable")
     def test_collector_boundary_exposes_current_components_not_fake_history(self):
