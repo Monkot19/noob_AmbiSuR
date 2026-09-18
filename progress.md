@@ -367,4 +367,6 @@
 - [x] test-only `6fac88dd3b62241d712a84d3f68d80534f8b18d5` 已在 AutoDL 观察到精确 RED：`ModuleNotFoundError: reliability.g1_timeline`；server clean、无训练。
 - [x] 本地最小 `reliability/g1_timeline.py` 候选已完成 `py_compile` 与 `git diff --check`；本机默认 Python 缺 NumPy/Torch，未将本地 dependency import failure 计作 GREEN。
 - [x] loader 实现 `2fa3980c011a3d42622314f992b02a2822a6aff2` 已通过 AutoDL 11/11 focused GREEN、compile/clean/no-training gate。
-- [ ] 当前只新增 timeline bundle 的 RED 测试：冻结 15 个路径、三份 CSV 列合同、JSON matrix orientation/state order/iterations 及 event 原值保留；生产 writer 尚未实现。
+- [x] bundle test-only `dd89dc4c7681c90c278dfef17089448d18f15110` 已在 AutoDL 精确观察到缺少 `write_timeline_artifacts` 的预期 RED；compile/clean/no-training gate 通过。
+- [x] 本地最小 writer 候选仅生成三组既有 bundle，并保留 event source data；`py_compile` 与 `git diff --check` 通过。
+- [ ] 下一门：提交/推送 writer 后在 AutoDL 运行 timeline + visualization focused GREEN；通过前不开始 formal orchestration RED。

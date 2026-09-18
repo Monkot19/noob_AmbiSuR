@@ -171,3 +171,266 @@ def load_d0_timeline(run_directory):
             fraction_matrices, dtype=np.float64
         ),
     )
+
+
+def _state_proportion_source(timeline):
+    rows = []
+    records = []
+    for iteration, point_count, counts in zip(
+        timeline.iterations, timeline.point_counts, timeline.state_counts
+    ):
+        fractions = counts.astype(np.float64) / float(point_count)
+        records.append(
+            {
+                "iteration": int(iteration),
+                "point_count": int(point_count),
+                "counts": {
+                    name: int(value) for name, value in zip(STATE_NAMES, counts)
+                },
+                "fractions": {
+                    name: float(value)
+                    for name, value in zip(STATE_NAMES, fractions)
+                },
+            }
+        )
+        rows.extend(
+            (
+                int(iteration),
+                name,
+                int(count),
+                float(fraction),
+            )
+            for name, count, fraction in zip(STATE_NAMES, counts, fractions)
+        )
+    metadata = {
+        "schema_version": 1,
+        "iterations": list(timeline.iterations),
+        "state_order": list(STATE_NAMES),
+        "records": records,
+    }
+    return rows, metadata
+
+
+def _transition_source(timeline):
+    rows = []
+    for iteration, event in zip(timeline.iterations, timeline.events):
+        for previous_index, previous_name in enumerate(STATE_NAMES):
+            for current_index, current_name in enumerate(STATE_NAMES):
+                rows.append(
+                    (
+                        int(iteration),
+                        "transition",
+                        previous_name,
+                        current_name,
+                        "",
+                        int(
+                            event["transition_count_matrix"][previous_index][
+                                current_index
+                            ]
+                        ),
+                        float(
+                            event["transition_fraction_matrix"][previous_index][
+                                current_index
+                            ]
+                        ),
+                        "",
+                    )
+                )
+        for name in (
+            "jitter_count",
+            "jitter_rate",
+            "mean_stable_age_refreshes",
+            "mean_stable_transition_count",
+        ):
+            rows.append((int(iteration), name, "", "", "", "", "", event[name]))
+        for name in (
+            "mean_stable_age_refreshes_by_state",
+            "mean_stable_transition_count_by_state",
+        ):
+            rows.extend(
+                (
+                    int(iteration),
+                    name,
+                    "",
+                    "",
+                    state,
+                    "",
+                    "",
+                    event[name][state],
+                )
+                for state in STATE_NAMES
+            )
+    metadata = {
+        "schema_version": 1,
+        "iterations": list(timeline.iterations),
+        "state_order": list(STATE_NAMES),
+        "matrix_orientation": "previous_rows_current_columns",
+        "records": [dict(event) for event in timeline.events],
+    }
+    return rows, metadata
+
+
+def _joint_coverage_source(timeline):
+    rows = []
+    records = []
+    for iteration, point_count, valid_count in zip(
+        timeline.iterations,
+        timeline.point_counts,
+        timeline.joint_valid_counts,
+    ):
+        fraction = float(valid_count) / float(point_count)
+        row = (
+            int(iteration),
+            int(point_count),
+            int(valid_count),
+            fraction,
+        )
+        rows.append(row)
+        records.append(
+            {
+                "iteration": row[0],
+                "point_count": row[1],
+                "joint_valid_count": row[2],
+                "joint_valid_fraction": row[3],
+            }
+        )
+    metadata = {
+        "schema_version": 1,
+        "iterations": list(timeline.iterations),
+        "records": records,
+    }
+    return rows, metadata
+
+
+def write_timeline_artifacts(timeline, output_directory):
+    """Write the three frozen formal timeline bundles and source data."""
+    from reliability.g1_visualization import (
+        STATE_PALETTE,
+        _matplotlib_pyplot,
+        _save_figure_bundle,
+    )
+
+    if not isinstance(timeline, D0Timeline):
+        raise ValueError("timeline must be a validated D0Timeline")
+    plt = _matplotlib_pyplot()
+    timeline_directory = Path(output_directory) / "timeline"
+    written = []
+
+    state_rows, state_metadata = _state_proportion_source(timeline)
+    state_fractions = timeline.state_counts.astype(np.float64)
+    state_fractions /= timeline.point_counts[:, None]
+    figure, axis = plt.subplots(figsize=(6.8, 3.0), constrained_layout=True)
+    for state_index, state_name in enumerate(STATE_NAMES):
+        axis.plot(
+            timeline.iterations,
+            state_fractions[:, state_index],
+            marker="o",
+            markersize=3,
+            color=STATE_PALETTE[state_index] / 255.0,
+            label=state_name,
+        )
+    axis.set(
+        xlabel="Iteration",
+        ylabel="Stable-state fraction",
+        ylim=(0.0, 1.0),
+    )
+    axis.legend(ncol=3)
+    written.extend(
+        _save_figure_bundle(
+            figure,
+            timeline_directory,
+            "state_proportion",
+            ("iteration", "state", "count", "fraction"),
+            state_rows,
+            state_metadata,
+        )
+    )
+    plt.close(figure)
+
+    transition_rows, transition_metadata = _transition_source(timeline)
+    figure, axes = plt.subplots(
+        3, 3, figsize=(8.4, 7.8), constrained_layout=True
+    )
+    for index, (iteration, matrix) in enumerate(
+        zip(timeline.iterations, timeline.transition_fraction_matrices)
+    ):
+        axis = axes.flat[index]
+        axis.imshow(matrix, vmin=0.0, vmax=1.0, cmap="viridis")
+        axis.set_title(str(iteration))
+        axis.set_xticks(range(5), STATE_NAMES, rotation=45, ha="right")
+        axis.set_yticks(range(5), STATE_NAMES)
+        axis.set_xlabel("Current")
+        axis.set_ylabel("Previous")
+    summary_axis = axes.flat[7]
+    summary_axis.plot(
+        timeline.iterations,
+        [event["mean_stable_age_refreshes"] for event in timeline.events],
+        marker="o",
+        label="Mean stable age",
+    )
+    summary_axis.plot(
+        timeline.iterations,
+        [event["mean_stable_transition_count"] for event in timeline.events],
+        marker="o",
+        label="Mean transitions",
+    )
+    summary_axis.plot(
+        timeline.iterations,
+        [event["jitter_rate"] for event in timeline.events],
+        marker="o",
+        label="Jitter rate",
+    )
+    summary_axis.set(xlabel="Iteration", ylabel="Event statistic")
+    summary_axis.legend()
+    axes.flat[8].axis("off")
+    written.extend(
+        _save_figure_bundle(
+            figure,
+            timeline_directory,
+            "state_transition",
+            (
+                "iteration",
+                "record_type",
+                "previous_state",
+                "current_state",
+                "state",
+                "count",
+                "fraction",
+                "value",
+            ),
+            transition_rows,
+            transition_metadata,
+        )
+    )
+    plt.close(figure)
+
+    coverage_rows, coverage_metadata = _joint_coverage_source(timeline)
+    figure, axis = plt.subplots(figsize=(6.8, 3.0), constrained_layout=True)
+    axis.plot(
+        timeline.iterations,
+        [row[3] for row in coverage_rows],
+        marker="o",
+        color="#1F77B4",
+    )
+    axis.set(
+        xlabel="Iteration",
+        ylabel="Joint-valid fraction",
+        ylim=(0.0, 1.0),
+    )
+    written.extend(
+        _save_figure_bundle(
+            figure,
+            timeline_directory,
+            "joint_coverage",
+            (
+                "iteration",
+                "point_count",
+                "joint_valid_count",
+                "joint_valid_fraction",
+            ),
+            coverage_rows,
+            coverage_metadata,
+        )
+    )
+    plt.close(figure)
+    return tuple(written)
