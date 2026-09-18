@@ -792,5 +792,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Task 4 formal orchestration 完成：test-only `43eff82b92267d0ac86f7face5fd9d6854295c56` 在 AutoDL 精确观察到 formal `NotImplementedError`；最小实现 `2a6f28a35dbd6cceca4ba5e007b0f25d1c8d633e` 随后通过 geometry/metrics/visualization/timeline/orchestration/publication/真实 CUDA override 57/57、编译、clean/no-training gate。正式合同固定为 3000/7000 双轮、7000-only decision、13 项不可变输入和 108 项原子发布。
 - [x] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring 与 formal timeline/orchestration；Task 5 Step 1 全量/CUDA qualification 已通过。
 - [x] 新路径 500-step/refresh-100 temporal v2 shadow smoke 已完成：五轮 transition matrix/age/count/jitter 精确重建、checkpoint production round-trip、snapshot join、日志/输入/Git 安全门全部通过。首次审计唯一失败是外部脚本误把当前 Evidence schema 3 写死为旧值 2；按生产类常量复核后 reconciliation 0 failure，训练无需重跑。
-- [ ] 下一步执行 Step 3 D0 隔离审计；只有隔离门通过才请求新路径 v2 7k 唯一训练授权。
+- [x] Step 3 D0 隔离审计完成：focused 39/39、真实 run no-GT/仅 `shadow_diagnostics`/method flags 全关、compile/clean/no-training 全通过；历史 500-step 数值仅作 diagnostic，不设事后阈值。
+- [ ] 下一步请求新路径 v2 7k 唯一训练授权；获准后先做独立只读 preflight，再创建 private view 和启动训练。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。
