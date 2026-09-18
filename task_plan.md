@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0/G0 与 D0 shadow 工程 smoke 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-17，offline G1 evaluator Tasks 1–4 已完成；Task 5 的发布 primitives/CLI 边界在 AutoDL exact `60a80b7df183dc5600c259b9f7cc421a09edcf8a` 通过 corrected 27/27、help 与 fail-closed gate。当前继续 Task 5 原子发布和 evaluator orchestration TDD；500 exploratory evaluator smoke、正式 7k D0/G1、C1、tag 与 Supporting 尚未完成或授权。
+Phase 0、E0/G0、D0 shadow 工程 smoke 与 temporal diagnostics Tasks 1–4 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-18，formal 3000/7000 evaluator、schema-2 timeline 与 108-item 原子发布均已实现；Task 5 Step 1 在 clean AutoDL `research/core-routing@595fa71e1468ce5fc3a43079a47ceb994bbd6a66` 通过全仓 231/231、CUDA 12/12、编译与 runtime gate。当前进入新路径 500-step/refresh-100 temporal v2 shadow smoke；v2 正式 7k、formal G1、C1、tag 与 Supporting 尚未启动或授权。
 
 **2026-09-17 exploratory inventory clarification（APPROVED）：** 正式 `required_artifacts()` 继续冻结为 3000/7000 + timeline 的 108 项；显式 `--exploratory --iterations 500` 使用独立 55 项 inventory，仅含 iteration 500 的 field PLY、固定三视角 PNG/GT overlay、`iteration_000500` metrics 及 base JSON，不含 timeline，不伪造正式迭代，`g1_evaluable/g1_pass=null`。该选择只解决既有 500 smoke 与正式 inventory 的实现冲突，不改变正式 G1 门。
 
@@ -784,11 +784,12 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] 用户选择并确认方案 A：transition=`stable(t-1)->stable(t)`，在 refresh 内使用已 topology-migrated 的旧稳定状态精确统计；clone/split 继承 mapped parent lineage。
 - [x] 冻结 `stable_age_refreshes`、`stable_transition_count`、5x5 count/fraction matrix 与 jitter 的 no-GT/no-grad 合同；`.npz` inventory 不变，summary 写 events，aligned tensors 进入 versioned D0 runtime state。
 - [x] 用户书面确认规格；独立逐项 TDD 实施计划已写入 `docs/superpowers/plans/2026-09-17-d0-temporal-transition-diagnostics.md`，并通过规格覆盖、placeholder、接口和 108-artifact inventory 自检。
-- [ ] 按既定“当前任务内逐项 TDD”执行 Task 1：先新增纯 temporal transition tracker 的失败测试，再实现最小 GREEN；尚未修改方法源码。
+- [x] 按既定“当前任务内逐项 TDD”完成 Task 1：纯 temporal transition tracker 已经历预期 RED 与最小 GREEN。
 - [x] 用户批准 topology 方案 A：clone/split child 使用 `new_to_old=parent,is_new=True`；generic Evidence migration 仍按 `is_new` 清零，只有 temporal lineage migration 沿 parent 继承；不新增第二映射。
 - [x] Task 1 pure tracker 与 Task 2 Evidence/topology/checkpoint/Gaussian clone-split lineage 已完成逐项 RED→GREEN；AutoDL 最终相关回归在 clean `103029b0b6d5b6896519f5a0bc487e4c8b89afa9` 上 64/64 PASS，未启动训练。
 - [x] Task 3 schema-2 events/runtime/training bridge 完成；AutoDL focused 30/30、full discovery 224/224 PASS，feature-off legacy dispatch/checkpoint、15-field NPZ 与训练顺序保持不变，未启动训练。
 - [x] Task 4 loader 与 timeline bundle 子步完成：clean `17cec96450c8800241af23334917fbf81db3863e` 在 AutoDL 通过 timeline + visualization 19/19、`py_compile`、clean/no-training gate；15 个 timeline 路径保持在既有 108 项 formal inventory 内。
 - [x] Task 4 formal orchestration 完成：test-only `43eff82b92267d0ac86f7face5fd9d6854295c56` 在 AutoDL 精确观察到 formal `NotImplementedError`；最小实现 `2a6f28a35dbd6cceca4ba5e007b0f25d1c8d633e` 随后通过 geometry/metrics/visualization/timeline/orchestration/publication/真实 CUDA override 57/57、编译、clean/no-training gate。正式合同固定为 3000/7000 双轮、7000-only decision、13 项不可变输入和 108 项原子发布。
-- [ ] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring、formal timeline/orchestration；随后服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
+- [x] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring 与 formal timeline/orchestration；Task 5 Step 1 全量/CUDA qualification 已通过。
+- [ ] 下一步仅执行新路径 500-step/refresh-100 temporal v2 shadow smoke 预检、训练和深审计；通过后才请求新路径 v2 7k 唯一训练授权。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

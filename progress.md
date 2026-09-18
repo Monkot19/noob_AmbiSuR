@@ -373,6 +373,6 @@
 
 ## 2026-09-18 Temporal D0 Task 5 Qualification
 
-- [ ] Step 1：在 exact `2a6f28a35dbd6cceca4ba5e007b0f25d1c8d633e` 跑全仓 component discovery 与指定 CUDA gates；只读验证，不启动训练。
-- [ ] Step 2：使用新路径、r2/seed0/500 iterations/refresh 100 跑五刷新 schema-2 shadow smoke；GT 不进入命令，随后审计 event/timeline/checkpoint/isolation。
+- [x] Step 1：在 exact `595fa71e1468ce5fc3a43079a47ceb994bbd6a66` 完成全仓 component discovery 231/231、指定 CUDA gates 12/12、runtime/compile/clean/no-training gate；`D0_TASK5_QUALIFICATION=PASS`。
+- [ ] Step 2：使用新路径、r2/seed0/500 iterations/refresh 100 跑五刷新 schema-2 shadow smoke；GT 不进入命令，随后审计 event/timeline/checkpoint/isolation。下一动作先做只读 preflight，不创建 run/view、不启动训练。
 - [ ] Step 3–6：通过 isolation 后才请求 v2 7k 唯一训练授权，随后正式 G1 108 项发布并决定 C1 go/no-go。
