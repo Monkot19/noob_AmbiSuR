@@ -32,7 +32,7 @@
 - Consumes: row-aligned `snapshot: Mapping[str, np.ndarray]`, `components: Mapping[str, np.ndarray]`, and `distances: np.ndarray`.
 - Produces: `build_component_report(snapshot, components, distances, *, iteration, metadata) -> dict` and `risk_bin_rows(report) -> tuple[dict, ...]`.
 
-- [ ] **Step 1: Write the failing validation and schema tests**
+- [x] **Step 1: Write the failing validation and schema tests**
 
 ```python
 def test_component_report_is_diagnostic_only_and_uses_fixed_rows(self):
@@ -58,13 +58,13 @@ def test_component_report_rejects_shape_nonfinite_and_wrong_iteration(self):
         build_component_report(..., distances=np.array([np.nan] * 20), ...)
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run: `python -B -m unittest tests.test_g1_component_diagnostics -v`
 
 Expected: `ModuleNotFoundError: reliability.g1_component_diagnostics`.
 
-- [ ] **Step 3: Implement fixed summaries without a decision path**
+- [x] **Step 3: Implement fixed summaries without a decision path**
 
 Implement these exact constants and fields:
 
@@ -82,7 +82,7 @@ RAW_COMPONENTS = (
 
 For every field, report count, min/max/mean, frozen quantiles, Pearson correlation with distance, tie-safe Spearman correlation, and ten equal-count risk bins containing count, score bounds, mean distance, and strict `distance > 0.05` rate. Report `S` fractions at `>=0.50/.75/.90/.95/.98/.99` and exact maximum fraction. Never produce a PASS/FAIL or alternate G1 gate.
 
-- [ ] **Step 4: Run focused GREEN and static checks**
+- [x] **Step 4: Run focused GREEN and static checks**
 
 Run:
 
@@ -94,7 +94,7 @@ git diff --check
 
 Expected: all tests pass; no warnings or whitespace errors.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add reliability/g1_component_diagnostics.py tests/test_g1_component_diagnostics.py
@@ -115,7 +115,7 @@ git commit -m "feat: add G1 component diagnostic summaries"
 - Produces atomically: `<output-root>/<confirmation-id>/report.json`, `risk_bins.csv`, `inputs.json`, and `manifest.json`.
 - Produces exit code `0` only for a complete diagnostic publication; malformed input or mutation returns `2`. Metric values never change the exit code.
 
-- [ ] **Step 1: Write failing collection and publication tests**
+- [x] **Step 1: Write failing collection and publication tests**
 
 ```python
 def test_collect_components_exposes_s_terms_and_never_claims_stability(self):
@@ -142,13 +142,13 @@ def test_cli_removes_staging_on_failure_or_input_mutation(self):
     self.assertEqual(list(output_root.glob(f".{confirmation_id}.tmp-*")), [])
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run: `python -B -m unittest tests.test_g1_component_diagnostic_cli -v`
 
 Expected: import failure for the missing diagnostic CLI/collector boundary.
 
-- [ ] **Step 3: Implement the minimal orchestration**
+- [x] **Step 3: Implement the minimal orchestration**
 
 The command must:
 
@@ -161,7 +161,7 @@ The command must:
 7. build the pure report, write the four fixed artifacts into a staging directory, verify exact manifest size/SHA, re-fingerprint inputs, and rename staging atomically;
 8. free CUDA objects and exit without writing the run or source directory.
 
-- [ ] **Step 4: Run CLI GREEN and regression tests**
+- [x] **Step 4: Run CLI GREEN and regression tests**
 
 Run:
 
@@ -173,7 +173,7 @@ git diff --check
 
 Expected: all available local tests pass; dependency-dependent tests skip explicitly rather than fail.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add reliability/g1_component_diagnostics.py scripts/diagnostics/diagnose_d0_g1_components.py tests/test_g1_component_diagnostic_cli.py

@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0/G0、D0 shadow 工程 smoke 与 temporal diagnostics Tasks 1–4 已完成。历史正式 schema-2 G0 的 343 项内部数值失败及 `G0=FAIL` 原样保留；预先冻结的 behavioral schema-3 unseen E0 已 `g0_equivalent=true`。截至 2026-09-18，formal 3000/7000 evaluator、schema-2 timeline 与 108-item 原子发布均已实现；Task 5 Step 1 在 clean AutoDL `research/core-routing@595fa71e1468ce5fc3a43079a47ceb994bbd6a66` 通过全仓 231/231、CUDA 12/12、编译与 runtime gate。当前进入新路径 500-step/refresh-100 temporal v2 shadow smoke；v2 正式 7k、formal G1、C1、tag 与 Supporting 尚未启动或授权。
+Phase 0、E0/G0 与 D0 temporal-v2 工程链已完成。正式 Tool Room/r2/seed0/7000 D0-v2 资产在 clean `research/core-routing@0679bcf2cb0ed52565685b9cd4a07b7c2e5d836f` 通过 timeline、checkpoint、no-GT、输入哈希与训练安全审计；正式 108-item G1 已完成且可评价，但 7000 主门失败：`AUROC(N)=0.542911`，优于组件为 `A=0.550844`，增益 `-0.007933`，未达到冻结的 `>0.60` 与 `>=0.03`。因此 C1、阶段 tag、30k 与 Supporting 均保持未启动。当前只执行已批准的 7000-only component diagnosis，定位 `S` 饱和与双可靠性分量，不改变训练、G1 门或正式包。
 
 **2026-09-17 exploratory inventory clarification（APPROVED）：** 正式 `required_artifacts()` 继续冻结为 3000/7000 + timeline 的 108 项；显式 `--exploratory --iterations 500` 使用独立 55 项 inventory，仅含 iteration 500 的 field PLY、固定三视角 PNG/GT overlay、`iteration_000500` metrics 及 base JSON，不含 timeline，不伪造正式迭代，`g1_evaluable/g1_pass=null`。该选择只解决既有 500 smoke 与正式 inventory 的实现冲突，不改变正式 G1 门。
 
@@ -75,9 +75,9 @@ Phase 0、E0/G0、D0 shadow 工程 smoke 与 temporal diagnostics Tasks 1–4 �
 ### Phase 2：D0 影子证据
 - [x] 实现并验证 pure A/S/N、双可靠性、K/Delta、五状态候选与迟滞
 - [x] 实现并验证真实 `sg(alpha*T)` CUDA evidence accumulation 与持久 EvidenceAccumulator state
-- [ ] 接通 high-level renderer、训练 shadow refresh、checkpoint/topology state migration 和日志，但不改变训练
+- [x] 接通 high-level renderer、训练 shadow refresh、checkpoint/topology state migration 和日志，但不改变训练
 - [ ] 通过 G1
-- **Status:** in_progress_steps1_through_8_component_green_shadow_smoke_approval_pending
+- **Status:** formal_d0_v2_qualified_formal_g1_metric_fail_component_diagnosis_in_progress
 
 ### Phase 3：C1–C3 粗粒度执行
 - [ ] C1 需求门控

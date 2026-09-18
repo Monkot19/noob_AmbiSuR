@@ -377,4 +377,15 @@
 - [x] Step 2：新路径 `d0_temporal_v2_r2_seed0_500_20260918_v1` 五刷新 schema-2 shadow smoke 完成；exit 0、五轮 exact transition reconstruction、checkpoint production round-trip、200k finite-center join、input/log/Git safety 全通过。首次 audit 的旧 Evidence schema=2 断言已按实际 `1/2/3/1` 版本组合复核为 audit-only error，未重跑训练。
 - [x] Step 3：focused isolation 39/39 与真实 run no-GT/only-shadow/no-method-feature/compile/clean/no-training 门全部通过；历史 500-step 对照仅作 diagnostic。
 - [x] 用户授权 Step 4 新路径 v2 7k 唯一 GT-free shadow 训练；范围锁定 Tool Room/r2/seed0/7000/refresh-1000/checkpoints-3000,7000。
-- [ ] Step 4–6：先做只读 preflight，PASS 后启动唯一训练；随后 formal D0、108-item formal G1，并决定 C1 go/no-go。
+- [x] Step 4：新路径 temporal-v2 7k 唯一训练完成；exit 0、七刷新、3000/7000 checkpoint、no-GT 与输入/日志安全通过。
+- [x] Step 5：formal D0 timeline/checkpoint/optimizer-step reconciliation 通过；正式 D0 training asset qualified。
+- [x] Step 6：108-item formal G1 完成并准确给出 `FAIL_METRIC_GATE`；7000 `AUROC(N)=0.542911`、best `A=0.550844`、gain `-0.007933`。C1 go/no-go=`NO-GO`，不放宽冻结门。
+
+## 2026-09-18 D0/G1 Component Diagnosis
+
+- [x] 用户批准在不改训练、正式 G1 定义或正式包的前提下，先拆解 `S_count/S_angle`、prior/geometry reliability 与 `K` 分量。
+- [x] 创建隔离分支 `codex/d0-g1-component-diagnostic` 与实施计划 `docs/superpowers/plans/2026-09-18-d0-g1-component-diagnostic.md`。
+- [x] Task 1 pure report RED→GREEN：固定 iteration 7000、19 个字段、quantile/Pearson/Spearman/10-bin risk，明确 `diagnostic_only=true`、`g1_decision=null`。
+- [x] Task 2 lightweight CLI RED→GREEN：一次 full-mesh query + 一次 406-camera no-grad collector，4-file atomic/non-overwriting publication；不重跑训练、不生成 renders/archive。
+- [x] 自审发现 `M`/`M_obs` 真实边界错误并补无 Torch 回归后修复；focused 11 tests PASS（1 Torch integration explicit skip）、`py_compile`、help 与 `git diff --check` PASS。
+- [ ] Task 3：合并/推送 exact commit 后，先在 AutoDL 跑 Torch/CUDA focused qualification，再运行一次真实 7000 component diagnostic；根据冻结报告只选择一个独立的 `S` 修订规格，geometry reliability 作为单独 blocker。
