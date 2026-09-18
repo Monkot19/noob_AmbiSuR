@@ -606,6 +606,147 @@ def produce_exploratory_500(
     return report
 
 
+def produce_formal_3000_7000(
+    staging,
+    *,
+    run_dir,
+    source_root,
+    gt_mesh,
+    provenance=None,
+    input_fingerprints=None,
+):
+    """Produce the frozen 108-file formal 3000/7000 evaluation bundle."""
+    import torch
+
+    from gaussian_renderer import render
+    from reliability.g1_timeline import (
+        load_d0_timeline,
+        write_timeline_artifacts,
+    )
+    from reliability.g1_visualization import (
+        render_override_color,
+        select_static_cameras,
+        write_colored_ply,
+        write_gt_overlay,
+        write_metric_figures,
+    )
+    from reliability.offline_g1 import load_g1_iteration, load_valid_mesh
+
+    staging = Path(staging)
+    mesh = load_valid_mesh(gt_mesh)
+    iteration_reports = {}
+    iteration_inputs = {}
+    for iteration in FORMAL_ITERATIONS:
+        joined = load_g1_iteration(run_dir, iteration)
+        evaluation = evaluate_iteration(joined, mesh)
+        colors_by_field = _field_colors(evaluation)
+        root = staging / f"iteration_{iteration:06d}"
+        for field, colors in colors_by_field.items():
+            write_colored_ply(
+                root / "fields" / f"{field}.ply",
+                evaluation["centers"],
+                colors,
+            )
+
+        gaussians, cameras, pipeline, background = _load_render_runtime(
+            run_dir, source_root, iteration
+        )
+        if gaussians.get_xyz.shape[0] != joined.original_point_count:
+            raise ValueError("render checkpoint row count mismatch")
+        selected = select_static_cameras(cameras)
+        view_names = ("q25", "q50", "q75")
+        finite_rows = torch.as_tensor(
+            joined.finite_row_indices, device="cuda", dtype=torch.long
+        )
+        for field, finite_colors in colors_by_field.items():
+            full_colors = torch.full(
+                (joined.original_point_count, 3),
+                127.0 / 255.0,
+                device="cuda",
+                dtype=gaussians.get_xyz.dtype,
+            )
+            full_colors[finite_rows] = torch.as_tensor(
+                finite_colors / 255.0,
+                device="cuda",
+                dtype=gaussians.get_xyz.dtype,
+            )
+            for view_name, camera in zip(view_names, selected):
+                image = render_override_color(
+                    camera, gaussians, pipeline, background, full_colors
+                )
+                _save_rgb(root / "views" / f"{field}_{view_name}.png", image)
+
+        for view_name, camera in zip(view_names, selected):
+            with torch.no_grad():
+                gaussian_rgb = render(
+                    camera,
+                    gaussians,
+                    pipeline,
+                    background,
+                    return_plane=False,
+                )["render"]
+            write_gt_overlay(
+                camera,
+                mesh,
+                gaussian_rgb,
+                root / "overlays" / f"gt_{view_name}.png",
+            )
+
+        current_report = dict(evaluation["report"])
+        current_report.update(
+            evaluated_center_count=evaluation["evaluated_center_count"],
+            rejected_center_count=evaluation["rejected_center_count"],
+        )
+        iteration_reports[str(iteration)] = current_report
+        iteration_inputs[str(iteration)] = {
+            "checkpoint_sha256": joined.checkpoint_sha256,
+            "snapshot_sha256": joined.snapshot_sha256,
+            "finite_row_indices": joined.finite_row_indices,
+            "rejected_center_indices": joined.rejected_center_indices,
+        }
+        del gaussians, cameras, pipeline, background
+        torch.cuda.empty_cache()
+
+    decision = iteration_reports["7000"]
+    write_metric_figures(
+        decision,
+        staging / "metrics",
+        prefix="iteration_007000",
+    )
+    timeline = load_d0_timeline(run_dir)
+    write_timeline_artifacts(timeline, staging)
+
+    report = {
+        "schema_version": 1,
+        "exploratory": False,
+        "evaluated_iterations": list(FORMAL_ITERATIONS),
+        "decision_iteration": 7000,
+        "g1_evaluable": decision["g1_evaluable"],
+        "g1_pass": decision["g1_pass"],
+        "iterations": iteration_reports,
+        "mesh": {
+            "source_vertex_count": mesh.source_vertex_count,
+            "source_triangle_count": mesh.source_triangle_count,
+            "valid_vertex_count": int(mesh.vertices.shape[0]),
+            "valid_triangle_count": int(mesh.triangles.shape[0]),
+            "rejected_triangle_count": mesh.rejected_triangle_count,
+        },
+    }
+    _write_json(staging / "report.json", report)
+    _write_json(
+        staging / "inputs.json",
+        {
+            "schema_version": 1,
+            "exploratory": False,
+            "iterations": list(FORMAL_ITERATIONS),
+            "provenance": dict(provenance or {}),
+            "input_fingerprints": dict(input_fingerprints or {}),
+            "iteration_inputs": iteration_inputs,
+        },
+    )
+    return report
+
+
 def run_evaluator(args):
     from reliability.g1_visualization import required_artifacts
 
@@ -634,29 +775,50 @@ def run_evaluator(args):
         expected_dataset_sha=args.expected_dataset_sha,
         expected_gt_sha=args.expected_gt_sha,
     )
-    if not args.exploratory:
-        raise NotImplementedError("formal 3000/7000 orchestration is not implemented")
-
-    checkpoint = run_dir / "chkpnt500.pth"
-    snapshot = run_dir / "d0_evidence" / "iteration_000500.npz"
-    immutable = {
-        "checkpoint_500": checkpoint,
-        "snapshot_500": snapshot,
-        "resolved_config": run_dir / "resolved_config.json",
-        "source_root": source_root,
-        "gt_mesh": gt_mesh,
-    }
+    evidence = run_dir / "d0_evidence"
+    if args.exploratory:
+        immutable = {
+            "checkpoint_500": run_dir / "chkpnt500.pth",
+            "snapshot_500": evidence / "iteration_000500.npz",
+            "resolved_config": run_dir / "resolved_config.json",
+            "source_root": source_root,
+            "gt_mesh": gt_mesh,
+        }
+    else:
+        immutable = {
+            "checkpoint_3000": run_dir / "chkpnt3000.pth",
+            "checkpoint_7000": run_dir / "chkpnt7000.pth",
+            "events": evidence / "events.jsonl",
+            "resolved_config": run_dir / "resolved_config.json",
+            "source_root": source_root,
+            "gt_mesh": gt_mesh,
+        }
+        immutable.update(
+            {
+                f"snapshot_{iteration}": (
+                    evidence / f"iteration_{iteration:06d}.npz"
+                )
+                for iteration in TIMELINE_ITERATIONS
+            }
+        )
     provenance = {
         "commit": commit,
         "dataset_sha256": dataset_sha,
         "gt_mesh_sha256": gt_sha,
     }
     input_fingerprints = fingerprint_inputs(immutable)
-    required = required_artifacts(iterations=iterations, exploratory=True)
+    required = required_artifacts(
+        iterations=iterations, exploratory=args.exploratory
+    )
     report_box = {}
 
     def producer(staging):
-        report_box["report"] = produce_exploratory_500(
+        produce = (
+            produce_exploratory_500
+            if args.exploratory
+            else produce_formal_3000_7000
+        )
+        report_box["report"] = produce(
             staging,
             run_dir=run_dir,
             source_root=source_root,
@@ -672,7 +834,9 @@ def run_evaluator(args):
         producer,
         required=required,
     )
-    return publication_exit_code(report_box["report"], exploratory=True), publication
+    return publication_exit_code(
+        report_box["report"], exploratory=args.exploratory
+    ), publication
 
 
 def build_parser():
