@@ -789,6 +789,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Task 1 pure tracker 与 Task 2 Evidence/topology/checkpoint/Gaussian clone-split lineage 已完成逐项 RED→GREEN；AutoDL 最终相关回归在 clean `103029b0b6d5b6896519f5a0bc487e4c8b89afa9` 上 64/64 PASS，未启动训练。
 - [x] Task 3 schema-2 events/runtime/training bridge 完成；AutoDL focused 30/30、full discovery 224/224 PASS，feature-off legacy dispatch/checkpoint、15-field NPZ 与训练顺序保持不变，未启动训练。
 - [x] Task 4 loader 与 timeline bundle 子步完成：clean `17cec96450c8800241af23334917fbf81db3863e` 在 AutoDL 通过 timeline + visualization 19/19、`py_compile`、clean/no-training gate；15 个 timeline 路径保持在既有 108 项 formal inventory 内。
-- [ ] Task 4 formal orchestration：先提交只含测试/记录的 RED，锁定 3000/7000 双轮评价、仅 7000 作决策、13 项不可变输入指纹、108 项原子发布，以及 7000 失败时不得留下目录/archive/sidecar/staging；观察精确 RED 后才实现生产入口。
+- [x] Task 4 formal orchestration 完成：test-only `43eff82b92267d0ac86f7face5fd9d6854295c56` 在 AutoDL 精确观察到 formal `NotImplementedError`；最小实现 `2a6f28a35dbd6cceca4ba5e007b0f25d1c8d633e` 随后通过 geometry/metrics/visualization/timeline/orchestration/publication/真实 CUDA override 57/57、编译、clean/no-training gate。正式合同固定为 3000/7000 双轮、7000-only decision、13 项不可变输入和 108 项原子发布。
 - [ ] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring、formal timeline/orchestration；随后服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

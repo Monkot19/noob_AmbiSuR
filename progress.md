@@ -369,4 +369,10 @@
 - [x] loader 实现 `2fa3980c011a3d42622314f992b02a2822a6aff2` 已通过 AutoDL 11/11 focused GREEN、compile/clean/no-training gate。
 - [x] bundle test-only `dd89dc4c7681c90c278dfef17089448d18f15110` 已在 AutoDL 精确观察到缺少 `write_timeline_artifacts` 的预期 RED；compile/clean/no-training gate 通过。
 - [x] writer `17cec96450c8800241af23334917fbf81db3863e` 已在 AutoDL 通过 timeline + visualization 19/19、`py_compile`、clean/no-training gate；三组 15 项 timeline bundle 与 event source data 合同关闭。
-- [ ] formal orchestration test-only RED 已本地准备：覆盖 3000/7000 双轮、7000-only decision、13 项输入指纹、108 项原子发布和失败清理；提交/推送后先在 AutoDL 观察现有 fail-closed formal branch 的精确 RED，再写最小生产实现。
+- [x] formal orchestration RED→GREEN 完成：`43eff82b92267d0ac86f7face5fd9d6854295c56` 精确 RED；`2a6f28a35dbd6cceca4ba5e007b0f25d1c8d633e` 在 AutoDL 通过完整 Task-4 57/57、编译、clean/no-training gate。Task 4 关闭。
+
+## 2026-09-18 Temporal D0 Task 5 Qualification
+
+- [ ] Step 1：在 exact `2a6f28a35dbd6cceca4ba5e007b0f25d1c8d633e` 跑全仓 component discovery 与指定 CUDA gates；只读验证，不启动训练。
+- [ ] Step 2：使用新路径、r2/seed0/500 iterations/refresh 100 跑五刷新 schema-2 shadow smoke；GT 不进入命令，随后审计 event/timeline/checkpoint/isolation。
+- [ ] Step 3–6：通过 isolation 后才请求 v2 7k 唯一训练授权，随后正式 G1 108 项发布并决定 C1 go/no-go。
