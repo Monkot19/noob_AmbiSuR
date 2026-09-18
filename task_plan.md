@@ -788,6 +788,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] 用户批准 topology 方案 A：clone/split child 使用 `new_to_old=parent,is_new=True`；generic Evidence migration 仍按 `is_new` 清零，只有 temporal lineage migration 沿 parent 继承；不新增第二映射。
 - [x] Task 1 pure tracker 与 Task 2 Evidence/topology/checkpoint/Gaussian clone-split lineage 已完成逐项 RED→GREEN；AutoDL 最终相关回归在 clean `103029b0b6d5b6896519f5a0bc487e4c8b89afa9` 上 64/64 PASS，未启动训练。
 - [x] Task 3 schema-2 events/runtime/training bridge 完成；AutoDL focused 30/30、full discovery 224/224 PASS，feature-off legacy dispatch/checkpoint、15-field NPZ 与训练顺序保持不变，未启动训练。
-- [ ] 当前进入 Task 4：先以失败测试冻结七刷新 timeline loader；禁止相邻 snapshot 行对齐，生产 timeline/evaluator 尚未实现。
+- [ ] Task 4 loader 子步进入 GREEN 验证：test-only `6fac88dd3b62241d712a84d3f68d80534f8b18d5` 已在 AutoDL 精确观察到缺少 `reliability.g1_timeline` 的预期 RED；本地最小 loader 候选只逐轮读取七个 schema-2 event/snapshot，禁止相邻 snapshot 行对齐，等待服务器 focused GREEN 后再进入三个 timeline bundle。
 - [ ] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring、formal timeline/orchestration；随后服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

@@ -361,3 +361,9 @@
 - [x] training bridge RED 在 clean `cb4e439` 上因缺少 `train.persist_d0_snapshot` 精确失败；最小接线 `2e14e9181746e5176691c73b7d6f3a117f72c5ab` 保持原 optimizer-step 后、checkpoint 前的位置。
 - [x] AutoDL focused 30/30 与全仓 discovery 224/224 PASS；feature-off legacy path/tuple checkpoint、CUDA Evidence/renderer、既有 G1 工程链均无回归，工作树 clean，未启动训练。Task 3 关闭。
 - [ ] 下一步：Task 4 strict seven-refresh timeline loader RED；正式 evaluator、v2 D0 和 C1 均未启动。
+
+## 2026-09-18 Temporal D0 Task 4 Timeline Loader
+
+- [x] test-only `6fac88dd3b62241d712a84d3f68d80534f8b18d5` 已在 AutoDL 观察到精确 RED：`ModuleNotFoundError: reliability.g1_timeline`；server clean、无训练。
+- [x] 本地最小 `reliability/g1_timeline.py` 候选已完成 `py_compile` 与 `git diff --check`；本机默认 Python 缺 NumPy/Torch，未将本地 dependency import failure 计作 GREEN。
+- [ ] 下一门：提交并推送 loader，实现提交须在 AutoDL 通过 `tests.test_g1_timeline` focused GREEN；通过后才开始三个冻结 timeline artifact bundle 的下一轮 RED。
