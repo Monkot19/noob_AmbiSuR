@@ -409,7 +409,7 @@ class GaussianModel:
 
         return optimizable_tensors
 
-    def densification_postfix(self, new_xyz, new_knn_f, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, return_topology_change=False):
+    def densification_postfix(self, new_xyz, new_knn_f, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, return_topology_change=False, parent_indices=None):
         old_count = self.get_xyz.shape[0]
         d = {"xyz": new_xyz,
         "knn_f": new_knn_f,
@@ -435,7 +435,10 @@ class GaussianModel:
         self.max_weight = torch.zeros((self.get_xyz.shape[0]), device="cuda")
         if return_topology_change:
             return append_topology_change(
-                old_count, new_xyz.shape[0], device=self.get_xyz.device
+                old_count,
+                new_xyz.shape[0],
+                parent_indices=parent_indices,
+                device=self.get_xyz.device,
             )
         return None
 
@@ -493,6 +496,11 @@ class GaussianModel:
         new_opacity = self._opacity[selected_pts_mask].repeat(N,1)
         new_knn_f = self._knn_f[selected_pts_mask].repeat(N,1)
 
+        parent_indices = None
+        if return_topology_change:
+            parent_indices = torch.nonzero(
+                selected_pts_mask, as_tuple=False
+            ).squeeze(1).repeat(N)
         append_change = self.densification_postfix(
             new_xyz,
             new_knn_f,
@@ -502,6 +510,7 @@ class GaussianModel:
             new_scaling,
             new_rotation,
             return_topology_change=return_topology_change,
+            parent_indices=parent_indices,
         )
 
         prune_filter = torch.cat((selected_pts_mask, torch.zeros(N * selected_pts_mask.sum(), device="cuda", dtype=bool)))
@@ -553,6 +562,11 @@ class GaussianModel:
             new_rotation = self._rotation[selected_pts_mask]
             new_knn_f = self._knn_f[selected_pts_mask]
 
+            parent_indices = None
+            if return_topology_change:
+                parent_indices = torch.nonzero(
+                    selected_pts_mask, as_tuple=False
+                ).squeeze(1)
             return self.densification_postfix(
                 new_xyz,
                 new_knn_f,
@@ -562,6 +576,7 @@ class GaussianModel:
                 new_scaling,
                 new_rotation,
                 return_topology_change=return_topology_change,
+                parent_indices=parent_indices,
             )
         if return_topology_change:
             return identity_topology_change(
