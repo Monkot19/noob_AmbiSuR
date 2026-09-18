@@ -788,6 +788,7 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] 用户批准 topology 方案 A：clone/split child 使用 `new_to_old=parent,is_new=True`；generic Evidence migration 仍按 `is_new` 清零，只有 temporal lineage migration 沿 parent 继承；不新增第二映射。
 - [x] Task 1 pure tracker 与 Task 2 Evidence/topology/checkpoint/Gaussian clone-split lineage 已完成逐项 RED→GREEN；AutoDL 最终相关回归在 clean `103029b0b6d5b6896519f5a0bc487e4c8b89afa9` 上 64/64 PASS，未启动训练。
 - [x] Task 3 schema-2 events/runtime/training bridge 完成；AutoDL focused 30/30、full discovery 224/224 PASS，feature-off legacy dispatch/checkpoint、15-field NPZ 与训练顺序保持不变，未启动训练。
-- [ ] Task 4 loader 子步已在 clean `2fa3980c011a3d42622314f992b02a2822a6aff2` 上通过 AutoDL 11/11 GREEN；bundle test-only `dd89dc4c7681c90c278dfef17089448d18f15110` 已精确观察到缺少 writer 的 RED，本地最小 15-artifact writer 候选等待服务器 GREEN，正式 evaluator 编排仍未实现。
+- [x] Task 4 loader 与 timeline bundle 子步完成：clean `17cec96450c8800241af23334917fbf81db3863e` 在 AutoDL 通过 timeline + visualization 19/19、`py_compile`、clean/no-training gate；15 个 timeline 路径保持在既有 108 项 formal inventory 内。
+- [ ] Task 4 formal orchestration：先提交只含测试/记录的 RED，锁定 3000/7000 双轮评价、仅 7000 作决策、13 项不可变输入指纹、108 项原子发布，以及 7000 失败时不得留下目录/archive/sidecar/staging；观察精确 RED 后才实现生产入口。
 - [ ] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring、formal timeline/orchestration；随后服务器 short multi-refresh smoke，最后新路径 v2 7k rerun。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

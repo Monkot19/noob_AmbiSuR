@@ -368,5 +368,5 @@
 - [x] 本地最小 `reliability/g1_timeline.py` 候选已完成 `py_compile` 与 `git diff --check`；本机默认 Python 缺 NumPy/Torch，未将本地 dependency import failure 计作 GREEN。
 - [x] loader 实现 `2fa3980c011a3d42622314f992b02a2822a6aff2` 已通过 AutoDL 11/11 focused GREEN、compile/clean/no-training gate。
 - [x] bundle test-only `dd89dc4c7681c90c278dfef17089448d18f15110` 已在 AutoDL 精确观察到缺少 `write_timeline_artifacts` 的预期 RED；compile/clean/no-training gate 通过。
-- [x] 本地最小 writer 候选仅生成三组既有 bundle，并保留 event source data；`py_compile` 与 `git diff --check` 通过。
-- [ ] 下一门：提交/推送 writer 后在 AutoDL 运行 timeline + visualization focused GREEN；通过前不开始 formal orchestration RED。
+- [x] writer `17cec96450c8800241af23334917fbf81db3863e` 已在 AutoDL 通过 timeline + visualization 19/19、`py_compile`、clean/no-training gate；三组 15 项 timeline bundle 与 event source data 合同关闭。
+- [ ] formal orchestration test-only RED 已本地准备：覆盖 3000/7000 双轮、7000-only decision、13 项输入指纹、108 项原子发布和失败清理；提交/推送后先在 AutoDL 观察现有 fail-closed formal branch 的精确 RED，再写最小生产实现。
