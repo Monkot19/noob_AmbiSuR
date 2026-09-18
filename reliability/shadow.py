@@ -1,12 +1,15 @@
+import copy
+
 import torch
 
 from reliability.evidence import EvidenceAccumulator
+from reliability.transition_diagnostics import validate_transition_summary
 
 
 class D0ShadowRuntime:
     """Schedule detached D0 evidence refreshes without training writes."""
 
-    STATE_VERSION = 1
+    STATE_VERSION = 2
 
     def __init__(
         self,
@@ -25,6 +28,7 @@ class D0ShadowRuntime:
         self.refresh_interval = int(refresh_interval)
         self.last_refresh_iteration = None
         self.refresh_count = 0
+        self.latest_transition_diagnostics = None
         self.accumulator = EvidenceAccumulator(
             point_count, cfg=cfg, device=device
         )
@@ -37,6 +41,13 @@ class D0ShadowRuntime:
         if iteration == self.last_refresh_iteration:
             return None
         snapshot = self.accumulator.refresh(build_inputs())
+        self.latest_transition_diagnostics = copy.deepcopy(
+            self.accumulator.latest_transition_diagnostics
+        )
+        validate_transition_summary(
+            self.latest_transition_diagnostics,
+            self.accumulator.point_count,
+        )
         self.last_refresh_iteration = iteration
         self.refresh_count += 1
         return snapshot
@@ -51,6 +62,9 @@ class D0ShadowRuntime:
             "refresh_interval": self.refresh_interval,
             "last_refresh_iteration": self.last_refresh_iteration,
             "refresh_count": self.refresh_count,
+            "latest_transition_diagnostics": copy.deepcopy(
+                self.latest_transition_diagnostics
+            ),
             "evidence": self.accumulator.state_dict(),
         }
 
@@ -68,9 +82,16 @@ class D0ShadowRuntime:
         evidence = state.get("evidence")
         if not isinstance(evidence, dict):
             raise ValueError("missing D0 evidence state")
+        latest = state.get("latest_transition_diagnostics")
+        if count == 0:
+            if latest is not None:
+                raise ValueError("unrefreshed D0 runtime cannot have a summary")
+        else:
+            validate_transition_summary(latest, self.accumulator.point_count)
         self.accumulator.load_state_dict(evidence)
         self.last_refresh_iteration = last
         self.refresh_count = count
+        self.latest_transition_diagnostics = copy.deepcopy(latest)
 
 
 def create_shadow_runtime(

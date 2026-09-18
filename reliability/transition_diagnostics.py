@@ -1,5 +1,7 @@
 """Detached temporal diagnostics for topology-aligned D0 stable states."""
 
+import math
+
 import torch
 
 from reliability.topology import migrate_lineage_tensor
@@ -12,6 +14,103 @@ STATE_NAMES = (
     "Geometry-led",
     "Abstain",
 )
+
+TRANSITION_SUMMARY_FIELDS = {
+    "transition_count_matrix",
+    "transition_fraction_matrix",
+    "jitter_count",
+    "jitter_rate",
+    "mean_stable_age_refreshes",
+    "mean_stable_age_refreshes_by_state",
+    "mean_stable_transition_count",
+    "mean_stable_transition_count_by_state",
+}
+
+
+def _finite_nonnegative(value, name, *, allow_none=False):
+    if value is None and allow_none:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a finite nonnegative number")
+    if not math.isfinite(float(value)) or float(value) < 0.0:
+        raise ValueError(f"{name} must be a finite nonnegative number")
+
+
+def validate_transition_summary(summary, point_count):
+    """Validate one JSON-safe temporal summary before persistence."""
+    if not isinstance(summary, dict) or set(summary) != TRANSITION_SUMMARY_FIELDS:
+        raise ValueError("invalid temporal transition summary fields")
+    if not isinstance(point_count, int) or point_count <= 0:
+        raise ValueError("point_count must be positive")
+
+    counts = summary["transition_count_matrix"]
+    fractions = summary["transition_fraction_matrix"]
+    if (
+        not isinstance(counts, list)
+        or len(counts) != len(STATE_NAMES)
+        or any(not isinstance(row, list) or len(row) != len(STATE_NAMES) for row in counts)
+    ):
+        raise ValueError("transition_count_matrix must have shape [5, 5]")
+    if (
+        not isinstance(fractions, list)
+        or len(fractions) != len(STATE_NAMES)
+        or any(not isinstance(row, list) or len(row) != len(STATE_NAMES) for row in fractions)
+    ):
+        raise ValueError("transition_fraction_matrix must have shape [5, 5]")
+
+    count_total = 0
+    fraction_total = 0.0
+    for row_index, (count_row, fraction_row) in enumerate(
+        zip(counts, fractions)
+    ):
+        for column_index, (count, fraction) in enumerate(
+            zip(count_row, fraction_row)
+        ):
+            if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                raise ValueError("transition counts must be nonnegative integers")
+            _finite_nonnegative(fraction, "transition fraction")
+            expected = count / float(point_count)
+            if not math.isclose(float(fraction), expected, rel_tol=0.0, abs_tol=1e-12):
+                raise ValueError(
+                    "transition fraction does not match transition count"
+                )
+            count_total += count
+            fraction_total += float(fraction)
+    if count_total != point_count:
+        raise ValueError("transition count total must equal point_count")
+    if not math.isclose(fraction_total, 1.0, rel_tol=0.0, abs_tol=1e-12):
+        raise ValueError("transition fractions must sum to one")
+
+    jitter_count = summary["jitter_count"]
+    if (
+        isinstance(jitter_count, bool)
+        or not isinstance(jitter_count, int)
+        or not 0 <= jitter_count <= point_count
+    ):
+        raise ValueError("jitter_count must be within the point population")
+    _finite_nonnegative(summary["jitter_rate"], "jitter_rate")
+    if not math.isclose(
+        float(summary["jitter_rate"]),
+        jitter_count / float(point_count),
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError("jitter_rate does not match jitter_count")
+
+    for name in (
+        "mean_stable_age_refreshes",
+        "mean_stable_transition_count",
+    ):
+        _finite_nonnegative(summary[name], name)
+    for name in (
+        "mean_stable_age_refreshes_by_state",
+        "mean_stable_transition_count_by_state",
+    ):
+        values = summary[name]
+        if not isinstance(values, dict) or set(values) != set(STATE_NAMES):
+            raise ValueError(f"{name} must use the five frozen state names")
+        for state, value in values.items():
+            _finite_nonnegative(value, f"{name}.{state}", allow_none=True)
 
 
 class TemporalTransitionDiagnostics:
