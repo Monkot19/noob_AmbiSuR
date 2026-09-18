@@ -69,6 +69,21 @@ class D0ShadowRuntimeTests(unittest.TestCase):
         self.assertEqual(grad_modes, [False, False])
         self.assertEqual(runtime.last_refresh_iteration, 2000)
         self.assertEqual(runtime.refresh_count, 2)
+        self.assertEqual(
+            runtime.latest_transition_diagnostics,
+            runtime.accumulator.latest_transition_diagnostics,
+        )
+        self.assertEqual(
+            sum(
+                map(
+                    sum,
+                    runtime.latest_transition_diagnostics[
+                        "transition_count_matrix"
+                    ],
+                )
+            ),
+            2,
+        )
 
     def test_refresh_does_not_write_parameter_grad_optimizer_or_proxy(self):
         runtime = D0ShadowRuntime(
@@ -119,6 +134,10 @@ class D0ShadowRuntimeTests(unittest.TestCase):
 
         self.assertEqual(restored.last_refresh_iteration, 1000)
         self.assertEqual(restored.refresh_count, 1)
+        self.assertEqual(
+            restored.latest_transition_diagnostics,
+            runtime.latest_transition_diagnostics,
+        )
         torch.testing.assert_close(
             restored.accumulator.k_ema.value,
             runtime.accumulator.k_ema.value,

@@ -347,3 +347,10 @@
 - [ ] 下一动作：Task 1 仅新增 `tests/test_transition_diagnostics.py` 观察预期 RED；随后才写 `reliability/transition_diagnostics.py` 最小实现。
 - [x] 用户批准 topology identity/reset 方案 A；设计稿、实现规格和计划已同步，下一步仍从 Task 1 RED 开始。
 - [ ] 尚未修改方法源码、未启动训练、未创建 tag；C1 继续等待 v2 D0 isolation 与正式 G1。
+
+## 2026-09-18 Temporal D0 Tasks 1–2 Verification
+
+- [x] Task 1 tracker 与 Task 2 Evidence/topology integration 已完成；Gaussian production lineage RED 在 clean `9cc715d` 上 2/2 精确失败，原因均为 clone/split 未传 `parent_indices`。
+- [x] 最小实现 `103029b0b6d5b6896519f5a0bc487e4c8b89afa9` 仅在 `return_topology_change=True` 时提取 clone parent indices 与 split `selected_indices.repeat(N)`，未改变 feature-off 路径或 RNG 调用顺序。
+- [x] AutoDL Green-B 29/29 PASS；最终 reliability/arbitration/transition/topology/Gaussian/Evidence/shadow CUDA 回归 64/64 PASS，工作树 clean，`training_started=NO`。Task 2 关闭。
+- [ ] 下一步：Task 3 schema-2 diagnostics 测试优先；尚未修改 writer/runtime/train，尚未启动 v2 D0 或 C1。
