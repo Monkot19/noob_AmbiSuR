@@ -354,3 +354,10 @@
 - [x] 最小实现 `103029b0b6d5b6896519f5a0bc487e4c8b89afa9` 仅在 `return_topology_change=True` 时提取 clone parent indices 与 split `selected_indices.repeat(N)`，未改变 feature-off 路径或 RNG 调用顺序。
 - [x] AutoDL Green-B 29/29 PASS；最终 reliability/arbitration/transition/topology/Gaussian/Evidence/shadow CUDA 回归 64/64 PASS，工作树 clean，`training_started=NO`。Task 2 关闭。
 - [ ] 下一步：Task 3 schema-2 diagnostics 测试优先；尚未修改 writer/runtime/train，尚未启动 v2 D0 或 C1。
+
+## 2026-09-18 Temporal D0 Task 3 Verification
+
+- [x] schema-2 writer/runtime RED 在 clean `9e13637` 上精确暴露 4 个缺口；最小 writer/runtime GREEN `c16f683` 后 focused 14/14 PASS。
+- [x] training bridge RED 在 clean `cb4e439` 上因缺少 `train.persist_d0_snapshot` 精确失败；最小接线 `2e14e9181746e5176691c73b7d6f3a117f72c5ab` 保持原 optimizer-step 后、checkpoint 前的位置。
+- [x] AutoDL focused 30/30 与全仓 discovery 224/224 PASS；feature-off legacy path/tuple checkpoint、CUDA Evidence/renderer、既有 G1 工程链均无回归，工作树 clean，未启动训练。Task 3 关闭。
+- [ ] 下一步：Task 4 strict seven-refresh timeline loader RED；正式 evaluator、v2 D0 和 C1 均未启动。
