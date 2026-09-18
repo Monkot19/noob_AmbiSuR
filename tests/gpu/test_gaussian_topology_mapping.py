@@ -74,6 +74,7 @@ class GaussianTopologyMappingTests(unittest.TestCase):
             return_topology_change=True,
         )
 
+        self.assertIsNotNone(captured["parent_indices"])
         self.assertEqual(captured["parent_indices"].tolist(), [0, 2])
         self.assertEqual(change.new_to_old.tolist(), [0, 1, 2, 0, 2])
         self.assertEqual(
@@ -104,6 +105,7 @@ class GaussianTopologyMappingTests(unittest.TestCase):
             return_topology_change=True,
         )
 
+        self.assertIsNotNone(captured["parent_indices"])
         self.assertEqual(captured["parent_indices"].tolist(), [0, 2, 0, 2])
         self.assertEqual(
             captured["prune_filter"].tolist(),
