@@ -56,6 +56,19 @@ from reliability.diagnostics import write_snapshot
 from reliability.shadow import create_shadow_runtime
 
 
+def persist_d0_snapshot(output_directory, iteration, snapshot, shadow_runtime):
+    if shadow_runtime is None:
+        raise ValueError("D0 snapshot persistence requires a shadow runtime")
+    return write_snapshot(
+        output_directory,
+        iteration,
+        snapshot,
+        transition_diagnostics=(
+            shadow_runtime.latest_transition_diagnostics
+        ),
+    )
+
+
 def setup_seed(seed):
      torch.manual_seed(seed)
      torch.cuda.manual_seed_all(seed)
@@ -585,7 +598,12 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     iteration, evidence_collector
                 )
                 if snapshot is not None:
-                    write_snapshot(scene.model_path, iteration, snapshot)
+                    persist_d0_snapshot(
+                        scene.model_path,
+                        iteration,
+                        snapshot,
+                        shadow_runtime,
+                    )
 
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
