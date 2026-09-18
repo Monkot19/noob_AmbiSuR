@@ -793,5 +793,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] 完成 accumulator/topology/checkpoint、schema-2 events/training wiring 与 formal timeline/orchestration；Task 5 Step 1 全量/CUDA qualification 已通过。
 - [x] 新路径 500-step/refresh-100 temporal v2 shadow smoke 已完成：五轮 transition matrix/age/count/jitter 精确重建、checkpoint production round-trip、snapshot join、日志/输入/Git 安全门全部通过。首次审计唯一失败是外部脚本误把当前 Evidence schema 3 写死为旧值 2；按生产类常量复核后 reconciliation 0 failure，训练无需重跑。
 - [x] Step 3 D0 隔离审计完成：focused 39/39、真实 run no-GT/仅 `shadow_diagnostics`/method flags 全关、compile/clean/no-training 全通过；历史 500-step 数值仅作 diagnostic，不设事后阈值。
-- [ ] 下一步请求新路径 v2 7k 唯一训练授权；获准后先做独立只读 preflight，再创建 private view 和启动训练。
+- [x] 用户已授权新路径 v2 7k 唯一 GT-free shadow 训练；授权范围为 Tool Room/r2/seed0/7000/refresh-1000/checkpoints-3000,7000，不包含 C1、tag、Supporting 或阈值调整。
+- [ ] 下一步先执行独立只读 preflight；PASS 后才创建 private view 和启动唯一训练。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。

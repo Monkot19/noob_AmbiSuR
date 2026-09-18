@@ -376,4 +376,5 @@
 - [x] Step 1：在 exact `595fa71e1468ce5fc3a43079a47ceb994bbd6a66` 完成全仓 component discovery 231/231、指定 CUDA gates 12/12、runtime/compile/clean/no-training gate；`D0_TASK5_QUALIFICATION=PASS`。
 - [x] Step 2：新路径 `d0_temporal_v2_r2_seed0_500_20260918_v1` 五刷新 schema-2 shadow smoke 完成；exit 0、五轮 exact transition reconstruction、checkpoint production round-trip、200k finite-center join、input/log/Git safety 全通过。首次 audit 的旧 Evidence schema=2 断言已按实际 `1/2/3/1` 版本组合复核为 audit-only error，未重跑训练。
 - [x] Step 3：focused isolation 39/39 与真实 run no-GT/only-shadow/no-method-feature/compile/clean/no-training 门全部通过；历史 500-step 对照仅作 diagnostic。
-- [ ] Step 4–6：请求 v2 7k 唯一训练授权；随后新路径 formal D0、108-item formal G1，并决定 C1 go/no-go。
+- [x] 用户授权 Step 4 新路径 v2 7k 唯一 GT-free shadow 训练；范围锁定 Tool Room/r2/seed0/7000/refresh-1000/checkpoints-3000,7000。
+- [ ] Step 4–6：先做只读 preflight，PASS 后启动唯一训练；随后 formal D0、108-item formal G1，并决定 C1 go/no-go。
