@@ -10,6 +10,7 @@ import numpy as np
 from reliability.g1_component_diagnostics import RAW_COMPONENTS
 from scripts.diagnostics.diagnose_d0_g1_components import (
     _assemble_component_arrays,
+    _restore_training_neighbors,
     build_parser,
     collect_component_arrays,
     run_diagnostic,
@@ -43,6 +44,10 @@ class G1ComponentDiagnosticCliTests(unittest.TestCase):
         output.mkdir()
         (run / "exit_code.txt").write_text("0\n", encoding="utf-8")
         (run / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+        (run / "multi_view.json").write_text(
+            '{"ref_name":"camera-a","nearest_name":[]}\n',
+            encoding="utf-8",
+        )
         (run / "chkpnt7000.pth").write_bytes(b"checkpoint")
         (evidence / "iteration_007000.npz").write_bytes(b"snapshot")
         (source / "source.bin").write_bytes(b"source")
@@ -189,6 +194,82 @@ class G1ComponentDiagnosticCliTests(unittest.TestCase):
 
         self.assertEqual(set(arrays), set(RAW_COMPONENTS))
         np.testing.assert_array_equal(arrays["view_count"], [2, 1])
+
+    def test_training_neighbors_are_restored_by_name_in_offline_camera_order(self):
+        cameras = [
+            SimpleNamespace(image_name="camera-b", nearest_id=[], nearest_names=[]),
+            SimpleNamespace(image_name="camera-a", nearest_id=[], nearest_names=[]),
+            SimpleNamespace(image_name="camera-c", nearest_id=[], nearest_names=[]),
+        ]
+        records = [
+            {"ref_name": "camera-a", "nearest_name": ["camera-c", "camera-b"]},
+            {"ref_name": "camera-b", "nearest_name": ["camera-a"]},
+            {"ref_name": "camera-c", "nearest_name": []},
+        ]
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "multi_view.json"
+            path.write_text(
+                "\n".join(json.dumps(record) for record in records) + "\n",
+                encoding="utf-8",
+            )
+            _restore_training_neighbors(cameras, path)
+
+        self.assertEqual(cameras[0].nearest_id, [1])
+        self.assertEqual(cameras[0].nearest_names, ["camera-a"])
+        self.assertEqual(cameras[1].nearest_id, [2, 0])
+        self.assertEqual(cameras[1].nearest_names, ["camera-c", "camera-b"])
+        self.assertEqual(cameras[2].nearest_id, [])
+        self.assertEqual(cameras[2].nearest_names, [])
+
+    def test_training_neighbor_restoration_fails_closed_on_bad_names(self):
+        cases = {
+            "missing camera record": [
+                {"ref_name": "camera-a", "nearest_name": ["camera-b"]},
+            ],
+            "duplicate reference camera": [
+                {"ref_name": "camera-a", "nearest_name": ["camera-b"]},
+                {"ref_name": "camera-a", "nearest_name": []},
+                {"ref_name": "camera-b", "nearest_name": ["camera-a"]},
+            ],
+            "unknown neighbor camera": [
+                {"ref_name": "camera-a", "nearest_name": ["camera-z"]},
+                {"ref_name": "camera-b", "nearest_name": ["camera-a"]},
+            ],
+        }
+        for message, records in cases.items():
+            cameras = [
+                SimpleNamespace(image_name="camera-a", nearest_id=[], nearest_names=[]),
+                SimpleNamespace(image_name="camera-b", nearest_id=[], nearest_names=[]),
+            ]
+            with self.subTest(message=message), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "multi_view.json"
+                path.write_text(
+                    "\n".join(json.dumps(record) for record in records) + "\n",
+                    encoding="utf-8",
+                )
+                with self.assertRaisesRegex(ValueError, message):
+                    _restore_training_neighbors(cameras, path)
+
+    def test_multi_view_map_is_an_immutable_diagnostic_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            args, _output = self.make_request(directory, "neighbor-fingerprint")
+            dependency = self.dependencies()
+            seen = []
+            original = dependency.fingerprint_inputs
+
+            def fingerprint(paths):
+                seen.append(dict(paths))
+                return original(paths)
+
+            dependency.fingerprint_inputs = fingerprint
+            run_diagnostic(args, dependencies=dependency)
+
+        self.assertEqual(len(seen), 2)
+        for inputs in seen:
+            self.assertEqual(
+                inputs["multi_view"], Path(args.run_dir).resolve() / "multi_view.json"
+            )
 
     @unittest.skipUnless(importlib.util.find_spec("torch"), "Torch is unavailable")
     def test_collector_boundary_exposes_current_components_not_fake_history(self):
