@@ -796,3 +796,13 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] 用户已授权新路径 v2 7k 唯一 GT-free shadow 训练；授权范围为 Tool Room/r2/seed0/7000/refresh-1000/checkpoints-3000,7000，不包含 C1、tag、Supporting 或阈值调整。
 - [ ] 下一步先执行独立只读 preflight；PASS 后才创建 private view 和启动唯一训练。
 - [ ] v1 保持只读工程证据，不覆盖、不移动、不删除、不用近似补算，也不用于正式 G1/C1。
+
+## 2026-09-24 Component Diagnostic Decision Gate
+
+- [x] AutoDL focused qualification and real iteration-7000 diagnostic completed on exact `dad6f9f0344e52d7f7fa8c1b0ccd80d40f244ebb`.
+- [x] `S` saturation root symptom established: count normalization is saturated for 95% of rows and angle normalization is at/near cap for at least half of rows.
+- [ ] Before any formula change, reconcile historical snapshot/checkpoint `V_p/V_g` with the current all-zero raw multiview/support recomputation and fingerprint the loaded CUDA extension on the current container.
+- [ ] If the runtime chain is consistent, isolate pixel-pair validity versus CUDA evidence channel transport with one minimal camera/pair probe; otherwise restore/rebuild only the exact qualified extension under TDD.
+- [ ] After reliability blocker is resolved, use the frozen report to write and review exactly one `S` recalibration specification. Keep formal G1 unchanged; C1 remains blocked.
+- [x] Runtime boundary isolated: snapshot/checkpoint validity is high, CUDA constant transport works, and offline cameras have empty `nearest_id` because `_load_render_runtime()` bypasses `Scene` neighbor construction/restoration.
+- [ ] Bounded TDD fix pending approval: add a strict name-based `multi_view.json` restoration helper in the component diagnostic path, include the file in immutable input validation/fingerprinting, leave training/runtime formulas untouched, then rerun focused tests and publish a new diagnostic confirmation ID.

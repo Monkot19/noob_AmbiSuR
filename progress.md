@@ -389,3 +389,15 @@
 - [x] Task 2 lightweight CLI RED→GREEN：一次 full-mesh query + 一次 406-camera no-grad collector，4-file atomic/non-overwriting publication；不重跑训练、不生成 renders/archive。
 - [x] 自审发现 `M`/`M_obs` 真实边界错误并补无 Torch 回归后修复；focused 11 tests PASS（1 Torch integration explicit skip）、`py_compile`、help 与 `git diff --check` PASS。
 - [ ] Task 3：合并/推送 exact commit 后，先在 AutoDL 跑 Torch/CUDA focused qualification，再运行一次真实 7000 component diagnostic；根据冻结报告只选择一个独立的 `S` 修订规格，geometry reliability 作为单独 blocker。
+
+## 2026-09-24 Component Range Audit Follow-up
+
+- [x] AutoDL exact diagnostic commit qualification and real iteration-7000 lightweight diagnostic completed without training restart.
+- [x] Range audit confirmed independent `S_count` and `S_angle` saturation; recorded exact quantiles and preserved frozen G1 failure.
+- [x] Detected unexpected all-zero current prior/geometry multiview and support fields while historical `T_p/T_g` remain nonzero.
+- [ ] Run one short read-only provenance/validity audit: compare snapshot/checkpoint `V_p/V_g` coverage and hashes, then identify the loaded `diff_plane_rasterization_ambisur._C` binary path/SHA/mtime. Do not rerun training or full-mesh/406-camera diagnostics.
+- [ ] Only after locating the multiview zero boundary, draft one independently reviewed `S` recalibration specification; no implementation or C1 authorization yet.
+- [x] Boundary audit: historical validity is high and exactly matches checkpoint state; installed Python wrapper matches repository and CUDA symbol exists.
+- [x] Single-camera constant transport: CUDA evidence numerator/denominator is numerically operational; prior failure was an over-strict probe tolerance, not a production failure.
+- [x] Single-source pair probe: `DSC06476.nearest_id=[]`; root cause is offline runtime failing to restore the training run's frozen neighbor map, so no pair loop ran.
+- [ ] Await approval of the bounded diagnostic fix design before adding the RED test or production code.
