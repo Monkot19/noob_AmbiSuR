@@ -401,4 +401,7 @@
 - [x] Single-camera constant transport: CUDA evidence numerator/denominator is numerically operational; prior failure was an over-strict probe tolerance, not a production failure.
 - [x] Single-source pair probe: `DSC06476.nearest_id=[]`; root cause is offline runtime failing to restore the training run's frozen neighbor map, so no pair loop ran.
 - [x] Bounded diagnostic fix approved; RED observed for the missing restoration helper, then CPU GREEN passed with strict name mapping and immutable-input coverage.
-- [ ] Push the exact fix commit, run focused AutoDL Torch/CUDA qualification, then publish one new iteration-7000 component diagnostic confirmation without restarting training.
+- [x] Exact fix commit pushed; AutoDL Torch/CUDA qualification passed 14/14 and corrected iteration-7000 component diagnostic published under a new confirmation ID without restarting training.
+- [x] Corrected artifact audit passed: four-file inventory, manifest hashes, frozen provenance, 1,424,279 centers, zero rejected centers, and `multi_view` immutable fingerprint all verified.
+- [ ] Draft and review exactly one observation-sufficiency recalibration specification that removes hard-cap saturation while preserving GT-free training and the approved `N=1-S(1-A)` meaning. No implementation before approval.
+- [ ] Track the historical `T_g/r_g` reversal as a separate pre-C2 temporal reliability diagnostic; do not fold it into the C1 sufficiency change.

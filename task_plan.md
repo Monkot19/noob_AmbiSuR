@@ -806,4 +806,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [ ] After reliability blocker is resolved, use the frozen report to write and review exactly one `S` recalibration specification. Keep formal G1 unchanged; C1 remains blocked.
 - [x] Runtime boundary isolated: snapshot/checkpoint validity is high, CUDA constant transport works, and offline cameras have empty `nearest_id` because `_load_render_runtime()` bypasses `Scene` neighbor construction/restoration.
 - [x] Bounded TDD fix implemented locally: strict name-based `multi_view.json` restoration plus required-input and immutable-fingerprint coverage; training/runtime formulas remain untouched.
-- [ ] Push exact commit, qualify it on AutoDL, and rerun only the lightweight iteration-7000 component diagnostic under a new confirmation ID. Do not rerun 7k training or formal G1.
+- [x] Exact commit qualified on AutoDL and the lightweight iteration-7000 component diagnostic rerun completed with integrity audit PASS; no 7k or formal-G1 rerun occurred.
+- [ ] C1 path: specify one GT-free, monotone, non-hard-capped calibration for `S_count` and `S_angle`; retain `N=1-S(1-A)` and frozen G1, then seek explicit approval before TDD implementation.
+- [ ] C2 blocker: separately instrument or otherwise reconstruct refresh-time geometry stability/EMA lineage before changing geometry reliability. Current recomputed multiview, depth-normal, and support components must remain unchanged absent contrary evidence.
