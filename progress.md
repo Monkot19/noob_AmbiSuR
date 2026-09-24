@@ -400,4 +400,5 @@
 - [x] Boundary audit: historical validity is high and exactly matches checkpoint state; installed Python wrapper matches repository and CUDA symbol exists.
 - [x] Single-camera constant transport: CUDA evidence numerator/denominator is numerically operational; prior failure was an over-strict probe tolerance, not a production failure.
 - [x] Single-source pair probe: `DSC06476.nearest_id=[]`; root cause is offline runtime failing to restore the training run's frozen neighbor map, so no pair loop ran.
-- [ ] Await approval of the bounded diagnostic fix design before adding the RED test or production code.
+- [x] Bounded diagnostic fix approved; RED observed for the missing restoration helper, then CPU GREEN passed with strict name mapping and immutable-input coverage.
+- [ ] Push the exact fix commit, run focused AutoDL Torch/CUDA qualification, then publish one new iteration-7000 component diagnostic confirmation without restarting training.
