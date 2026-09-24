@@ -113,6 +113,57 @@ def collect_component_arrays(refresh_inputs):
     return _assemble_component_arrays(refresh_inputs, sufficiency, consistency)
 
 
+def _restore_training_neighbors(cameras, multi_view_path):
+    """Restore the frozen training neighbor graph in offline camera order."""
+    cameras = list(cameras)
+    name_to_index = {}
+    for index, camera in enumerate(cameras):
+        name = getattr(camera, "image_name", None)
+        if not isinstance(name, str) or not name:
+            raise ValueError("offline camera name must be a non-empty string")
+        if name in name_to_index:
+            raise ValueError(f"duplicate offline camera name: {name}")
+        name_to_index[name] = index
+
+    records = {}
+    path = Path(multi_view_path)
+    for line_number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not line.strip():
+            raise ValueError(f"blank multi-view record at line {line_number}")
+        record = json.loads(line)
+        if not isinstance(record, dict):
+            raise ValueError(f"multi-view record must be an object at line {line_number}")
+        ref_name = record.get("ref_name")
+        nearest_names = record.get("nearest_name")
+        if not isinstance(ref_name, str) or not ref_name:
+            raise ValueError(f"invalid reference camera at line {line_number}")
+        if ref_name not in name_to_index:
+            raise ValueError(f"unknown reference camera: {ref_name}")
+        if ref_name in records:
+            raise ValueError(f"duplicate reference camera: {ref_name}")
+        if not isinstance(nearest_names, list) or not all(
+            isinstance(name, str) and name for name in nearest_names
+        ):
+            raise ValueError(f"invalid neighbor camera list for: {ref_name}")
+        if len(nearest_names) != len(set(nearest_names)):
+            raise ValueError(f"duplicate neighbor camera for: {ref_name}")
+        unknown = [name for name in nearest_names if name not in name_to_index]
+        if unknown:
+            raise ValueError(f"unknown neighbor camera: {unknown[0]}")
+        records[ref_name] = list(nearest_names)
+
+    missing = [name for name in name_to_index if name not in records]
+    if missing:
+        raise ValueError(f"missing camera record: {missing[0]}")
+
+    for camera in cameras:
+        nearest_names = records[camera.image_name]
+        camera.nearest_names = list(nearest_names)
+        camera.nearest_id = [name_to_index[name] for name in nearest_names]
+
+
 def _collect_runtime_components(run_dir, source_root, iteration):
     import torch
 
@@ -128,6 +179,7 @@ def _collect_runtime_components(run_dir, source_root, iteration):
     gaussians, cameras, pipeline, background = _load_render_runtime(
         run_dir, source_root, iteration
     )
+    _restore_training_neighbors(cameras, run_dir / "multi_view.json")
     collector = D0EvidenceCollector(
         cameras,
         gaussians,
@@ -191,6 +243,7 @@ def _validate_request(args):
         raise ValueError("training run did not complete successfully")
     required = (
         run_dir / "resolved_config.json",
+        run_dir / "multi_view.json",
         run_dir / "chkpnt7000.pth",
         run_dir / "d0_evidence" / "iteration_007000.npz",
     )
@@ -254,6 +307,7 @@ def run_diagnostic(args, *, dependencies=None):
         "checkpoint_7000": run_dir / "chkpnt7000.pth",
         "snapshot_7000": run_dir / "d0_evidence" / "iteration_007000.npz",
         "resolved_config": run_dir / "resolved_config.json",
+        "multi_view": run_dir / "multi_view.json",
         "source_root": source_root,
         "gt_mesh": gt_mesh,
     }
