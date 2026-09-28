@@ -18,37 +18,39 @@ FORMULA_COMMIT = "a" * 40
 DATASET_SHA = "b" * 64
 PRIOR_SHA = "c" * 64
 GT_SHA = "d" * 64
-TRAINING_ARGV = [
-    "/root/miniconda3/envs/ambisur/bin/python",
-    "-u",
-    "train.py",
-    "--source_path",
-    "/data/views/tool-room/colmap_undistorted",
-    "--model_path",
-    "/runs/tool-room/soft-calibration-v1",
-    "-r",
-    "2",
-    "--iterations",
-    "7000",
-    "--seed",
-    "0",
-    "--core_shadow_mode",
-    "--d0_refresh_interval",
-    "1000",
-    "--test_iterations",
-    "1000",
-    "2000",
-    "3000",
-    "4000",
-    "5000",
-    "6000",
-    "7000",
-    "--save_iterations",
-    "7000",
-    "--checkpoint_iterations",
-    "3000",
-    "7000",
-]
+def training_argv(root):
+    root = Path(root).resolve()
+    return [
+        "/root/miniconda3/envs/ambisur/bin/python",
+        "-u",
+        "train.py",
+        "--source_path",
+        str(root / "view"),
+        "--model_path",
+        str(root / "run"),
+        "-r",
+        "2",
+        "--iterations",
+        "7000",
+        "--seed",
+        "0",
+        "--core_shadow_mode",
+        "--d0_refresh_interval",
+        "1000",
+        "--test_iterations",
+        "1000",
+        "2000",
+        "3000",
+        "4000",
+        "5000",
+        "6000",
+        "7000",
+        "--save_iterations",
+        "7000",
+        "--checkpoint_iterations",
+        "3000",
+        "7000",
+    ]
 
 
 def resolved_config():
@@ -72,7 +74,7 @@ def confirmation_kwargs(root, confirmation_id="soft-calibration-formal-v1"):
         "confirmation_id": confirmation_id,
         "preflight_utc": "2026-09-28T08:00:00Z",
         "formula_commit": FORMULA_COMMIT,
-        "training_argv": list(TRAINING_ARGV),
+        "training_argv": training_argv(root),
         "scene": "Tool_Room",
         "seed": 0,
         "resolution": 2,
@@ -97,7 +99,7 @@ def confirmation_kwargs(root, confirmation_id="soft-calibration-formal-v1"):
     }
 
 
-def materialize_admission_run(run):
+def materialize_admission_run(run, argv):
     run = Path(run)
     run.mkdir()
     (run / "run_identity.json").write_text(
@@ -105,7 +107,7 @@ def materialize_admission_run(run):
             {
                 "git_commit": FORMULA_COMMIT,
                 "git_dirty": False,
-                "argv": TRAINING_ARGV,
+                "argv": argv,
                 "seed": 0,
             }
         )
@@ -130,7 +132,8 @@ class G1ConfirmationTests(unittest.TestCase):
     def test_builds_the_frozen_soft_calibration_record(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            record = build_confirmation_record(**confirmation_kwargs(root))
+            kwargs = confirmation_kwargs(root)
+            record = build_confirmation_record(**kwargs)
 
         self.assertEqual(record["schema_version"], 1)
         self.assertEqual(record["confirmation_id"], "soft-calibration-formal-v1")
@@ -147,7 +150,7 @@ class G1ConfirmationTests(unittest.TestCase):
                 "d_c": (1.0 - math.cos(math.radians(30.0))) / 2.0,
             },
         )
-        self.assertEqual(record["training"]["argv"], TRAINING_ARGV)
+        self.assertEqual(record["training"]["argv"], kwargs["training_argv"])
         self.assertEqual(
             record["training"]["evaluation_iterations"],
             list(range(1000, 7001, 1000)),
@@ -264,7 +267,9 @@ class G1ConfirmationTests(unittest.TestCase):
             root = Path(directory)
             kwargs = confirmation_kwargs(root)
             record = build_confirmation_record(**kwargs)
-            run = materialize_admission_run(kwargs["run_dir"])
+            run = materialize_admission_run(
+                kwargs["run_dir"], kwargs["training_argv"]
+            )
 
             validate_formal_admission(
                 record,
@@ -299,7 +304,12 @@ class G1ConfirmationTests(unittest.TestCase):
     def test_formal_admission_rejects_run_identity_config_or_hash_mutation(self):
         mutations = (
             ("dirty", "run_identity.json", ("git_dirty",), True),
-            ("argv", "run_identity.json", ("argv",), TRAINING_ARGV + ["--changed"]),
+            (
+                "argv",
+                "run_identity.json",
+                ("argv",),
+                training_argv(Path("/changed")) + ["--changed"],
+            ),
             ("identity_seed", "run_identity.json", ("seed",), 1),
             ("identity_commit", "run_identity.json", ("git_commit",), "0" * 40),
             ("resolution", "resolved_config.json", ("model", "resolution"), 4),
@@ -325,7 +335,9 @@ class G1ConfirmationTests(unittest.TestCase):
                     root = Path(directory)
                     kwargs = confirmation_kwargs(root)
                     record = build_confirmation_record(**kwargs)
-                    run = materialize_admission_run(kwargs["run_dir"])
+                    run = materialize_admission_run(
+                        kwargs["run_dir"], kwargs["training_argv"]
+                    )
                     path = run / filename
                     if keys:
                         document = json.loads(path.read_text(encoding="utf-8"))
