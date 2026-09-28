@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0/G0 与 D0 temporal-v2 工程链已完成。正式 Tool Room/r2/seed0/7000 D0-v2 资产在 clean `research/core-routing@0679bcf2cb0ed52565685b9cd4a07b7c2e5d836f` 通过 timeline、checkpoint、no-GT、输入哈希与训练安全审计；正式 108-item G1 已完成且可评价，但 7000 主门失败：`AUROC(N)=0.542911`，优于组件为 `A=0.550844`，增益 `-0.007933`，未达到冻结的 `>0.60` 与 `>=0.03`。因此 C1、阶段 tag、30k 与 Supporting 均保持未启动。当前只执行已批准的 7000-only component diagnosis，定位 `S` 饱和与双可靠性分量，不改变训练、G1 门或正式包。
+Phase 0、E0/G0 与 D0 temporal-v2 工程链已完成。原正式 Tool Room/r2/seed0/7000 D0-v2 的 G1 主门失败（`AUROC(N)=0.542911`、best `A=0.550844`、gain `-0.007933`）后，根因诊断确认 `S_count/S_angle` 饱和；用户已批准固定 soft half-saturation 方案 A。新公式、Evidence v4、formal confirmation 与 evaluator admission 已按 TDD 实现，并在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 通过 AutoDL 70 项 focused、269 项 full discovery、8 项显式 CUDA、canonical dataset/prior hash、clean/no-training 总门。当前状态为 **Task 6 complete / smoke-ready**；C1、阶段 tag、正式 7k、30k 与 Supporting 均未启动。下一步仅在用户单独授权后执行新路径 500-step/refresh-100 shadow smoke。
 
 **2026-09-17 exploratory inventory clarification（APPROVED）：** 正式 `required_artifacts()` 继续冻结为 3000/7000 + timeline 的 108 项；显式 `--exploratory --iterations 500` 使用独立 55 项 inventory，仅含 iteration 500 的 field PLY、固定三视角 PNG/GT overlay、`iteration_000500` metrics 及 base JSON，不含 timeline，不伪造正式迭代，`g1_evaluable/g1_pass=null`。该选择只解决既有 500 smoke 与正式 inventory 的实现冲突，不改变正式 G1 门。
 
@@ -809,5 +809,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Exact commit qualified on AutoDL and the lightweight iteration-7000 component diagnostic rerun completed with integrity audit PASS; no 7k or formal-G1 rerun occurred.
 - [x] C1 path specification gate: user approved the revised soft half-saturation specification on 2026-09-28 after formal-admission, topology-evidence, E3-scope, floating-tolerance, and preregistration gaps were closed.
 - [x] Approach A selected and specified: fixed soft half-saturation for count and angle, unchanged geometric mean/N/G1.
-- [ ] Review and separately approve `docs/superpowers/plans/2026-09-28-observation-sufficiency-soft-calibration.md` before any formula code, RED tests, smoke, or formal rerun begins.
+- [x] `docs/superpowers/plans/2026-09-28-observation-sufficiency-soft-calibration.md` 已获用户批准；Tasks 1–6 已完成逐项 RED→GREEN、自审修复与 exact-commit AutoDL CPU/CUDA qualification。
+- [ ] Task 7：等待用户单独授权后启动新路径 500-step/refresh-100 shadow smoke；只验证五次 refresh、Evidence v4 round-trip、finite、no-GT 与训练隔离，不宣称真实 topology migration。
 - [ ] C2 blocker: separately instrument or otherwise reconstruct refresh-time geometry stability/EMA lineage before changing geometry reliability. Current recomputed multiview, depth-normal, and support components must remain unchanged absent contrary evidence.

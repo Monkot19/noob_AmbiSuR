@@ -380,3 +380,11 @@
 - The 500-step smoke precedes the first real densification at iteration 600, so it verifies refresh/state/isolation behavior but not empirical topology migration. Migration evidence comes from synthetic CPU/CUDA regression plus the actual 7k changing-topology trajectory.
 - Tool Room seed 0 is a mechanism-development gate only. E3 still requires Utility Room and multiple seeds before any method-level or generalization claim.
 - Rational and trigonometric anchors are mathematically hand checked under dtype-appropriate tolerance; exact equality is reserved for values exactly representable in the active dtype.
+
+## 2026-09-28 Soft-calibration Task 6 qualification
+
+- Exact candidate `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` passed the AutoDL qualification on Python 3.10.21, PyTorch 2.7.1+cu128 and an RTX 4090.
+- Verification evidence is complete: implementation-range `git diff --check` and compilation passed; focused CPU/formal suites passed 70/70; full test discovery passed 269/269; the explicit CUDA Evidence suite passed 8/8.
+- Canonical inputs remained exact: dataset SHA256 `aad92aa2e0f0d072756b3a56c686d5c1d35f448811ce60ca4360c67dbc3ef255` and aligned-prior SHA256 `69a21ab8756f43834a5357f27ca6cf40c6b7b15695e0e8cade1914fe70956977`.
+- The final checkout was clean and detached at the reviewed commit, with zero active training processes. This qualifies the implementation as smoke-ready; it does not authorize or constitute the Task 7 smoke, formal 7k, G1 PASS, C1, or a stage tag.
+- The 500-step smoke remains intentionally limited: it can verify five refreshes, Evidence v4 serialization/round-trip, finite outputs, GT isolation and training isolation. Since real densification starts after iteration 500, topology migration evidence remains synthetic at smoke time and must be rechecked on the later formal 7k run.

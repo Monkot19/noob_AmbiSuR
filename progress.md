@@ -409,5 +409,7 @@
 - [x] Revised soft half-saturation specification completed user re-review and was approved; implementation had not started at approval time.
 - [x] User approved the revised soft half-saturation specification on 2026-09-28.
 - [x] Drafted the task-by-task native TDD implementation/experiment plan with separate formula, state-version, confirmation, evaluator, smoke, preregistration, formal-run, and decision gates.
-- [ ] Implementation plan awaits separate user review/approval. No formula code, tests, training, or formal evaluation has started under the new specification.
+- [x] The implementation plan was separately approved and Tasks 1–6 were executed with native TDD: soft formulas and Evidence v4, fail-closed formal confirmation, version-4 checkpoint admission, and evaluator target binding are implemented.
+- [x] Final review fix `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` closed the frozen-argv/config, write-time target-absence, and publication-target admission gaps. AutoDL then passed 70/70 focused tests, 269/269 full discovery, 8/8 explicit CUDA tests, canonical input hashes, clean-worktree and no-training gates.
+- [ ] Task 7 awaits separate user authorization: run one new-path Tool Room/r2/seed0 500-step shadow smoke with refreshes at 100/200/300/400/500. No smoke, formal 7k rerun, formal G1, C1 or stage tag has started under soft calibration.
 - [ ] Track the historical `T_g/r_g` reversal as a separate pre-C2 temporal reliability diagnostic; do not fold it into the C1 sufficiency change.
