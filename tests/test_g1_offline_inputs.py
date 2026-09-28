@@ -43,10 +43,10 @@ def make_snapshot(rows=4):
     return snapshot
 
 
-def make_core_state(snapshot):
+def make_core_state(snapshot, *, evidence_version=2, iteration=3000):
     rows = snapshot["A"].shape[0]
     evidence = {
-        "version": 2,
+        "version": evidence_version,
         "point_count": rows,
         "a_value": snapshot["A"].copy(),
         "s_value": snapshot["S"].copy(),
@@ -61,10 +61,51 @@ def make_core_state(snapshot):
     return {
         "version": 1,
         "refresh_interval": 1000,
-        "last_refresh_iteration": 3000,
-        "refresh_count": 3,
+        "last_refresh_iteration": iteration,
+        "refresh_count": iteration // 1000,
         "evidence": evidence,
     }
+
+
+def write_iteration_fixture(
+    run, iteration, *, evidence_version, checkpoint_iteration=None,
+    include_evidence=True,
+):
+    snapshot = make_snapshot()
+    evidence_dir = Path(run) / "d0_evidence"
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        evidence_dir / f"iteration_{iteration:06d}.npz", **snapshot
+    )
+    core_state = make_core_state(
+        snapshot,
+        evidence_version=evidence_version,
+        iteration=iteration,
+    )
+    if not include_evidence:
+        core_state.pop("evidence")
+    elif torch is not None:
+        core_state["evidence"] = {
+            key: torch.as_tensor(value)
+            if isinstance(value, np.ndarray)
+            else value
+            for key, value in core_state["evidence"].items()
+        }
+    centers = torch.zeros((4, 3), dtype=torch.float32)
+    capture = (0, centers) + (None,) * 14
+    torch.save(
+        {
+            "schema_version": 1,
+            "gaussian_state": capture,
+            "iteration": (
+                iteration
+                if checkpoint_iteration is None
+                else checkpoint_iteration
+            ),
+            "core_state": core_state,
+        },
+        Path(run) / f"chkpnt{iteration}.pth",
+    )
 
 
 class G1OfflineInputTests(unittest.TestCase):
@@ -230,6 +271,85 @@ class G1OfflineInputTests(unittest.TestCase):
                 joined.snapshot_sha256,
                 hashlib.sha256(snapshot_path.read_bytes()).hexdigest(),
             )
+
+    @unittest.skipIf(torch is None, "Torch is required for checkpoint I/O")
+    def test_formal_loading_requires_version_four_at_3000_and_7000(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            write_iteration_fixture(run, 3000, evidence_version=4)
+            write_iteration_fixture(run, 7000, evidence_version=4)
+
+            joined_3000 = load_g1_iteration(
+                run, 3000, expected_evidence_version=4
+            )
+            joined_7000 = load_g1_iteration(
+                run, 7000, expected_evidence_version=4
+            )
+
+        self.assertEqual(joined_3000.iteration, 3000)
+        self.assertEqual(joined_7000.iteration, 7000)
+
+    @unittest.skipIf(torch is None, "Torch is required for checkpoint I/O")
+    def test_formal_loading_rejects_legacy_mixed_or_missing_evidence_versions(self):
+        for versions in ((3, 4), (4, 3), (3, 3)):
+            with self.subTest(versions=versions):
+                with tempfile.TemporaryDirectory() as directory:
+                    run = Path(directory)
+                    write_iteration_fixture(
+                        run, 3000, evidence_version=versions[0]
+                    )
+                    write_iteration_fixture(
+                        run, 7000, evidence_version=versions[1]
+                    )
+                    with self.assertRaisesRegex(
+                        ValueError, "evidence state version"
+                    ):
+                        for iteration in (3000, 7000):
+                            load_g1_iteration(
+                                run,
+                                iteration,
+                                expected_evidence_version=4,
+                            )
+
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            write_iteration_fixture(
+                run,
+                3000,
+                evidence_version=4,
+                include_evidence=False,
+            )
+            with self.assertRaisesRegex(
+                ValueError, "checkpoint evidence state"
+            ):
+                load_g1_iteration(
+                    run, 3000, expected_evidence_version=4
+                )
+
+    @unittest.skipIf(torch is None, "Torch is required for checkpoint I/O")
+    def test_formal_loading_rejects_wrong_checkpoint_iteration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            write_iteration_fixture(
+                run,
+                3000,
+                evidence_version=4,
+                checkpoint_iteration=2999,
+            )
+            with self.assertRaisesRegex(ValueError, "checkpoint iteration"):
+                load_g1_iteration(
+                    run, 3000, expected_evidence_version=4
+                )
+
+    @unittest.skipIf(torch is None, "Torch is required for checkpoint I/O")
+    def test_exploratory_loading_can_read_structurally_valid_version_three(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            write_iteration_fixture(run, 3000, evidence_version=3)
+
+            joined = load_g1_iteration(run, 3000)
+
+        self.assertEqual(joined.iteration, 3000)
 
 
 if __name__ == "__main__":

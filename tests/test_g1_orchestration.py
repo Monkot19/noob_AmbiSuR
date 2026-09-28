@@ -39,6 +39,23 @@ class G1OrchestrationTests(unittest.TestCase):
                 f"checkpoint-{iteration}".encode("ascii")
             )
         (run / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+        (run / "run_identity.json").write_text("{}\n", encoding="utf-8")
+        prior_sha = "e" * 64
+        for name, value in (
+            ("dataset_manifest_before.sha256", evaluator.canonical_tree_sha256(source)),
+            ("dataset_manifest_after.sha256", evaluator.canonical_tree_sha256(source)),
+            ("aligned_prior_before.sha256", prior_sha),
+            ("aligned_prior_after.sha256", prior_sha),
+        ):
+            (run / name).write_text(value + "\n", encoding="utf-8")
+        confirmation_contract = root / "confirmation.json"
+        confirmation_contract.write_text("{}\n", encoding="utf-8")
+        confirmation_sha = hashlib.sha256(
+            confirmation_contract.read_bytes()
+        ).hexdigest()
+        Path(f"{confirmation_contract}.sha256").write_text(
+            confirmation_sha + "  confirmation.json\n", encoding="utf-8"
+        )
         args = SimpleNamespace(
             run_dir=str(run),
             source_root=str(source),
@@ -49,6 +66,9 @@ class G1OrchestrationTests(unittest.TestCase):
             expected_commit="a" * 40,
             expected_dataset_sha=evaluator.canonical_tree_sha256(source),
             expected_gt_sha=hashlib.sha256(gt_mesh.read_bytes()).hexdigest(),
+            expected_prior_sha=prior_sha,
+            confirmation_contract=str(confirmation_contract),
+            expected_confirmation_sha=confirmation_sha,
             exploratory=False,
         )
         return args, run, source, gt_mesh, output
@@ -194,6 +214,13 @@ class G1OrchestrationTests(unittest.TestCase):
             {
                 "checkpoint_3000",
                 "checkpoint_7000",
+                "confirmation_contract",
+                "confirmation_sha256",
+                "run_identity",
+                "dataset_manifest_before",
+                "dataset_manifest_after",
+                "aligned_prior_before",
+                "aligned_prior_after",
                 "events",
                 "gt_mesh",
                 "resolved_config",
@@ -207,6 +234,103 @@ class G1OrchestrationTests(unittest.TestCase):
                 "source_root",
             },
         )
+        self.assertEqual(
+            set(captured["admitted_inputs"]), {3000, 7000}
+        )
+
+    def test_formal_mode_requires_confirmation_before_expensive_producer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            args, _run, _source, _gt_mesh, output = self.make_formal_contract(
+                directory, confirmation_id="missing-confirmation"
+            )
+            args.confirmation_contract = None
+            args.expected_confirmation_sha = None
+            producer_called = False
+
+            def unexpected_producer(*_args, **_kwargs):
+                nonlocal producer_called
+                producer_called = True
+                raise AssertionError("expensive producer was called")
+
+            with (
+                patch.object(evaluator, "_git_head", return_value="a" * 40),
+                patch.object(
+                    evaluator,
+                    "load_confirmation_record",
+                    return_value={"confirmation_id": args.confirmation_id},
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "validate_formal_admission",
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "load_g1_iteration",
+                    side_effect=lambda _run, iteration, **_kwargs: (
+                        SimpleNamespace(iteration=iteration)
+                    ),
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "produce_formal_3000_7000",
+                    side_effect=unexpected_producer,
+                    create=True,
+                ),
+            ):
+                with self.assertRaisesRegex(ValueError, "confirmation"):
+                    run_evaluator(args)
+
+            self.assertFalse(producer_called)
+            self.assertFalse((output / "missing-confirmation").exists())
+            self.assertFalse(
+                (output / "missing-confirmation.tar.gz").exists()
+            )
+            self.assertEqual(
+                list(output.glob(".missing-confirmation.tmp-*")), []
+            )
+
+    def test_confirmation_mismatch_fails_before_publication(self):
+        with tempfile.TemporaryDirectory() as directory:
+            args, _run, _source, _gt_mesh, output = self.make_formal_contract(
+                directory, confirmation_id="confirmation-mismatch"
+            )
+            producer_called = False
+
+            def unexpected_producer(*_args, **_kwargs):
+                nonlocal producer_called
+                producer_called = True
+
+            with (
+                patch.object(evaluator, "_git_head", return_value="a" * 40),
+                patch.object(
+                    evaluator,
+                    "load_confirmation_record",
+                    side_effect=ValueError("confirmation SHA256 mismatch"),
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "produce_formal_3000_7000",
+                    side_effect=unexpected_producer,
+                    create=True,
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    ValueError, "confirmation SHA256 mismatch"
+                ):
+                    run_evaluator(args)
+
+            self.assertFalse(producer_called)
+            self.assertFalse((output / "confirmation-mismatch").exists())
+            self.assertFalse(
+                (output / "confirmation-mismatch.tar.gz").exists()
+            )
+            self.assertEqual(
+                list(output.glob(".confirmation-mismatch.tmp-*")), []
+            )
 
     def test_formal_7000_failure_leaves_no_publication_or_staging(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -219,6 +343,25 @@ class G1OrchestrationTests(unittest.TestCase):
 
             with (
                 patch.object(evaluator, "_git_head", return_value="a" * 40),
+                patch.object(
+                    evaluator,
+                    "load_confirmation_record",
+                    return_value={"confirmation_id": args.confirmation_id},
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "validate_formal_admission",
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "load_g1_iteration",
+                    side_effect=lambda _run, iteration, **_kwargs: (
+                        SimpleNamespace(iteration=iteration)
+                    ),
+                    create=True,
+                ),
                 patch.object(
                     evaluator,
                     "produce_formal_3000_7000",

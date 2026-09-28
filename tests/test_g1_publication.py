@@ -155,6 +155,9 @@ class G1PublicationTests(unittest.TestCase):
             "--expected-commit",
             "--expected-dataset-sha",
             "--expected-gt-sha",
+            "--expected-prior-sha",
+            "--confirmation-contract",
+            "--expected-confirmation-sha",
             "--exploratory",
         ):
             self.assertIn(flag, result.stdout)
