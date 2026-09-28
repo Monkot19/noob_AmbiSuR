@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import math
+from numbers import Real
 
 import torch
 
@@ -9,6 +11,10 @@ from reliability.arbitration import (
 )
 from reliability.topology import migrate_tensor
 from reliability.transition_diagnostics import TemporalTransitionDiagnostics
+
+
+OBSERVATION_COUNT_HALF_SATURATION = 5.0
+OBSERVATION_ANGLE_HALF_SATURATION_DEGREES = 30.0
 
 
 @dataclass(frozen=True)
@@ -136,8 +142,8 @@ def compute_observation_sufficiency(
     camera_centers,
     gaussian_centers,
     *,
-    k_c=5,
-    theta_c_degrees=30.0,
+    k_c=OBSERVATION_COUNT_HALF_SATURATION,
+    theta_c_degrees=OBSERVATION_ANGLE_HALF_SATURATION_DEGREES,
     chunk_size=8192,
     eps=1e-8,
 ):
@@ -150,8 +156,22 @@ def compute_observation_sufficiency(
         raise ValueError("camera centers must have shape [V, 3]")
     if gaussians.shape != (hits.shape[1], 3):
         raise ValueError("Gaussian centers must have shape [P, 3]")
-    if k_c <= 0:
-        raise ValueError("k_c must be positive")
+    if (
+        isinstance(k_c, bool)
+        or not isinstance(k_c, Real)
+        or not math.isfinite(float(k_c))
+        or float(k_c) <= 0.0
+    ):
+        raise ValueError("k_c must be a finite positive scalar")
+    if (
+        isinstance(theta_c_degrees, bool)
+        or not isinstance(theta_c_degrees, Real)
+        or not math.isfinite(float(theta_c_degrees))
+        or not 0.0 < float(theta_c_degrees) < 180.0
+    ):
+        raise ValueError(
+            "theta_c_degrees must be a finite scalar within (0, 180)"
+        )
     if chunk_size <= 0:
         raise ValueError("chunk_size must be positive")
 
@@ -193,8 +213,8 @@ def compute_observation_sufficiency(
         device=gaussians.device,
     )
     reference = (1.0 - torch.cos(theta)) / 2.0
-    count_score = (count_float / float(k_c)).clamp(0.0, 1.0)
-    angle_score = (dispersion / reference.clamp_min(eps)).clamp(0.0, 1.0)
+    count_score = count_float / (count_float + float(k_c))
+    angle_score = dispersion / (dispersion + reference)
     score = (count_score * angle_score).sqrt()
     return ObservationSufficiency(counts, count_score, angle_score, score)
 
@@ -438,7 +458,7 @@ class KEMAState(EMAState):
 class EvidenceAccumulator:
     """Persistent, detached D0 evidence and arbitration state."""
 
-    STATE_VERSION = 3
+    STATE_VERSION = 4
 
     def __init__(
         self,
