@@ -317,7 +317,7 @@ def build_g1_iteration_inputs(
     )
 
 
-def load_g1_iteration(run_dir, iteration):
+def load_g1_iteration(run_dir, iteration, *, expected_evidence_version=None):
     if torch is None:
         raise RuntimeError("Torch is required to read a Core checkpoint")
     run_dir = Path(run_dir)
@@ -338,6 +338,22 @@ def load_g1_iteration(run_dir, iteration):
         raise ValueError("G1 requires a versioned Core checkpoint")
     if int(payload.get("iteration", -1)) != iteration:
         raise ValueError("checkpoint iteration mismatch")
+    if expected_evidence_version is not None:
+        expected_evidence_version = int(expected_evidence_version)
+        core_state = payload.get("core_state")
+        evidence = (
+            core_state.get("evidence")
+            if isinstance(core_state, dict)
+            else None
+        )
+        if not isinstance(evidence, dict):
+            raise ValueError("missing checkpoint evidence state")
+        if evidence.get("version") != expected_evidence_version:
+            raise ValueError(
+                "checkpoint evidence state version mismatch: "
+                f"expected={expected_evidence_version}, "
+                f"actual={evidence.get('version')}"
+            )
     capture = payload.get("gaussian_state")
     if not isinstance(capture, tuple) or len(capture) != 16:
         raise ValueError("invalid Gaussian capture schema")
