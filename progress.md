@@ -403,8 +403,11 @@
 - [x] Bounded diagnostic fix approved; RED observed for the missing restoration helper, then CPU GREEN passed with strict name mapping and immutable-input coverage.
 - [x] Exact fix commit pushed; AutoDL Torch/CUDA qualification passed 14/14 and corrected iteration-7000 component diagnostic published under a new confirmation ID without restarting training.
 - [x] Corrected artifact audit passed: four-file inventory, manifest hashes, frozen provenance, 1,424,279 centers, zero rejected centers, and `multi_view` immutable fingerprint all verified.
-- [ ] User review of the written soft half-saturation specification remains required. No implementation or implementation-plan authorization yet.
+- [x] First written-spec review completed with bounded corrections; the revised specification was subsequently approved before implementation planning.
 - [x] User selected soft half-saturation approach A on 2026-09-28; written architectural specification added for review. Implementation has not started.
 - [x] First specification review verified and incorporated: formal G1 now requires both checkpoints at evidence version 4 plus an exact preregistration identity; the 500-step smoke no longer claims real topology migration; numeric anchors are tolerance-aware; Tool Room seed 0 is only an internal C1-specification/planning gate; and the formal 7k requires a pre-run confirmation record with a detached frozen SHA256.
-- [ ] Revised soft half-saturation specification awaits user re-review. Implementation planning and implementation remain not started.
+- [x] Revised soft half-saturation specification completed user re-review and was approved; implementation had not started at approval time.
+- [x] User approved the revised soft half-saturation specification on 2026-09-28.
+- [x] Drafted the task-by-task native TDD implementation/experiment plan with separate formula, state-version, confirmation, evaluator, smoke, preregistration, formal-run, and decision gates.
+- [ ] Implementation plan awaits separate user review/approval. No formula code, tests, training, or formal evaluation has started under the new specification.
 - [ ] Track the historical `T_g/r_g` reversal as a separate pre-C2 temporal reliability diagnostic; do not fold it into the C1 sufficiency change.
