@@ -41,7 +41,7 @@
 
 ## Current Phase
 
-Phase 0、E0/G0 与 D0 temporal-v2 工程链已完成。原正式 Tool Room/r2/seed0/7000 D0-v2 的 G1 主门失败（`AUROC(N)=0.542911`、best `A=0.550844`、gain `-0.007933`）后，根因诊断确认 `S_count/S_angle` 饱和；用户已批准固定 soft half-saturation 方案 A。新公式、Evidence v4、formal confirmation 与 evaluator admission 已按 TDD 实现，并在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 通过 AutoDL 70 项 focused、269 项 full discovery、8 项显式 CUDA 总门。随后同一代码提交的新路径 Tool Room/r2/seed0 500-step/refresh-100 shadow smoke 通过五刷新、v4 round-trip、finite、checkpoint join、no-GT、输入哈希与训练隔离深审计。当前状态为 **Task 7 complete / formal-confirmation-ready**；C1、阶段 tag、正式 7k、30k 与 Supporting 均未启动。下一步是 Task 8：只生成并审核 immutable formal-7k confirmation record，仍不创建 run/view 或启动训练。
+Phase 0、E0/G0 与 D0 temporal-v2 工程链已完成。原正式 Tool Room/r2/seed0/7000 D0-v2 的 G1 主门失败（`AUROC(N)=0.542911`、best `A=0.550844`、gain `-0.007933`）后，根因诊断确认 `S_count/S_angle` 饱和；用户已批准固定 soft half-saturation 方案 A。新公式、Evidence v4、formal confirmation 与 evaluator admission 已按 TDD 实现，并在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 通过 AutoDL 70 项 focused、269 项 full discovery、8 项显式 CUDA 总门。随后同一代码提交的新路径 Tool Room/r2/seed0 500-step/refresh-100 shadow smoke 通过五刷新、v4 round-trip、finite、checkpoint join、no-GT、输入哈希与训练隔离深审计。confirmation resolved-config 字段路径修复 `815ccb8700e4aad4a2dbecf5959d0b9c54a17126` 又通过 AutoDL 40 项 formal、269 项 full discovery 与 8 项 CUDA；其后 immutable formal-7k confirmation 已在 run/view/output 均不存在时生成并由 production loader、detached SHA 和 chronology gate 验证。当前状态为 **Task 8 complete / awaiting explicit formal-7k authorization**；C1、阶段 tag、正式 7k、30k 与 Supporting 均未启动。下一步仅在用户明确授权后按 confirmation 中冻结的 argv 启动 Task 9 formal 7k。
 
 **2026-09-17 exploratory inventory clarification（APPROVED）：** 正式 `required_artifacts()` 继续冻结为 3000/7000 + timeline 的 108 项；显式 `--exploratory --iterations 500` 使用独立 55 项 inventory，仅含 iteration 500 的 field PLY、固定三视角 PNG/GT overlay、`iteration_000500` metrics 及 base JSON，不含 timeline，不伪造正式迭代，`g1_evaluable/g1_pass=null`。该选择只解决既有 500 smoke 与正式 inventory 的实现冲突，不改变正式 G1 门。
 
@@ -811,5 +811,5 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Approach A selected and specified: fixed soft half-saturation for count and angle, unchanged geometric mean/N/G1.
 - [x] `docs/superpowers/plans/2026-09-28-observation-sufficiency-soft-calibration.md` 已获用户批准；Tasks 1–6 已完成逐项 RED→GREEN、自审修复与 exact-commit AutoDL CPU/CUDA qualification。
 - [x] Task 7：新路径 Tool Room/r2/seed0 500-step/refresh-100 shadow smoke 在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 完成；五次 refresh、Evidence v4、finite、checkpoint/snapshot join、optimizer step 499、no-GT、输入哈希与训练隔离全部 PASS，`real_topology_evidence=NO`。
-- [ ] Task 8：准备并冻结 formal-7k confirmation JSON 与 detached SHA；本步骤不得创建 formal run/view 或启动训练，正式 7k 仍需另行授权。
+- [x] Task 8：formal-7k confirmation JSON 与 detached SHA 已冻结并通过 production load/digest/chronology 审计；未创建 formal run/view，未启动训练。正式 7k 仍需另行授权。
 - [ ] C2 blocker: separately instrument or otherwise reconstruct refresh-time geometry stability/EMA lineage before changing geometry reliability. Current recomputed multiview, depth-normal, and support components must remain unchanged absent contrary evidence.

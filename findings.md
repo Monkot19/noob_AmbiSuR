@@ -397,3 +397,11 @@
 - Canonical dataset and aligned-prior SHA256 values were unchanged before/after; logs and metadata contained zero error, nonfinite, or GT references. Only `shadow_diagnostics` was enabled, Git was clean, and no training process remained.
 - Evidence boundary: every point count stayed 200,000 because the smoke ends before first densification at 600. Therefore `real_topology_evidence=NO`; topology remains covered synthetically here and must be confirmed by changing counts plus checkpoint/snapshot alignment in the later formal 7k.
 - Two pre-training wrapper faults were operational only and caused no partial run: one transient Git remote-ref compare-and-swap race, followed by incorrect preflight directory names `depth/conf` instead of the production loader's `estimated_depths/estimated_confs`. Read-only audits established both causes before the corrected launch; no run/view/state path existed after either failure.
+
+## 2026-09-28 Soft Calibration Formal Confirmation Freeze
+
+- The first production-helper attempt failed before writing any record because the validator incorrectly expected `core.d0_refresh_interval`; the real `build_resolved_config()` contract stores this optimization argument at `optimization.d0_refresh_interval`.
+- Minimal fix `815ccb8700e4aad4a2dbecf5959d0b9c54a17126` aligned the validator with the production config and passed AutoDL 40/40 focused formal-contract tests, 269/269 full discovery, 8/8 explicit CUDA tests, compile/diff/clean/no-training gates.
+- Formal confirmation `d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1` was written before any run/view/output target existed. Production reload and detached checksum both accepted canonical SHA256 `074ee091cf71e21b7a9f49256bf3bbdbc4b83a62babba557ee714d9fa42f0bf0`.
+- The record freezes exact commit `815ccb8700e4aad4a2dbecf5959d0b9c54a17126`, Tool Room/r2/seed0, 7000 iterations, refresh/evaluation 1000--7000, checkpoints/G1 at 3000/7000, unchanged G1 thresholds, and canonical dataset/prior/GT hashes. GT appears only in the offline-evaluation section.
+- Chronology audit ended with `run_created=NO`, `view_created=NO`, and `formal_training_started=NO`; Task 9 formal GPU work remains behind a separate explicit user authorization.
