@@ -191,6 +191,25 @@ class G1OrchestrationTests(unittest.TestCase):
                 patch.object(evaluator, "_git_head", return_value="a" * 40),
                 patch.object(
                     evaluator,
+                    "load_confirmation_record",
+                    return_value={"confirmation_id": args.confirmation_id},
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "validate_formal_admission",
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
+                    "load_g1_iteration",
+                    side_effect=lambda _run, iteration, **_kwargs: (
+                        SimpleNamespace(iteration=iteration)
+                    ),
+                    create=True,
+                ),
+                patch.object(
+                    evaluator,
                     "produce_formal_3000_7000",
                     side_effect=produce,
                     create=True,
@@ -254,25 +273,6 @@ class G1OrchestrationTests(unittest.TestCase):
 
             with (
                 patch.object(evaluator, "_git_head", return_value="a" * 40),
-                patch.object(
-                    evaluator,
-                    "load_confirmation_record",
-                    return_value={"confirmation_id": args.confirmation_id},
-                    create=True,
-                ),
-                patch.object(
-                    evaluator,
-                    "validate_formal_admission",
-                    create=True,
-                ),
-                patch.object(
-                    evaluator,
-                    "load_g1_iteration",
-                    side_effect=lambda _run, iteration, **_kwargs: (
-                        SimpleNamespace(iteration=iteration)
-                    ),
-                    create=True,
-                ),
                 patch.object(
                     evaluator,
                     "produce_formal_3000_7000",
