@@ -12,7 +12,7 @@ Preserve the scientific claim that external-prior need depends on both appearanc
 N_i=1-S_i(1-A_i).
 \]
 
-Success is not defined by improving Tool Room after tuning against its GT. Success first means implementing the selected fixed calibration exactly and preserving all isolation contracts. Scientific promotion still requires the unchanged formal G1 gate on a new preregistered run.
+Success is not defined by improving Tool Room after tuning against its GT. Success first means implementing the selected fixed calibration exactly and preserving all isolation contracts. A new preregistered Tool Room r2/seed-0 run must still pass the unchanged formal G1 gate before work may proceed to the written C1 specification and implementation plan. That single-scene gate is an internal mechanism gate only: it is not evidence of method validity or generalization. The E3 protocol still requires Tool Room and Utility Room with the prescribed multiple seeds, and a positive Tool Room seed-0 result cannot waive or replace that evaluation.
 
 ## Evidence trigger
 
@@ -96,6 +96,16 @@ The evidence tensor inventory does not change, but the persisted `S` EMA now has
 
 `D0ShadowRuntime.STATE_VERSION` and the event/snapshot schemas need not change because their structures and meanings outside the nested evidence state are unchanged. The nested evidence-version check provides the fail-closed resume boundary. Old formal runs remain immutable and readable by offline evaluators; they are not resumable or promotable under the new calibration.
 
+The same distinction must be enforced at the formal-evaluation boundary, not merely documented. Before a non-exploratory new-calibration G1 evaluation computes a decision or publishes a formal bundle, the evaluator must:
+
+- load both iteration-3000 and iteration-7000 checkpoints through the versioned Core checkpoint parser and require `core_state.evidence.version == 4` in each;
+- require the run identity, resolved configuration, seed, resolution, exact training command, dataset SHA, aligned-prior SHA, formal checkpoint/evaluation iterations, and output confirmation ID to match one immutable preregistration record;
+- require the exact training commit in the run identity to match the formula commit frozen by that record;
+- verify the record against its separately frozen expected SHA256 (stored in a detached sidecar or supplied as an immutable launch input) before trusting any of its fields; and
+- fail before formal publication if any identity, version, or fingerprint differs.
+
+A version-3 asset may still be opened for explicit read-only or exploratory diagnosis. It must never produce a new-calibration formal PASS: formal mode must reject it, while exploratory mode must keep `g1_pass` and every promotion decision null.
+
 Every new experiment remains identified by exact commit, resolved configuration, run identity, seed, dataset hash, and a fresh output path. No old checkpoint, snapshot, report, or tag may be overwritten or relabelled.
 
 ## Implementation boundary
@@ -122,16 +132,19 @@ Any violation fails closed. The implementation must not silently restore the old
 
 Implementation must begin with failing tests for hand-checked values and state compatibility. The minimum test contract is:
 
-1. exact count anchors: `M=0 -> 0`, `M=5 -> 0.5`, and `M=10 -> 2/3`;
-2. exact angular anchors: `D=0 -> 0` and `D=D_c -> 0.5`;
+1. mathematically hand-checked count anchors `M=0 -> 0`, `M=5 -> 0.5`, and `M=10 -> 2/3`, compared with the existing dtype-appropriate numeric tolerance; values such as 0 and 0.5 may additionally require exact equality when the active dtype represents them exactly;
+2. mathematically hand-checked angular anchors `D=0 -> 0` and `D=D_c -> 0.5`, under the same tolerance and exact-representability rule;
 3. monotonicity and boundedness over representative finite counts and dispersions;
 4. no hard plateau for distinct valid inputs that the former caps mapped to 1;
 5. unchanged geometric-mean composition and `N=1-S(1-A)`;
 6. chunked versus unchunked equality within the existing numeric tolerance;
 7. dtype/device/no-grad preservation on CPU and CUDA;
-8. evidence state version-4 round trip and explicit rejection of version 3;
-9. topology migration and temporal diagnostics remain unchanged;
-10. feature-off dispatch and behavioral G0 tests remain unchanged.
+8. evidence state version-4 round trip and explicit rejection of version 3 for resume;
+9. synthetic CPU and CUDA topology-migration regression, including state reset/inheritance and version-4 checkpoint/snapshot alignment, without claiming that a pre-densification smoke exercised real topology change;
+10. non-exploratory formal G1 rejection when either the iteration-3000 or iteration-7000 checkpoint is version 3, when the two versions differ, or when either checkpoint cannot be parsed through the versioned Core state contract;
+11. canonical confirmation-record generation rejects pre-existing run/view/report/archive/output targets, writes the record before training, emits a detached SHA256, and detects any later record mutation;
+12. formal G1 fail-closed rejection before publication for a wrong commit, config, seed, resolution, command, dataset/prior SHA, iteration protocol, confirmation ID, or confirmation-record SHA; version-3 exploratory diagnosis remains readable but cannot emit a formal decision;
+13. feature-off dispatch and behavioral G0 tests remain unchanged.
 
 Before any cloud experiment, run CPU tests, static compilation, focused CUDA tests, and a clean-worktree/no-active-training preflight.
 
@@ -140,10 +153,11 @@ Before any cloud experiment, run CPU tests, static compilation, focused CUDA tes
 The sequence is fixed to avoid parameter fishing:
 
 1. Implement the single selected formula with TDD. Do not test alternative constants or transformations against GT.
-2. Run a short Tool Room r2/seed-0 500-step D0 shadow smoke with five refreshes. Audit state version 4, finite values, topology migration, checkpoint round trip, no GT references, and training isolation.
-3. If the smoke passes, run one new Tool Room r2/seed-0 7000 formal D0 shadow trajectory with the same refresh/checkpoint protocol used by formal-v2. The previous formal-v2 run remains read-only.
-4. Run the unchanged formal G1 evaluator at iterations 3000 and 7000. Iteration 7000 remains the only decision point.
-5. Report the result whether it passes or fails. Do not modify constants after observing it.
+2. Run a short Tool Room r2/seed-0 500-step D0 shadow smoke with five refreshes. Audit version-4 state and checkpoint round trips, finite values, no GT references, and training isolation. This run ends before the first real densification at iteration 600 and therefore supplies no real-topology-migration evidence.
+3. Before creating the formal run, freeze an immutable confirmation/preflight record. It must contain the exact formula commit; the fixed equations and `K_c=5`, `theta_c=30 degrees`; seed, resolution, and exact training command; dataset and aligned-prior SHA256; the 3000/7000 checkpoint and evaluation protocol; the new confirmation ID and proof that its run, view, report, archive, and output paths are absent; and the unchanged G1 thresholds. After canonical serialization, compute its SHA256 into a detached sidecar and record that expected digest in the launch log. The record and detached digest are inputs to formal evaluation, not after-the-fact annotations.
+4. If the smoke and preregistration gates pass, run one new Tool Room r2/seed-0 7000 formal D0 shadow trajectory with the same refresh/checkpoint protocol used by formal-v2. The previous formal-v2 run remains read-only. Audit the real point-count changes and require iteration-matched checkpoint/snapshot row alignment across the actual topology-changing trajectory.
+5. Run the unchanged G1 metric computation at iterations 3000 and 7000, with iteration 7000 as the only decision point, but require the new formal-admission checks above before metric evaluation and atomic publication.
+6. Report the result whether it passes or fails. Do not modify constants after observing it.
 
 The unchanged hard G1 requirements remain:
 
@@ -158,7 +172,7 @@ and
 \max\{\operatorname{AUROC}(A),\operatorname{AUROC}(1-S)\}\ge0.03.
 \]
 
-A pass authorizes the existing C1 planning gate, not C1 execution by itself. A failure stops C1 and is recorded as evidence against this fixed operationalization; it does not authorize another same-scene calibration search.
+A pass authorizes only the existing written C1 specification and implementation-planning gate, not C1 execution by itself and not a scientific claim of effectiveness or generalization. Utility Room and the required multiple seeds remain mandatory under E3 and cannot be skipped because Tool Room seed 0 passes. A failure stops C1 and is recorded as evidence against this fixed operationalization; it does not authorize another same-scene calibration search.
 
 ## Completion criteria
 
@@ -167,7 +181,11 @@ This design is complete only when:
 - the written specification and implementation plan are separately approved;
 - the RED-GREEN test history is preserved in separate commits;
 - local and AutoDL verification pass on exact commits;
-- the 500-step smoke passes all isolation and state audits;
+- the 500-step smoke passes its five-refresh, version-4 round-trip, finite-value, no-GT, and training-isolation audits without being cited as real-topology evidence;
+- synthetic topology migration passes on CPU/CUDA, and the new 7k run demonstrates real topology changes with exact iteration-matched checkpoint/snapshot alignment;
+- a pre-run confirmation record freezes the exact commit, equations/constants, seed, resolution, command, input hashes, 3000/7000 protocol, absent output paths, and G1 gates, with a separately frozen and verified SHA256;
+- formal admission rejects version-3 or mixed-version checkpoints and every mismatch against that confirmation record before publication;
 - the new formal 7k run and unchanged formal G1 evaluation are published immutably;
 - the result is recorded without changing the preregistered gate;
+- any Tool Room seed-0 PASS is reported only as authorization to draft the C1 specification/plan, while Utility Room and multi-seed E3 obligations remain explicit;
 - no C1, C2, Supporting feature, or lifecycle code is introduced under this task.

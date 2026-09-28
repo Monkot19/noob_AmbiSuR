@@ -405,4 +405,6 @@
 - [x] Corrected artifact audit passed: four-file inventory, manifest hashes, frozen provenance, 1,424,279 centers, zero rejected centers, and `multi_view` immutable fingerprint all verified.
 - [ ] User review of the written soft half-saturation specification remains required. No implementation or implementation-plan authorization yet.
 - [x] User selected soft half-saturation approach A on 2026-09-28; written architectural specification added for review. Implementation has not started.
+- [x] First specification review verified and incorporated: formal G1 now requires both checkpoints at evidence version 4 plus an exact preregistration identity; the 500-step smoke no longer claims real topology migration; numeric anchors are tolerance-aware; Tool Room seed 0 is only an internal C1-specification/planning gate; and the formal 7k requires a pre-run confirmation record with a detached frozen SHA256.
+- [ ] Revised soft half-saturation specification awaits user re-review. Implementation planning and implementation remain not started.
 - [ ] Track the historical `T_g/r_g` reversal as a separate pre-C2 temporal reliability diagnostic; do not fold it into the C1 sufficiency change.

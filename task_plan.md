@@ -803,10 +803,10 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] `S` saturation root symptom established: count normalization is saturated for 95% of rows and angle normalization is at/near cap for at least half of rows.
 - [x] Historical snapshot/checkpoint `V_p/V_g`, hashes, and loaded CUDA extension identity reconciled; the original all-zero recomputation was not accepted as method evidence.
 - [x] Minimal transport and camera-pair probes isolated the empty offline neighbor graph; the strict frozen-neighbor restoration fix passed TDD and corrected real-data audit.
-- [ ] Review and approve exactly one written `S` recalibration specification based on the corrected frozen report. Keep formal G1 unchanged; C1 remains blocked.
+- [ ] Re-review and approve exactly one written `S` recalibration specification based on the corrected frozen report. Keep formal G1 metrics unchanged; add fail-closed version-4/preregistration admission checks; C1 remains blocked.
 - [x] Runtime boundary isolated: snapshot/checkpoint validity is high, CUDA constant transport works, and offline cameras have empty `nearest_id` because `_load_render_runtime()` bypasses `Scene` neighbor construction/restoration.
 - [x] Bounded TDD fix implemented locally: strict name-based `multi_view.json` restoration plus required-input and immutable-fingerprint coverage; training/runtime formulas remain untouched.
 - [x] Exact commit qualified on AutoDL and the lightweight iteration-7000 component diagnostic rerun completed with integrity audit PASS; no 7k or formal-G1 rerun occurred.
 - [ ] C1 path: user must approve the written soft half-saturation specification; only then may an implementation plan be written and separately approved before TDD implementation.
-- [x] Approach A selected: fixed soft half-saturation for count and angle, unchanged geometric mean/N/G1. Written specification awaits user review; no implementation-plan or code authorization yet.
+- [x] Approach A selected: fixed soft half-saturation for count and angle, unchanged geometric mean/N/G1. First review's bounded contract gaps have been incorporated without changing the formula; revised specification awaits user re-review, with no implementation-plan or code authorization yet.
 - [ ] C2 blocker: separately instrument or otherwise reconstruct refresh-time geometry stability/EMA lineage before changing geometry reliability. Current recomputed multiview, depth-normal, and support components must remain unchanged absent contrary evidence.
