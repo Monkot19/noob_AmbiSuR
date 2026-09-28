@@ -18,10 +18,23 @@ if __package__ in (None, ""):
     if repository_root not in sys.path:
         sys.path.insert(0, repository_root)
 
+from reliability.g1_confirmation import (
+    load_confirmation_record,
+    validate_formal_admission,
+)
+
 
 FORMAL_ITERATIONS = (3000, 7000)
 EXPLORATORY_ITERATIONS = (500,)
 TIMELINE_ITERATIONS = tuple(range(1000, 7001, 1000))
+FORMAL_EVIDENCE_VERSION = 4
+
+
+def load_g1_iteration(run_dir, iteration, **kwargs):
+    """Load one joined checkpoint/snapshot without importing Torch for CLI help."""
+    from reliability.offline_g1 import load_g1_iteration as implementation
+
+    return implementation(run_dir, iteration, **kwargs)
 
 
 def _resolved(path):
@@ -612,6 +625,8 @@ def produce_formal_3000_7000(
     run_dir,
     source_root,
     gt_mesh,
+    admitted_inputs,
+    formal_admission,
     provenance=None,
     input_fingerprints=None,
 ):
@@ -630,14 +645,17 @@ def produce_formal_3000_7000(
         write_gt_overlay,
         write_metric_figures,
     )
-    from reliability.offline_g1 import load_g1_iteration, load_valid_mesh
+    from reliability.offline_g1 import load_valid_mesh
 
     staging = Path(staging)
+    admitted_inputs = dict(admitted_inputs)
+    if set(admitted_inputs) != set(FORMAL_ITERATIONS):
+        raise ValueError("formal admitted iteration set mismatch")
     mesh = load_valid_mesh(gt_mesh)
     iteration_reports = {}
     iteration_inputs = {}
     for iteration in FORMAL_ITERATIONS:
-        joined = load_g1_iteration(run_dir, iteration)
+        joined = admitted_inputs[iteration]
         evaluation = evaluate_iteration(joined, mesh)
         colors_by_field = _field_colors(evaluation)
         root = staging / f"iteration_{iteration:06d}"
@@ -719,6 +737,8 @@ def produce_formal_3000_7000(
     report = {
         "schema_version": 1,
         "exploratory": False,
+        "provenance": dict(provenance or {}),
+        "formal_admission": dict(formal_admission),
         "evaluated_iterations": list(FORMAL_ITERATIONS),
         "decision_iteration": 7000,
         "g1_evaluable": decision["g1_evaluable"],
@@ -740,6 +760,7 @@ def produce_formal_3000_7000(
             "exploratory": False,
             "iterations": list(FORMAL_ITERATIONS),
             "provenance": dict(provenance or {}),
+            "formal_admission": dict(formal_admission),
             "input_fingerprints": dict(input_fingerprints or {}),
             "iteration_inputs": iteration_inputs,
         },
@@ -776,6 +797,8 @@ def run_evaluator(args):
         expected_gt_sha=args.expected_gt_sha,
     )
     evidence = run_dir / "d0_evidence"
+    admitted_inputs = None
+    formal_admission = None
     if args.exploratory:
         immutable = {
             "checkpoint_500": run_dir / "chkpnt500.pth",
@@ -785,9 +808,69 @@ def run_evaluator(args):
             "gt_mesh": gt_mesh,
         }
     else:
+        confirmation_contract = getattr(args, "confirmation_contract", None)
+        expected_confirmation_sha = getattr(
+            args, "expected_confirmation_sha", None
+        )
+        expected_prior_sha = getattr(args, "expected_prior_sha", None)
+        missing = [
+            name
+            for name, value in (
+                ("confirmation contract", confirmation_contract),
+                ("expected confirmation SHA256", expected_confirmation_sha),
+                ("expected prior SHA256", expected_prior_sha),
+            )
+            if not value
+        ]
+        if missing:
+            raise ValueError(
+                "formal confirmation arguments are required: "
+                + ", ".join(missing)
+            )
+        confirmation_contract = _resolved(confirmation_contract)
+        confirmation_sidecar = Path(f"{confirmation_contract}.sha256")
+        confirmation = load_confirmation_record(
+            confirmation_contract, expected_confirmation_sha
+        )
+        validate_formal_admission(
+            confirmation,
+            run_dir=run_dir,
+            confirmation_id=args.confirmation_id,
+            evaluator_commit=commit,
+            dataset_sha256=dataset_sha,
+            prior_sha256=expected_prior_sha,
+            gt_sha256=gt_sha,
+        )
+        admitted_inputs = {
+            iteration: load_g1_iteration(
+                run_dir,
+                iteration,
+                expected_evidence_version=FORMAL_EVIDENCE_VERSION,
+            )
+            for iteration in FORMAL_ITERATIONS
+        }
+        if set(admitted_inputs) != set(FORMAL_ITERATIONS):
+            raise ValueError("formal admitted iteration set mismatch")
+        formal_admission = {
+            "confirmation_id": args.confirmation_id,
+            "confirmation_sha256": expected_confirmation_sha,
+            "evidence_version": FORMAL_EVIDENCE_VERSION,
+            "formula_commit": confirmation.get("formula_commit"),
+        }
         immutable = {
             "checkpoint_3000": run_dir / "chkpnt3000.pth",
             "checkpoint_7000": run_dir / "chkpnt7000.pth",
+            "confirmation_contract": confirmation_contract,
+            "confirmation_sha256": confirmation_sidecar,
+            "run_identity": run_dir / "run_identity.json",
+            "dataset_manifest_before": (
+                run_dir / "dataset_manifest_before.sha256"
+            ),
+            "dataset_manifest_after": (
+                run_dir / "dataset_manifest_after.sha256"
+            ),
+            "aligned_prior_before": run_dir / "aligned_prior_before.sha256",
+            "aligned_prior_after": run_dir / "aligned_prior_after.sha256",
             "events": evidence / "events.jsonl",
             "resolved_config": run_dir / "resolved_config.json",
             "source_root": source_root,
@@ -806,6 +889,13 @@ def run_evaluator(args):
         "dataset_sha256": dataset_sha,
         "gt_mesh_sha256": gt_sha,
     }
+    if formal_admission is not None:
+        provenance.update(
+            aligned_prior_sha256=args.expected_prior_sha,
+            confirmation_id=formal_admission["confirmation_id"],
+            confirmation_sha256=formal_admission["confirmation_sha256"],
+            evidence_version=formal_admission["evidence_version"],
+        )
     input_fingerprints = fingerprint_inputs(immutable)
     required = required_artifacts(
         iterations=iterations, exploratory=args.exploratory
@@ -813,19 +903,24 @@ def run_evaluator(args):
     report_box = {}
 
     def producer(staging):
-        produce = (
-            produce_exploratory_500
-            if args.exploratory
-            else produce_formal_3000_7000
-        )
-        report_box["report"] = produce(
-            staging,
-            run_dir=run_dir,
-            source_root=source_root,
-            gt_mesh=gt_mesh,
-            provenance=provenance,
-            input_fingerprints=input_fingerprints,
-        )
+        common = {
+            "run_dir": run_dir,
+            "source_root": source_root,
+            "gt_mesh": gt_mesh,
+            "provenance": provenance,
+            "input_fingerprints": input_fingerprints,
+        }
+        if args.exploratory:
+            report_box["report"] = produce_exploratory_500(
+                staging, **common
+            )
+        else:
+            report_box["report"] = produce_formal_3000_7000(
+                staging,
+                admitted_inputs=admitted_inputs,
+                formal_admission=formal_admission,
+                **common,
+            )
 
     publication = publish_atomically(
         output_root,
@@ -850,6 +945,9 @@ def build_parser():
     parser.add_argument("--expected-commit", required=True)
     parser.add_argument("--expected-dataset-sha", required=True)
     parser.add_argument("--expected-gt-sha", required=True)
+    parser.add_argument("--expected-prior-sha")
+    parser.add_argument("--confirmation-contract")
+    parser.add_argument("--expected-confirmation-sha")
     parser.add_argument("--exploratory", action="store_true")
     return parser
 
