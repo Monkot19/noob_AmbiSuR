@@ -57,11 +57,14 @@ def resolved_config():
         "schema_version": 1,
         "training_path": "core",
         "model": {"resolution": 2},
-        "optimization": {"iterations": 7000, "seed": 0},
+        "optimization": {
+            "iterations": 7000,
+            "seed": 0,
+            "d0_refresh_interval": 1000,
+        },
         "core": {
             "seed": 0,
             "core_shadow_mode": True,
-            "d0_refresh_interval": 1000,
             "enabled_features": ["shadow_diagnostics"],
         },
     }
@@ -255,7 +258,7 @@ class G1ConfirmationTests(unittest.TestCase):
                 (("optimization", "iterations"), 6999),
                 (("optimization", "seed"), 1),
                 (("core", "seed"), 1),
-                (("core", "d0_refresh_interval"), 500),
+                (("optimization", "d0_refresh_interval"), 500),
             ):
                 with self.subTest(config_keys=keys):
                     kwargs = confirmation_kwargs(root / "-".join(keys))
@@ -406,7 +409,12 @@ class G1ConfirmationTests(unittest.TestCase):
             ("config_seed", "resolved_config.json", ("optimization", "seed"), 1),
             ("core_seed", "resolved_config.json", ("core", "seed"), 1),
             ("core_mode", "resolved_config.json", ("core", "core_shadow_mode"), False),
-            ("refresh", "resolved_config.json", ("core", "d0_refresh_interval"), 500),
+            (
+                "refresh",
+                "resolved_config.json",
+                ("optimization", "d0_refresh_interval"),
+                500,
+            ),
             ("features", "resolved_config.json", ("core", "enabled_features"), []),
             ("dataset_before", "dataset_manifest_before.sha256", (), "0" * 64),
             ("dataset_after", "dataset_manifest_after.sha256", (), "0" * 64),

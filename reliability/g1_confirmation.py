@@ -145,7 +145,10 @@ def _validate_resolved_config(training):
         (("optimization", "seed"), training["seed"]),
         (("core", "seed"), training["seed"]),
         (("core", "core_shadow_mode"), True),
-        (("core", "d0_refresh_interval"), training["refresh_interval"]),
+        (
+            ("optimization", "d0_refresh_interval"),
+            training["refresh_interval"],
+        ),
         (("core", "enabled_features"), ["shadow_diagnostics"]),
     )
     if config.get("training_path") != "core":
