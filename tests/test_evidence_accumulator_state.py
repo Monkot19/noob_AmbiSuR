@@ -280,7 +280,7 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
 
         restored.load_state_dict(state)
 
-        self.assertEqual(state["version"], 3)
+        self.assertEqual(state["version"], 4)
         self.assertIn("temporal_transition_diagnostics", state)
         torch.testing.assert_close(
             restored.transition_diagnostics.stable_age_refreshes,
@@ -294,6 +294,18 @@ class EvidenceAccumulatorStateTests(unittest.TestCase):
             restored.transition_diagnostics.previous_stable,
             accumulator.transition_diagnostics.previous_stable,
         )
+
+    def test_version_three_state_cannot_resume_under_soft_calibration(self):
+        accumulator = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+        accumulator.refresh(self.inputs())
+        legacy_state = accumulator.state_dict()
+        legacy_state["version"] = 3
+        restored = EvidenceAccumulator(2, cfg=self.cfg, device="cpu")
+
+        with self.assertRaisesRegex(
+            ValueError, "unsupported evidence state version"
+        ):
+            restored.load_state_dict(legacy_state)
 
     def test_refresh_contract_has_no_gt_or_mesh_input(self):
         names = set(inspect.signature(EvidenceAccumulator.refresh).parameters)

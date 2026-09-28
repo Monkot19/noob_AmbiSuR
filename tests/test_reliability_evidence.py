@@ -39,6 +39,22 @@ class EMAStateTests(unittest.TestCase):
 
 
 class ObservationEvidenceTests(unittest.TestCase):
+    @staticmethod
+    def _sufficiency_for_pair(angle_degrees, *, dtype=torch.float64):
+        angle = math.radians(angle_degrees)
+        pixel_hits = torch.ones(2, 1, dtype=torch.int32)
+        camera_centers = torch.tensor(
+            [
+                [1.0, 0.0, 0.0],
+                [math.cos(angle), math.sin(angle), 0.0],
+            ],
+            dtype=dtype,
+        )
+        gaussian_centers = torch.zeros(1, 3, dtype=dtype)
+        return compute_observation_sufficiency(
+            pixel_hits, camera_centers, gaussian_centers
+        )
+
     def test_active_non_dc_uses_dynamic_sh_degree(self):
         coefficients = torch.ones(2, 15, 3)
 
@@ -78,9 +94,133 @@ class ObservationEvidenceTests(unittest.TestCase):
         )
 
         self.assertEqual(result.M_obs.item(), 2)
-        torch.testing.assert_close(result.S_count, torch.tensor([0.4]))
-        torch.testing.assert_close(result.S_angle, torch.tensor([1.0]))
-        torch.testing.assert_close(result.S, torch.tensor([math.sqrt(0.4)]))
+        d_c = (1.0 - math.cos(math.radians(30.0))) / 2.0
+        expected_count = torch.tensor([2.0 / 7.0])
+        expected_angle = torch.tensor([1.0 / (1.0 + d_c)])
+        torch.testing.assert_close(result.S_count, expected_count)
+        torch.testing.assert_close(result.S_angle, expected_angle)
+        torch.testing.assert_close(
+            result.S, (expected_count * expected_angle).sqrt()
+        )
+
+    def test_soft_count_uses_hand_checked_half_saturation_anchors(self):
+        for view_count_value, expected in ((0, 0.0), (5, 0.5), (10, 2.0 / 3.0)):
+            with self.subTest(view_count=view_count_value):
+                pixel_hits = torch.ones(
+                    view_count_value, 1, dtype=torch.int32
+                )
+                camera_centers = torch.tensor(
+                    [[1.0, 0.0, 0.0]] * view_count_value,
+                    dtype=torch.float64,
+                ).reshape(view_count_value, 3)
+                result = compute_observation_sufficiency(
+                    pixel_hits,
+                    camera_centers,
+                    torch.zeros(1, 3, dtype=torch.float64),
+                )
+
+                torch.testing.assert_close(
+                    result.S_count,
+                    torch.tensor([expected], dtype=torch.float64),
+                    rtol=1e-12,
+                    atol=1e-12,
+                )
+
+    def test_soft_angle_uses_hand_checked_half_saturation_anchors(self):
+        zero = self._sufficiency_for_pair(0.0)
+        half = self._sufficiency_for_pair(30.0)
+
+        torch.testing.assert_close(
+            zero.S_angle,
+            torch.tensor([0.0], dtype=torch.float64),
+            rtol=0.0,
+            atol=1e-12,
+        )
+        torch.testing.assert_close(
+            half.S_angle,
+            torch.tensor([0.5], dtype=torch.float64),
+            rtol=1e-12,
+            atol=1e-12,
+        )
+
+    def test_soft_scores_remain_strictly_below_one_without_old_plateaus(self):
+        count_scores = []
+        for view_count_value in (5, 10):
+            result = compute_observation_sufficiency(
+                torch.ones(view_count_value, 1, dtype=torch.int32),
+                torch.tensor(
+                    [[1.0, 0.0, 0.0]] * view_count_value,
+                    dtype=torch.float64,
+                ),
+                torch.zeros(1, 3, dtype=torch.float64),
+            )
+            count_scores.append(result.S_count.item())
+
+        angle_at_half = self._sufficiency_for_pair(30.0).S_angle.item()
+        angle_at_maximum = self._sufficiency_for_pair(180.0).S_angle.item()
+
+        self.assertLess(count_scores[0], count_scores[1])
+        self.assertLess(count_scores[1], 1.0)
+        self.assertLess(angle_at_half, angle_at_maximum)
+        self.assertLess(angle_at_maximum, 1.0)
+
+    def test_soft_sufficiency_and_need_follow_frozen_composition(self):
+        result = self._sufficiency_for_pair(30.0)
+        expected_s = torch.tensor(
+            [math.sqrt((2.0 / 7.0) * 0.5)], dtype=torch.float64
+        )
+        ambiguity = torch.tensor([0.25], dtype=torch.float64)
+
+        torch.testing.assert_close(
+            result.S, expected_s, rtol=1e-12, atol=1e-12
+        )
+        torch.testing.assert_close(
+            compute_need(ambiguity, result.S),
+            1.0 - expected_s * (1.0 - ambiguity),
+            rtol=1e-12,
+            atol=1e-12,
+        )
+
+    def test_soft_sufficiency_rejects_nonfinite_or_out_of_domain_constants(self):
+        hits = torch.ones(2, 1, dtype=torch.int32)
+        cameras = torch.tensor(
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+        )
+        centers = torch.zeros(1, 3)
+
+        for value in (0.0, -1.0, math.nan, math.inf):
+            with self.subTest(k_c=value):
+                with self.assertRaisesRegex(ValueError, "k_c"):
+                    compute_observation_sufficiency(
+                        hits, cameras, centers, k_c=value
+                    )
+        for value in (0.0, -1.0, 180.0, math.nan, math.inf):
+            with self.subTest(theta_c_degrees=value):
+                with self.assertRaisesRegex(ValueError, "theta_c_degrees"):
+                    compute_observation_sufficiency(
+                        hits,
+                        cameras,
+                        centers,
+                        theta_c_degrees=value,
+                    )
+
+    def test_empty_point_domain_preserves_dtype_device_and_no_grad(self):
+        result = compute_observation_sufficiency(
+            torch.empty((2, 0), dtype=torch.int32),
+            torch.tensor(
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+                dtype=torch.float64,
+            ),
+            torch.empty((0, 3), dtype=torch.float64, requires_grad=True),
+        )
+
+        self.assertEqual(result.M_obs.shape, (0,))
+        self.assertEqual(result.M_obs.dtype, torch.int64)
+        for value in (result.S_count, result.S_angle, result.S):
+            self.assertEqual(value.shape, (0,))
+            self.assertEqual(value.dtype, torch.float64)
+            self.assertEqual(value.device.type, "cpu")
+            self.assertFalse(value.requires_grad)
 
     def test_repeated_view_direction_has_zero_sufficiency(self):
         pixel_hits = torch.ones(5, 1, dtype=torch.int32)
@@ -93,7 +233,7 @@ class ObservationEvidenceTests(unittest.TestCase):
             pixel_hits, camera_centers, gaussian_centers
         )
 
-        torch.testing.assert_close(result.S_count, torch.ones(1))
+        torch.testing.assert_close(result.S_count, torch.full((1,), 0.5))
         torch.testing.assert_close(result.S_angle, torch.zeros(1), atol=1e-6, rtol=0)
         torch.testing.assert_close(result.S, torch.zeros(1), atol=1e-6, rtol=0)
 
