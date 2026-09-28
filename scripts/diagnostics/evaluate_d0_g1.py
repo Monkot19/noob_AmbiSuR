@@ -840,6 +840,9 @@ def run_evaluator(args):
             dataset_sha256=dataset_sha,
             prior_sha256=expected_prior_sha,
             gt_sha256=gt_sha,
+            report_path=output_root / args.confirmation_id / "report.json",
+            output_dir=output_root / args.confirmation_id,
+            archive_path=output_root / f"{args.confirmation_id}.tar.gz",
         )
         admitted_inputs = {
             iteration: load_g1_iteration(

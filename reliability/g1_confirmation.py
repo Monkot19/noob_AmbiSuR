@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 from typing import Mapping
 
@@ -87,11 +87,75 @@ def _contains_gt_reference(value):
     return "gt_mesh" in serialized or '"gt"' in serialized or "/gt/" in serialized
 
 
-def _argument_value(argv, flag):
+def _argument_values(argv, flag):
     positions = [index for index, value in enumerate(argv) if value == flag]
-    if len(positions) != 1 or positions[0] + 1 >= len(argv):
+    if len(positions) != 1:
         raise ValueError(f"training argv must contain exactly one {flag}")
-    return argv[positions[0] + 1]
+    values = []
+    index = positions[0] + 1
+    while index < len(argv) and not argv[index].startswith("-"):
+        values.append(argv[index])
+        index += 1
+    return values
+
+
+def _validate_training_command(training, targets):
+    argv = training["argv"]
+    if (
+        len(argv) < 2
+        or not (
+            Path(argv[0]).is_absolute()
+            or PurePosixPath(argv[0]).is_absolute()
+        )
+        or "python" not in Path(argv[0]).name.lower()
+        or Path(argv[1]).name != "train.py"
+    ):
+        raise ValueError("training argv prefix mismatch")
+    expected = {
+        "--source_path": [targets["view_dir"]["path"]],
+        "--model_path": [targets["run_dir"]["path"]],
+        "-r": [str(training["resolution"])],
+        "--iterations": [str(training["iterations"])],
+        "--seed": [str(training["seed"])],
+        "--core_shadow_mode": [],
+        "--d0_refresh_interval": [str(training["refresh_interval"])],
+        "--test_iterations": [
+            str(value) for value in training["evaluation_iterations"]
+        ],
+        "--save_iterations": [
+            str(value) for value in training["save_iterations"]
+        ],
+        "--checkpoint_iterations": [
+            str(value) for value in training["checkpoint_iterations"]
+        ],
+    }
+    actual_flags = [value for value in argv[2:] if value.startswith("-")]
+    if actual_flags != list(expected):
+        raise ValueError("training argv flag set or order mismatch")
+    for flag, expected_values in expected.items():
+        if _argument_values(argv, flag) != expected_values:
+            raise ValueError(f"training argv values mismatch: {flag}")
+
+
+def _validate_resolved_config(training):
+    config = training["resolved_config"]
+    expected = (
+        (("model", "resolution"), training["resolution"]),
+        (("optimization", "iterations"), training["iterations"]),
+        (("optimization", "seed"), training["seed"]),
+        (("core", "seed"), training["seed"]),
+        (("core", "core_shadow_mode"), True),
+        (("core", "d0_refresh_interval"), training["refresh_interval"]),
+        (("core", "enabled_features"), ["shadow_diagnostics"]),
+    )
+    if config.get("training_path") != "core":
+        raise ValueError("resolved config training path mismatch")
+    for (section, name), value in expected:
+        values = config.get(section)
+        if not isinstance(values, Mapping) or values.get(name) != value:
+            raise ValueError(
+                f"resolved config contract mismatch: {section}.{name}"
+            )
 
 
 def _validate_record(record):
@@ -165,6 +229,7 @@ def _validate_record(record):
     if not isinstance(training["scene"], str) or not training["scene"]:
         raise ValueError("training scene is invalid")
     fixed_training = {
+        "scene": "Tool_Room",
         "seed": 0,
         "resolution": 2,
         "iterations": _TRAINING_ITERATIONS,
@@ -220,15 +285,8 @@ def _validate_record(record):
         if target["absent"] is not True:
             raise ValueError(f"target absence proof is missing: {name}")
 
-    argv = training["argv"]
-    if _resolved_path(_argument_value(argv, "--source_path")) != targets[
-        "view_dir"
-    ]["path"]:
-        raise ValueError("training source path does not match frozen view")
-    if _resolved_path(_argument_value(argv, "--model_path")) != targets[
-        "run_dir"
-    ]["path"]:
-        raise ValueError("training model path does not match frozen run")
+    _validate_training_command(training, targets)
+    _validate_resolved_config(training)
     return record
 
 
@@ -318,6 +376,11 @@ def write_confirmation_record(record: Mapping, path: Path):
     sidecar = Path(f"{path}.sha256")
     if path.exists() or sidecar.exists():
         raise FileExistsError("confirmation record or sidecar already exists")
+    for name, target in record["targets"].items():
+        if Path(target["path"]).exists():
+            raise FileExistsError(
+                f"confirmation target already exists at write: {name}"
+            )
     payload = _canonical_bytes(record)
     digest = hashlib.sha256(payload).hexdigest()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -383,6 +446,9 @@ def validate_formal_admission(
     dataset_sha256: str,
     prior_sha256: str,
     gt_sha256: str,
+    report_path: Path,
+    output_dir: Path,
+    archive_path: Path,
 ):
     _validate_record(record)
     evaluator_commit = _require_sha(
@@ -402,6 +468,14 @@ def validate_formal_admission(
         raise ValueError("evaluator/formula commit mismatch")
     if str(run_dir) != record["targets"]["run_dir"]["path"]:
         raise ValueError("formal run path mismatch")
+    actual_targets = {
+        "report_path": _resolved_path(report_path),
+        "output_dir": _resolved_path(output_dir),
+        "archive_path": _resolved_path(archive_path),
+    }
+    for name, actual in actual_targets.items():
+        if actual != record["targets"][name]["path"]:
+            raise ValueError(f"formal publication target mismatch: {name}")
     if dataset_sha256 != record["inputs"]["dataset_sha256"]:
         raise ValueError("dataset SHA256 mismatch")
     if prior_sha256 != record["inputs"]["aligned_prior_sha256"]:

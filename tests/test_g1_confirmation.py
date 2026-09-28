@@ -22,7 +22,6 @@ def training_argv(root):
     root = Path(root).resolve()
     return [
         "/root/miniconda3/envs/ambisur/bin/python",
-        "-u",
         "train.py",
         "--source_path",
         str(root / "view"),
@@ -90,7 +89,7 @@ def confirmation_kwargs(root, confirmation_id="soft-calibration-formal-v1"):
         "gt_sha256": GT_SHA,
         "run_dir": root / "run",
         "view_dir": root / "view",
-        "report_path": root / "formal-report.json",
+        "report_path": root / "formal-output" / "report.json",
         "output_dir": root / "formal-output",
         "archive_path": root / "formal-output.tar.gz",
         "expected_resolved_config": resolved_config(),
@@ -206,6 +205,68 @@ class G1ConfirmationTests(unittest.TestCase):
                 load_confirmation_record(path, digest)
             self.assertTrue(sidecar.is_file())
 
+    def test_write_rechecks_that_every_frozen_target_is_still_absent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            kwargs = confirmation_kwargs(root)
+            record = build_confirmation_record(**kwargs)
+            Path(kwargs["run_dir"]).mkdir(parents=True)
+            record_path = root / "confirmation.json"
+
+            with self.assertRaisesRegex(FileExistsError, "target"):
+                write_confirmation_record(record, record_path)
+
+            self.assertFalse(record_path.exists())
+            self.assertFalse(Path(f"{record_path}.sha256").exists())
+
+    def test_build_rejects_argv_or_config_outside_the_frozen_protocol(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for flag, wrong in (
+                ("--seed", "1"),
+                ("-r", "4"),
+                ("--iterations", "6999"),
+                ("--d0_refresh_interval", "500"),
+            ):
+                with self.subTest(flag=flag):
+                    kwargs = confirmation_kwargs(root / flag.lstrip("-"))
+                    argv = list(kwargs["training_argv"])
+                    argv[argv.index(flag) + 1] = wrong
+                    kwargs["training_argv"] = argv
+                    with self.assertRaisesRegex(ValueError, "training argv"):
+                        build_confirmation_record(**kwargs)
+
+            kwargs = confirmation_kwargs(root / "mode")
+            kwargs["training_argv"] = [
+                token
+                for token in kwargs["training_argv"]
+                if token != "--core_shadow_mode"
+            ]
+            with self.assertRaisesRegex(ValueError, "training argv"):
+                build_confirmation_record(**kwargs)
+
+            kwargs = confirmation_kwargs(root / "scene")
+            kwargs["scene"] = "Utility_Room"
+            with self.assertRaisesRegex(ValueError, "training scene"):
+                build_confirmation_record(**kwargs)
+
+            for keys, wrong in (
+                (("model", "resolution"), 4),
+                (("optimization", "iterations"), 6999),
+                (("optimization", "seed"), 1),
+                (("core", "seed"), 1),
+                (("core", "d0_refresh_interval"), 500),
+            ):
+                with self.subTest(config_keys=keys):
+                    kwargs = confirmation_kwargs(root / "-".join(keys))
+                    config = copy.deepcopy(kwargs["expected_resolved_config"])
+                    config[keys[0]][keys[1]] = wrong
+                    kwargs["expected_resolved_config"] = config
+                    with self.assertRaisesRegex(
+                        ValueError, "resolved config"
+                    ):
+                        build_confirmation_record(**kwargs)
+
     def test_rejects_unsafe_ids_existing_targets_and_malformed_sha(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -279,6 +340,9 @@ class G1ConfirmationTests(unittest.TestCase):
                 dataset_sha256=DATASET_SHA,
                 prior_sha256=PRIOR_SHA,
                 gt_sha256=GT_SHA,
+                report_path=kwargs["report_path"],
+                output_dir=kwargs["output_dir"],
+                archive_path=kwargs["archive_path"],
             )
 
             for keyword, wrong in (
@@ -295,10 +359,30 @@ class G1ConfirmationTests(unittest.TestCase):
                     "dataset_sha256": DATASET_SHA,
                     "prior_sha256": PRIOR_SHA,
                     "gt_sha256": GT_SHA,
+                    "report_path": kwargs["report_path"],
+                    "output_dir": kwargs["output_dir"],
+                    "archive_path": kwargs["archive_path"],
                 }
                 arguments[keyword] = wrong
                 with self.subTest(keyword=keyword):
                     with self.assertRaises(ValueError):
+                        validate_formal_admission(record, **arguments)
+
+            for keyword in ("report_path", "output_dir", "archive_path"):
+                arguments = {
+                    "run_dir": run,
+                    "confirmation_id": record["confirmation_id"],
+                    "evaluator_commit": FORMULA_COMMIT,
+                    "dataset_sha256": DATASET_SHA,
+                    "prior_sha256": PRIOR_SHA,
+                    "gt_sha256": GT_SHA,
+                    "report_path": kwargs["report_path"],
+                    "output_dir": kwargs["output_dir"],
+                    "archive_path": kwargs["archive_path"],
+                }
+                arguments[keyword] = root / f"wrong-{keyword}"
+                with self.subTest(keyword=keyword):
+                    with self.assertRaisesRegex(ValueError, "target"):
                         validate_formal_admission(record, **arguments)
 
     def test_formal_admission_rejects_run_identity_config_or_hash_mutation(self):
@@ -361,6 +445,9 @@ class G1ConfirmationTests(unittest.TestCase):
                             dataset_sha256=DATASET_SHA,
                             prior_sha256=PRIOR_SHA,
                             gt_sha256=GT_SHA,
+                            report_path=kwargs["report_path"],
+                            output_dir=kwargs["output_dir"],
+                            archive_path=kwargs["archive_path"],
                         )
 
 
