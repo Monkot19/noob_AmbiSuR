@@ -813,3 +813,14 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Task 7：新路径 Tool Room/r2/seed0 500-step/refresh-100 shadow smoke 在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 完成；五次 refresh、Evidence v4、finite、checkpoint/snapshot join、optimizer step 499、no-GT、输入哈希与训练隔离全部 PASS，`real_topology_evidence=NO`。
 - [x] Task 8：formal-7k confirmation JSON 与 detached SHA 已冻结并通过 production load/digest/chronology 审计；未创建 formal run/view，未启动训练。正式 7k 仍需另行授权。
 - [ ] C2 blocker: separately instrument or otherwise reconstruct refresh-time geometry stability/EMA lineage before changing geometry reliability. Current recomputed multiview, depth-normal, and support components must remain unchanged absent contrary evidence.
+
+## 2026-09-28 Formal Soft-v4 G1 Stop and Independent-Evidence Triage
+
+- [x] Freeze the valid formal result as `G1 FAIL / C1 NO-GO`; retain unchanged metric gates and full evaluation domain.
+- [x] Record the failure anatomy and distinguish formula rejection from rejection of the broader reliability-routing question.
+- [x] Verify the downloaded publication folder against all 108 manifest byte counts and SHA256 values.
+- [x] Stop C1, 30k continuation, stage tagging, and additional Tool Room calibration search.
+- [x] Freeze a no-training feasibility question and fixed candidate set before inspecting conditional results.
+- [ ] TDD a lightweight read-only conditional-complementarity diagnostic with `1-r_p` as the sole decision candidate; keep joint-valid `1-K` and temporal transition count descriptive-only.
+- [ ] Run it once against the existing 3000/7000 version-4 assets and frozen GT mesh; publish only a small JSON/CSV report.
+- [ ] Apply the preregistered `FEASIBLE / INCONCLUSIVE / NO_CLEAR_COMPLEMENT` rule. Do not train unless a new written hypothesis and independent-scene protocol are separately approved.

@@ -416,3 +416,12 @@
 - [x] Task 8 confirmation `d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1` was canonically frozen at `/root/autodl-tmp/ambisur_diagnostics/d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1.confirmation.json`; detached SHA256 `074ee091cf71e21b7a9f49256bf3bbdbc4b83a62babba557ee714d9fa42f0bf0` matched direct recomputation and production reload.
 - [x] Confirmation chronology gate proved formal run/view/output absent and no training started. Task 8 is complete; Task 9 formal 7k awaits separate explicit authorization.
 - [ ] Track the historical `T_g/r_g` reversal as a separate pre-C2 temporal reliability diagnostic; do not fold it into the C1 sufficiency change.
+
+## 2026-09-28 Soft-v4 Formal Decision and Freeze
+
+- [x] Formal-v4 7k training completion, seven-refresh topology/checkpoint audit, optimizer lazy-state reconciliation, confirmation admission, full-mesh G1 evaluation, 108-file publication, archive SHA, and local 108/108 manifest hash audit all passed.
+- [x] Frozen decision recorded without changing the gate: at 7000 `AUROC(N)=0.547598`, best component `A=0.545626`, gain `0.001972`; `FORMAL_G1=FAIL_METRIC_GATE`, `C1_GO_NO_GO=NO_GO`.
+- [x] Added `docs/research/2026-09-28-softcal-v4-g1-failure-anatomy.md` with exact identity, metrics, comparison boundary, failure mechanisms, state/risk evidence, claim limits, and artifact paths.
+- [x] Stopped C1, 30k continuation, stage tagging, and any further Tool Room constant/transform search for this operationalization.
+- [x] Defined a short diagnostic-only feasibility gate with `1-r_p` as the sole decision candidate, using spatially blocked cross-fitting at 3000/7000. Joint-valid `1-K` and temporal transition count are descriptive-only, preventing a three-way post-hoc search. No training or production-method change is authorized.
+- [ ] Implement and qualify the lightweight conditional-complementarity diagnostic only after the bounded probe design is reviewed. A pass may authorize a new written hypothesis on an independent validation scene; it cannot authorize C1.

@@ -362,25 +362,27 @@ The approved implementation plan is not itself authorization to spend GPU time o
 - Consumes: explicit Task 8 authorization, confirmation JSON/digest, qualified code commit, canonical Tool Room inputs, and offline GT only after training.
 - Produces: immutable formal D0/G1 bundle or a fail-closed diagnostic; never silently advances C1.
 
-- [ ] **Step 1: Launch and audit the confirmed 7k run**
+- [x] **Step 1: Launch and audit the confirmed 7k run**
 
 Require exit 0, one completion marker, seven refresh snapshots/events, checkpoints 3000/7000 with evidence version 4, before/after input hashes unchanged, zero GT references, finite state, correct optimizer schedule, and real changing point counts with exact checkpoint/snapshot row alignment.
 
-- [ ] **Step 2: Run formal G1 through the confirmation gate**
+- [x] **Step 2: Run formal G1 through the confirmation gate**
 
 Invoke the evaluator with the exact confirmation JSON and detached SHA, expected commit/dataset/prior/GT hashes, iterations 3000/7000, and a fresh confirmation-bound output. Any admission mismatch exits malformed before metric publication.
 
-- [ ] **Step 3: Audit publication and decision**
+- [x] **Step 3: Audit publication and decision**
 
 Verify 108 artifacts, manifest/archive/SHA, immutable-input before/after fingerprints, full finite-center/full valid-triangle domain, no staging residue, diagnostic-only iteration 3000, and decision-only iteration 7000.
 
-- [ ] **Step 4: Apply the unchanged stop rule**
+- [x] **Step 4: Apply the unchanged stop rule**
 
 If both frozen G1 inequalities pass, report only `C1_WRITTEN_SPEC_AND_PLAN_AUTHORIZED`; do not implement C1 until those documents are separately approved. If either fails, record the fixed operationalization as failed, stop C1, and do not search more Tool Room constants/transforms. In both cases, do not claim E3/generalization; Utility Room and multi-seed obligations remain.
 
-- [ ] **Step 5: Verify, review, and record**
+- [x] **Step 5: Verify, review, and record**
 
 Use `superpowers:verification-before-completion` and `superpowers:requesting-code-review`; commit documentation with the observed result. Create no stage tag unless all tag prerequisites in the root project plan are met.
+
+**Observed result:** Formal admission, D0 integrity, full-domain evaluation, atomic publication, archive SHA, and the 108-file local manifest audit passed. The decision iteration returned `AUROC(N)=0.547598`, best component `A=0.545626`, and gain `0.001972`; both frozen inequalities failed. C1 is stopped, no stage tag is created, and no further Tool Room transform/constant search is authorized. The frozen failure anatomy and the diagnostic-only independent-evidence feasibility gate are recorded in `docs/research/2026-09-28-softcal-v4-g1-failure-anatomy.md`.
 
 ## Plan Self-Review Record
 

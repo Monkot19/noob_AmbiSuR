@@ -405,3 +405,13 @@
 - Formal confirmation `d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1` was written before any run/view/output target existed. Production reload and detached checksum both accepted canonical SHA256 `074ee091cf71e21b7a9f49256bf3bbdbc4b83a62babba557ee714d9fa42f0bf0`.
 - The record freezes exact commit `815ccb8700e4aad4a2dbecf5959d0b9c54a17126`, Tool Room/r2/seed0, 7000 iterations, refresh/evaluation 1000--7000, checkpoints/G1 at 3000/7000, unchanged G1 thresholds, and canonical dataset/prior/GT hashes. GT appears only in the offline-evaluation section.
 - Chronology audit ended with `run_created=NO`, `view_created=NO`, and `formal_training_started=NO`; Task 9 formal GPU work remains behind a separate explicit user authorization.
+
+## 2026-09-28 Soft-calibrated v4 Formal G1 Failure Anatomy
+
+- The formal v4 run and publication are technically valid: exact confirmation/provenance, Evidence v4 at 3000/7000, unchanged inputs, no GT training leakage, full finite-centre/full valid-triangle domain, 20 immutable fingerprints, and atomic 108-file publication all passed. The evaluator exit code 1 is the expected metric-failure status, not a crash.
+- At the sole decision point 7000, `AUROC(N)=0.547598`, `AUPRC(N)=0.220698`, best component `A=0.545626`, and gain `0.001972`; the frozen `>0.60` and `>=0.03` gates both fail. C1 remains NO-GO and no 30k or same-scene recalibration is permitted.
+- Soft calibration removed hard saturation (`S` mean 0.646383, max 0.897230) but did not produce complementarity. The lowest-N tail is not a reliable low-risk set, and N closely tracks A in the ROC/PR evidence.
+- The five-state partition contains coarse signal—Abstain high-error rate 0.300427 versus overall 0.187807—but Consensus is empty and Geometry-led has only 22 rows, so the routing state space is degenerate and cannot override G1.
+- `r_p` is the only current feasibility lead: highest-r_p 20% has high-error rate 0.107497 versus 0.187807 overall, Spearman priority-distance -0.173008, and nearly monotone risk. This is marginal risk stratification only; conditional gain over A/1-S and causal routing benefit are unproved.
+- `r_g` remains directionally reversed and is excluded from the short feasibility candidate set pending its separate pre-C2 diagnosis.
+- The next allowed work is one read-only, no-training, fixed-candidate conditional-complementarity probe. Passing it would authorize only a new written hypothesis and independent-scene validation design, not C1 or a Tool Room rerun.
