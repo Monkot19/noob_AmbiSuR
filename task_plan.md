@@ -821,6 +821,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Verify the downloaded publication folder against all 108 manifest byte counts and SHA256 values.
 - [x] Stop C1, 30k continuation, stage tagging, and additional Tool Room calibration search.
 - [x] Freeze a no-training feasibility question and fixed candidate set before inspecting conditional results.
-- [ ] TDD a lightweight read-only conditional-complementarity diagnostic with `1-r_p` as the sole decision candidate; keep joint-valid `1-K` and temporal transition count descriptive-only.
+- [ ] TDD the reviewed read-only conditional-complementarity contract with `1-r_p` as the sole decision candidate: identical `V_p=True` domains, pooled OOF gain, fold-local preprocessing and column-rank checks, deterministic float64 Newton/IRLS, paired fixed-origin voxel bootstrap, raw-risk direction gates, and exhaustive three-state output. Keep joint-valid `1-K` and temporal transition count descriptive-only.
 - [ ] Run it once against the existing 3000/7000 version-4 assets and frozen GT mesh; publish only a small JSON/CSV report.
 - [ ] Apply the preregistered `FEASIBLE / INCONCLUSIVE / NO_CLEAR_COMPLEMENT` rule. Do not train unless a new written hypothesis and independent-scene protocol are separately approved.
