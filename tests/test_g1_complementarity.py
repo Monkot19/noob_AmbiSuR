@@ -126,9 +126,9 @@ def iteration_summary(iteration, *, passing=True):
         "domain": {
             "original_point_count": 110,
             "finite_center_count": 100,
-            "eligible_count": 90,
+            "eligible_count": 90 if passing else 79,
             "positive_count": 30,
-            "negative_count": 60,
+            "negative_count": 60 if passing else 49,
             "coverage": 0.90 if passing else 0.79,
             "label": "distance_gt_0.05_m",
         },
@@ -140,7 +140,7 @@ def iteration_summary(iteration, *, passing=True):
         "crossfit": {
             "folds": folds,
             "baseline": {"auroc": 0.55, "auprc": 0.35},
-            "augmented": {"auroc": 0.59, "auprc": 0.39},
+            "augmented": {"auroc": 0.59 if passing else 0.56, "auprc": 0.39},
             "pooled_auroc_gain": 0.04 if passing else 0.01,
         },
         "bootstrap": {
@@ -150,9 +150,9 @@ def iteration_summary(iteration, *, passing=True):
             "voxel_size_m": 0.5,
             "voxel_origin": [0.0, 0.0, 0.0],
             "voxel_count": 25,
-            "lower": 0.01 if passing else 0.0,
-            "upper": 0.07,
-            "auroc_gain_replicates": [0.04] * 2000,
+            "lower": 0.04 if passing else 0.0,
+            "upper": 0.04 if passing else 0.0,
+            "auroc_gain_replicates": [0.04 if passing else 0.0] * 2000,
         },
     }
 
@@ -394,6 +394,7 @@ class G1ComplementarityReportTests(unittest.TestCase):
         early_good = iteration_summary(3000)
         primary_bad = iteration_summary(7000)
         primary_bad["crossfit"]["pooled_auroc_gain"] = 0.019
+        primary_bad["crossfit"]["augmented"]["auroc"] = 0.569
         primary_bad["crossfit"]["folds"][0]["auroc_gain"] = 0.50
 
         report = build_probe_report(

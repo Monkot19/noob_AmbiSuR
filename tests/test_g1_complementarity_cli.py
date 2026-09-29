@@ -78,7 +78,7 @@ def iteration_summary(iteration, *, passing=False):
         "crossfit": {
             "folds": folds,
             "baseline": {"auroc": 0.55, "auprc": 0.35},
-            "augmented": {"auroc": 0.59, "auprc": 0.39},
+            "augmented": {"auroc": 0.59 if passing else 0.56, "auprc": 0.39},
             "pooled_auroc_gain": 0.04 if passing else 0.01,
         },
         "bootstrap": {
@@ -88,9 +88,9 @@ def iteration_summary(iteration, *, passing=False):
             "voxel_size_m": 0.5,
             "voxel_origin": [0.0, 0.0, 0.0],
             "voxel_count": 4,
-            "lower": 0.01 if passing else 0.0,
-            "upper": 0.07,
-            "auroc_gain_replicates": [0.04 if passing else 0.01] * 2000,
+            "lower": 0.04 if passing else 0.0,
+            "upper": 0.04 if passing else 0.0,
+            "auroc_gain_replicates": [0.04 if passing else 0.0] * 2000,
         },
     }
 
