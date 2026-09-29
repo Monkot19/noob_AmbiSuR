@@ -187,10 +187,36 @@ The three outcomes are exhaustive:
 
 Accordingly, this is a single-candidate, read-only, spatially blocked conditional-complementarity diagnostic. It asks only whether `1-r_p` contributes stable predictive information beyond `A` and `1-S`; it is neither a method-effect experiment nor a cross-scene generalization test.
 
-## 7. Artifact locations
+## 7. Frozen `1-r_p` complementarity result
+
+### 7.1 Measurement chronology and integrity
+
+The first real probe publication (`...20260929_v1`) returned `INCONCLUSIVE` because the report validator incorrectly required independently constructed five-way quintiles and twenty-way risk bins to have matching grouped endpoint counts. This was a measurement-contract defect, not a scientific result. The frozen candidate, domain, folds, solver, bootstrap, thresholds, and inputs were unchanged. Commit `4388d2f1ed232ec5a7599d7ae2e22a7c2f21e752` repaired only that validator by checking each deterministic partition against its own `divmod` inventory. AutoDL then passed 75 focused tests and 291 full-discovery tests before the v2 rerun.
+
+The corrected v2 publication is internally complete: evaluator exit code 0, outcome `INDEPENDENT_EVIDENCE_FEASIBLE`, no failed gates, no inconclusive reasons, and all five manifest-listed payload files match their recorded byte counts and SHA256 digests. It binds diagnostic commit `4388d2f1ed232ec5a7599d7ae2e22a7c2f21e752`, formula commit `815ccb8700e4aad4a2dbecf5959d0b9c54a17126`, formal confirmation SHA256 `074ee091cf71e21b7a9f49256bf3bbdbc4b83a62babba557ee714d9fa42f0bf0`, and the previously frozen dataset, prior, GT-mesh, and run-identity hashes. No training was started or modified.
+
+### 7.2 Frozen measurements
+
+| Iteration | Role | Eligible / finite centres | Marginal AUROC (`1-r_p`) | Baseline AUROC | Augmented AUROC | Pooled OOF gain | 95% voxel-bootstrap gain |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 3,000 | direction stability | 1,093,102 / 1,093,102 | 0.589713 | 0.518032 | 0.572746 | 0.054714 | [0.035258, 0.074344] |
+| 7,000 | primary | 1,417,059 / 1,417,059 | 0.623265 | 0.519882 | 0.609023 | 0.089141 | [0.067379, 0.108420] |
+
+Coverage is 1.0 at both iterations. At 3,000, the raw-risk top-minus-bottom quintile error-rate separation is 0.154474 and Spearman correlation with GT distance is 0.137450. At 7,000, the corresponding values are 0.170999 and 0.173008. Every fold-local numerical-independence residual is above 0.95. The 7,000 fold gains are all positive (`0.122770`, `0.089374`, `0.126887`, `0.057999`, `0.000704`); one 3,000 diagnostic fold is negative, but the preregistered pooled gain and paired spatial-bootstrap lower bound remain positive and the 3,000 pooled-gain gate passes.
+
+### 7.3 Frozen conclusion and authority boundary
+
+The supported conclusion is:
+
+> Within the frozen Tool Room seed-0 assets, `1-r_p` contains stable conditional predictive information about centre-to-GT-mesh error beyond the `[A, 1-S]` baseline. It is therefore a viable independent evidence source for a new hypothesis.
+
+This result does **not** demonstrate causal training benefit, routing benefit, reconstruction improvement, or cross-scene generalization. It does not rescue the rejected `N` formula, does not authorize C1, and does not authorize another Tool Room training search. The only authorized continuation is to write a new prior-aware hypothesis and a preregistered independent-scene validation protocol, including Utility Room and multiple seeds, before deciding whether any new training investment is justified.
+
+## 8. Artifact locations
 
 - Server formal directory: `/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-g1/d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1`
 - Server archive: `/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-g1/d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1.tar.gz`
 - Local read-only copy: `D:\research_Space\output\ambisur_diagnostics\Tool_Room\d0-g1\d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1`
+- Server complementarity-v2 directory: `/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-g1-complementarity/d0_g1_prior_complementarity_softcal_v4_toolroom_seed0_20260929_v2`
 
 The uncompressed local folder is sufficient for the present audit because every manifest-listed file passed byte-count and SHA256 verification. The server archive and detached SHA remain the canonical transport/long-term archival pair.

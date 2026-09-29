@@ -823,6 +823,7 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Freeze a no-training feasibility question and fixed candidate set before inspecting conditional results.
 - [x] TDD the reviewed read-only conditional-complementarity contract with `1-r_p` as the sole decision candidate: identical `V_p=True` domains, pooled OOF gain, fold-local preprocessing and column-rank checks, deterministic float64 Newton/IRLS, paired fixed-origin voxel bootstrap, raw-risk direction gates, and exhaustive three-state output. Keep joint-valid `1-K` and temporal transition count descriptive-only.
 - [x] Draft and obtain approval for the native TDD implementation plan at `docs/superpowers/plans/2026-09-29-independent-evidence-feasibility-probe.md` before implementation.
-- [ ] Qualify the exact local diagnostic commit on AutoDL with Python 3.10/Torch/Open3D, focused and full discovery, static compilation, clean Git/no-training gates, and frozen confirmation/data/prior/GT identity. Do not run the real probe during qualification.
-- [ ] Run it once against the existing 3000/7000 version-4 assets and frozen GT mesh; publish only a small JSON/CSV report.
-- [ ] Apply the preregistered `FEASIBLE / INCONCLUSIVE / NO_CLEAR_COMPLEMENT` rule. Do not train unless a new written hypothesis and independent-scene protocol are separately approved.
+- [x] Qualify exact diagnostic commit `4388d2f1ed232ec5a7599d7ae2e22a7c2f21e752` on AutoDL: focused 75/75 and full discovery 291/291 passed with clean Git/no-training and frozen input identity.
+- [x] Run the one-time read-only probe against the existing 3000/7000 version-4 assets and frozen GT mesh; the corrected v2 compact JSON/CSV publication passed its manifest audit.
+- [x] Apply the preregistered rule: `INDEPENDENT_EVIDENCE_FEASIBLE`, with 7000 pooled OOF AUROC gain `0.089141` and paired voxel-bootstrap 95% lower bound `0.067379`; C1 remains unauthorized.
+- [ ] Write and review a new prior-aware evidence hypothesis plus an independent-scene Utility Room/multi-seed validation protocol. Do not start training until that separate protocol is approved.
