@@ -7,14 +7,20 @@ from reliability.g1_complementarity import (
     ProbeConfig,
     ProbeDomain,
     ProbeInconclusiveError,
+    bootstrap_rows,
     build_probe_domain,
+    build_probe_report,
     column_independence,
     crossfit_comparison,
     fit_logistic,
+    fold_rows,
     make_spatial_folds,
     paired_voxel_bootstrap,
+    probe_exit_code,
     raw_risk_direction,
+    risk_bin_rows,
     summarize_oof,
+    validate_probe_report,
 )
 
 
@@ -77,6 +83,90 @@ def synthetic_domain(rows=40):
         prior_risk=prior_risk.astype(np.float64),
         coverage=1.0,
     )
+
+
+def iteration_summary(iteration, *, passing=True):
+    role = "primary" if iteration == 7000 else "direction_stability"
+    direction = {
+        "lowest_quintile_count": 20,
+        "highest_quintile_count": 20,
+        "lowest_quintile_high_error_rate": 0.10,
+        "highest_quintile_high_error_rate": 0.20 if passing else 0.08,
+        "high_minus_low_error_rate": 0.10 if passing else -0.02,
+        "spearman_risk_distance": 0.15 if passing else -0.01,
+        "risk_bins": [
+            {
+                "bin": index,
+                "count": 5,
+                "risk_min": index / 20.0,
+                "risk_max": (index + 1) / 20.0,
+                "mean_distance_m": 0.02 + index * 0.002,
+                "high_error_rate": 0.05 + index * 0.01,
+            }
+            for index in range(20)
+        ],
+    }
+    folds = [
+        {
+            "fold": fold,
+            "training_count": 80,
+            "validation_count": 20,
+            "baseline_auroc": 0.55,
+            "augmented_auroc": 0.59,
+            "auroc_gain": 0.04,
+            "candidate_relative_residual": 0.25,
+            "positive_weight": 1.0,
+            "negative_weight": 1.0,
+        }
+        for fold in range(5)
+    ]
+    return {
+        "iteration": iteration,
+        "role": role,
+        "domain": {
+            "original_point_count": 110,
+            "finite_center_count": 100,
+            "eligible_count": 90,
+            "positive_count": 30,
+            "negative_count": 60,
+            "coverage": 0.90 if passing else 0.79,
+            "label": "distance_gt_0.05_m",
+        },
+        "direction": direction,
+        "numerical_independence": {
+            "threshold_strictly_greater_than": 1e-8,
+            "fold_relative_residuals": [0.25] * 5,
+        },
+        "crossfit": {
+            "folds": folds,
+            "baseline": {"auroc": 0.55, "auprc": 0.35},
+            "augmented": {"auroc": 0.59, "auprc": 0.39},
+            "pooled_auroc_gain": 0.04 if passing else 0.01,
+        },
+        "bootstrap": {
+            "seed": 20260928,
+            "replicate_count": 2000,
+            "interval_percentiles": [2.5, 97.5],
+            "voxel_size_m": 0.5,
+            "voxel_count": 25,
+            "lower": 0.01 if passing else 0.0,
+            "upper": 0.07,
+            "auroc_gain_replicates": [0.04] * 2000,
+        },
+    }
+
+
+def probe_provenance():
+    return {
+        "diagnostic_commit": "a" * 40,
+        "formula_commit": "b" * 40,
+        "confirmation_id": "soft_v4_formal_toolroom_seed0",
+        "confirmation_sha256": "c" * 64,
+        "dataset_sha256": "d" * 64,
+        "aligned_prior_sha256": "e" * 64,
+        "gt_mesh_sha256": "f" * 64,
+        "run_identity_sha256": "1" * 64,
+    }
 
 
 class G1ComplementarityDomainTests(unittest.TestCase):
@@ -234,6 +324,129 @@ class G1ComplementarityModelTests(unittest.TestCase):
                 fold["baseline_feature_mean"],
                 np.column_stack((domain.a, domain.one_minus_s))[train].mean(axis=0),
             )
+
+
+class G1ComplementarityReportTests(unittest.TestCase):
+    def report(self, *, passing=True, inconclusive_reasons=()):
+        return build_probe_report(
+            [
+                iteration_summary(3000, passing=passing),
+                iteration_summary(7000, passing=passing),
+            ],
+            provenance=probe_provenance(),
+            config=ProbeConfig(),
+            inconclusive_reasons=list(inconclusive_reasons),
+        )
+
+    def test_exact_report_schema_preserves_diagnostic_only_scope(self):
+        report = self.report()
+
+        self.assertEqual(
+            set(report),
+            {
+                "schema_version",
+                "diagnostic_only",
+                "training_started",
+                "candidate",
+                "baseline",
+                "configuration",
+                "gates",
+                "provenance",
+                "iterations",
+                "outcome",
+                "failed_gates",
+                "inconclusive_reasons",
+                "c1_authorized",
+                "causal_claim",
+                "cross_scene_claim",
+            },
+        )
+        self.assertTrue(report["diagnostic_only"])
+        self.assertFalse(report["training_started"])
+        self.assertEqual(report["candidate"], {"name": "one_minus_r_p", "expression": "1-r_p"})
+        self.assertEqual(report["baseline"], ["A", "1-S"])
+        self.assertEqual([row["iteration"] for row in report["iterations"]], [3000, 7000])
+        self.assertEqual([row["role"] for row in report["iterations"]], ["direction_stability", "primary"])
+        self.assertFalse(report["c1_authorized"])
+        self.assertIsNone(report["causal_claim"])
+        self.assertIsNone(report["cross_scene_claim"])
+        self.assertEqual(validate_probe_report(report), report)
+
+    def test_three_outcomes_are_exhaustive_and_have_frozen_exit_codes(self):
+        feasible = self.report()
+        negative = self.report(passing=False)
+        inconclusive = self.report(inconclusive_reasons=["solver did not converge"])
+
+        self.assertEqual(feasible["outcome"], "INDEPENDENT_EVIDENCE_FEASIBLE")
+        self.assertEqual(probe_exit_code(feasible), 0)
+        self.assertEqual(negative["outcome"], "NO_CLEAR_COMPLEMENT")
+        self.assertEqual(probe_exit_code(negative), 1)
+        self.assertEqual(inconclusive["outcome"], "INCONCLUSIVE")
+        self.assertEqual(probe_exit_code(inconclusive), 2)
+        self.assertIn("solver did not converge", inconclusive["inconclusive_reasons"])
+
+    def test_all_gates_are_conjunctive_and_3000_cannot_replace_7000(self):
+        early_good = iteration_summary(3000)
+        primary_bad = iteration_summary(7000)
+        primary_bad["crossfit"]["pooled_auroc_gain"] = 0.019
+        primary_bad["crossfit"]["folds"][0]["auroc_gain"] = 0.50
+
+        report = build_probe_report(
+            [early_good, primary_bad],
+            provenance=probe_provenance(),
+            config=ProbeConfig(),
+        )
+
+        self.assertEqual(report["outcome"], "NO_CLEAR_COMPLEMENT")
+        self.assertIn("7000_POOLED_AUROC_GAIN_BELOW_0.02", report["failed_gates"])
+        self.assertEqual(probe_exit_code(report), 1)
+
+    def test_flat_csv_rows_have_frozen_complete_inventories(self):
+        report = self.report()
+
+        folds = fold_rows(report)
+        bins = risk_bin_rows(report)
+        bootstrap = bootstrap_rows(report)
+
+        self.assertEqual(len(folds), 10)
+        self.assertEqual([(row["iteration"], row["fold"]) for row in folds], [(iteration, fold) for iteration in (3000, 7000) for fold in range(5)])
+        self.assertEqual(len(bins), 40)
+        self.assertEqual([(row["iteration"], row["bin"]) for row in bins], [(iteration, index) for iteration in (3000, 7000) for index in range(20)])
+        self.assertEqual(len(bootstrap), 4000)
+        self.assertEqual(bootstrap[0], {"iteration": 3000, "replicate": 0, "auroc_gain": 0.04})
+        self.assertEqual(bootstrap[-1], {"iteration": 7000, "replicate": 1999, "auroc_gain": 0.04})
+
+    def test_validation_rejects_schema_constant_and_scope_mutations(self):
+        mutations = []
+        missing = self.report()
+        del missing["candidate"]
+        mutations.append((missing, "fields"))
+        extra = self.report()
+        extra["unexpected"] = True
+        mutations.append((extra, "fields"))
+        candidate = self.report()
+        candidate["candidate"] = {"name": "one_minus_r_g", "expression": "1-r_g"}
+        mutations.append((candidate, "candidate"))
+        role = self.report()
+        role["iterations"][0]["role"] = "primary"
+        mutations.append((role, "role"))
+        nonfinite = self.report()
+        nonfinite["iterations"][1]["crossfit"]["pooled_auroc_gain"] = np.nan
+        mutations.append((nonfinite, "finite"))
+        wrong_bootstrap = self.report()
+        wrong_bootstrap["iterations"][1]["bootstrap"]["seed"] = 7
+        mutations.append((wrong_bootstrap, "bootstrap"))
+        authorized = self.report()
+        authorized["c1_authorized"] = True
+        mutations.append((authorized, "C1"))
+        causal = self.report()
+        causal["causal_claim"] = "causal"
+        mutations.append((causal, "causal"))
+
+        for report, message in mutations:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    validate_probe_report(report)
             self.assertEqual(
                 fold["positive_weight"],
                 int(train.sum()) / (2 * int(domain.labels[train].sum())),
