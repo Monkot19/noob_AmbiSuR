@@ -928,11 +928,20 @@ def _validate_iteration(row, expected_iteration, expected_role, config):
     risk_bins = row["direction"]["risk_bins"]
     if sum(bin_row["count"] for bin_row in risk_bins) != domain["eligible_count"]:
         raise ValueError("risk bin inventory mismatch")
+    bin_size, larger_bin_count = divmod(domain["eligible_count"], 20)
+    expected_bin_counts = [
+        bin_size + (index < larger_bin_count) for index in range(20)
+    ]
+    if [bin_row["count"] for bin_row in risk_bins] != expected_bin_counts:
+        raise ValueError("risk bin split mismatch")
+    quintile_size, larger_quintile_count = divmod(
+        domain["eligible_count"], 5
+    )
     if (
         row["direction"]["lowest_quintile_count"]
-        != sum(bin_row["count"] for bin_row in risk_bins[:4])
+        != quintile_size + (larger_quintile_count > 0)
         or row["direction"]["highest_quintile_count"]
-        != sum(bin_row["count"] for bin_row in risk_bins[-4:])
+        != quintile_size
     ):
         raise ValueError("risk quintile inventory mismatch")
     independence = row["numerical_independence"]

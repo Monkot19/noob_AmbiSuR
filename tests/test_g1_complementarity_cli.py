@@ -26,21 +26,28 @@ REQUIRED_ARTIFACTS = (
 
 def iteration_summary(iteration, *, passing=False):
     role = "primary" if iteration == 7000 else "direction_stability"
-    folds = [
-        {
+    validation_counts = [21, 21, 21, 20, 20]
+    validation_positive_counts = [5, 5, 5, 4, 4]
+    folds = []
+    for fold in range(5):
+        validation_count = validation_counts[fold]
+        validation_positive_count = validation_positive_counts[fold]
+        training_count = 103 - validation_count
+        training_positive_count = 23 - validation_positive_count
+        folds.append({
             "fold": fold,
-            "training_count": 80,
-            "validation_count": 20,
-            "training_positive_count": 16,
+            "training_count": training_count,
+            "validation_count": validation_count,
+            "training_positive_count": training_positive_count,
             "training_negative_count": 64,
-            "validation_positive_count": 4,
+            "validation_positive_count": validation_positive_count,
             "validation_negative_count": 16,
             "baseline_auroc": 0.55,
             "augmented_auroc": 0.59,
             "auroc_gain": 0.04,
             "candidate_relative_residual": 0.2,
-            "positive_weight": 80 / (2 * 16),
-            "negative_weight": 80 / (2 * 64),
+            "positive_weight": training_count / (2 * training_positive_count),
+            "negative_weight": training_count / (2 * 64),
             "baseline_a_mean": 0.5,
             "baseline_one_minus_s_mean": 0.4,
             "baseline_a_scale": 0.2,
@@ -51,23 +58,21 @@ def iteration_summary(iteration, *, passing=False):
             "augmented_iterations": 7,
             "baseline_converged": True,
             "augmented_converged": True,
-        }
-        for fold in range(5)
-    ]
+        })
     return {
         "iteration": iteration,
         "role": role,
         "domain": {
-            "original_point_count": 102,
-            "finite_center_count": 100,
-            "eligible_count": 100,
-            "positive_count": 20,
+            "original_point_count": 110,
+            "finite_center_count": 103,
+            "eligible_count": 103,
+            "positive_count": 23,
             "negative_count": 80,
             "coverage": 1.0,
             "label": "distance_gt_0.05_m",
         },
         "direction": {
-            "lowest_quintile_count": 20,
+            "lowest_quintile_count": 21,
             "highest_quintile_count": 20,
             "lowest_quintile_high_error_rate": 0.0,
             "highest_quintile_high_error_rate": 1.0,
@@ -77,7 +82,7 @@ def iteration_summary(iteration, *, passing=False):
             "risk_bins": [
                 {
                     "bin": index,
-                    "count": 5,
+                    "count": 6 if index < 3 else 5,
                     "risk_min": index / 20,
                     "risk_max": (index + 1) / 20,
                     "mean_distance_m": 0.01 + index / 1000,
