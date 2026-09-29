@@ -1,6 +1,7 @@
 """Pure statistics for the read-only G1 prior-complementarity probe."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+import copy
 import math
 
 import numpy as np
@@ -671,3 +672,332 @@ def paired_voxel_bootstrap(
         "upper": float(upper),
         "auroc_gain_replicates": gains,
     }
+
+
+PROBE_OUTCOMES = (
+    "INDEPENDENT_EVIDENCE_FEASIBLE",
+    "NO_CLEAR_COMPLEMENT",
+    "INCONCLUSIVE",
+)
+
+_REPORT_FIELDS = {
+    "schema_version",
+    "diagnostic_only",
+    "training_started",
+    "candidate",
+    "baseline",
+    "configuration",
+    "gates",
+    "provenance",
+    "iterations",
+    "outcome",
+    "failed_gates",
+    "inconclusive_reasons",
+    "c1_authorized",
+    "causal_claim",
+    "cross_scene_claim",
+}
+
+_ITERATION_FIELDS = {
+    "iteration",
+    "role",
+    "domain",
+    "direction",
+    "numerical_independence",
+    "crossfit",
+    "bootstrap",
+}
+
+_DOMAIN_FIELDS = {
+    "original_point_count",
+    "finite_center_count",
+    "eligible_count",
+    "positive_count",
+    "negative_count",
+    "coverage",
+    "label",
+}
+
+_DIRECTION_FIELDS = {
+    "lowest_quintile_count",
+    "highest_quintile_count",
+    "lowest_quintile_high_error_rate",
+    "highest_quintile_high_error_rate",
+    "high_minus_low_error_rate",
+    "spearman_risk_distance",
+    "risk_bins",
+}
+
+_BOOTSTRAP_FIELDS = {
+    "seed",
+    "replicate_count",
+    "interval_percentiles",
+    "voxel_size_m",
+    "voxel_origin",
+    "voxel_count",
+    "lower",
+    "upper",
+    "auroc_gain_replicates",
+}
+
+_FROZEN_GATES = {
+    "coverage_at_7000_at_least": 0.80,
+    "direction_spearman_at_both_at_least": 0.0,
+    "direction_high_minus_low_at_both_at_least": 0.0,
+    "direction_high_minus_low_at_7000_at_least": 0.05,
+    "fold_relative_residual_strictly_greater_than": 1e-8,
+    "pooled_auroc_gain_at_3000_at_least": 0.0,
+    "pooled_auroc_gain_at_7000_at_least": 0.02,
+    "bootstrap_95pct_lower_at_7000_strictly_greater_than": 0.005,
+}
+
+
+def _json_safe(value):
+    if isinstance(value, np.ndarray):
+        return [_json_safe(item) for item in value.tolist()]
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def _exact_fields(value, expected, name):
+    if not isinstance(value, dict) or set(value) != expected:
+        raise ValueError(f"{name} fields mismatch")
+
+
+def _finite_scalar(value, name):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a finite number")
+    if not math.isfinite(float(value)):
+        raise ValueError(f"{name} must be finite")
+    return float(value)
+
+
+def _config_record(config):
+    record = _json_safe(asdict(config))
+    record["interval_percentiles"] = list(record["interval_percentiles"])
+    return record
+
+
+def _failed_gates(iterations):
+    by_iteration = {row["iteration"]: row for row in iterations}
+    early = by_iteration[3000]
+    primary = by_iteration[7000]
+    failures = []
+    if primary["domain"]["coverage"] < 0.80:
+        failures.append("7000_COVERAGE_BELOW_0.80")
+    for row in (early, primary):
+        iteration = row["iteration"]
+        direction = row["direction"]
+        if direction["highest_quintile_high_error_rate"] < direction["lowest_quintile_high_error_rate"]:
+            failures.append(f"{iteration}_RAW_RISK_QUINTILE_DIRECTION_NEGATIVE")
+        if direction["spearman_risk_distance"] < 0.0:
+            failures.append(f"{iteration}_RAW_RISK_SPEARMAN_NEGATIVE")
+        residuals = row["numerical_independence"]["fold_relative_residuals"]
+        if any(value <= 1e-8 for value in residuals):
+            failures.append(f"{iteration}_CANDIDATE_COLUMN_NOT_INDEPENDENT")
+    if primary["direction"]["high_minus_low_error_rate"] < 0.05:
+        failures.append("7000_RAW_RISK_SEPARATION_BELOW_0.05")
+    if early["crossfit"]["pooled_auroc_gain"] < 0.0:
+        failures.append("3000_POOLED_AUROC_GAIN_NEGATIVE")
+    if primary["crossfit"]["pooled_auroc_gain"] < 0.02:
+        failures.append("7000_POOLED_AUROC_GAIN_BELOW_0.02")
+    if primary["bootstrap"]["lower"] <= 0.005:
+        failures.append("7000_BOOTSTRAP_LOWER_NOT_GREATER_THAN_0.005")
+    return failures
+
+
+def build_probe_report(iterations, *, provenance, config, inconclusive_reasons=None):
+    """Build the frozen, diagnostic-only three-state complementarity report."""
+    iterations = _json_safe(copy.deepcopy(list(iterations)))
+    reasons = [str(reason) for reason in (inconclusive_reasons or [])]
+    report = {
+        "schema_version": 1,
+        "diagnostic_only": True,
+        "training_started": False,
+        "candidate": {"name": "one_minus_r_p", "expression": "1-r_p"},
+        "baseline": ["A", "1-S"],
+        "configuration": _config_record(config),
+        "gates": dict(_FROZEN_GATES),
+        "provenance": _json_safe(copy.deepcopy(provenance)),
+        "iterations": iterations,
+        "outcome": "INCONCLUSIVE",
+        "failed_gates": [],
+        "inconclusive_reasons": reasons,
+        "c1_authorized": False,
+        "causal_claim": None,
+        "cross_scene_claim": None,
+    }
+    if not reasons:
+        report["failed_gates"] = _failed_gates(iterations)
+        report["outcome"] = (
+            "NO_CLEAR_COMPLEMENT"
+            if report["failed_gates"]
+            else "INDEPENDENT_EVIDENCE_FEASIBLE"
+        )
+    return validate_probe_report(report)
+
+
+def _validate_risk_bins(bins, iteration):
+    if not isinstance(bins, list) or len(bins) != 20:
+        raise ValueError(f"{iteration} risk bin count mismatch")
+    expected = {
+        "bin", "count", "risk_min", "risk_max", "mean_distance_m", "high_error_rate"
+    }
+    for index, row in enumerate(bins):
+        _exact_fields(row, expected, f"{iteration} risk bin")
+        if row["bin"] != index:
+            raise ValueError(f"{iteration} risk bin order mismatch")
+        for name in expected - {"bin", "count"}:
+            _finite_scalar(row[name], f"{iteration} risk bin {name}")
+
+
+def _validate_iteration(row, expected_iteration, expected_role, config):
+    _exact_fields(row, _ITERATION_FIELDS, f"{expected_iteration} iteration")
+    if row["iteration"] != expected_iteration or row["role"] != expected_role:
+        raise ValueError("iteration role mismatch")
+    _exact_fields(row["domain"], _DOMAIN_FIELDS, f"{expected_iteration} domain")
+    domain = row["domain"]
+    if domain["label"] != "distance_gt_0.05_m":
+        raise ValueError("label contract mismatch")
+    for name in ("original_point_count", "finite_center_count", "eligible_count", "positive_count", "negative_count"):
+        if not isinstance(domain[name], int) or domain[name] < 0:
+            raise ValueError(f"{expected_iteration} domain count mismatch")
+    coverage = _finite_scalar(domain["coverage"], "coverage")
+    if not 0.0 <= coverage <= 1.0:
+        raise ValueError("coverage outside unit interval")
+    if domain["eligible_count"] != domain["positive_count"] + domain["negative_count"]:
+        raise ValueError("domain class counts mismatch")
+    _exact_fields(row["direction"], _DIRECTION_FIELDS, f"{expected_iteration} direction")
+    for name in _DIRECTION_FIELDS - {"risk_bins"}:
+        _finite_scalar(row["direction"][name], f"direction {name}")
+    _validate_risk_bins(row["direction"]["risk_bins"], expected_iteration)
+    independence = row["numerical_independence"]
+    _exact_fields(independence, {"threshold_strictly_greater_than", "fold_relative_residuals"}, "numerical independence")
+    if independence["threshold_strictly_greater_than"] != config.independence_threshold:
+        raise ValueError("independence threshold mismatch")
+    residuals = independence["fold_relative_residuals"]
+    if not isinstance(residuals, list) or len(residuals) != config.fold_count:
+        raise ValueError("independence fold count mismatch")
+    for value in residuals:
+        _finite_scalar(value, "independence residual")
+    crossfit = row["crossfit"]
+    _exact_fields(crossfit, {"folds", "baseline", "augmented", "pooled_auroc_gain"}, "crossfit")
+    _finite_scalar(crossfit["pooled_auroc_gain"], "pooled AUROC gain")
+    for name in ("baseline", "augmented"):
+        _exact_fields(crossfit[name], {"auroc", "auprc"}, f"{name} metrics")
+        _finite_scalar(crossfit[name]["auroc"], f"{name} AUROC")
+        _finite_scalar(crossfit[name]["auprc"], f"{name} AUPRC")
+    folds = crossfit["folds"]
+    if not isinstance(folds, list) or len(folds) != config.fold_count:
+        raise ValueError("crossfit fold count mismatch")
+    fold_fields = {"fold", "training_count", "validation_count", "baseline_auroc", "augmented_auroc", "auroc_gain", "candidate_relative_residual", "positive_weight", "negative_weight"}
+    for fold, fold_record in enumerate(folds):
+        _exact_fields(fold_record, fold_fields, "fold")
+        if fold_record["fold"] != fold:
+            raise ValueError("fold order mismatch")
+        for name in fold_fields - {"fold", "training_count", "validation_count"}:
+            _finite_scalar(fold_record[name], f"fold {name}")
+    bootstrap = row["bootstrap"]
+    _exact_fields(bootstrap, _BOOTSTRAP_FIELDS, "bootstrap")
+    if bootstrap["seed"] != config.bootstrap_seed or bootstrap["replicate_count"] != config.bootstrap_replicates:
+        raise ValueError("bootstrap seed or replicate count mismatch")
+    if bootstrap["interval_percentiles"] != list(config.interval_percentiles):
+        raise ValueError("bootstrap interval mismatch")
+    if bootstrap["voxel_size_m"] != config.voxel_size_m or bootstrap["voxel_origin"] != [0.0, 0.0, 0.0]:
+        raise ValueError("bootstrap voxel contract mismatch")
+    gains = bootstrap["auroc_gain_replicates"]
+    if not isinstance(gains, list) or len(gains) != config.bootstrap_replicates:
+        raise ValueError("bootstrap replicate inventory mismatch")
+    for value in [bootstrap["lower"], bootstrap["upper"], *gains]:
+        _finite_scalar(value, "bootstrap value")
+
+
+def validate_probe_report(report):
+    """Fail closed unless *report* exactly matches the frozen JSON contract."""
+    _exact_fields(report, _REPORT_FIELDS, "report")
+    if report["schema_version"] != 1:
+        raise ValueError("report schema version mismatch")
+    if report["diagnostic_only"] is not True or report["training_started"] is not False:
+        raise ValueError("diagnostic-only scope mismatch")
+    if report["candidate"] != {"name": "one_minus_r_p", "expression": "1-r_p"}:
+        raise ValueError("candidate contract mismatch")
+    if report["baseline"] != ["A", "1-S"]:
+        raise ValueError("baseline contract mismatch")
+    config = ProbeConfig()
+    if report["configuration"] != _config_record(config):
+        raise ValueError("configuration constants mismatch")
+    if report["gates"] != _FROZEN_GATES:
+        raise ValueError("gate constants mismatch")
+    if not isinstance(report["provenance"], dict) or not report["provenance"]:
+        raise ValueError("provenance fields mismatch")
+    if not isinstance(report["iterations"], list) or len(report["iterations"]) != 2:
+        raise ValueError("iteration inventory mismatch")
+    _validate_iteration(report["iterations"][0], 3000, "direction_stability", config)
+    _validate_iteration(report["iterations"][1], 7000, "primary", config)
+    if report["c1_authorized"] is not False:
+        raise ValueError("C1 authorization is forbidden")
+    if report["causal_claim"] is not None:
+        raise ValueError("causal claim is forbidden")
+    if report["cross_scene_claim"] is not None:
+        raise ValueError("cross-scene claim is forbidden")
+    if report["outcome"] not in PROBE_OUTCOMES:
+        raise ValueError("outcome mismatch")
+    if not isinstance(report["failed_gates"], list) or not all(isinstance(value, str) for value in report["failed_gates"]):
+        raise ValueError("failed gates mismatch")
+    reasons = report["inconclusive_reasons"]
+    if not isinstance(reasons, list) or not all(isinstance(value, str) and value for value in reasons):
+        raise ValueError("inconclusive reasons mismatch")
+    expected_failures = _failed_gates(report["iterations"])
+    if reasons:
+        if report["outcome"] != "INCONCLUSIVE" or report["failed_gates"]:
+            raise ValueError("inconclusive outcome mismatch")
+    else:
+        expected_outcome = "NO_CLEAR_COMPLEMENT" if expected_failures else "INDEPENDENT_EVIDENCE_FEASIBLE"
+        if report["outcome"] != expected_outcome or report["failed_gates"] != expected_failures:
+            raise ValueError("decision outcome mismatch")
+    return report
+
+
+def probe_exit_code(report):
+    validate_probe_report(report)
+    return {
+        "INDEPENDENT_EVIDENCE_FEASIBLE": 0,
+        "NO_CLEAR_COMPLEMENT": 1,
+        "INCONCLUSIVE": 2,
+    }[report["outcome"]]
+
+
+def fold_rows(report):
+    validate_probe_report(report)
+    rows = []
+    for iteration in report["iterations"]:
+        for fold in iteration["crossfit"]["folds"]:
+            rows.append({"iteration": iteration["iteration"], **copy.deepcopy(fold)})
+    return rows
+
+
+def risk_bin_rows(report):
+    validate_probe_report(report)
+    rows = []
+    for iteration in report["iterations"]:
+        for row in iteration["direction"]["risk_bins"]:
+            rows.append({"iteration": iteration["iteration"], **copy.deepcopy(row)})
+    return rows
+
+
+def bootstrap_rows(report):
+    validate_probe_report(report)
+    rows = []
+    for iteration in report["iterations"]:
+        for replicate, value in enumerate(iteration["bootstrap"]["auroc_gain_replicates"]):
+            rows.append({
+                "iteration": iteration["iteration"],
+                "replicate": replicate,
+                "auroc_gain": value,
+            })
+    return rows

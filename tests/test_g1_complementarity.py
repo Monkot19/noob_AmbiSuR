@@ -148,6 +148,7 @@ def iteration_summary(iteration, *, passing=True):
             "replicate_count": 2000,
             "interval_percentiles": [2.5, 97.5],
             "voxel_size_m": 0.5,
+            "voxel_origin": [0.0, 0.0, 0.0],
             "voxel_count": 25,
             "lower": 0.01 if passing else 0.0,
             "upper": 0.07,
@@ -324,6 +325,10 @@ class G1ComplementarityModelTests(unittest.TestCase):
                 fold["baseline_feature_mean"],
                 np.column_stack((domain.a, domain.one_minus_s))[train].mean(axis=0),
             )
+            self.assertEqual(
+                fold["positive_weight"],
+                int(train.sum()) / (2 * int(domain.labels[train].sum())),
+            )
 
 
 class G1ComplementarityReportTests(unittest.TestCase):
@@ -447,10 +452,6 @@ class G1ComplementarityReportTests(unittest.TestCase):
             with self.subTest(message=message):
                 with self.assertRaisesRegex(ValueError, message):
                     validate_probe_report(report)
-            self.assertEqual(
-                fold["positive_weight"],
-                int(train.sum()) / (2 * int(domain.labels[train].sum())),
-            )
 
     def test_crossfit_rejects_zero_scale_or_classless_training_fold(self):
         domain = synthetic_domain()
