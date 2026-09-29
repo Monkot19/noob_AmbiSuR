@@ -94,6 +94,7 @@ def iteration_summary(iteration, *, passing=True):
         "highest_quintile_high_error_rate": 0.20 if passing else 0.08,
         "high_minus_low_error_rate": 0.10 if passing else -0.02,
         "spearman_risk_distance": 0.15 if passing else -0.01,
+        "marginal": {"auroc": 0.62, "auprc": 0.45},
         "risk_bins": [
             {
                 "bin": index,
@@ -111,12 +112,26 @@ def iteration_summary(iteration, *, passing=True):
             "fold": fold,
             "training_count": 80,
             "validation_count": 20,
+            "training_positive_count": 16,
+            "training_negative_count": 64,
+            "validation_positive_count": 4,
+            "validation_negative_count": 16,
             "baseline_auroc": 0.55,
             "augmented_auroc": 0.59,
             "auroc_gain": 0.04,
             "candidate_relative_residual": 0.25,
-            "positive_weight": 1.0,
-            "negative_weight": 1.0,
+            "positive_weight": 80 / (2 * 16),
+            "negative_weight": 80 / (2 * 64),
+            "baseline_a_mean": 0.5,
+            "baseline_one_minus_s_mean": 0.4,
+            "baseline_a_scale": 0.2,
+            "baseline_one_minus_s_scale": 0.1,
+            "candidate_mean": 0.3,
+            "candidate_scale": 0.15,
+            "baseline_iterations": 6,
+            "augmented_iterations": 7,
+            "baseline_converged": True,
+            "augmented_converged": True,
         }
         for fold in range(5)
     ]
@@ -126,10 +141,10 @@ def iteration_summary(iteration, *, passing=True):
         "domain": {
             "original_point_count": 110,
             "finite_center_count": 100,
-            "eligible_count": 90 if passing else 79,
-            "positive_count": 30,
-            "negative_count": 60 if passing else 49,
-            "coverage": 0.90 if passing else 0.79,
+            "eligible_count": 100,
+            "positive_count": 20,
+            "negative_count": 80,
+            "coverage": 1.0,
             "label": "distance_gt_0.05_m",
         },
         "direction": direction,
@@ -448,6 +463,14 @@ class G1ComplementarityReportTests(unittest.TestCase):
         causal = self.report()
         causal["causal_claim"] = "causal"
         mutations.append((causal, "causal"))
+        fold_inventory = self.report()
+        fold_inventory["iterations"][0]["crossfit"]["folds"][0][
+            "validation_positive_count"
+        ] = 5
+        fold_inventory["iterations"][0]["crossfit"]["folds"][0][
+            "validation_negative_count"
+        ] = 15
+        mutations.append((fold_inventory, "fold training/validation complement"))
 
         for report, message in mutations:
             with self.subTest(message=message):

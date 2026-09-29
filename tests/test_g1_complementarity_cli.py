@@ -31,12 +31,26 @@ def iteration_summary(iteration, *, passing=False):
             "fold": fold,
             "training_count": 80,
             "validation_count": 20,
+            "training_positive_count": 16,
+            "training_negative_count": 64,
+            "validation_positive_count": 4,
+            "validation_negative_count": 16,
             "baseline_auroc": 0.55,
             "augmented_auroc": 0.59,
             "auroc_gain": 0.04,
             "candidate_relative_residual": 0.2,
-            "positive_weight": 1.0,
-            "negative_weight": 1.0,
+            "positive_weight": 80 / (2 * 16),
+            "negative_weight": 80 / (2 * 64),
+            "baseline_a_mean": 0.5,
+            "baseline_one_minus_s_mean": 0.4,
+            "baseline_a_scale": 0.2,
+            "baseline_one_minus_s_scale": 0.1,
+            "candidate_mean": 0.3,
+            "candidate_scale": 0.15,
+            "baseline_iterations": 6,
+            "augmented_iterations": 7,
+            "baseline_converged": True,
+            "augmented_converged": True,
         }
         for fold in range(5)
     ]
@@ -44,25 +58,26 @@ def iteration_summary(iteration, *, passing=False):
         "iteration": iteration,
         "role": role,
         "domain": {
-            "original_point_count": 12,
-            "finite_center_count": 10,
-            "eligible_count": 10,
-            "positive_count": 5,
-            "negative_count": 5,
+            "original_point_count": 102,
+            "finite_center_count": 100,
+            "eligible_count": 100,
+            "positive_count": 20,
+            "negative_count": 80,
             "coverage": 1.0,
             "label": "distance_gt_0.05_m",
         },
         "direction": {
-            "lowest_quintile_count": 2,
-            "highest_quintile_count": 2,
+            "lowest_quintile_count": 20,
+            "highest_quintile_count": 20,
             "lowest_quintile_high_error_rate": 0.0,
             "highest_quintile_high_error_rate": 1.0,
             "high_minus_low_error_rate": 1.0,
             "spearman_risk_distance": 0.5,
+            "marginal": {"auroc": 0.65, "auprc": 0.50},
             "risk_bins": [
                 {
                     "bin": index,
-                    "count": 1,
+                    "count": 5,
                     "risk_min": index / 20,
                     "risk_max": (index + 1) / 20,
                     "mean_distance_m": 0.01 + index / 1000,
@@ -96,9 +111,17 @@ def iteration_summary(iteration, *, passing=False):
 
 
 class FakeDependencies:
-    def __init__(self, *, passing=False, computation_error=None, mutate=False):
+    def __init__(
+        self,
+        *,
+        passing=False,
+        computation_error=None,
+        confirmation_error=None,
+        mutate=False,
+    ):
         self.passing = passing
         self.computation_error = computation_error
+        self.confirmation_error = confirmation_error
         self.mutate = mutate
         self.load_calls = []
         self.distance_counts = []
@@ -109,6 +132,8 @@ class FakeDependencies:
         return {"commit": "a" * 40, "clean": True}
 
     def load_confirmation(self, _path, _sha):
+        if self.confirmation_error:
+            raise ValueError(self.confirmation_error)
         return {"confirmation_id": "formal-v4", "formula_commit": "b" * 40}
 
     def validate_admission(self, **_kwargs):
@@ -258,6 +283,13 @@ class G1ComplementarityCliTests(unittest.TestCase):
                 inconclusive_args,
                 dependencies=FakeDependencies(computation_error="classless fold"),
             )
+            damaged_args = self.make_args(root / "damaged", "damaged")
+            damaged_code, damaged = run_probe(
+                damaged_args,
+                dependencies=FakeDependencies(
+                    confirmation_error="confirmation SHA256 mismatch"
+                ),
+            )
 
             self.assertEqual(negative_code, 1)
             self.assertTrue(Path(negative["output_dir"]).is_dir())
@@ -269,6 +301,12 @@ class G1ComplementarityCliTests(unittest.TestCase):
                 [3000, 7000],
             )
             self.assertTrue(all(row["status"] == "INCONCLUSIVE" for row in inconclusive["report"]["iterations"]))
+            self.assertEqual(damaged_code, 2)
+            self.assertTrue(Path(damaged["output_dir"]).is_dir())
+            self.assertIn(
+                "confirmation SHA256 mismatch",
+                damaged["report"]["inconclusive_reasons"][0],
+            )
 
     def test_overwrite_unsafe_output_and_mutation_leave_no_publication(self):
         with tempfile.TemporaryDirectory() as directory:

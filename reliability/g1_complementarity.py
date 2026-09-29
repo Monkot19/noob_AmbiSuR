@@ -515,11 +515,17 @@ def crossfit_comparison(domain, folds, *, config):
             domain.labels[training]
         )
         validation_rows = domain.row_indices[validation].astype(int).tolist()
+        training_positive_count = int(domain.labels[training].sum())
+        validation_positive_count = int(domain.labels[validation].sum())
         fold_reports.append(
             {
                 "fold": fold,
                 "training_count": int(training.sum()),
                 "validation_count": int(validation.sum()),
+                "training_positive_count": training_positive_count,
+                "training_negative_count": int(training.sum()) - training_positive_count,
+                "validation_positive_count": validation_positive_count,
+                "validation_negative_count": int(validation.sum()) - validation_positive_count,
                 "positive_weight": positive_weight,
                 "negative_weight": negative_weight,
                 "baseline_feature_mean": baseline_mean.tolist(),
@@ -725,6 +731,7 @@ _DIRECTION_FIELDS = {
     "highest_quintile_high_error_rate",
     "high_minus_low_error_rate",
     "spearman_risk_distance",
+    "marginal",
     "risk_bins",
 }
 
@@ -865,6 +872,12 @@ def _validate_risk_bins(bins, iteration):
         _exact_fields(row, expected, f"{iteration} risk bin")
         if row["bin"] != index:
             raise ValueError(f"{iteration} risk bin order mismatch")
+        if (
+            isinstance(row["count"], bool)
+            or not isinstance(row["count"], int)
+            or row["count"] < 0
+        ):
+            raise ValueError(f"{iteration} risk bin count mismatch")
         for name in expected - {"bin", "count"}:
             _finite_scalar(row[name], f"{iteration} risk bin {name}")
 
@@ -898,8 +911,11 @@ def _validate_iteration(row, expected_iteration, expected_role, config):
     ):
         raise ValueError("domain coverage/count contract mismatch")
     _exact_fields(row["direction"], _DIRECTION_FIELDS, f"{expected_iteration} direction")
-    for name in _DIRECTION_FIELDS - {"risk_bins"}:
+    for name in _DIRECTION_FIELDS - {"risk_bins", "marginal"}:
         _finite_scalar(row["direction"][name], f"direction {name}")
+    _exact_fields(row["direction"]["marginal"], {"auroc", "auprc"}, "marginal metrics")
+    _finite_scalar(row["direction"]["marginal"]["auroc"], "marginal AUROC")
+    _finite_scalar(row["direction"]["marginal"]["auprc"], "marginal AUPRC")
     if not math.isclose(
         row["direction"]["high_minus_low_error_rate"],
         row["direction"]["highest_quintile_high_error_rate"]
@@ -909,6 +925,16 @@ def _validate_iteration(row, expected_iteration, expected_role, config):
     ):
         raise ValueError("direction separation mismatch")
     _validate_risk_bins(row["direction"]["risk_bins"], expected_iteration)
+    risk_bins = row["direction"]["risk_bins"]
+    if sum(bin_row["count"] for bin_row in risk_bins) != domain["eligible_count"]:
+        raise ValueError("risk bin inventory mismatch")
+    if (
+        row["direction"]["lowest_quintile_count"]
+        != sum(bin_row["count"] for bin_row in risk_bins[:4])
+        or row["direction"]["highest_quintile_count"]
+        != sum(bin_row["count"] for bin_row in risk_bins[-4:])
+    ):
+        raise ValueError("risk quintile inventory mismatch")
     independence = row["numerical_independence"]
     _exact_fields(independence, {"threshold_strictly_greater_than", "fold_relative_residuals"}, "numerical independence")
     if independence["threshold_strictly_greater_than"] != config.independence_threshold:
@@ -935,13 +961,65 @@ def _validate_iteration(row, expected_iteration, expected_role, config):
     folds = crossfit["folds"]
     if not isinstance(folds, list) or len(folds) != config.fold_count:
         raise ValueError("crossfit fold count mismatch")
-    fold_fields = {"fold", "training_count", "validation_count", "baseline_auroc", "augmented_auroc", "auroc_gain", "candidate_relative_residual", "positive_weight", "negative_weight"}
+    fold_fields = {
+        "fold", "training_count", "validation_count",
+        "training_positive_count", "training_negative_count",
+        "validation_positive_count", "validation_negative_count",
+        "baseline_auroc", "augmented_auroc", "auroc_gain",
+        "candidate_relative_residual", "positive_weight", "negative_weight",
+        "baseline_a_mean", "baseline_one_minus_s_mean",
+        "baseline_a_scale", "baseline_one_minus_s_scale",
+        "candidate_mean", "candidate_scale", "baseline_iterations",
+        "augmented_iterations", "baseline_converged", "augmented_converged",
+    }
+    validation_count = 0
+    validation_positive_count = 0
+    validation_negative_count = 0
     for fold, fold_record in enumerate(folds):
         _exact_fields(fold_record, fold_fields, "fold")
         if fold_record["fold"] != fold:
             raise ValueError("fold order mismatch")
-        for name in fold_fields - {"fold", "training_count", "validation_count"}:
+        count_fields = {
+            "fold", "training_count", "validation_count",
+            "training_positive_count", "training_negative_count",
+            "validation_positive_count", "validation_negative_count",
+            "baseline_iterations", "augmented_iterations",
+        }
+        boolean_fields = {"baseline_converged", "augmented_converged"}
+        for name in fold_fields - count_fields - boolean_fields:
             _finite_scalar(fold_record[name], f"fold {name}")
+        for name in count_fields - {"fold"}:
+            if isinstance(fold_record[name], bool) or not isinstance(fold_record[name], int) or fold_record[name] < 0:
+                raise ValueError(f"fold {name} mismatch")
+        if fold_record["baseline_converged"] is not True or fold_record["augmented_converged"] is not True:
+            raise ValueError("fold solver convergence mismatch")
+        if (
+            fold_record["training_count"]
+            != fold_record["training_positive_count"] + fold_record["training_negative_count"]
+            or fold_record["validation_count"]
+            != fold_record["validation_positive_count"] + fold_record["validation_negative_count"]
+        ):
+            raise ValueError("fold class counts mismatch")
+        if (
+            fold_record["training_count"]
+            != domain["eligible_count"] - fold_record["validation_count"]
+            or fold_record["training_positive_count"]
+            != domain["positive_count"] - fold_record["validation_positive_count"]
+            or fold_record["training_negative_count"]
+            != domain["negative_count"] - fold_record["validation_negative_count"]
+        ):
+            raise ValueError("fold training/validation complement mismatch")
+        if (
+            fold_record["training_positive_count"] == 0
+            or fold_record["training_negative_count"] == 0
+            or fold_record["validation_positive_count"] == 0
+            or fold_record["validation_negative_count"] == 0
+        ):
+            raise ValueError("fold requires both classes")
+        expected_positive_weight = fold_record["training_count"] / (2 * fold_record["training_positive_count"])
+        expected_negative_weight = fold_record["training_count"] / (2 * fold_record["training_negative_count"])
+        if not math.isclose(fold_record["positive_weight"], expected_positive_weight, rel_tol=0.0, abs_tol=1e-15) or not math.isclose(fold_record["negative_weight"], expected_negative_weight, rel_tol=0.0, abs_tol=1e-15):
+            raise ValueError("fold class weight mismatch")
         if not math.isclose(
             fold_record["candidate_relative_residual"],
             residuals[fold],
@@ -949,6 +1027,15 @@ def _validate_iteration(row, expected_iteration, expected_role, config):
             abs_tol=1e-15,
         ):
             raise ValueError("fold independence residual mismatch")
+        validation_count += fold_record["validation_count"]
+        validation_positive_count += fold_record["validation_positive_count"]
+        validation_negative_count += fold_record["validation_negative_count"]
+    if (
+        validation_count != domain["eligible_count"]
+        or validation_positive_count != domain["positive_count"]
+        or validation_negative_count != domain["negative_count"]
+    ):
+        raise ValueError("fold validation class inventory mismatch")
     bootstrap = row["bootstrap"]
     _exact_fields(bootstrap, _BOOTSTRAP_FIELDS, "bootstrap")
     if bootstrap["seed"] != config.bootstrap_seed or bootstrap["replicate_count"] != config.bootstrap_replicates:

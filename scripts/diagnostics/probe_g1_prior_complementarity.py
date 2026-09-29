@@ -114,6 +114,13 @@ def evaluate_iteration(joined, distances, *, iteration, config):
     direction = raw_risk_direction(
         domain.prior_risk, domain.distances, domain.row_indices
     )
+    from reliability.g1_metrics import binary_curves
+
+    marginal = binary_curves(domain.prior_risk, domain.labels)
+    direction["marginal"] = {
+        "auroc": float(marginal["auroc"]),
+        "auprc": float(marginal["auprc"]),
+    }
     direction["risk_bins"] = _risk_bins(domain)
     comparison = crossfit_comparison(domain, folds, config=config)
     bootstrap = paired_voxel_bootstrap(
@@ -133,12 +140,26 @@ def evaluate_iteration(joined, distances, *, iteration, config):
                 "fold": int(row["fold"]),
                 "training_count": int(row["training_count"]),
                 "validation_count": int(row["validation_count"]),
+                "training_positive_count": int(row["training_positive_count"]),
+                "training_negative_count": int(row["training_negative_count"]),
+                "validation_positive_count": int(row["validation_positive_count"]),
+                "validation_negative_count": int(row["validation_negative_count"]),
                 "baseline_auroc": float(row["baseline_auroc"]),
                 "augmented_auroc": float(row["augmented_auroc"]),
                 "auroc_gain": float(row["auroc_gain"]),
                 "candidate_relative_residual": residual,
                 "positive_weight": float(row["positive_weight"]),
                 "negative_weight": float(row["negative_weight"]),
+                "baseline_a_mean": float(row["baseline_feature_mean"][0]),
+                "baseline_one_minus_s_mean": float(row["baseline_feature_mean"][1]),
+                "baseline_a_scale": float(row["baseline_feature_scale"][0]),
+                "baseline_one_minus_s_scale": float(row["baseline_feature_scale"][1]),
+                "candidate_mean": float(row["candidate_mean"]),
+                "candidate_scale": float(row["candidate_scale"]),
+                "baseline_iterations": int(row["baseline_iterations"]),
+                "augmented_iterations": int(row["augmented_iterations"]),
+                "baseline_converged": True,
+                "augmented_converged": True,
             }
         )
     return {
@@ -356,7 +377,17 @@ def _publish(output_root, diagnostic_id, inputs, report, immutable, dependencies
         _write_csv(
             staging / "folds.csv",
             fold_rows(report),
-            ["iteration", "fold", "training_count", "validation_count", "baseline_auroc", "augmented_auroc", "auroc_gain", "candidate_relative_residual", "positive_weight", "negative_weight"],
+            [
+                "iteration", "fold", "training_count", "validation_count",
+                "training_positive_count", "training_negative_count",
+                "validation_positive_count", "validation_negative_count",
+                "baseline_auroc", "augmented_auroc", "auroc_gain",
+                "candidate_relative_residual", "positive_weight", "negative_weight",
+                "baseline_a_mean", "baseline_one_minus_s_mean",
+                "baseline_a_scale", "baseline_one_minus_s_scale",
+                "candidate_mean", "candidate_scale", "baseline_iterations",
+                "augmented_iterations", "baseline_converged", "augmented_converged",
+            ],
         )
         _write_csv(
             staging / "risk_bins.csv",
@@ -397,12 +428,12 @@ def run_probe(args, dependencies=None):
         raise ValueError("diagnostic code identity must be exact and clean")
     immutable = _immutable_paths(run_dir, source_root, gt_mesh, confirmation)
     before = dependencies.fingerprint(immutable)
-    record = dependencies.load_confirmation(
-        confirmation, args.expected_confirmation_sha
-    )
-    provenance = _provenance(args, record, run_dir)
     config = ProbeConfig()
+    record = {}
     try:
+        record = dependencies.load_confirmation(
+            confirmation, args.expected_confirmation_sha
+        )
         dependencies.validate_admission(
             record=record,
             run_dir=run_dir,
@@ -428,13 +459,15 @@ def run_probe(args, dependencies=None):
                 )
             )
         report = build_probe_report(
-            summaries, provenance=provenance, config=config
+            summaries,
+            provenance=_provenance(args, record, run_dir),
+            config=config,
         )
     except (ProbeInconclusiveError, ValueError, FileNotFoundError) as error:
         reason = f"{type(error).__name__}: {error}"
         report = build_probe_report(
             _inconclusive_iterations(reason),
-            provenance=provenance,
+            provenance=_provenance(args, record, run_dir),
             config=config,
             inconclusive_reasons=[reason],
         )
