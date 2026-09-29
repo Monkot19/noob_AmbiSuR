@@ -827,3 +827,13 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Run the one-time read-only probe against the existing 3000/7000 version-4 assets and frozen GT mesh; the corrected v2 compact JSON/CSV publication passed its manifest audit.
 - [x] Apply the preregistered rule: `INDEPENDENT_EVIDENCE_FEASIBLE`, with 7000 pooled OOF AUROC gain `0.089141` and paired voxel-bootstrap 95% lower bound `0.067379`; C1 remains unauthorized.
 - [ ] Write and review a new prior-aware evidence hypothesis plus an independent-scene Utility Room/multi-seed validation protocol. Do not start training until that separate protocol is approved.
+
+## 2026-09-29 Prior/Geometry Risk Independent Validation Gate
+
+- [x] Freeze the Tool Room seed-0 v2 interpretation: `1-r_p` supplies conditional predictive information beyond `[A,1-S]` on its valid domain, without implying statistical independence, causality, cross-scene generalization, C1 authority, or a final architecture.
+- [x] Approve the semantic split: `A/S` are difficulty context, `1-r_p` is external-prior risk and a Bypass warning, `1-r_g` is internal-geometry risk only when valid, and `K/Delta` are reserved for agreement/conflict.
+- [x] Approve the pre-C2 boundary: diagnose/repair historical `T_g/r_g` only from approved formulas, synthetic/time-state tests, and Tool Room read-only engineering evidence; freeze repair code/schema/protocol before any Utility GT-derived result.
+- [x] Correct the Utility upload contract: the user uploads 147 images, genuinely undistorted PINHOLE/SIMPLE_PINHOLE `sparse/0`, and physically separate GT mesh; AmbiSuR DA3 generates `estimated_depths`, `estimated_confs`, `sparse_da3`, and `sparse_da3_aligned` once on the server for a frozen shared snapshot.
+- [x] Draft the formal design at `docs/superpowers/specs/2026-09-29-prior-geometry-risk-independent-validation-design.md` with new Utility version-5 D0 assets for seeds 0/1/2 and the unique common-domain `M0 -> M1 -> M2` probe.
+- [ ] Obtain formal specification approval before invoking `superpowers:writing-plans`, changing production code, running DA3, inspecting Utility GT, or launching Utility training.
+- [ ] After approval, write the TDD implementation plan. Do not implement or execute it until that plan is separately approved.

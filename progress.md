@@ -432,3 +432,7 @@
 - [x] Frozen metrics: 3000 pooled OOF AUROC gain `0.054714`, voxel-bootstrap 95% interval `[0.035258, 0.074344]`; 7000 gain `0.089141`, interval `[0.067379, 0.108420]`; coverage 1.0 at both iterations.
 - [x] Raw-risk direction and numerical independence passed: 3000/7000 quintile separations `0.154474/0.170999`, Spearman `0.137450/0.173008`, and every fold-local residual above 0.95.
 - [ ] Write and review the new prior-aware hypothesis and an independent Utility Room/multi-seed validation protocol. This result does not authorize C1, Tool Room retraining, causality, or cross-scene claims.
+- [x] Presented and received approval for the prior/geometry semantic split and Utility multi-seed validation summary; incorporated the additional no-Utility-GT-before-freeze chronology and the requirement for three new versioned Utility 7k D0 assets.
+- [x] Corrected the source/derived data distinction: user upload is 147 images + verified undistorted `sparse/0` + separate GT; AmbiSuR DA3 generates and freezes depth/confidence/raw/aligned prior assets on the server.
+- [x] Drafted `docs/superpowers/specs/2026-09-29-prior-geometry-risk-independent-validation-design.md`; no production code, DA3 preprocessing, Utility GT evaluation, or training was started.
+- [ ] Await formal specification review. Only after `规格通过` may an implementation plan be written.
