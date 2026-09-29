@@ -821,7 +821,8 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Verify the downloaded publication folder against all 108 manifest byte counts and SHA256 values.
 - [x] Stop C1, 30k continuation, stage tagging, and additional Tool Room calibration search.
 - [x] Freeze a no-training feasibility question and fixed candidate set before inspecting conditional results.
-- [ ] TDD the reviewed read-only conditional-complementarity contract with `1-r_p` as the sole decision candidate: identical `V_p=True` domains, pooled OOF gain, fold-local preprocessing and column-rank checks, deterministic float64 Newton/IRLS, paired fixed-origin voxel bootstrap, raw-risk direction gates, and exhaustive three-state output. Keep joint-valid `1-K` and temporal transition count descriptive-only.
-- [x] Draft the native TDD implementation plan at `docs/superpowers/plans/2026-09-29-independent-evidence-feasibility-probe.md`; implementation remains blocked until plan review.
+- [x] TDD the reviewed read-only conditional-complementarity contract with `1-r_p` as the sole decision candidate: identical `V_p=True` domains, pooled OOF gain, fold-local preprocessing and column-rank checks, deterministic float64 Newton/IRLS, paired fixed-origin voxel bootstrap, raw-risk direction gates, and exhaustive three-state output. Keep joint-valid `1-K` and temporal transition count descriptive-only.
+- [x] Draft and obtain approval for the native TDD implementation plan at `docs/superpowers/plans/2026-09-29-independent-evidence-feasibility-probe.md` before implementation.
+- [ ] Qualify the exact local diagnostic commit on AutoDL with Python 3.10/Torch/Open3D, focused and full discovery, static compilation, clean Git/no-training gates, and frozen confirmation/data/prior/GT identity. Do not run the real probe during qualification.
 - [ ] Run it once against the existing 3000/7000 version-4 assets and frozen GT mesh; publish only a small JSON/CSV report.
 - [ ] Apply the preregistered `FEASIBLE / INCONCLUSIVE / NO_CLEAR_COMPLEMENT` rule. Do not train unless a new written hypothesis and independent-scene protocol are separately approved.
