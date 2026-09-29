@@ -436,3 +436,6 @@
 - [x] Corrected the source/derived data distinction: user upload is 147 images + verified undistorted `sparse/0` + separate GT; AmbiSuR DA3 generates and freezes depth/confidence/raw/aligned prior assets on the server.
 - [x] Drafted `docs/superpowers/specs/2026-09-29-prior-geometry-risk-independent-validation-design.md`; no production code, DA3 preprocessing, Utility GT evaluation, or training was started.
 - [ ] Await formal specification review. Only after `规格通过` may an implementation plan be written.
+- [x] User approved the independent prior/geometry risk specification and explicitly retained diagnosis-first, no-Utility-GT, one-time-DA3, shared-snapshot, and separate-stage authorization boundaries.
+- [x] Created `docs/superpowers/plans/2026-09-29-prior-geometry-risk-independent-validation.md` with a conditional stop after semantic diagnosis and explicit RED/GREEN/commit/review gates.
+- [ ] Await TDD implementation-plan approval and execution approach. No production code or external data/training action has been authorized.

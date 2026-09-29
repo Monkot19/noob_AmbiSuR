@@ -836,4 +836,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Correct the Utility upload contract: the user uploads 147 images, genuinely undistorted PINHOLE/SIMPLE_PINHOLE `sparse/0`, and physically separate GT mesh; AmbiSuR DA3 generates `estimated_depths`, `estimated_confs`, `sparse_da3`, and `sparse_da3_aligned` once on the server for a frozen shared snapshot.
 - [x] Draft the formal design at `docs/superpowers/specs/2026-09-29-prior-geometry-risk-independent-validation-design.md` with new Utility version-5 D0 assets for seeds 0/1/2 and the unique common-domain `M0 -> M1 -> M2` probe.
 - [ ] Obtain formal specification approval before invoking `superpowers:writing-plans`, changing production code, running DA3, inspecting Utility GT, or launching Utility training.
-- [ ] After approval, write the TDD implementation plan. Do not implement or execute it until that plan is separately approved.
+- [x] Formal specification approved on 2026-09-29 with four retained execution boundaries: diagnosis before version bump; pre-DA3 147-way/no-GT confirmation; one immutable DA3 snapshot shared by three seeds; and separate approval for every later execution stage.
+- [x] Wrote the formal gated TDD plan at `docs/superpowers/plans/2026-09-29-prior-geometry-risk-independent-validation.md`.
+- [ ] Obtain implementation-plan approval and execution-method choice. Do not implement Task 1, run DA3, inspect Utility GT, launch Utility training, or start C1 under the specification approval alone.
