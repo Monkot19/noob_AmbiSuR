@@ -1,6 +1,6 @@
 # Prior-Risk Utility Room Multi-Seed Transfer Design
 
-**Status:** Draft for formal review. The in-chat design summary was confirmed on 2026-09-30. This document authorizes neither implementation nor experiment execution.
+**Status:** Approved on 2026-09-30 for TDD implementation planning only. This approval authorizes neither implementation nor experiment execution.
 
 **Scope:** Define one read-only, independent-scene replication test for the already frozen candidate `1-r_p`. This line does not modify the production method and is independent of the geometry-update authorization hypothesis.
 
