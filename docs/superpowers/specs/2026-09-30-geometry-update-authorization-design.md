@@ -31,7 +31,7 @@ This is an action-authorization problem, not a static geometry-correctness class
 
 The causal/diagnostic unit is one **pre-action spatial cluster** `C`, not one Gaussian and not an arbitrary simultaneous set of candidates. Stage G-A must define one deterministic, GT-free cluster-construction rule from the pre-action state, including its coordinate frame, neighborhood rule, membership tie breaks, minimum/maximum size, guard region, validity, and behavior near scene boundaries. Until that exact rule is approved, no paired target may be generated.
 
-One paired experiment treats exactly one valid cluster. No two nearby clusters are treated in the same branch pair. If later batching is proposed for compute reasons, clusters in the same batch must be disjoint and separated by a preregistered guard distance; otherwise the batch is invalid for causal attribution. This prevents overlapping treatment interference from being mislabeled as independent samples.
+Stage G-A forbids batching: every branch pair treats exactly one valid cluster. Spatial separation or a guard distance cannot establish absence of cross-cluster interference because rendering and optimizer coupling are global. Any future batching proposal requires a separate approved no-interference contract and synthetic validation; it cannot rely on distance alone.
 
 Before any empirical target is generated, one clean cluster-level geometry update action `a_C` must also be specified completely. Its implementation, affected parameter set, per-member update, aggregation, magnitude/clipping, support requirements, source observations, optimizer interaction, and invalid-row behavior must be frozen.
 
@@ -145,7 +145,7 @@ The synthetic generator must include cases where geometry is wrong but the updat
 
 Only after Stage G-A implementation and its positive gate are complete and frozen may a separate Tool Room intervention specification be drafted. This charter does not authorize that specification, its TDD plan, or its execution. A future approved Tool Room protocol may generate paired, short-horizon cluster targets under the frozen action; its spatial and seed-level development/holdout partitions must be fixed before target inspection.
 
-Tool Room can be used to reject the hypothesis or choose between already specified formula components only within a preregistered development allocation. The final Tool Room holdout is single-use. No result may be rescued through a sign flip, threshold search, alternate horizon, alternate action, or post-hoc row filter.
+Tool Room may only test or reject the unique `Q_g` formula frozen by the approved Stage G-A exact sub-specification. It may not select, delete, or recombine components, refit the formula or constants, or substitute another candidate. The final Tool Room holdout is single-use. No result may be rescued through a sign flip, threshold search, alternate horizon, alternate action, or post-hoc row filter.
 
 ### Stage G-C: pre-Utility freeze
 
