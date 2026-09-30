@@ -853,4 +853,10 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Draft the independent `1-r_p` Utility Room seeds 0/1/2 transfer specification at `docs/superpowers/specs/2026-09-30-prior-risk-utility-transfer-design.md`.
 - [x] Bind both lines to one Utility GT information firewall: the geometry action/target/formula/state/stop contract must be frozen before either line reads any Utility GT-derived value.
 - [x] Preserve the hard stop: these specifications do not resume Tasks 4–13 and do not authorize implementation planning, DA3, Utility training, GT evaluation, routing, five-state arbitration, or C1.
+- [x] Revise geometry scope to a Stage G-A research charter with a spatial-cluster intervention unit, explicit interference/spillover/optimizer/topology-lineage contract, and cluster-level rather than per-Gaussian effect.
+- [x] Require a separately approved Stage G-A exact sub-specification before any implementation plan; it must freeze action, parameters, outcome, horizon, margins, safety, unique `Q_g`, validity, metrics, coverage, compute budget, and positive/stop gates.
+- [x] Close the Utility GT firewall with exactly two releases: immutable Stage G-C candidate confirmation or checksummed terminal `NO_ACTION_SPECIFIC_SIGNAL` confirmation that Utility results cannot reopen.
+- [x] Make iteration 7,000 the only prior-transfer performance gate; keep 3,000 only for preregistered direction stability and descriptive metrics.
+- [x] Align DA3 admission with loader reality: 147 depth and 147 confidence `<complete image filename>.npy` arrays; depth previews are manifest-tracked but not counted.
+- [x] Add fail-closed GT mesh identity/alignment/coverage admission with no realignment, crop, AABB filtering, or evaluation-domain repair.
 - [ ] Obtain separate formal review/approval for each specification before invoking `superpowers:writing-plans` for either line.

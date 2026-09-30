@@ -457,4 +457,7 @@
 - [x] Added `docs/superpowers/specs/2026-09-30-geometry-update-authorization-design.md` in commit `a50c121`.
 - [x] Added `docs/superpowers/specs/2026-09-30-prior-risk-utility-transfer-design.md` in commit `3175a38`.
 - [x] Self-review found no placeholder, whitespace, authorization-scope, version, or cross-line Utility-GT firewall conflict.
-- [ ] Await separate user review of both formal specifications. No implementation plan or execution has begun.
+- [x] First formal review returned seven bounded specification gaps; no implementation plan or execution began.
+- [x] Revised the geometry document in `5b8b2a8cbfa12fa6aa7702f617576c060b004142` as a Stage G-A charter with cluster-level intervention/interference/topology lineage and exact-sub-specification gate.
+- [x] Revised the prior-transfer document in `696912a` with terminal firewall release, 7000-only performance gating, exact loader array counts, and fail-closed mesh admission.
+- [ ] Await separate approval of both revised specifications. No implementation plan, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, or C1 has begun.
