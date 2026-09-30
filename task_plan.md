@@ -862,4 +862,8 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Obtain formal approval for the `1-r_p` Utility transfer specification; planning is now eligible but has not started and execution remains unauthorized.
 - [x] Remove the final Geometry charter ambiguities: Stage G-A is single-cluster only with no batching, and Tool Room may only test/reject the frozen unique `Q_g`.
 - [x] Obtain final formal approval for the revised Geometry Stage G-A charter; only the Stage G-A exact sub-specification may be drafted next.
-- [ ] Wait for explicit user direction before drafting either the Geometry Stage G-A exact sub-specification or the approved Prior-transfer TDD implementation plan.
+- [x] Draft the separately authorized Geometry Stage G-A exact sub-specification; document only, with no implementation plan or experiment execution.
+- [x] Draft the separately authorized `1-r_p` Utility transfer TDD implementation plan; plan only, with all server and Utility-GT stages separately gated.
+- [x] Preserve separate commits and the no-execution boundary; await separate user reviews before either line advances.
+- [x] Drafting note: two initial planning-file patches failed closed because one contained an empty update hunk and one targeted text that lived in `progress.md`; neither changed repository contents, and the corrected exact-context patch succeeded.
+- [x] Verification note: the first literal contract checker expected `does not authorize implementation`, while the reviewed Geometry text says `would not authorize implementation`; the check stopped without repository change and was corrected to the document's exact phrase.

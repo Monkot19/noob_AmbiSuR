@@ -464,4 +464,6 @@
 - [x] Applied the second Geometry review: Stage G-A now forbids batching, and Tool Room can only test/reject the unique frozen `Q_g` without component or constant selection.
 - [x] Geometry Stage G-A charter formally approved for drafting its exact sub-specification only; no TDD plan or execution is authorized.
 - [x] Both research-line specifications are approved with distinct next-step gates. No follow-on document has started pending explicit user direction.
+- [x] Geometry Stage G-A exact sub-specification drafted at `docs/superpowers/specs/2026-09-30-geometry-stage-ga-exact-subspecification.md` and committed separately as `ac8a6c0`.
+- [x] `1-r_p` Utility transfer TDD implementation plan drafted at `docs/superpowers/plans/2026-09-30-prior-risk-utility-transfer.md`; no implementation or server action was performed.
 - [ ] Continue to block implementation planning/execution, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, and C1 unless separately authorized.
