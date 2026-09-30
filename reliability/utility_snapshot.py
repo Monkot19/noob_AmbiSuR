@@ -275,6 +275,16 @@ def _verify_source_manifest(manifest: Mapping, *, root_override=None) -> None:
         raise ValueError("source manifest SHA256 mismatch")
 
 
+def _verify_da3_checkpoint(checkpoint: Mapping) -> None:
+    path = _absolute_path(checkpoint["path"], "DA3 checkpoint path")
+    if not path.is_file():
+        raise FileNotFoundError(f"DA3 checkpoint is missing: {path}")
+    if path.stat().st_size != int(checkpoint["bytes"]):
+        raise ValueError("DA3 checkpoint byte count mismatch")
+    if _sha256_file(path) != str(checkpoint["sha256"]):
+        raise ValueError("DA3 checkpoint SHA256 mismatch")
+
+
 def _validate_da3_confirmation(record: Mapping, *, require_targets_absent: bool) -> dict:
     required = {
         "schema_version",
@@ -411,6 +421,7 @@ def _atomic_record_write(record: Mapping, path: Path) -> dict:
 def write_da3_confirmation(record: Mapping, path: Path) -> dict:
     validated = _validate_da3_confirmation(record, require_targets_absent=True)
     _verify_source_manifest(validated["source"])
+    _verify_da3_checkpoint(validated["da3_checkpoint"])
     return _atomic_record_write(validated, path)
 
 
@@ -419,6 +430,7 @@ def load_da3_confirmation(
     expected_sha256: str,
     *,
     verify_source: bool = False,
+    verify_checkpoint: bool = False,
     expected_kind: str = "utility_da3_confirmation",
 ) -> dict:
     path = _absolute_path(path, "record path")
@@ -433,6 +445,8 @@ def load_da3_confirmation(
         record = _validate_da3_confirmation(record, require_targets_absent=False)
         if verify_source:
             _verify_source_manifest(record["source"])
+        if verify_checkpoint:
+            _verify_da3_checkpoint(record["da3_checkpoint"])
     elif expected_kind == "utility_da3_snapshot":
         if record.get("schema_version") != 1 or record.get("kind") != expected_kind or _SHA64.fullmatch(str(record.get("snapshot_sha256"))) is None:
             raise ValueError("snapshot record schema mismatch")

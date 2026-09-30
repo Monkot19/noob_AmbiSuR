@@ -264,6 +264,36 @@ class UtilityDa3SnapshotTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_da3_confirmation(path, publication["sha256"], verify_source=True)
 
+    def test_confirmation_rehashes_checkpoint_before_publication(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _source, _staging, _snapshot_record, record = _confirmation(root)
+            (root / "da3.ckpt").write_bytes(b"tamper-da3")
+            with self.assertRaises(ValueError):
+                write_da3_confirmation(record, root / "confirmation.json")
+
+    def test_confirmation_rejects_missing_checkpoint_before_publication(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _source, _staging, _snapshot_record, record = _confirmation(root)
+            (root / "da3.ckpt").unlink()
+            with self.assertRaises(FileNotFoundError):
+                write_da3_confirmation(record, root / "confirmation.json")
+
+    def test_confirmation_reload_can_reverify_checkpoint_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _source, _staging, _snapshot_record, record = _confirmation(root)
+            path = root / "confirmation.json"
+            publication = write_da3_confirmation(record, path)
+            (root / "da3.ckpt").write_bytes(b"tamper-da3")
+            with self.assertRaises(ValueError):
+                load_da3_confirmation(
+                    path,
+                    publication["sha256"],
+                    verify_checkpoint=True,
+                )
+
     def test_snapshot_admits_exact_arrays_models_alignment_and_complete_manifest(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
