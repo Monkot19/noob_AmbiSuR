@@ -812,7 +812,7 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] `docs/superpowers/plans/2026-09-28-observation-sufficiency-soft-calibration.md` 已获用户批准；Tasks 1–6 已完成逐项 RED→GREEN、自审修复与 exact-commit AutoDL CPU/CUDA qualification。
 - [x] Task 7：新路径 Tool Room/r2/seed0 500-step/refresh-100 shadow smoke 在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 完成；五次 refresh、Evidence v4、finite、checkpoint/snapshot join、optimizer step 499、no-GT、输入哈希与训练隔离全部 PASS，`real_topology_evidence=NO`。
 - [x] Task 8：formal-7k confirmation JSON 与 detached SHA 已冻结并通过 production load/digest/chronology 审计；未创建 formal run/view，未启动训练。正式 7k 仍需另行授权。
-- [ ] C2 blocker: separately instrument or otherwise reconstruct refresh-time geometry stability/EMA lineage before changing geometry reliability. Current recomputed multiview, depth-normal, and support components must remain unchanged absent contrary evidence.
+- [x] C2 blocker adjudicated under the approved fail-closed contract: real collector/reprojection tests and the frozen Tool Room no-GT audit found no violation of the approved formula, validity, support, history, topology, or stored-state contracts. Current geometry components remain unchanged; the historical GT-direction anomaly is not permission to flip a sign or advance Evidence state.
 
 ## 2026-09-28 Formal Soft-v4 G1 Stop and Independent-Evidence Triage
 
@@ -826,7 +826,7 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Qualify exact diagnostic commit `4388d2f1ed232ec5a7599d7ae2e22a7c2f21e752` on AutoDL: focused 75/75 and full discovery 291/291 passed with clean Git/no-training and frozen input identity.
 - [x] Run the one-time read-only probe against the existing 3000/7000 version-4 assets and frozen GT mesh; the corrected v2 compact JSON/CSV publication passed its manifest audit.
 - [x] Apply the preregistered rule: `INDEPENDENT_EVIDENCE_FEASIBLE`, with 7000 pooled OOF AUROC gain `0.089141` and paired voxel-bootstrap 95% lower bound `0.067379`; C1 remains unauthorized.
-- [ ] Write and review a new prior-aware evidence hypothesis plus an independent-scene Utility Room/multi-seed validation protocol. Do not start training until that separate protocol is approved.
+- [x] Write and review a new prior-aware evidence hypothesis plus an independent-scene Utility Room/multi-seed validation protocol. The approved protocol remained conditional on a justified geometry-semantic repair; no training or Utility processing started.
 
 ## 2026-09-29 Prior/Geometry Risk Independent Validation Gate
 
@@ -835,8 +835,13 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Approve the pre-C2 boundary: diagnose/repair historical `T_g/r_g` only from approved formulas, synthetic/time-state tests, and Tool Room read-only engineering evidence; freeze repair code/schema/protocol before any Utility GT-derived result.
 - [x] Correct the Utility upload contract: the user uploads 147 images, genuinely undistorted PINHOLE/SIMPLE_PINHOLE `sparse/0`, and physically separate GT mesh; AmbiSuR DA3 generates `estimated_depths`, `estimated_confs`, `sparse_da3`, and `sparse_da3_aligned` once on the server for a frozen shared snapshot.
 - [x] Draft the formal design at `docs/superpowers/specs/2026-09-29-prior-geometry-risk-independent-validation-design.md` with new Utility version-5 D0 assets for seeds 0/1/2 and the unique common-domain `M0 -> M1 -> M2` probe.
-- [ ] Obtain formal specification approval before invoking `superpowers:writing-plans`, changing production code, running DA3, inspecting Utility GT, or launching Utility training.
+- [x] Formal specification approval obtained before implementation planning; the diagnosis-first, pre-DA3 no-GT audit, one-snapshot, and separately authorized execution boundaries remained binding.
 - [x] Formal specification approved on 2026-09-29 with four retained execution boundaries: diagnosis before version bump; pre-DA3 147-way/no-GT confirmation; one immutable DA3 snapshot shared by three seeds; and separate approval for every later execution stage.
 - [x] Wrote the formal gated TDD plan at `docs/superpowers/plans/2026-09-29-prior-geometry-risk-independent-validation.md`.
 - [x] Revised the plan after review so Task 1 exercises the real reprojection/collector `E_g,mv` and `E_g,dn` boundaries, Task 4 follows the production file actually located by RED, and canonical dual-risk confirmation is frozen after DA3 but before any seed/probe target exists.
-- [ ] Obtain implementation-plan approval and execution-method choice. Do not implement Task 1, run DA3, inspect Utility GT, launch Utility training, or start C1 under the specification approval alone.
+- [x] Implementation plan approved for current-task sequential TDD execution; external server/data/training/GT/C1 gates remained separately authorized.
+- [x] Task 1 exercised the real collector/reprojection `E_g,mv` and `E_g,dn` boundaries plus temporal/topology state semantics on AutoDL: 23/23 passed and froze `NO_SEMANTIC_REPAIR_JUSTIFIED` without modifying production files.
+- [x] Task 2 implemented the compact no-GT semantic audit through `5f76a3f19596d28f8da31e29f3589a87cf0ed09f`; final AutoDL regression passed 34/34 plus static compile and all no-training/no-Utility/no-GT/no-C1 sentinels.
+- [x] Task 3A qualified the exact commit on AutoDL: focused 50/50, full discovery 312/312, CUDA boundary 11/11, canonical dataset/prior hashes, clean tree, and parser `GT_ARGUMENT_PRESENT=NO` all passed.
+- [x] Task 3B atomically published and verified the one-time Tool Room version-4 3000/7000 no-GT audit. All five checks passed, including 1,093,102 and 1,417,059 joined rows with zero `r_g` mismatches and unchanged immutable fingerprints.
+- [x] Apply the hard branch gate: final outcome `NO_SEMANTIC_REPAIR_JUSTIFIED`; Evidence version 5 is not authorized and Tasks 4–13 are stopped. No DA3, Utility processing/training, GT evaluation, C1, formula/sign/threshold change, or production-method repair occurred. Any future prior-only independent-scene work requires a new separately reviewed protocol rather than resuming this stopped dual-risk plan.

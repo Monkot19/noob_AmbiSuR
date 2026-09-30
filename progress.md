@@ -415,7 +415,7 @@
 - [x] Task 8 config-path fix `815ccb8700e4aad4a2dbecf5959d0b9c54a17126` passed AutoDL 40/40 focused formal contracts, 269/269 discovery, and 8/8 explicit CUDA gates.
 - [x] Task 8 confirmation `d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1` was canonically frozen at `/root/autodl-tmp/ambisur_diagnostics/d0_g1_softcal_v4_formal7k_toolroom_seed0_20260928_v1.confirmation.json`; detached SHA256 `074ee091cf71e21b7a9f49256bf3bbdbc4b83a62babba557ee714d9fa42f0bf0` matched direct recomputation and production reload.
 - [x] Confirmation chronology gate proved formal run/view/output absent and no training started. Task 8 is complete; Task 9 formal 7k awaits separate explicit authorization.
-- [ ] Track the historical `T_g/r_g` reversal as a separate pre-C2 temporal reliability diagnostic; do not fold it into the C1 sufficiency change.
+- [x] Track and adjudicate the historical `T_g/r_g` reversal as a separate pre-C2 semantic diagnostic. The approved collector/reprojection/state contract and real no-GT audit passed, so no semantic repair or Evidence-version bump is justified; the empirical reversal is not folded into C1.
 
 ## 2026-09-28 Soft-v4 Formal Decision and Freeze
 
@@ -431,12 +431,22 @@
 - [x] The separately authorized read-only v2 probe returned `INDEPENDENT_EVIDENCE_FEASIBLE`; all five manifest-listed payloads passed byte/SHA verification and no training asset changed.
 - [x] Frozen metrics: 3000 pooled OOF AUROC gain `0.054714`, voxel-bootstrap 95% interval `[0.035258, 0.074344]`; 7000 gain `0.089141`, interval `[0.067379, 0.108420]`; coverage 1.0 at both iterations.
 - [x] Raw-risk direction and numerical independence passed: 3000/7000 quintile separations `0.154474/0.170999`, Spearman `0.137450/0.173008`, and every fold-local residual above 0.95.
-- [ ] Write and review the new prior-aware hypothesis and an independent Utility Room/multi-seed validation protocol. This result does not authorize C1, Tool Room retraining, causality, or cross-scene claims.
+- [x] Wrote, reviewed, and approved the prior-aware/geometry-risk independent Utility Room multi-seed validation protocol. Its geometry branch remained conditional on a justified semantic repair; no C1, Tool Room retraining, causality, or cross-scene claim was authorized.
 - [x] Presented and received approval for the prior/geometry semantic split and Utility multi-seed validation summary; incorporated the additional no-Utility-GT-before-freeze chronology and the requirement for three new versioned Utility 7k D0 assets.
 - [x] Corrected the source/derived data distinction: user upload is 147 images + verified undistorted `sparse/0` + separate GT; AmbiSuR DA3 generates and freezes depth/confidence/raw/aligned prior assets on the server.
 - [x] Drafted `docs/superpowers/specs/2026-09-29-prior-geometry-risk-independent-validation-design.md`; no production code, DA3 preprocessing, Utility GT evaluation, or training was started.
-- [ ] Await formal specification review. Only after `规格通过` may an implementation plan be written.
+- [x] Formal specification reviewed and approved with diagnosis-first, no-Utility-GT-before-freeze, one-time DA3/shared-snapshot, and separate execution-authorization boundaries.
 - [x] User approved the independent prior/geometry risk specification and explicitly retained diagnosis-first, no-Utility-GT, one-time-DA3, shared-snapshot, and separate-stage authorization boundaries.
 - [x] Created `docs/superpowers/plans/2026-09-29-prior-geometry-risk-independent-validation.md` with a conditional stop after semantic diagnosis and explicit RED/GREEN/commit/review gates.
 - [x] Applied the 2026-09-30 plan review: added real `E_g,mv`/`E_g,dn` collector-reprojection tests, made Task 4 root-cause-file conditional, and moved canonical confirmation ahead of seed target creation/training with same-SHA evaluator reload.
-- [ ] Await TDD implementation-plan approval and execution approach. No production code or external data/training action has been authorized.
+- [x] TDD implementation plan approved for current-task sequential execution; external data/training/GT/C1 actions remained separately gated.
+
+## 2026-09-30 Prior/Geometry Validation Tasks 1–3 and Hard Stop
+
+- [x] Task 1 tests-only diagnosis commit `2371b1260f2f25e47ba28c6aa28c0dcadb55dc22` passed 23/23 authoritative AutoDL tests over real reprojection, collector, state, topology, and isolation boundaries. Outcome: `NO_SEMANTIC_REPAIR_JUSTIFIED`; no production file changed.
+- [x] Task 2 RED `65f27239ef8b56b2721ffb6e18591c8f600cc923`, audit GREEN `c0cdb85d5026ed681afb3a282ea88653397ca27a`, and review fix `5f76a3f19596d28f8da31e29f3589a87cf0ed09f` completed. Final AutoDL result: 34/34 plus compile 0, clean detached HEAD, and no training/Utility/GT/C1 activity.
+- [x] Task 3A exact-commit qualification passed: focused 50/50, full discovery 312/312, CUDA boundary 11/11, static compile 0, canonical hashes exact, clean tree, zero active training, and no GT/mesh parser argument.
+- [x] Task 3B one-time Tool Room no-GT audit completed with atomic publication and verified manifest. All checks passed: Task-1 conformance, version-4 state at 3000/7000, real collector components, and immutable before/after fingerprints. Audit return code 0; no failed or inconclusive checks.
+- [x] Frozen decision `NO_SEMANTIC_REPAIR_JUSTIFIED`: `repair_authorized=false`, `authorized_evidence_version=null`, `tasks_4_to_13_stopped=true`. Production geometry formulas/state remain unchanged at Evidence version 4.
+- [x] Safety closeout: repository clean; active training count 0; `training_started=NO`, `utility_processing_started=NO`, `gt_evaluation_started=NO`, and `C1_started=NO`.
+- [x] Current gated plan is closed. Any future prior-only Utility/multi-seed confirmation requires a new specification and approvals; it cannot resume Tasks 4–13 from this stopped dual-risk plan.
