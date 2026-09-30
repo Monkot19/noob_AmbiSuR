@@ -838,4 +838,5 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [ ] Obtain formal specification approval before invoking `superpowers:writing-plans`, changing production code, running DA3, inspecting Utility GT, or launching Utility training.
 - [x] Formal specification approved on 2026-09-29 with four retained execution boundaries: diagnosis before version bump; pre-DA3 147-way/no-GT confirmation; one immutable DA3 snapshot shared by three seeds; and separate approval for every later execution stage.
 - [x] Wrote the formal gated TDD plan at `docs/superpowers/plans/2026-09-29-prior-geometry-risk-independent-validation.md`.
+- [x] Revised the plan after review so Task 1 exercises the real reprojection/collector `E_g,mv` and `E_g,dn` boundaries, Task 4 follows the production file actually located by RED, and canonical dual-risk confirmation is frozen after DA3 but before any seed/probe target exists.
 - [ ] Obtain implementation-plan approval and execution-method choice. Do not implement Task 1, run DA3, inspect Utility GT, launch Utility training, or start C1 under the specification approval alone.

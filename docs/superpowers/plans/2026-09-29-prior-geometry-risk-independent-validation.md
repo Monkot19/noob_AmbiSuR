@@ -4,7 +4,7 @@
 
 **Goal:** Diagnose whether historical `T_g/r_g` violates the already approved reliability semantics and, only if a formula-derived implementation defect is confirmed and repaired, build the version-5 Utility Room multi-seed assets and compact nested `M0 -> M1 -> M2` read-only validation path.
 
-**Architecture:** The plan is a sequential, fail-closed pipeline. A synthetic/state conformance suite and GT-free Tool Room audit make the first decision; a green existing implementation produces `NO_SEMANTIC_REPAIR_JUSTIFIED` and stops, while an exact semantic RED permits only the minimal repair and Evidence version 5. Utility source/DA3 admission, three GT-free seed runs, and the nested GT probe remain separate approval-gated stages and reuse immutable confirmation/manifest primitives rather than modifying training or the old version-4 reports.
+**Architecture:** The plan is a sequential, fail-closed pipeline. Real collector/reprojection plus synthetic/state conformance tests and a GT-free Tool Room audit make the first decision; a green existing implementation produces `NO_SEMANTIC_REPAIR_JUSTIFIED` and stops, while an exact semantic RED permits only the minimal root-cause repair and Evidence version 5. Utility source/DA3 admission freezes one snapshot, one canonical confirmation is written before any run/probe target exists, three GT-free seed runs reload it, and the final nested evaluator reloads the same SHA before any GT query.
 
 **Tech Stack:** Python 3.10, PyTorch 2.7.1+cu128, NumPy 1.26.3, standard-library `unittest`, existing COLMAP loaders, Pillow, Open3D full-mesh distance query, JSON/CSV/SHA256, Git, DA3 preprocessing, AutoDL RTX 4090.
 
@@ -19,6 +19,7 @@
 - Utility GT is inaccessible to diagnosis, repair, source audit, DA3, and all three D0 runs. Before the final probe confirmation, only GT existence, byte size, and SHA256 may be recorded; no distance, label, overlay, or metric may be produced.
 - Utility upload admission requires exactly 147 images and 147 registered COLMAP image records, exact case-sensitive basename equality, only `PINHOLE`/`SIMPLE_PINHOLE` cameras, finite poses/points, matching image dimensions, and no `split.json`.
 - DA3 requires a hash-pinned preprocessing confirmation before launch. It runs once into a new target, produces one immutable derived snapshot, and seeds 0/1/2 reuse that exact snapshot. Regeneration creates a different snapshot ID.
+- Immediately after that DA3 snapshot is frozen—and while every planned seed run/view/state path and probe target is still absent—write one canonical dual-risk confirmation. Seed launches and the final evaluator must reload that same confirmation and detached SHA; it may not be regenerated after seeing run or GT results.
 - Utility runs are seeds 0/1/2, resolution 2, 7,000 iterations, refreshes 1,000–7,000, checkpoints 3,000/7,000, GT-free, sequential, and admitted only with Evidence version 5.
 - The only formal models are `M0=[A,1-S]`, `M1=M0+[1-r_p]`, and `M2=M1+[1-r_g]`, evaluated on identical finite `V_p & V_g` rows with full-mesh `distance>0.05 m` labels.
 - Preserve the exact five-slab OOF, float64 IRLS, fold-local preprocessing, column-residual threshold `>1e-8`, fixed-origin 0.5 m paired voxel bootstrap, 2,000 replicates, and `SeedSequence([20260928, iteration, training_seed])` contract.
@@ -27,17 +28,19 @@
 
 ## File Structure
 
-- Create `tests/test_geometry_reliability_semantics.py`: direct approved-formula, refresh-time, validity, topology, and no-grad conformance tests against current production code.
+- Create `tests/test_geometry_reliability_semantics.py`: approved-formula combination, refresh-time, topology, and no-grad conformance tests against current production code.
+- Modify `tests/test_reprojection_reliability.py`: direct `reprojection_validity_and_errors` monotonicity and validity coverage for the real `E_g,mv` input boundary.
+- Modify `tests/test_d0_collector.py`: end-to-end `D0EvidenceCollector` coverage for the real `E_g,mv`/`E_g,dn` score, validity, support, and transport boundary.
 - Create `reliability/geometry_reliability_audit.py`: pure report schema and invariant checks for synthetic cases plus existing D0 state; no GT or predictive metric.
 - Create `scripts/diagnostics/audit_geometry_reliability_semantics.py`: read-only Tool Room admission, state inspection, compact atomic JSON publication, and explicit semantic outcome.
 - Create `tests/test_geometry_reliability_audit.py`: audit schema, parser, no-GT boundary, mutation, and stop-outcome tests.
-- Conditionally modify `reliability/evidence.py`: only the exact code path identified by the semantic RED; bump `EvidenceAccumulator.STATE_VERSION` from 4 to 5 without changing snapshot fields.
-- Conditionally modify `tests/test_evidence_accumulator_state.py`, `tests/test_d0_shadow_runtime.py`, `tests/test_topology_migration.py`, and `tests/gpu/test_evidence_accumulator_cuda.py`: version-5, chronology, topology, resume, and real-CUDA repair coverage.
+- Conditionally modify only the production file(s) named by the exact semantic RED: `reliability/collector.py` for collector assembly/validity/support, `reliability/evidence.py` for reprojection/combination/state semantics, and the existing renderer transport path only if a focused transport RED locates the defect there. A confirmed stored-semantic repair also bumps `EvidenceAccumulator.STATE_VERSION` from 4 to 5 without changing snapshot fields.
+- Conditionally modify `tests/test_reprojection_reliability.py`, `tests/test_d0_collector.py`, `tests/test_geometry_reliability_semantics.py`, `tests/test_evidence_accumulator_state.py`, `tests/test_d0_shadow_runtime.py`, `tests/test_topology_migration.py`, and `tests/gpu/test_evidence_accumulator_cuda.py`: root-cause boundary, version-5, chronology, topology, resume, and real-CUDA repair coverage.
 - Create `reliability/utility_da3.py`: Utility source audit, preprocessing confirmation, derived-snapshot audit, deterministic manifests, and detached SHA validation.
 - Create `scripts/diagnostics/prepare_utility_da3_confirmation.py`: read-only 147-way source audit and atomic preprocessing confirmation; it has no GT argument and never invokes DA3.
 - Create `scripts/diagnostics/finalize_utility_da3_snapshot.py`: post-DA3 derived-array/model/transformation audit and immutable snapshot record; it has no GT argument.
 - Create `tests/test_utility_da3.py` and `tests/test_utility_da3_cli.py`: source, camera, basename, finite, hash, no-overwrite, regeneration, and no-GT tests.
-- Create `reliability/g1_dual_risk_confirmation.py`: version-5 three-seed run/probe confirmation schema, detached SHA, and admission checks; old `g1_confirmation.py` stays version-4 compatible.
+- Create `reliability/g1_dual_risk_confirmation.py`: pre-run version-5 three-seed/probe confirmation schema, detached SHA, absent-target preregistration checks, and later completed-run evaluator admission; old `g1_confirmation.py` stays version-4 compatible.
 - Create `tests/test_g1_dual_risk_confirmation.py`: exact constants, three-seed commands, absent targets, version/hash/mutation, and chronology tests.
 - Create `reliability/g1_dual_risk.py`: common-domain construction, nested OOF models, direction checks, seed-level metrics, macro paired bootstrap, report validation, and exhaustive outcomes.
 - Create `tests/test_g1_dual_risk.py`: hand-checked statistical and decision tests.
@@ -48,9 +51,9 @@
 ## Review Focus
 
 - False-positive repair: `test_green_semantics_forces_no_repair_outcome` must prove that an already conforming current implementation cannot trigger a version bump or proceed to Utility work (Tasks 1–3).
+- Collector/reprojection inversion: `test_collector_geometry_scores_decrease_with_error_and_preserve_valid_support_semantics` must pass controlled errors through the real `D0EvidenceCollector`/reprojection boundary and prove that larger valid errors cannot raise `E_g,mv` or `E_g,dn` (Tasks 1 and 4).
 - History/topology contamination: `test_mapped_new_child_resets_geometry_history_while_survivor_keeps_previous_refresh` must distinguish evidence reset from temporal diagnostic lineage inheritance (Tasks 1 and 4).
-- Fake undistortion or filename drift: `test_source_audit_rejects_fisheye_case_mismatch_and_unregistered_image` must reject renamed `OPENCV_FISHEYE`, case-only mismatches, extras, and missing records before DA3 (Task 6).
-- GT leakage and preprocessing mutation: `test_preprocessing_cli_has_no_gt_surface_and_detects_source_change` must prove confirmation/finalization cannot read GT and cannot bless changed source or regenerated derived assets (Tasks 6–7).
+- Utility preprocessing admission: `test_source_audit_rejects_fisheye_case_mismatch_and_unregistered_image` must reject renamed `OPENCV_FISHEYE`, case-only mismatches, extras, and missing records, while `test_preprocessing_cli_has_no_gt_surface_and_detects_source_change` proves confirmation/finalization cannot read GT or bless changed/regenerated assets (Tasks 6–7).
 - Pseudoreplication or macro-CI overclaim: `test_macro_bootstrap_averages_fixed_seed_paired_voxel_gains_without_pooling_rows_or_resampling_seeds` must pin the run-level/scene-level interpretation and exact bootstrap construction (Tasks 9–10).
 
 ---
@@ -59,42 +62,57 @@
 
 **Files:**
 - Create: `tests/test_geometry_reliability_semantics.py`
+- Modify: `tests/test_reprojection_reliability.py`
+- Modify: `tests/test_d0_collector.py`
+- Read only: `reliability/collector.py`
 - Read only: `reliability/evidence.py`
 - Read only: `reliability/topology.py`
 
 **Interfaces:**
-- Consumes: `combine_geometry_reliability`, `compute_geometry_stability`, `EvidenceAccumulator.refresh`, `EvidenceAccumulator.on_topology_change`, `TopologyChange`, and existing `EvidenceRefreshInputs` fixtures.
+- Consumes: `reprojection_validity_and_errors`, `reproject_depth_normal_maps`, `D0EvidenceCollector`, `combine_geometry_reliability`, `compute_geometry_stability`, `EvidenceAccumulator.refresh`, `EvidenceAccumulator.on_topology_change`, `TopologyChange`, and existing renderer/`EvidenceRefreshInputs` fixtures.
 - Produces: an approved-formula conformance suite whose result is either a specific semantic RED or `NO_SEMANTIC_REPAIR_JUSTIFIED`; it produces no implementation fix.
 
-- [ ] **Step 1: Add direct component and stability monotonicity tests**
+- [ ] **Step 1: Add real reprojection-boundary monotonicity and validity tests**
+
+In `tests/test_reprojection_reliability.py`, add controlled valid depth/normal pairs at increasing error and invalid pairs covering non-finite, non-positive, out-of-frame, foreground-occluded, and zero-normal inputs. Assert that valid depth/normal errors are non-decreasing with the physical mismatch, invalid rows contribute zero error with `valid=False`, and no invalid row can be reinterpreted as high reliability or support.
+
+- [ ] **Step 2: Add real collector-boundary score and support tests**
+
+In `tests/test_d0_collector.py`, add `test_collector_geometry_scores_decrease_with_error_and_preserve_valid_support_semantics`. Drive controlled two-pass renders through the real `D0EvidenceCollector` and its `reproject_depth_normal_maps` call. Assert that increasing a still-valid multi-view depth/normal mismatch cannot increase `geometry_multiview` (`E_g,mv`); increasing the primitive-versus-depth-normal angular mismatch cannot increase `geometry_depth_normal` (`E_g,dn`); `geometry_support_views` counts only source views with positive transported valid reprojection count; and the `E_g,dn` denominator includes only finite, nonzero normals with `alpha>=0.5`. Keep score, validity, and support assertions separate so a zero-filled invalid value cannot pass as reliable evidence.
+
+- [ ] **Step 3: Add direct component and stability monotonicity tests**
 
 Add `test_geometry_components_are_reliability_monotone` and `test_stability_decreases_only_with_movement_or_rotation`. Use mathematically hand-checked values to assert that increasing any valid reliability component cannot decrease `T_g`, and increasing normalized movement or rotation cannot increase `E_g,stab`. Check exact values only for exactly representable anchors and dtype-appropriate tolerance otherwise.
 
-- [ ] **Step 2: Add refresh chronology and validity tests**
+- [ ] **Step 4: Add refresh chronology and validity tests**
 
 Add `test_stability_uses_the_previous_valid_refresh_before_overwrite`, `test_first_history_is_unknown_then_becomes_valid`, and `test_invalid_geometry_observation_preserves_ema_but_makes_r_g_unusable`. Assert `V_g=False` means unknown, `r_g=0` only as a gated output, invalid rows do not update `t_g_ema`, and current centers/normals are copied only after stability is computed.
 
-- [ ] **Step 3: Add topology and isolation tests**
+- [ ] **Step 5: Add topology and isolation tests**
 
 Add `test_mapped_new_child_resets_geometry_history_while_survivor_keeps_previous_refresh` and `test_geometry_refresh_is_detached_and_does_not_change_training_state`. Assert survivors follow `new_to_old`; any `is_new=True` row resets geometry evidence/history even with a mapped parent; temporal diagnostic lineage may still inherit separately; no parameter grad, optimizer field, densification proxy, or topology decision changes.
 
-- [ ] **Step 4: Run the diagnosis on the unmodified implementation**
+- [ ] **Step 6: Run the diagnosis on the unmodified implementation**
 
 Run:
 
 ```bash
-python -B -m unittest tests.test_geometry_reliability_semantics -v
+python -B -m unittest \
+  tests.test_reprojection_reliability \
+  tests.test_d0_collector \
+  tests.test_geometry_reliability_semantics -v
 ```
 
 Expected branch:
 
-- If every test passes, record `SEMANTIC_TEST_OUTCOME=NO_SEMANTIC_REPAIR_JUSTIFIED`; do not edit `reliability/evidence.py`, do not bump version, and continue only to Task 2 so the read-only conclusion can be frozen.
-- If a test fails, it must fail on an explicit approved-formula value or state transition. Record the exact test, expected value/state, actual value/state, and implicated production function as `SEMANTIC_TEST_OUTCOME=DEFECT_CANDIDATE`. Syntax, fixture, tolerance, device, or unrelated failures are not defect evidence.
+- If every test passes, record `SEMANTIC_TEST_OUTCOME=NO_SEMANTIC_REPAIR_JUSTIFIED`; do not edit any production file, do not bump version, and continue only to Task 2 so the read-only conclusion can be frozen.
+- If a test fails, it must fail on an explicit approved-formula value, collector/reprojection boundary, validity/support contract, or state transition. Record the exact test, expected value/state, actual value/state, and implicated production function/boundary as `SEMANTIC_TEST_OUTCOME=DEFECT_CANDIDATE`. Syntax, fixture, tolerance, device, or unrelated failures are not defect evidence.
 
-- [ ] **Step 5: Commit the diagnostic tests without production changes**
+- [ ] **Step 7: Commit the diagnostic tests without production changes**
 
 ```bash
-git add tests/test_geometry_reliability_semantics.py
+git add tests/test_reprojection_reliability.py tests/test_d0_collector.py \
+  tests/test_geometry_reliability_semantics.py
 git commit -m "test: specify geometry reliability semantics"
 ```
 
@@ -180,7 +198,10 @@ Run the CLI once against the existing Tool Room assets. Verify output hashes, no
 **Condition:** Execute only after Task 3 freezes `SEMANTIC_DEFECT_CONFIRMED`. Otherwise this task is out of scope.
 
 **Files:**
-- Modify: `reliability/evidence.py`
+- Conditionally modify: the exact existing production file(s) located by the Task 1/Task 3 RED. Expected boundaries are `reliability/collector.py` for `E_g,mv`/`E_g,dn` assembly, validity, and support; `reliability/evidence.py` for reprojection, combination, history, and the required version bump; or the existing renderer evidence-transport path only when its own focused transport test is RED. Do not edit every listed boundary by default.
+- Modify after any confirmed stored-semantic repair: `reliability/evidence.py` (`EvidenceAccumulator.STATE_VERSION` only if the root-cause repair is elsewhere).
+- Modify: `tests/test_reprojection_reliability.py`
+- Modify: `tests/test_d0_collector.py`
 - Modify: `tests/test_geometry_reliability_semantics.py`
 - Modify: `tests/test_evidence_accumulator_state.py`
 - Modify: `tests/test_d0_shadow_runtime.py`
@@ -188,7 +209,7 @@ Run the CLI once against the existing Tool Room assets. Verify output hashes, no
 - Modify: `tests/gpu/test_evidence_accumulator_cuda.py`
 
 **Interfaces:**
-- Consumes: the exact failing approved-formula test and named production function from Task 3.
+- Consumes: the exact failing approved-formula/collector/reprojection/transport test, failure trace, and named production function or boundary from Task 3.
 - Produces: the minimal formula-preserving repair using the existing serialized fields, `EvidenceAccumulator.STATE_VERSION = 5`, strict version-4 load rejection, and unchanged snapshot field inventory.
 
 - [ ] **Step 1: Re-run the exact semantic RED before editing code**
@@ -197,11 +218,11 @@ Run the single failing test and capture its expected failure. If it now passes, 
 
 - [ ] **Step 2: Extend RED coverage around the confirmed root cause**
 
-Add the smallest adjacent boundary cases needed to distinguish the root cause from alternative implementations. Add version tests asserting new state writes version 5, version 4 cannot load/resume, and old version-4 assets remain readable only through explicitly historical diagnostic paths.
+Add the smallest adjacent boundary cases needed to distinguish the root cause from alternative implementations. If the failure is upstream, preserve the real collector/reprojection score, validity, support, and transport assertions rather than replacing them with a post-combination mock. Add version tests asserting new state writes version 5, version 4 cannot load/resume, and old version-4 assets remain readable only through explicitly historical diagnostic paths.
 
 - [ ] **Step 3: Implement the minimal GREEN**
 
-Modify only the implicated existing formula/time-state path and set `EvidenceAccumulator.STATE_VERSION = 5`. Keep `D0ShadowRuntime.STATE_VERSION = 2`, snapshot fields, arbitration, gradients, topology actions, constants, and component formulas unchanged. If the repair needs a new serialized field or runtime-envelope meaning, stop for a spec amendment instead of silently bumping another schema.
+Modify only the production boundary implicated by the RED and set `EvidenceAccumulator.STATE_VERSION = 5`. The repair may land in collector/reprojection assembly, evidence combination/history, or renderer evidence transport according to the observed failure; the plan does not predetermine `reliability/evidence.py` as the root cause. Keep `D0ShadowRuntime.STATE_VERSION = 2`, snapshot fields, arbitration, gradients, topology actions, constants, and approved component formulas unchanged. If the repair needs a new serialized field or runtime-envelope meaning, stop for a spec amendment instead of silently bumping another schema.
 
 - [ ] **Step 4: Run focused and full GREEN**
 
@@ -209,6 +230,8 @@ Run:
 
 ```bash
 python -B -m unittest \
+  tests.test_reprojection_reliability \
+  tests.test_d0_collector \
   tests.test_geometry_reliability_semantics \
   tests.test_evidence_accumulator_state \
   tests.test_d0_shadow_runtime \
@@ -221,12 +244,15 @@ Expected: all tests pass; historical version-4 formal report/confirmation tests 
 
 - [ ] **Step 5: Commit the repair**
 
+Stage only the production path(s) named in Task 3 plus the exact test files changed in Steps 1–2, then inspect the staged inventory:
+
 ```bash
-git add reliability/evidence.py tests/test_geometry_reliability_semantics.py \
-  tests/test_evidence_accumulator_state.py tests/test_d0_shadow_runtime.py \
-  tests/test_topology_migration.py tests/gpu/test_evidence_accumulator_cuda.py
+git diff --name-only
+git diff --cached --name-only
 git commit -m "fix: restore geometry reliability semantics"
 ```
+
+This is not permission to stage every candidate boundary or any unrelated production file.
 
 ### Task 5: Freeze Version-5 Repair Qualification Without Utility GT
 
@@ -344,16 +370,16 @@ Commit GREEN: `feat: add Utility DA3 snapshot finalizer`
 - Create: `reliability/g1_dual_risk_confirmation.py`
 
 **Interfaces:**
-- Produces: `build_dual_risk_confirmation(...) -> dict`, `write_dual_risk_confirmation(...) -> dict`, `load_dual_risk_confirmation(path: Path, expected_sha256: str) -> dict`, and `validate_dual_risk_admission(record, runs, probe_targets) -> dict`.
-- Consumes: exact repair commit, Evidence version 5, frozen DA3 snapshot, GT file identity, seeds 0/1/2 run commands/targets, and the immutable statistical constants from the spec.
+- Produces: `build_dual_risk_confirmation(...) -> dict`, `write_dual_risk_confirmation(...) -> dict`, `load_dual_risk_confirmation(path: Path, expected_sha256: str) -> dict`, `validate_dual_risk_preregistration(record, planned_targets) -> dict`, and `validate_dual_risk_admission(record, runs, probe_targets) -> dict`.
+- Consumes: exact repair commit, Evidence version 5, the already frozen DA3 snapshot, GT file identity only as immutable SHA/size/path metadata, seeds 0/1/2 planned run commands and absent run/view/state paths, absent probe targets, and the immutable statistical constants from the spec.
 
 - [ ] **Step 1: Write the exact confirmation RED contract**
 
-Assert the record binds three and only three seeds `{0,1,2}`, unique absent run/view/state paths, identical dataset snapshot ID, resolution 2, 7,000 iterations, refresh 1,000, checkpoints/evaluation 3,000 and 7,000, no GT in training commands, Evidence version 5, exact probe models/gates/bootstrap, and absent diagnostic targets.
+Assert the record binds three and only three seeds `{0,1,2}`, unique absent run/view/state paths, identical dataset snapshot ID, resolution 2, 7,000 iterations, refresh 1,000, checkpoints/evaluation 3,000 and 7,000, no GT in training commands, Evidence version 5, exact probe models/gates/bootstrap, and absent diagnostic targets. Add `test_confirmation_is_written_after_snapshot_and_before_all_run_view_state_and_probe_targets` and require the confirmation timestamp/detached SHA to precede every later target creation.
 
 - [ ] **Step 2: Write chronology, mutation, and legacy rejection tests**
 
-Reject version 4, mixed commits/snapshots/configs, duplicate/missing seeds, existing targets at preregistration, changed source/DA3/GT hashes, changed confirmation bytes, and a confirmation timestamp after any first Utility GT-derived artifact. Preserve old `g1_confirmation.py` and its version-4 tests unchanged.
+Reject version 4, mixed commits/snapshots/configs, duplicate/missing seeds, existing targets at preregistration, changed source/DA3/GT hashes, changed confirmation bytes, and a confirmation timestamp after any run/view/state/probe target or first Utility GT-derived artifact. Prove that completed runs are later admitted by reloading the identical confirmation SHA without rewriting the record. Preserve old `g1_confirmation.py` and its version-4 tests unchanged.
 
 - [ ] **Step 3: Verify RED, implement GREEN, and commit**
 
@@ -448,7 +474,7 @@ Commit: `feat: add nested dual risk statistics`
 
 - [ ] **Step 1: Specify strict three-run/version-5 admission**
 
-Assert exact clean diagnostic commit, canonical confirmation SHA, three completed run identities, same DA3 snapshot, expected seeds/configs/hashes, version-5 checkpoint/snapshot pairs at 3,000/7,000, absent output, and no extra run/candidate/model/threshold arguments.
+Assert exact clean diagnostic commit and reload the same canonical confirmation path/SHA written before training. Bind its three predeclared targets to the three completed run identities, same DA3 snapshot, expected seeds/configs/hashes, version-5 checkpoint/snapshot pairs at 3,000/7,000, and absent output. Reject a replacement or post-training confirmation even when its fields otherwise match, and expose no extra run/candidate/model/threshold arguments.
 
 - [ ] **Step 2: Specify full-domain orchestration**
 
@@ -482,7 +508,7 @@ Commit: `test: specify dual risk probe publication`
 
 - [ ] **Step 1: Implement request/admission and immutable fingerprints**
 
-Resolve safe paths, require the exact confirmation/commit/hashes and completed three runs, fingerprint every consumed asset, and reject version 4/mixed state before any GT query.
+Resolve safe paths, reload the exact pre-training confirmation and detached SHA, require its commit/hashes and completed three runs at the predeclared targets, fingerprint every consumed asset, and reject a rewritten/later confirmation, version 4, or mixed state before any GT query.
 
 - [ ] **Step 2: Implement six iteration evaluations and macro report**
 
@@ -545,9 +571,9 @@ Request and execute these in order; never combine an unapproved later gate into 
 1. **Tool semantic diagnostic authorization** — Task 3 only; no GT.
 2. **Utility source-audit/preprocessing-confirmation authorization** — read-only 147-way audit and confirmation only; no DA3 and no GT content.
 3. **One-time DA3 authorization** — exact confirmed command/new target, followed by Task 7 snapshot finalization; no GT.
-4. **Utility version-5 training authorization** — seeds 0/1/2 sequentially, same snapshot, GT-free; completion/deep audit before proceeding.
-5. **Final dual-risk confirmation authorization** — bind completed runs, snapshot, GT SHA, exact code/config/gates, and absent probe output; still no metric.
-6. **Utility GT probe authorization** — one compact read-only run, then manifest/result audit; no C1.
+4. **Canonical dual-risk confirmation authorization** — after the DA3 snapshot is frozen and while all three seed run/view/state paths plus probe targets are still absent, bind their planned commands/paths, the snapshot, GT SHA metadata, exact code/config/statistical gates, and write one canonical record with detached SHA; still no training or GT metric.
+5. **Utility version-5 training authorization** — reload that confirmation, launch seeds 0/1/2 sequentially at its predeclared targets using the same snapshot, and remain GT-free; completion/deep audit of all three runs is required before proceeding.
+6. **Utility GT probe authorization** — the evaluator reloads the same pre-training confirmation path/SHA, binds its predeclared targets to the completed runs, rejects any replacement/post-training confirmation, then performs one compact read-only GT probe and manifest/result audit; no C1.
 
 - [ ] **Step 5: Apply the final scientific stop rule**
 

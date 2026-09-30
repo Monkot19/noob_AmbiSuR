@@ -438,4 +438,5 @@
 - [ ] Await formal specification review. Only after `规格通过` may an implementation plan be written.
 - [x] User approved the independent prior/geometry risk specification and explicitly retained diagnosis-first, no-Utility-GT, one-time-DA3, shared-snapshot, and separate-stage authorization boundaries.
 - [x] Created `docs/superpowers/plans/2026-09-29-prior-geometry-risk-independent-validation.md` with a conditional stop after semantic diagnosis and explicit RED/GREEN/commit/review gates.
+- [x] Applied the 2026-09-30 plan review: added real `E_g,mv`/`E_g,dn` collector-reprojection tests, made Task 4 root-cause-file conditional, and moved canonical confirmation ahead of seed target creation/training with same-SHA evaluator reload.
 - [ ] Await TDD implementation-plan approval and execution approach. No production code or external data/training action has been authorized.
