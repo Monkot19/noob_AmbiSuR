@@ -460,4 +460,6 @@
 - [x] First formal review returned seven bounded specification gaps; no implementation plan or execution began.
 - [x] Revised the geometry document in `5b8b2a8cbfa12fa6aa7702f617576c060b004142` as a Stage G-A charter with cluster-level intervention/interference/topology lineage and exact-sub-specification gate.
 - [x] Revised the prior-transfer document in `696912a` with terminal firewall release, 7000-only performance gating, exact loader array counts, and fail-closed mesh admission.
-- [ ] Await separate approval of both revised specifications. No implementation plan, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, or C1 has begun.
+- [x] `1-r_p` Utility transfer specification formally approved for planning only; no implementation plan or execution has begun.
+- [x] Applied the second Geometry review: Stage G-A now forbids batching, and Tool Room can only test/reject the unique frozen `Q_g` without component or constant selection.
+- [ ] Await final approval of the revised Geometry Stage G-A charter. No implementation plan, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, or C1 has begun.

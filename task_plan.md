@@ -859,4 +859,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Make iteration 7,000 the only prior-transfer performance gate; keep 3,000 only for preregistered direction stability and descriptive metrics.
 - [x] Align DA3 admission with loader reality: 147 depth and 147 confidence `<complete image filename>.npy` arrays; depth previews are manifest-tracked but not counted.
 - [x] Add fail-closed GT mesh identity/alignment/coverage admission with no realignment, crop, AABB filtering, or evaluation-domain repair.
-- [ ] Obtain separate formal review/approval for each specification before invoking `superpowers:writing-plans` for either line.
+- [x] Obtain formal approval for the `1-r_p` Utility transfer specification; planning is now eligible but has not started and execution remains unauthorized.
+- [x] Remove the final Geometry charter ambiguities: Stage G-A is single-cluster only with no batching, and Tool Room may only test/reject the frozen unique `Q_g`.
+- [ ] Obtain final formal approval for the revised Geometry Stage G-A charter before drafting its exact sub-specification.
