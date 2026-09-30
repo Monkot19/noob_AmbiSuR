@@ -53,13 +53,15 @@ The repository DA3 pipeline derives exactly one canonical Utility snapshot:
 
 ```text
 Utility_Room/colmap_undistorted/
-├── estimated_depths/           # 147 image-aligned arrays
-├── estimated_confs/            # 147 image-aligned arrays
+├── estimated_depths/           # exactly 147 loader-consumed .npy arrays; .jpg previews allowed
+├── estimated_confs/            # exactly 147 loader-consumed .npy arrays
 ├── sparse_da3/0/
 └── sparse_da3_aligned/0/
 ```
 
-Before DA3 starts, a preprocessing confirmation must bind the exact code commit, DA3 model/checkpoint checksum, environment, command, constants, source manifest, and absent output target. Postprocessing admission requires exact array/name correspondence, finite supported shapes, loadable raw/aligned models, finite alignment metadata, an unchanged source manifest, and a complete derived SHA256 manifest.
+The loader consumes `estimated_depths/<complete image filename>.npy` and `estimated_confs/<complete image filename>.npy`, where `<complete image filename>` includes the original image extension and case. Postprocessing admission therefore requires exactly 147 such depth `.npy` files and exactly 147 such confidence `.npy` files, each in one-to-one correspondence with the 147 registered image filenames. Depth `.jpg` previews may coexist in `estimated_depths`; they are not counted as training arrays but every preview and every other derived file remains part of the complete derived manifest.
+
+Before DA3 starts, a preprocessing confirmation must bind the exact code commit, DA3 model/checkpoint checksum, environment, command, constants, source manifest, and absent output target. Postprocessing admission additionally requires finite supported array shapes, loadable raw/aligned models, finite alignment metadata, an unchanged source manifest, and a complete derived SHA256 manifest.
 
 DA3 runs once. Seeds 0/1/2 reuse the identical frozen snapshot. Any regeneration, repaired array, realignment, or parameter change creates a new snapshot identity and invalidates the earlier experiment confirmation.
 
@@ -69,11 +71,16 @@ No other AmbiSuR benchmark dataset is required for this replication.
 
 ## 3. Shared Utility GT information firewall
 
-This transfer line is independent of the geometry-authorization hypothesis, but both use Utility as an untouched independent scene. Therefore:
+This transfer line is independent of the geometry-authorization hypothesis, but both use Utility as an untouched independent scene. The first Utility GT access requires exactly one of two immutable releases:
 
-- the geometry-update authorization target, action, one candidate formula, validity/state contract, thresholds, metrics, and stop rules must reach the pre-Utility freeze defined in `2026-09-30-geometry-update-authorization-design.md` before any Utility GT-derived value is produced by either line;
+- **candidate release:** a geometry Stage G-C confirmation binds the action, intervention unit, target, one candidate formula, validity/state contract, thresholds, metrics, coverage, compute budget, and stop rules before any Utility GT-derived value is produced; or
+- **terminal release:** a canonical geometry termination confirmation and detached SHA bind the exact repository/specification identity, `NO_ACTION_SPECIFIC_SIGNAL`, the stage and evidence supporting termination, the fact that no geometry candidate is admitted to Utility, and the permanent rule that Utility results cannot reopen or revise this terminated geometry branch.
+
+In both cases:
+
 - source audit, DA3 preprocessing, and GT-free D0 training may occur earlier only under separate approvals and without parsing Utility GT;
-- the first Utility GT access must be logged and must occur only after both confirmations are immutable;
+- the prior-transfer confirmation and the selected geometry release must both be reloaded and hash-verified immediately before first Utility GT access;
+- the first Utility GT access must be logged with both identities;
 - the `1-r_p` outcome cannot change the frozen geometry hypothesis, and the geometry outcome cannot change this candidate, domain, model, or gate.
 
 This sequencing prevents Utility Room from becoming a second development scene.
@@ -133,7 +140,20 @@ Coverage is:
 count(finite centers with V_p=True) / count(all finite centers).
 ```
 
-### 5.2 Deterministic spatial cross-fitting
+### 5.2 GT mesh fail-closed admission
+
+The first formal mesh access begins with a preregistered admission audit, before any prediction metric is computed. It must verify:
+
+- exact GT mesh path, byte size, and SHA256 against the canonical confirmation;
+- a loadable triangle surface with the frozen finite/non-degenerate-triangle rules;
+- the frozen coordinate-frame identity and absence of any evaluation-time transform;
+- the preregistered scene-alignment and coverage checks against the frozen Utility source/camera reconstruction.
+
+The exact alignment/coverage audit algorithm and thresholds must be written into the canonical confirmation before the mesh is parsed. They may inspect coverage for admission but may not select or filter the evaluation rows.
+
+If identity, coordinate alignment, or scene coverage is abnormal, the entire probe returns `INCONCLUSIVE` and stops before model fitting. The evaluator must not repair or reinterpret the asset by realignment, rescaling, cropping, AABB filtering, component selection, manual masking, or changing the evaluation domain. A corrected mesh is a new immutable asset requiring a new confirmation and separate approval.
+
+### 5.3 Deterministic spatial cross-fitting
 
 Each seed/iteration uses deterministic five-fold spatial cross-fitting. Among eligible finite centers, choose the world-coordinate axis with greatest range; resolve equal ranges in `x,y,z` order. Sort by that coordinate with original checkpoint row index as the tie breaker, then split into five equal-count contiguous slabs.
 
@@ -156,7 +176,7 @@ A classless fold, zero or non-finite scale, non-finite prediction, failed solve,
 
 After fold-local standardization, `1-r_p` must add a numerically independent column relative to intercept, `A`, and `1-S`. Its relative residual from that numeric column space must be strictly greater than `1e-8` in every training fold. This is numeric design independence, not statistical independence.
 
-### 5.3 Primary metrics and direction checks
+### 5.4 Primary metrics and direction checks
 
 All out-of-fold predictions are pooled once per seed/iteration. The primary increment is:
 
@@ -166,6 +186,8 @@ Delta_AUROC(seed, iteration) = AUROC_OOF(M1) - AUROC_OOF(M0).
 
 It is not the average of the five fold AUROCs. AUPRC, marginal raw-risk metrics, five paired fold deltas, solver diagnostics, class counts, class weights, and preprocessing values are reported but do not replace the pooled primary quantity.
 
+Iteration 7,000 is the only performance decision point. Iteration 3,000 retains the preregistered raw-risk direction-stability checks below and reports all model metrics descriptively, but no 3,000 AUROC/AUPRC gain is a PASS/FAIL gate.
+
 On eligible rows, raw `1-r_p` is sorted with original row index as the tie breaker and divided into deterministic equal-count quintiles. At both 3,000 and 7,000, for every seed:
 
 - the highest-risk quintile high-error rate must not be below the lowest-risk quintile rate;
@@ -173,7 +195,7 @@ On eligible rows, raw `1-r_p` is sorted with original row index as the tie break
 
 At 7,000, every seed's highest-minus-lowest quintile high-error-rate difference must be at least `0.05`.
 
-### 5.4 Paired voxel bootstrap
+### 5.5 Paired voxel bootstrap
 
 After OOF predictions are fixed, validation rows are grouped into fixed-origin `[0,0,0]`, `0.5 m x 0.5 m x 0.5 m` world-coordinate voxels. For each seed/iteration, run exactly 2,000 paired replicates with NumPy `PCG64` initialized by:
 
@@ -192,12 +214,11 @@ This interval represents within-Utility spatial uncertainty for the fixed three 
 `PRIOR_RISK_TRANSFER_SUPPORTED` requires all of the following:
 
 - 7,000-step coverage is at least `0.80` for each seed;
-- every direction condition in Section 5.3 passes;
+- every direction condition in Section 5.4 passes;
 - every fold passes numerical-column, class, finite-output, and solver contracts;
 - every seed's 7,000 `Delta_AUROC` is non-negative;
 - the arithmetic mean of the three 7,000 seed gains is at least `0.02`;
-- the macro paired-bootstrap 95% lower bound at 7,000 is strictly greater than `0.005`;
-- the arithmetic mean of the three 3,000 seed gains is non-negative.
+- the macro paired-bootstrap 95% lower bound at 7,000 is strictly greater than `0.005`.
 
 `NO_CROSS_SCENE_REPLICATION` is returned when the evaluation is valid but any coverage, direction, independence, performance, or uncertainty gate fails.
 
@@ -215,7 +236,7 @@ After the one-time DA3 snapshot is frozen, but while all three seeds' run/view/s
 - every run/view/state/probe output path and its required absence;
 - the shared Utility GT information firewall.
 
-Only after confirmation review and separate authorization may GT-free seeds run. Only after all three assets independently qualify, the same confirmation is reloaded, exact runs are bound, the geometry Stage G-C freeze is verified, and a separate GT-probe authorization is granted may Utility GT be parsed.
+Only after confirmation review and separate authorization may GT-free seeds run. Only after all three assets independently qualify, the same confirmation is reloaded, exact runs are bound, one of the two geometry releases in Section 3 is reloaded and verified, and a separate GT-probe authorization is granted may Utility GT be parsed.
 
 The required authorization sequence is:
 
@@ -225,8 +246,9 @@ The required authorization sequence is:
 4. canonical confirmation creation;
 5. three GT-free seed runs;
 6. per-seed asset qualification;
-7. first Utility GT probe;
-8. publication audit and conclusion freeze.
+7. verify the immutable geometry Stage G-C or terminal release;
+8. first Utility GT probe and mesh admission;
+9. publication audit and conclusion freeze.
 
 No step inherits authority from this design document.
 
