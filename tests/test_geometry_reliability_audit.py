@@ -70,6 +70,11 @@ def provenance():
 
 
 class GeometryReliabilityAuditTests(unittest.TestCase):
+    def test_validation_returns_none_after_checking_the_report(self):
+        report = build_geometry_semantic_report(semantic_checks(), provenance())
+
+        self.assertIsNone(validate_geometry_semantic_report(report))
+
     def test_green_semantics_force_no_repair_and_stop_later_tasks(self):
         report = build_geometry_semantic_report(semantic_checks(), provenance())
 

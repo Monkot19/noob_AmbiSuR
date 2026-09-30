@@ -127,7 +127,8 @@ def build_geometry_semantic_report(checks, provenance):
         "inconclusive_reasons": inconclusive,
         "provenance": provenance,
     }
-    return validate_geometry_semantic_report(report)
+    validate_geometry_semantic_report(report)
+    return report
 
 
 def validate_geometry_semantic_report(report):
@@ -156,13 +157,12 @@ def validate_geometry_semantic_report(report):
     for name, value in expected.items():
         if result[name] != value:
             raise ValueError(f"report decision contract mismatch: {name}")
-    result["checks"] = checks
-    result["provenance"] = provenance
-    return result
+    return None
 
 
 def audit_exit_code(report):
-    outcome = validate_geometry_semantic_report(report)["outcome"]
+    validate_geometry_semantic_report(report)
+    outcome = report["outcome"]
     return {
         "NO_SEMANTIC_REPAIR_JUSTIFIED": 0,
         "SEMANTIC_DEFECT_CONFIRMED": 1,
