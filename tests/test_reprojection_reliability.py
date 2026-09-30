@@ -11,6 +11,84 @@ from reliability.evidence import (
 
 
 class ReprojectionEvidenceTests(unittest.TestCase):
+    def test_valid_physical_mismatch_increases_errors_and_decreases_score(self):
+        angles = torch.deg2rad(torch.tensor([0.0, 5.0, 10.0]))
+        target_normals = torch.stack(
+            (
+                torch.sin(angles),
+                torch.zeros_like(angles),
+                torch.cos(angles),
+            ),
+            dim=1,
+        )
+        result = reprojection_validity_and_errors(
+            projected_uv=torch.tensor([[1.0, 1.0]] * 3),
+            projected_depth=torch.ones(3),
+            source_depth=torch.ones(3),
+            sampled_target_depth=torch.tensor([1.0, 1.02, 1.04]),
+            source_normal=torch.tensor([[0.0, 0.0, 1.0]] * 3),
+            sampled_target_normal=target_normals,
+            image_height=3,
+            image_width=3,
+        )
+
+        self.assertEqual(result.valid.tolist(), [True, True, True])
+        self.assertTrue(
+            bool(torch.all(result.depth_error[1:] >= result.depth_error[:-1]))
+        )
+        self.assertTrue(
+            bool(torch.all(result.normal_error[1:] >= result.normal_error[:-1]))
+        )
+        score = torch.exp(
+            -0.5
+            * (
+                result.depth_error / 0.05
+                + result.normal_error / 0.10
+            )
+        )
+        self.assertTrue(bool(torch.all(score[1:] <= score[:-1])))
+
+    def test_invalid_reprojection_rows_have_zero_error_score_and_support(self):
+        result = reprojection_validity_and_errors(
+            projected_uv=torch.tensor(
+                [
+                    [float("nan"), 1.0],
+                    [1.0, 1.0],
+                    [3.0, 1.0],
+                    [1.0, 1.0],
+                    [1.0, 1.0],
+                ]
+            ),
+            projected_depth=torch.tensor([1.0, 0.0, 1.0, 2.0, 1.0]),
+            source_depth=torch.ones(5),
+            sampled_target_depth=torch.ones(5),
+            source_normal=torch.tensor(
+                [
+                    [0.0, 0.0, 1.0],
+                    [0.0, 0.0, 1.0],
+                    [0.0, 0.0, 1.0],
+                    [0.0, 0.0, 1.0],
+                    [0.0, 0.0, 0.0],
+                ]
+            ),
+            sampled_target_normal=torch.tensor([[0.0, 0.0, 1.0]] * 5),
+            image_height=3,
+            image_width=3,
+        )
+
+        self.assertEqual(result.valid.tolist(), [False] * 5)
+        torch.testing.assert_close(result.depth_error, torch.zeros(5))
+        torch.testing.assert_close(result.normal_error, torch.zeros(5))
+        transported_score = result.valid.to(torch.float32) * torch.exp(
+            -0.5
+            * (
+                result.depth_error / 0.05
+                + result.normal_error / 0.10
+            )
+        )
+        torch.testing.assert_close(transported_score, torch.zeros(5))
+        self.assertEqual(int(result.valid.sum().item()), 0)
+
     def test_mask_rejects_out_of_frame_behind_camera_and_foreground_occlusion(self):
         result = reprojection_validity_and_errors(
             projected_uv=torch.tensor([[2.0, 2.0], [-1.0, 2.0], [2.0, 2.0], [2.0, 2.0]]),

@@ -47,6 +47,132 @@ class SyntheticGaussians:
 
 
 class D0CollectorTests(unittest.TestCase):
+    def collect_geometry(
+        self,
+        *,
+        geometry_depths,
+        geometry_normals,
+        primitive_normals,
+        alphas=None,
+        nearest_ids=None,
+    ):
+        if nearest_ids is None:
+            nearest_ids = ([1], [0])
+        cameras = [
+            SyntheticCamera(0, list(nearest_ids[0])),
+            SyntheticCamera(1, list(nearest_ids[1])),
+        ]
+        gaussians = SyntheticGaussians()
+        if alphas is None:
+            alphas = (torch.ones(1, 2, 2), torch.ones(1, 2, 2))
+
+        def render_fn(camera, _gaussians, _pipe, _background, **kwargs):
+            uid = camera.uid
+            common = {
+                "out_observe": torch.ones(1, dtype=torch.int32),
+                "plane_depth": geometry_depths[uid],
+                "depth_normal": geometry_normals[uid],
+                "rendered_normal": primitive_normals[uid],
+                "rendered_alpha": alphas[uid],
+            }
+            values = kwargs.get("evidence_values")
+            validity = kwargs.get("evidence_validity")
+            if values is not None:
+                common["evidence_numerator"] = (
+                    torch.where(validity, values, torch.zeros_like(values))
+                ).sum(dim=(1, 2)).unsqueeze(0)
+                common["evidence_denominator"] = validity.sum(
+                    dim=(1, 2)
+                ).unsqueeze(0)
+            return common
+
+        return D0EvidenceCollector(
+            cameras,
+            gaussians,
+            render_fn,
+            SimpleNamespace(),
+            torch.zeros(3),
+            SimpleNamespace(),
+            normal_from_depth_fn=world_normal,
+        )()
+
+    @staticmethod
+    def constant_normal(x, z):
+        normal = torch.zeros(3, 2, 2)
+        normal[0] = x
+        normal[2] = z
+        return normal
+
+    def test_collector_geometry_scores_decrease_with_error_and_preserve_valid_support_semantics(self):
+        unit_z = self.constant_normal(0.0, 1.0)
+        tilted = self.constant_normal(0.2, (1.0 - 0.2 ** 2) ** 0.5)
+        unit_depths = (torch.ones(1, 2, 2), torch.ones(1, 2, 2))
+
+        exact = self.collect_geometry(
+            geometry_depths=unit_depths,
+            geometry_normals=(unit_z, unit_z),
+            primitive_normals=(unit_z, unit_z),
+        )
+        multiview_mismatch = self.collect_geometry(
+            geometry_depths=(
+                torch.ones(1, 2, 2),
+                torch.full((1, 2, 2), 1.04),
+            ),
+            geometry_normals=(unit_z, tilted),
+            primitive_normals=(unit_z, tilted),
+        )
+        depth_normal_mismatch = self.collect_geometry(
+            geometry_depths=unit_depths,
+            geometry_normals=(unit_z, unit_z),
+            primitive_normals=(tilted, tilted),
+        )
+        one_supporting_source = self.collect_geometry(
+            geometry_depths=unit_depths,
+            geometry_normals=(unit_z, unit_z),
+            primitive_normals=(unit_z, unit_z),
+            nearest_ids=([1], []),
+        )
+
+        self.assertLessEqual(
+            multiview_mismatch.geometry_multiview.item(),
+            exact.geometry_multiview.item(),
+        )
+        self.assertLess(
+            multiview_mismatch.geometry_multiview.item(),
+            exact.geometry_multiview.item(),
+        )
+        self.assertLessEqual(
+            depth_normal_mismatch.geometry_depth_normal.item(),
+            exact.geometry_depth_normal.item(),
+        )
+        self.assertLess(
+            depth_normal_mismatch.geometry_depth_normal.item(),
+            exact.geometry_depth_normal.item(),
+        )
+        self.assertEqual(exact.geometry_support_views.tolist(), [2])
+        self.assertEqual(
+            multiview_mismatch.geometry_support_views.tolist(), [2]
+        )
+        self.assertEqual(
+            one_supporting_source.geometry_support_views.tolist(), [1]
+        )
+
+    def test_collector_depth_normal_denominator_excludes_invalid_pixels(self):
+        unit_z = self.constant_normal(0.0, 1.0)
+        nonfinite = torch.full((3, 2, 2), float("nan"))
+        unit_depths = (torch.ones(1, 2, 2), torch.ones(1, 2, 2))
+        invalid = self.collect_geometry(
+            geometry_depths=unit_depths,
+            geometry_normals=(unit_z, unit_z),
+            primitive_normals=(nonfinite, unit_z),
+            alphas=(torch.ones(1, 2, 2), torch.full((1, 2, 2), 0.49)),
+        )
+
+        torch.testing.assert_close(
+            invalid.geometry_depth_normal, torch.zeros(1)
+        )
+        self.assertEqual(invalid.geometry_support_views.tolist(), [2])
+
     def test_identity_reprojection_has_zero_error_and_full_validity(self):
         depth = torch.ones(2, 2)
         normal = world_normal(None, depth)
