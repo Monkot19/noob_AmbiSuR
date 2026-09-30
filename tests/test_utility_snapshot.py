@@ -5,12 +5,18 @@ from pathlib import Path
 import tempfile
 import unittest
 
+import numpy as np
 from PIL import Image
 
 from reliability.utility_snapshot import (
     UtilitySourceAudit,
+    audit_da3_snapshot,
     audit_utility_source,
+    build_da3_confirmation,
+    load_da3_confirmation,
     source_manifest,
+    write_da3_confirmation,
+    write_snapshot_record,
 )
 
 
@@ -34,6 +40,83 @@ def _write_source(root: Path, names=("frame000.jpg", "frame001.JPG"), *, model="
         encoding="utf-8",
     )
     return root
+
+
+def _confirmation(root: Path, *, expected_count=2):
+    source = root / "source"
+    names = tuple(f"frame{index:03d}.jpg" for index in range(expected_count))
+    _write_source(source, names)
+    manifest = source_manifest(audit_utility_source(source, expected_count))
+    checkpoint = root / "da3.ckpt"
+    checkpoint.write_bytes(b"frozen-da3")
+    staging = root / "staging"
+    snapshot_record = root / "records" / "snapshot.json"
+    snapshot_record.parent.mkdir()
+    command = [
+        "bash",
+        str((root / "repo/scripts/run_da3_single.sh").resolve()),
+        str(staging.resolve()),
+        "500000",
+        "0.05",
+    ]
+    record = build_da3_confirmation(
+        repository_root=(root / "repo").resolve(),
+        repository_commit="a" * 40,
+        repository_clean=True,
+        source_manifest=manifest,
+        da3_checkpoint={
+            "path": str(checkpoint.resolve()),
+            "bytes": checkpoint.stat().st_size,
+            "sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
+        },
+        environment={
+            "python": "/opt/conda/bin/python",
+            "python_version": "3.10.21",
+            "torch_version": "2.7.1+cu128",
+            "cuda_version": "12.8",
+        },
+        command=command,
+        max_points=500000,
+        ransac_thresh=0.05,
+        staging_root=staging.resolve(),
+        snapshot_record_path=snapshot_record.resolve(),
+        created_utc="2026-09-30T00:00:00Z",
+    )
+    return source, staging, snapshot_record, record
+
+
+def _copy_source_and_write_derived(source: Path, staging: Path, *, names):
+    import shutil
+
+    shutil.copytree(source, staging)
+    depth = staging / "estimated_depths"
+    conf = staging / "estimated_confs"
+    raw = staging / "sparse_da3" / "0"
+    aligned = staging / "sparse_da3_aligned" / "0"
+    depth.mkdir()
+    conf.mkdir()
+    raw.mkdir(parents=True)
+    aligned.mkdir(parents=True)
+    for name in names:
+        np.save(depth / f"{name}.npy", np.ones((6, 8), dtype=np.float32))
+        np.save(conf / f"{name}.npy", np.full((6, 8), 0.5, dtype=np.float32))
+        Image.new("L", (8, 6)).save(depth / f"{name}.jpg")
+    for model in (raw, aligned):
+        (model / "cameras.txt").write_text("1 PINHOLE 8 6 4 4 4 3\n", encoding="utf-8")
+        lines = []
+        for index, name in enumerate(names, start=1):
+            lines.extend((f"{index} 1 0 0 0 0 0 0 1 {name}", ""))
+        (model / "images.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        (model / "points3D.txt").write_text("1 0 0 1 1 2 3 0.1\n", encoding="utf-8")
+    (aligned / "trans.json").write_text(json.dumps({
+        "scale": 1.25,
+        "T_matrix_scene2_from_scene1": [
+            [1.25, 0, 0, 0],
+            [0, 1.25, 0, 0],
+            [0, 0, 1.25, 0],
+            [0, 0, 0, 1],
+        ],
+    }), encoding="utf-8")
 
 
 class UtilitySourceAuditTests(unittest.TestCase):
@@ -132,6 +215,92 @@ class UtilitySourceAuditTests(unittest.TestCase):
                 mutate(root)
                 with self.assertRaises((ValueError, OSError)):
                     audit_utility_source(root, expected_count=2)
+
+
+class UtilityDa3SnapshotTests(unittest.TestCase):
+    def test_confirmation_binds_explicit_clean_inputs_command_and_absent_targets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, staging, snapshot_record, record = _confirmation(root)
+            self.assertEqual(record["repository"]["commit"], "a" * 40)
+            self.assertTrue(record["repository"]["clean"])
+            self.assertEqual(record["source"]["source_sha256"], source_manifest(audit_utility_source(source, 2))["source_sha256"])
+            self.assertEqual(record["preprocessing"], {"max_points": 500000, "ransac_thresh": 0.05})
+            self.assertEqual(record["command"][1].replace("\\", "/").split("/")[-3:], ["repo", "scripts", "run_da3_single.sh"])
+            self.assertFalse(staging.exists())
+            self.assertFalse(snapshot_record.exists())
+
+    def test_confirmation_rejects_implicit_or_unsafe_contracts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _source, staging, _snapshot_record, record = _confirmation(root)
+            bad = dict(record)
+            for label, mutate in (
+                ("dirty", lambda value: value["repository"].update(clean=False)),
+                ("sha", lambda value: value["da3_checkpoint"].update(sha256="bad")),
+                ("max", lambda value: value["preprocessing"].update(max_points=None)),
+                ("gt", lambda value: value.update(command=["bash", "/repo/scripts/run_da3_single.sh", "/gt/mesh.ply", "1", "0.1"])),
+            ):
+                with self.subTest(label=label):
+                    candidate = json.loads(json.dumps(record))
+                    mutate(candidate)
+                    with self.assertRaises(ValueError):
+                        write_da3_confirmation(candidate, root / f"{label}.json")
+            staging.mkdir()
+            with self.assertRaises(ValueError):
+                write_da3_confirmation(record, root / "existing-target.json")
+
+    def test_confirmation_write_load_is_canonical_immutable_and_detects_source_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, _staging, _snapshot_record, record = _confirmation(root)
+            path = root / "confirmation.json"
+            publication = write_da3_confirmation(record, path)
+            loaded = load_da3_confirmation(path, publication["sha256"])
+            self.assertEqual(loaded, record)
+            with self.assertRaises(FileExistsError):
+                write_da3_confirmation(record, path)
+            (source / "images/frame000.jpg").write_bytes(b"changed")
+            with self.assertRaises(ValueError):
+                load_da3_confirmation(path, publication["sha256"], verify_source=True)
+
+    def test_snapshot_admits_exact_arrays_models_alignment_and_complete_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, staging, snapshot_record, record = _confirmation(root)
+            names = tuple(record["source"]["image_names"])
+            _copy_source_and_write_derived(source, staging, names=names)
+            audit = audit_da3_snapshot(staging, record)
+            self.assertEqual(audit["array_count"], {"depth": 2, "confidence": 2})
+            self.assertEqual(audit["alignment"]["scale"], 1.25)
+            manifest_paths = [entry["path"] for entry in audit["derived_manifest"]]
+            self.assertIn("estimated_depths/frame000.jpg.npy", manifest_paths)
+            self.assertIn("estimated_depths/frame000.jpg.jpg", manifest_paths)
+            self.assertIn("sparse_da3_aligned/0/trans.json", manifest_paths)
+            written = write_snapshot_record(audit, record, snapshot_record)
+            self.assertEqual(load_da3_confirmation(snapshot_record, written["sha256"], expected_kind="utility_da3_snapshot")["snapshot_sha256"], audit["snapshot_sha256"])
+            with self.assertRaises(FileExistsError):
+                write_snapshot_record(audit, record, snapshot_record)
+
+    def test_snapshot_rejects_array_model_alignment_and_source_contract_violations(self):
+        mutations = {
+            "missing": lambda stage: (stage / "estimated_depths/frame000.jpg.npy").unlink(),
+            "extra": lambda stage: np.save(stage / "estimated_confs/extra.jpg.npy", np.ones((6, 8))),
+            "case": lambda stage: (stage / "estimated_depths/frame000.jpg.npy").rename(stage / "estimated_depths/FRAME000.jpg.npy"),
+            "nonfinite": lambda stage: np.save(stage / "estimated_depths/frame000.jpg.npy", np.full((6, 8), np.nan)),
+            "shape": lambda stage: np.save(stage / "estimated_confs/frame000.jpg.npy", np.ones((5, 8))),
+            "model": lambda stage: (stage / "sparse_da3/0/cameras.txt").unlink(),
+            "scale": lambda stage: (stage / "sparse_da3_aligned/0/trans.json").write_text(json.dumps({"scale": 0, "T_matrix_scene2_from_scene1": np.eye(4).tolist()}), encoding="utf-8"),
+            "source": lambda stage: (stage / "images/frame000.jpg").write_bytes(b"changed"),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                source, staging, _snapshot_record, record = _confirmation(root)
+                _copy_source_and_write_derived(source, staging, names=tuple(record["source"]["image_names"]))
+                mutate(staging)
+                with self.assertRaises((ValueError, FileNotFoundError)):
+                    audit_da3_snapshot(staging, record)
 
 
 if __name__ == "__main__":
