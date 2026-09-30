@@ -450,3 +450,11 @@
 - [x] Frozen decision `NO_SEMANTIC_REPAIR_JUSTIFIED`: `repair_authorized=false`, `authorized_evidence_version=null`, `tasks_4_to_13_stopped=true`. Production geometry formulas/state remain unchanged at Evidence version 4.
 - [x] Safety closeout: repository clean; active training count 0; `training_started=NO`, `utility_processing_started=NO`, `gt_evaluation_started=NO`, and `C1_started=NO`.
 - [x] Current gated plan is closed. Any future prior-only Utility/multi-seed confirmation requires a new specification and approvals; it cannot resume Tasks 4–13 from this stopped dual-risk plan.
+
+## 2026-09-30 Independent Research-Line Specifications
+
+- [x] User confirmed the two-line design summary and the corrected `r_g` terminology.
+- [x] Added `docs/superpowers/specs/2026-09-30-geometry-update-authorization-design.md` in commit `a50c121`.
+- [x] Added `docs/superpowers/specs/2026-09-30-prior-risk-utility-transfer-design.md` in commit `3175a38`.
+- [x] Self-review found no placeholder, whitespace, authorization-scope, version, or cross-line Utility-GT firewall conflict.
+- [ ] Await separate user review of both formal specifications. No implementation plan or execution has begun.

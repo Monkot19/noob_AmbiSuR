@@ -845,3 +845,12 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Task 3A qualified the exact commit on AutoDL: focused 50/50, full discovery 312/312, CUDA boundary 11/11, canonical dataset/prior hashes, clean tree, and parser `GT_ARGUMENT_PRESENT=NO` all passed.
 - [x] Task 3B atomically published and verified the one-time Tool Room version-4 3000/7000 no-GT audit. All five checks passed, including 1,093,102 and 1,417,059 joined rows with zero `r_g` mismatches and unchanged immutable fingerprints.
 - [x] Apply the hard branch gate: final outcome `NO_SEMANTIC_REPAIR_JUSTIFIED`; Evidence version 5 is not authorized and Tasks 4–13 are stopped. No DA3, Utility processing/training, GT evaluation, C1, formula/sign/threshold change, or production-method repair occurred. Any future prior-only independent-scene work requires a new separately reviewed protocol rather than resuming this stopped dual-risk plan.
+
+## 2026-09-30 Split Research Specifications
+
+- [x] Reclassify current `T_g/r_g` as internal geometry-consistency telemetry only; remove it from risk, authorization, candidate, and routing roles without changing Evidence v4.
+- [x] Draft the independent action-specific geometry-update authorization specification at `docs/superpowers/specs/2026-09-30-geometry-update-authorization-design.md`.
+- [x] Draft the independent `1-r_p` Utility Room seeds 0/1/2 transfer specification at `docs/superpowers/specs/2026-09-30-prior-risk-utility-transfer-design.md`.
+- [x] Bind both lines to one Utility GT information firewall: the geometry action/target/formula/state/stop contract must be frozen before either line reads any Utility GT-derived value.
+- [x] Preserve the hard stop: these specifications do not resume Tasks 4–13 and do not authorize implementation planning, DA3, Utility training, GT evaluation, routing, five-state arbitration, or C1.
+- [ ] Obtain separate formal review/approval for each specification before invoking `superpowers:writing-plans` for either line.

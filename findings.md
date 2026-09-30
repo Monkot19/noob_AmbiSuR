@@ -444,3 +444,11 @@
 - Frozen branch decision: `NO_SEMANTIC_REPAIR_JUSTIFIED`. The historical GT-direction anomaly for `r_g` remains an empirical predictive limitation or distribution/history question, but the approved evidence does not identify an implementation-semantic defect. It therefore cannot justify flipping the sign, changing the formula or threshold, or advancing Evidence version 4 to 5.
 - Consequence: Tasks 4–13 of the dual-risk Utility plan are stopped. DA3, Utility processing/training, Utility GT evaluation, the nested `M0 -> M1 -> M2` probe, and C1 did not start. The earlier Tool Room result for `1-r_p` remains bounded conditional-predictive evidence; any prior-only independent-scene continuation must be proposed and approved as a new protocol rather than reviving this stopped geometry-repair branch.
 - Frozen server publication: `/root/autodl-tmp/ambisur_diagnostics/Tool_Room/d0-geometry-semantics/d0_geometry_semantics_toolroom_softcal_v4_seed0_20260930_v1`.
+
+## 2026-09-30 Post-Stop Research Split
+
+- The semantic audit establishes implementation conformance, not construct validity for routing. Current `T_g/r_g` therefore remain useful only as internal geometry-consistency telemetry and cannot be relabeled as external correctness, geometry risk, or update permission.
+- The frozen `1-r_p` result and a future geometry authorization signal answer different estimands. The former is an external-prior warning with conditional predictive value; the latter must predict the paired benefit and safety of one specified action before that action occurs.
+- A static geometry-error classifier is insufficient for authorization because wrong geometry can still receive a harmful update, while an already good Gaussian can receive a beneficial bounded update. The target must be an action-specific paired treatment effect plus protected safety constraints.
+- Utility Room can remain an independent scene only if neither line reads Utility GT until the geometry action, target, one candidate formula, state/validity contract, metrics, and stopping rules are frozen. Source auditing, DA3, and GT-free training remain separately authorized operations.
+- A positive prior-transfer result cannot replace the missing geometry-authorization axis. A positive geometry candidate would still require a later written routing architecture and new G0/G1/C1 gates.
