@@ -1,8 +1,8 @@
 # Geometry-Update Authorization Hypothesis Design
 
-**Status:** Draft for formal review. The in-chat design summary was confirmed on 2026-09-30. This document authorizes neither implementation nor experiment execution.
+**Status:** Stage G-A research charter, draft for formal review. The in-chat design summary was confirmed on 2026-09-30. This is not a complete implementation specification and authorizes neither implementation planning nor experiment execution.
 
-**Scope:** Define a new, action-specific hypothesis for predicting when a geometry update is beneficial and safe. This specification is independent of the frozen prior-risk transfer line. It supersedes every future-facing use of `r_g` as a geometry-risk or routing-authorization quantity in `2026-09-29-prior-geometry-risk-independent-validation-design.md`.
+**Scope:** Bound the analytic and synthetic Stage G-A needed to define a new, action-specific hypothesis for predicting when a geometry update is beneficial and safe. This charter is independent of the frozen prior-risk transfer line. It supersedes every future-facing use of `r_g` as a geometry-risk or routing-authorization quantity in `2026-09-29-prior-geometry-risk-independent-validation-design.md`.
 
 ## 1. Frozen starting point
 
@@ -12,7 +12,7 @@ The resulting boundary is final for this research line:
 
 - `T_g/r_g` conform to their approved implementation semantics;
 - that conformance does **not** establish external geometric correctness or safe geometry-update authorization;
-- historical GT direction anomalies show that the construct is unsuitable for that responsibility;
+- current Tool Room evidence has not validated external geometric correctness or safe routing authorization for this construct, so it does not hold that responsibility under the current protocol;
 - `T_g/r_g` are archived only as **internal geometry-consistency telemetry**;
 - `1-r_g` is not a risk candidate, label, feature, threshold source, or routing input;
 - Evidence remains version 4; no version-5 migration is authorized;
@@ -21,47 +21,64 @@ The resulting boundary is final for this research line:
 
 The new question is deliberately different:
 
-> Before applying one precisely specified geometry update, can a GT-free quantity predict whether that update will be beneficial and safe for the affected Gaussian under a frozen finite-horizon evaluation?
+> Before applying one precisely specified geometry update to one preregistered spatial intervention unit, can a GT-free quantity predict whether that update will be beneficial and safe under a frozen finite-horizon evaluation?
 
 This is an action-authorization problem, not a static geometry-correctness classifier.
 
 ## 2. Scientific estimand
 
-### 2.1 Frozen action
+### 2.1 Paired intervention unit
 
-Before any empirical target is generated, one clean geometry update action `a` must be specified completely. Its implementation, affected parameter set, magnitude/clipping, support requirements, source observations, optimizer interaction, and invalid-row behavior must be frozen.
+The causal/diagnostic unit is one **pre-action spatial cluster** `C`, not one Gaussian and not an arbitrary simultaneous set of candidates. Stage G-A must define one deterministic, GT-free cluster-construction rule from the pre-action state, including its coordinate frame, neighborhood rule, membership tie breaks, minimum/maximum size, guard region, validity, and behavior near scene boundaries. Until that exact rule is approved, no paired target may be generated.
+
+One paired experiment treats exactly one valid cluster. No two nearby clusters are treated in the same branch pair. If later batching is proposed for compute reasons, clusters in the same batch must be disjoint and separated by a preregistered guard distance; otherwise the batch is invalid for causal attribution. This prevents overlapping treatment interference from being mislabeled as independent samples.
+
+Before any empirical target is generated, one clean cluster-level geometry update action `a_C` must also be specified completely. Its implementation, affected parameter set, per-member update, aggregation, magnitude/clipping, support requirements, source observations, optimizer interaction, and invalid-row behavior must be frozen.
 
 The first admissible action is a bounded update derived only from the existing depth/normal and multiview geometry observations. It may not add Ray-Color, a new appearance loss, learned confidence, GT, or any Supporting-stage capability.
 
-For Gaussian `i` at state `x_t`, compare two paired branches:
+For cluster `C` at state `x_t`, compare two paired branches:
 
 ```text
-a = 0: do not apply the candidate geometry update
-a = 1: apply exactly the frozen candidate geometry update
+a_C = 0: do not apply the candidate geometry update to members of C
+a_C = 1: apply exactly the frozen candidate geometry update to members of C
 ```
 
-The branches must share the same initial state, camera/view schedule, RNG state, optimizer state, topology schedule, training inputs, and non-geometry operations. Any implementation detail that differs beyond the action makes the pair invalid.
+Each branch starts from byte-identical model and optimizer states and uses the same camera/view schedule, RNG stream, training inputs, topology schedule, and non-geometry operations. The branches then own separate optimizer/model state; downstream divergence caused by `a_C` is part of the cluster-level effect, not an implementation mismatch.
+
+The full scene remains in both renders. Gaussians outside `C` receive the same rules and no direct candidate update, but they may change indirectly through rendering, gradients, optimizer coupling, or topology. Those changes are **spillover** and must be measured by preregistered protected non-target safety outcomes. They cannot be reassigned as per-Gaussian treatment effects.
+
+Topology is handled as follows:
+
+- the schedule and decision code are identical across branches, while action-caused differences in split/prune decisions are permitted downstream effects and must be reported;
+- a surviving row follows the existing `new_to_old` mapping;
+- all split/clone descendants of a pre-action member of `C` belong to that member's treatment lineage for outcome aggregation, while retaining explicit `is_new` identity;
+- pruning a treated lineage member is not missing data: it contributes the preregistered disappearance penalty and may trigger an unsafe outcome;
+- descendants of rows outside `C` remain outside the treated lineage, and their changes contribute only to spillover/safety summaries;
+- a lineage ambiguity, unsupported topology operation, or failed branch alignment invalidates the pair.
+
+Because rendering and optimization couple Gaussians, this charter makes no no-interference assumption at the Gaussian level. It therefore forbids any per-Gaussian treatment-effect notation or claim for branch differences.
 
 ### 2.2 Benefit and safety target
 
-Let `Y_i(a; H)` be a preregistered finite-horizon geometry error after branch `a`, evaluated at horizon `H`. Define the paired treatment effect
+Let `Y_C(a_C; H)` be the preregistered cluster-lineage outcome after branch `a_C`, evaluated at horizon `H`. Define the paired cluster-level effect
 
 ```text
-tau_i(H) = Y_i(0; H) - Y_i(1; H).
+tau_C(H) = Y_C(0; H) - Y_C(1; H).
 ```
 
-Positive `tau_i` means the update reduces the frozen geometry error. Authorization requires both:
+Positive `tau_C` means the update improves the frozen cluster-lineage outcome. Authorization requires both:
 
-1. **benefit:** `tau_i(H)` exceeds a preregistered practical-effect margin;
-2. **safety:** the branch passes preregistered finite-state, bounded-update, protected-appearance, optimizer, and topology constraints.
+1. **benefit:** `tau_C(H)` exceeds a preregistered practical-effect margin;
+2. **safety:** the branch passes preregistered finite-state, bounded-update, protected-appearance, optimizer, topology, and non-target-spillover constraints.
 
-The target is the effect of this one action in this one state and horizon. It is not a claim that the Gaussian is globally correct, reliable, or permanently safe.
+The target is the total paired effect of this one cluster action in this one state and horizon, including its within-lineage downstream consequences. It is not a claim that any member Gaussian is globally correct, individually causal, reliable, or permanently safe.
 
-The exact geometry error, horizon `H`, benefit margin, and safety tolerances must be chosen from mathematical semantics and synthetic calibration before Tool Room target inspection. They may not be selected for favorable Tool Room or Utility metrics.
+The exact `Y_C`, lineage aggregation, disappearance penalty, horizon `H`, benefit margin, and safety/spillover tolerances must be chosen from mathematical semantics and synthetic calibration before Tool Room target inspection. They may not be selected for favorable Tool Room or Utility metrics.
 
 ## 3. Candidate authorization signal
 
-The future candidate is provisionally named `Q_g`. The name carries no validity until the staged gates below pass.
+The future candidate is provisionally named `Q_g`. This charter does not yet define its formula. The name carries no validity until a separately approved Stage G-A exact sub-specification freezes one formula and the staged gates below pass.
 
 `Q_g` must use only information available **before** the candidate update and must be GT-free. Its only admissible component families are:
 
@@ -86,10 +103,10 @@ The preferred initial mechanism is paired intervention plus a bounded virtual lo
 
 Any prototype must initially be diagnostic-only:
 
-- `no_grad` and detached from production parameters;
-- no optimizer-state writes;
-- no densification/pruning/topology influence;
-- no training-loss or gradient scaling;
+- detached from the source production run and unable to write its parameters, gradients, optimizer, or artifacts;
+- branch-private gradients/optimizer evolution is allowed only when the Stage G-A exact sub-specification explicitly requires a finite-horizon paired simulation;
+- no influence on the source run's densification/pruning/topology decisions;
+- no change to source/production training loss or gradient scaling;
 - no checkpoint field reused from `T_g/r_g`;
 - feature-off behavior remains baseline equivalent.
 
@@ -97,11 +114,23 @@ If a later approved implementation needs persistent history, it must receive a n
 
 The temporal contract must specify when a pre-action feature is sampled, when the action occurs, how the finite horizon is measured, how topology migration maps paired rows, and when a row becomes invalid. Newly created rows cannot inherit authorization merely from a parent.
 
-## 5. Staged development and information firewall
+## 5. Stage G-A deliverable and later-stage firewall
 
 ### Stage G-A: analytic and synthetic contract
 
-Use hand-checked synthetic scenes and controlled perturbations to establish:
+The only next document permitted by this charter is a **Stage G-A exact sub-specification**. Before any TDD implementation plan, synthetic execution, or target generation, that sub-specification must freeze:
+
+- the deterministic spatial cluster unit and guard/interference rules;
+- the exact candidate action and every affected parameter;
+- `Y_C`, lineage aggregation, disappearance handling, and horizon `H`;
+- benefit margin and every protected safety/spillover constraint;
+- the unique `Q_g` formula and all constants;
+- component and combined validity predicates;
+- metrics, coverage definition/minimum, uncertainty, and positive/negative/inconclusive gates;
+- compute, memory, branch-count, and wall-time budgets;
+- synthetic cases, expected directions, and stop rules.
+
+Only after that sub-specification is separately approved may a Stage G-A TDD implementation plan be written. The plan may cover hand-checked synthetic scenes and controlled perturbations to establish:
 
 - exact action direction and bounded magnitude;
 - benefit/safety target semantics;
@@ -110,17 +139,17 @@ Use hand-checked synthetic scenes and controlled perturbations to establish:
 - temporal ordering and topology mapping;
 - degenerate, unsupported, non-finite, and contradictory cases.
 
-The synthetic generator must include cases where geometry is wrong but the update is harmful, and cases where geometry is already good but a small update is beneficial. This prevents `Q_g` from collapsing into a static error score.
+The synthetic generator must include cases where geometry is wrong but the update is harmful, and cases where geometry is already good but a small update is beneficial. It must also exercise cluster spillover, protected non-target rows, split/clone descendants, pruning/disappearance, and invalid lineage. This prevents `Q_g` from collapsing into a static error score.
 
 ### Stage G-B: Tool Room development domain
 
-Only after Stage G-A is frozen may Tool Room be used as the development scene. Tool Room may generate paired, short-horizon intervention targets under the frozen action. Spatial and seed-level development/holdout partitions must be fixed before target inspection.
+Only after Stage G-A implementation and its positive gate are complete and frozen may a separate Tool Room intervention specification be drafted. This charter does not authorize that specification, its TDD plan, or its execution. A future approved Tool Room protocol may generate paired, short-horizon cluster targets under the frozen action; its spatial and seed-level development/holdout partitions must be fixed before target inspection.
 
 Tool Room can be used to reject the hypothesis or choose between already specified formula components only within a preregistered development allocation. The final Tool Room holdout is single-use. No result may be rescued through a sign flip, threshold search, alternate horizon, alternate action, or post-hoc row filter.
 
 ### Stage G-C: pre-Utility freeze
 
-Before any Utility GT-derived value is read, the following must be immutable and checksummed:
+Before any Utility GT-derived value is read, a later Stage G-C confirmation must make the following immutable and checksummed:
 
 - exact repository commit and clean status;
 - action implementation and branch-pairing procedure;
@@ -132,13 +161,13 @@ Before any Utility GT-derived value is read, the following must be immutable and
 - metric, uncertainty, and stop rules;
 - output schema and confirmation record.
 
-Before this freeze, Utility GT handling is limited to path existence, byte size, and SHA256. No mesh parsing, distance query, label, overlay, summary, or GT-guided preprocessing is allowed. This firewall is shared with the prior-risk Utility transfer specification: Utility GT stays unopened until this geometry contract has reached Stage G-C, even though the two hypotheses remain analytically independent.
+Before this freeze, Utility GT handling is limited to path existence, byte size, and SHA256. No mesh parsing, distance query, label, overlay, summary, or GT-guided preprocessing is allowed. The alternative terminal release path is defined by the prior-risk transfer specification: an immutable checksummed geometry termination confirmation may release the prior-only probe without admitting any geometry candidate to Utility.
 
 Passing Stage G-C authorizes only a later request for independent Utility validation. It does not authorize routing or C1.
 
 ## 6. Preregistered stop rules
 
-The geometry-authorization branch stops with `NO_ACTION_SPECIFIC_SIGNAL` if any of the following is established under a valid evaluation:
+At the applicable approved stage, the geometry-authorization branch stops with `NO_ACTION_SPECIFIC_SIGNAL` if any of the following is established under a valid evaluation:
 
 - the candidate predicts static geometry error but not the paired update effect;
 - synthetic benefit direction or safety monotonicity fails;
@@ -151,7 +180,9 @@ The geometry-authorization branch stops with `NO_ACTION_SPECIFIC_SIGNAL` if any 
 
 The result is `INCONCLUSIVE` rather than a failure when corrupted inputs, invalid paired branches, missing classes/effects, non-finite outputs, infrastructure failure, or an unfrozen contract prevents the estimand from being computed. An inconclusive result cannot trigger a fallback candidate.
 
-The only positive development outcome is `GEOMETRY_AUTHORIZATION_HYPOTHESIS_READY`. It means the one frozen, action-specific candidate is coherent enough for independently approved Utility validation. It is not a causal claim beyond the paired intervention, a production authorization, a five-state authorization, or C1 approval.
+When an approved stage returns `NO_ACTION_SPECIFIC_SIGNAL`, it must publish a canonical termination confirmation plus detached SHA. That record binds the exact charter/sub-specification/commit, stage, frozen tests and evidence, exhaustive outcome, and the facts that no geometry candidate enters Utility and Utility results cannot reopen or revise the terminated branch. Reopening geometry research would require a new hypothesis, new specification, and a different untouched independent validation asset; it cannot reuse Utility feedback from the prior-risk line.
+
+The only eventual positive development outcome is `GEOMETRY_AUTHORIZATION_HYPOTHESIS_READY`. Its precise positive gate must be frozen in the Stage G-A exact sub-specification and retained through later approved stages. It means the one frozen, action-specific candidate is coherent enough for a later request for independent Utility validation. It is not a causal claim beyond the paired cluster intervention, a production authorization, a five-state authorization, or C1 approval.
 
 ## 7. Relationship to the prior-risk line
 
@@ -166,13 +197,14 @@ Neither result can substitute for the other. A positive prior-risk transfer resu
 
 ## 8. Current authorization boundary
 
-This document currently authorizes only formal review of the hypothesis design. It does not authorize:
+This Stage G-A charter currently authorizes only formal review and, after approval, drafting of the Stage G-A exact sub-specification. It does not authorize:
 
-- implementation or TDD planning;
+- implementation or TDD planning, including a Stage G-A implementation plan;
+- a Tool Room intervention specification or full-line implementation plan;
 - synthetic generation or Tool Room intervention runs;
 - DA3 or Utility preprocessing;
 - Utility training or GT evaluation;
 - Evidence-version changes;
 - production routing, five-state arbitration, or C1.
 
-Each later stage requires a separate approved implementation plan and an explicit execution authorization.
+The next permitted artifact after this charter is approved is the Stage G-A exact sub-specification listed in Section 5. Only after that document is separately approved may a Stage G-A TDD implementation plan be drafted. Every execution stage requires an additional explicit authorization.
