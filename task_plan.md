@@ -861,4 +861,5 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Add fail-closed GT mesh identity/alignment/coverage admission with no realignment, crop, AABB filtering, or evaluation-domain repair.
 - [x] Obtain formal approval for the `1-r_p` Utility transfer specification; planning is now eligible but has not started and execution remains unauthorized.
 - [x] Remove the final Geometry charter ambiguities: Stage G-A is single-cluster only with no batching, and Tool Room may only test/reject the frozen unique `Q_g`.
-- [ ] Obtain final formal approval for the revised Geometry Stage G-A charter before drafting its exact sub-specification.
+- [x] Obtain final formal approval for the revised Geometry Stage G-A charter; only the Stage G-A exact sub-specification may be drafted next.
+- [ ] Wait for explicit user direction before drafting either the Geometry Stage G-A exact sub-specification or the approved Prior-transfer TDD implementation plan.

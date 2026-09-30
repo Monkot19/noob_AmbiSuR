@@ -462,4 +462,6 @@
 - [x] Revised the prior-transfer document in `696912a` with terminal firewall release, 7000-only performance gating, exact loader array counts, and fail-closed mesh admission.
 - [x] `1-r_p` Utility transfer specification formally approved for planning only; no implementation plan or execution has begun.
 - [x] Applied the second Geometry review: Stage G-A now forbids batching, and Tool Room can only test/reject the unique frozen `Q_g` without component or constant selection.
-- [ ] Await final approval of the revised Geometry Stage G-A charter. No implementation plan, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, or C1 has begun.
+- [x] Geometry Stage G-A charter formally approved for drafting its exact sub-specification only; no TDD plan or execution is authorized.
+- [x] Both research-line specifications are approved with distinct next-step gates. No follow-on document has started pending explicit user direction.
+- [ ] Continue to block implementation planning/execution, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, and C1 unless separately authorized.

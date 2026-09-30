@@ -459,3 +459,4 @@
 - A valid prior-risk probe must stop as `INCONCLUSIVE` when first mesh access reveals identity, coordinate-alignment, or scene-coverage abnormality; it cannot repair the mesh or narrow the evaluation domain.
 - Spatial separation cannot remove rendering/optimizer interference. Stage G-A therefore permits exactly one treated cluster per branch pair; any future batching needs its own approved no-interference contract and synthetic evidence.
 - Tool Room is a confirm-or-reject stage for the single Stage G-A-frozen `Q_g`, not a formula-development allocation. Components and constants cannot be selected, removed, recombined, or refit there.
+- Both split specifications were formally approved on 2026-09-30, but their next authorities differ: Geometry permits only an exact Stage G-A sub-specification, while Prior transfer becomes eligible for a TDD implementation plan only after another explicit user authorization. Neither approval authorizes execution.

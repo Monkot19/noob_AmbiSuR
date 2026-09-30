@@ -1,6 +1,6 @@
 # Geometry-Update Authorization Hypothesis Design
 
-**Status:** Stage G-A research charter, draft for formal review. The in-chat design summary was confirmed on 2026-09-30. This is not a complete implementation specification and authorizes neither implementation planning nor experiment execution.
+**Status:** Stage G-A research charter approved on 2026-09-30 for drafting the Stage G-A exact sub-specification only. This is not a complete implementation specification and authorizes neither TDD implementation planning nor experiment execution.
 
 **Scope:** Bound the analytic and synthetic Stage G-A needed to define a new, action-specific hypothesis for predicting when a geometry update is beneficial and safe. This charter is independent of the frozen prior-risk transfer line. It supersedes every future-facing use of `r_g` as a geometry-risk or routing-authorization quantity in `2026-09-29-prior-geometry-risk-independent-validation-design.md`.
 
