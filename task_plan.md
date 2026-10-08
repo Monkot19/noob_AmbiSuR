@@ -884,4 +884,5 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [ ] Preserve old confirmation; request replacement confirmation binding the qualified new commit before any seed launch.
 - [ ] Tasks 6–8 remain distinct uncompleted work; do not label the complete Utility pipeline ready.
 - [x] Persist user-confirmed cross-scene reuse rules in AGENTS.md and project handoff; no statistics redevelopment or broad framework rewrite.
-- [ ] Task 6 code locally verified (61 focused tests); fresh review's two Important findings fixed with RED→GREEN tests. Exact-commit AutoDL qualification pending. Shared geometry-release validation/logging only; no real release creation or GT access, Tasks 7/8 still unimplemented.
+- [x] Task 6 authoritative AutoDL qualification at `6bdbb5ce1bd33efee5cdbff629fabd836acda4e0`: 61 focused / 382 discovery tests OK, clean checkout, exit 0. No real geometry release, GT access, training or C1.
+- [ ] Task 7: implement synthetic-only mesh admission under the approved inline TDD plan; Task 8 evaluator remains unimplemented. Real Utility GT access stays separately blocked.

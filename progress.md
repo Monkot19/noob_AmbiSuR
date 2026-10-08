@@ -512,3 +512,7 @@
 - Ruling: reuse the production prior-confirmation schema validator with guarded file reads rather than its general unguarded I/O loader. No schema/scientific behavior changes; cost if wrong is adapter maintenance, covered by confirmation regressions.
 - Final local discovery after review fixes: 245 tests, 22 errors exclusively `ModuleNotFoundError: torch`, 36 skips. This is not a full PASS; exact-commit server qualification remains pending. Final focused suite is 61/61 with no skips.
 - Real release/confirmation creation, GT access, DA3, training and C1 remain unperformed; Tasks 7/8 are still missing. Exact-commit AutoDL code qualification remains required before server readiness is claimed. Task 8 still owns original confirmation/completed-run binding and actual parser-order integration; unchanged Tasks 1–5 retain their existing contracts, and real geometry/mesh/server admission is not inferred from this synthetic review.
+
+## 2026-10-08 Task 6 server qualification / Task 7 start
+- User-supplied AutoDL evidence at `6bdbb5ce1bd33efee5cdbff629fabd836acda4e0`: focused 61 tests OK; discovery 382 tests OK; exit 0; clean checkout. This supersedes Task 6's local dependency limitation, not any later code's qualification.
+- No real geometry release created, no Utility GT accessed, no training or C1. Continue approved Task 7 inline TDD on synthetic fixtures only. Preserve frozen statistical core and existing geometric-query implementation; Task 8 remains pending.
