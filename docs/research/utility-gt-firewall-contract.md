@@ -115,3 +115,33 @@ closed even when the final content SHA matches the preregistered bytes.
 Synthetic tests do not establish that the real Utility mesh is admitted. That
 first parse remains blocked by the real geometry release and explicit probe
 authorization, irrespective of code-test results.
+
+## Compact evaluator integration (Task 8)
+
+`evaluate_g1_prior_transfer.py` verifies the exact clean commit, canonical prior
+confirmation, three ordered qualification handles and their complete immutable
+file inventories before authorizing first access. Source/snapshot/run/GT/output
+paths must match the original preregistration; no scientific override is exposed.
+The protected caller reuses completed-run binding validation with reference I/O
+disabled only after guarded, hash-verified reads. Existing callers retain full
+reference verification by default.
+
+The authorizer receives known protected GT/target paths before its first prior
+reload and carries them through all subsequent reloads. Token verification also
+supplies these paths. A prior record replaced by a GT hardlink is rejected before
+the opened object is read, not merely after its digest fails.
+
+After the immutable first-access log exists, the evaluator hashes GT against the
+preregistered path/size/SHA **before** mesh admission. That same file generation
+and content identity span admission, all six checkpoint evaluations and final
+publication. Initial safely characterizable identity failure is `INCONCLUSIVE`
+without parsing/fitting; mutation during hashing/admission/evaluation aborts
+publication and leaves the first-access log intact. Admission never establishes
+a replacement baseline for changed bytes.
+
+Every finite center is queried against the unchanged full mesh before the frozen
+probe applies `V_p=True`. M0/M1, folds, solver, bootstrap and gates are reused.
+Publication is exactly seven compact files, exclusive/no-overwrite, with staging
+cleanup and final input checks. Linux requires exclusive atomic `renameat2`;
+unsupported publication fails closed rather than falling back to overwrite.
+Synthetic tests do not authorize this entry point against real Utility assets.
