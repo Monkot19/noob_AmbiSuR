@@ -219,6 +219,31 @@ class UtilityGtFirewallTests(unittest.TestCase):
                 self.authorize(identity)
         self.assertTrue(self.log.exists(), "Do not erase a possibly consumed access record")
 
+    def test_release_reference_aliasing_gt_is_rejected_before_any_mesh_read(self):
+        record = self.release()
+        mesh = Path(self.prior["gt_mesh"]["path"])
+        record["evidence"] = [{"path": str(mesh), "sha256": "3" * 64}]
+        identity = self.publish("release.json", record)
+        real_open = Path.open
+        def guarded_open(path, *args, **kwargs):
+            self.assertNotEqual(path, mesh, "Firewall must reject before opening GT")
+            return real_open(path, *args, **kwargs)
+        with mock.patch.object(Path, "open", guarded_open), self.assertRaises(ValueError):
+            self.authorize(identity)
+        self.assertFalse(self.log.exists())
+
+    def test_post_publication_probe_artifact_blocks_parser_return(self):
+        identity = self.publish("release.json", self.release())
+        import os
+        real_link = os.link
+        def artifact_after_link(source, target):
+            real_link(source, target)
+            Path(self.prior["probe_targets"]["staging_dir"]).mkdir()
+        with mock.patch("reliability.utility_gt_firewall.os.link", side_effect=artifact_after_link):
+            with self.assertRaises(ValueError):
+                self.authorize(identity)
+        self.assertTrue(self.log.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
