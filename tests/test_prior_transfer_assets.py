@@ -16,11 +16,15 @@ from reliability.prior_transfer_assets import (
     qualify_prior_transfer_run,
     validate_completion,
     validate_optimizer_state,
+    _snapshot_binding,
+    input_fingerprints,
+    validate_checkpoint_metadata,
+    validate_checkpoint_lineage,
 )
 from reliability.g1_prior_transfer_confirmation import (
     build_prior_transfer_confirmation, write_prior_transfer_confirmation,
 )
-from tests.test_g1_prior_transfer_confirmation import PriorTransferConfirmationTests
+from tests import test_g1_prior_transfer_confirmation as confirmation_tests
 from tests.test_utility_snapshot import _confirmation, _copy_source_and_write_derived
 from reliability.utility_snapshot import audit_da3_snapshot, write_snapshot_record
 
@@ -107,13 +111,13 @@ class CompletionTests(unittest.TestCase):
                     validate_completion(self.run, self.row, "f" * 64, processes=[])
 
     def test_bad_completion_logs_processes_state_and_sentinel_fail_closed(self):
+        original_log = (self.run / "train.log").read_text()
         for text in ("Training complete.\nTraining complete.\n", "Training complete.\nNaN\n",
                      "Training complete.\nTraceback\n", "Training complete.\n/secret/gt/mesh.ply\n"):
-            (self.run / "train.log").write_text(text)
+            (self.run / "train.log").write_text(original_log.replace("Training complete.\n", text))
             with self.assertRaises(ValueError):
                 validate_completion(self.run, self.row, "f" * 64, processes=[])
-        completion_fixture_reset = self.run / "train.log"
-        completion_fixture_reset.write_text("Training complete.\n")
+        (self.run / "train.log").write_text(original_log)
         with self.assertRaises(ValueError):
             validate_completion(self.run, self.row, "f" * 64,
                                 processes=[(10, "S", "/env/python -B train.py --iterations 7000")])
@@ -159,15 +163,62 @@ class OptimizerTests(unittest.TestCase):
                 validate_optimizer_state(optimizer, params, schedule, 3000)
 
 
-def completed_run_fixture(root):
-    """Real source admission, DA3 manifest, runtime refresh/migration and checkpoint I/O."""
+class CheckpointContractTests(unittest.TestCase):
+    def fixture(self):
+        centers = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0]], dtype=np.float32)
+        evidence = {"previous_centers": centers.copy(), "history_valid": np.ones(3, dtype=bool),
+            "stable_state": np.array([0, 0, 4], dtype=np.int8),
+            "temporal_transition_diagnostics": {
+                "previous_stable": np.array([0, 0, 4], dtype=np.int8),
+                "stable_age_refreshes": np.array([1, 2, 3], dtype=np.int64),
+                "stable_transition_count": np.array([2, 1, 0], dtype=np.int64)}}
+        event = {"mean_stable_age_refreshes": 2.0, "mean_stable_transition_count": 1.0,
+            "mean_stable_age_refreshes_by_state": {"Bypass": 1.5, "Consensus": None,
+                "Prior-led": None, "Geometry-led": None, "Abstain": 3.0},
+            "mean_stable_transition_count_by_state": {"Bypass": 1.5, "Consensus": None,
+                "Prior-led": None, "Geometry-led": None, "Abstain": 0.0}}
+        return centers, evidence, event
+
+    def test_rejects_permuted_centers_and_missing_current_history(self):
+        centers, evidence, event = self.fixture()
+        validate_checkpoint_lineage(centers, evidence, event, 3)
+        with self.assertRaisesRegex(ValueError, "center"):
+            validate_checkpoint_lineage(centers[::-1], evidence, event, 3)
+        evidence["history_valid"][0] = False
+        with self.assertRaisesRegex(ValueError, "history"):
+            validate_checkpoint_lineage(centers, evidence, event, 3)
+
+    def test_counter_bounds_and_event_means_are_checked_not_just_round_trip(self):
+        for name in ("stable_age_refreshes", "stable_transition_count"):
+            for value in (100000, 0):
+                centers, evidence, event = self.fixture()
+                evidence["temporal_transition_diagnostics"][name][0] = value
+                with self.subTest(name=name, value=value), self.assertRaises(ValueError):
+                    validate_checkpoint_lineage(centers, evidence, event, 3)
+
+    def test_exact_checkpoint_root_and_nested_gt_metadata_fail_closed(self):
+        payload = {"schema_version": 1, "iteration": 3000, "gaussian_state": (), "core_state": {}}
+        validate_checkpoint_metadata(payload)
+        for key, value in (("gt_mesh", "/secret/gt/mesh.ply"), ("gt_distance", np.zeros(3))):
+            changed = copy.deepcopy(payload)
+            changed[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                validate_checkpoint_metadata(changed)
+            changed = copy.deepcopy(payload)
+            changed["core_state"][key] = value
+            with self.assertRaises(ValueError):
+                validate_checkpoint_metadata(changed)
+
+
+def asset_metadata_fixture(root):
+    """Real source/DA3 admission and completed launcher metadata (no checkpoints)."""
     source, snapshot, snapshot_path, da3 = _confirmation(root, expected_count=147)
     _copy_source_and_write_derived(source, snapshot, names=da3["source"]["image_names"])
     write_snapshot_record(audit_da3_snapshot(snapshot, da3), da3, snapshot_path)
     source_path = root / "source.json"
     write_json(source_path, {**da3["source"], "audit_kind": "utility_source", "gt_access": "NONE"})
     # Reuse the preregistration fixture, not a mock of the qualification behavior.
-    maker = PriorTransferConfirmationTests()
+    maker = confirmation_tests.PriorTransferConfirmationTests()
     maker.root, maker.source_record, maker.snapshot_record = root, source_path, snapshot_path
     request = maker.request()
     request["snapshot_record"]["snapshot_sha256"] = json.loads(snapshot_path.read_text())["snapshot_sha256"]
@@ -189,6 +240,13 @@ def completed_run_fixture(root):
     write_json(run / "resolved_config.json", expected_training_config(row))
     write_json(run / "run_identity.json", {"git_commit": request["repository"]["commit"],
         "git_dirty": False, "seed": 0, "argv": row["training_argv"], "cwd": str(repo)})
+    return confirmation, confirmation_path, published["sha256"], row
+
+
+def completed_run_fixture(root):
+    """Add real runtime refresh/migration and checkpoint I/O to the data fixture."""
+    confirmation, confirmation_path, digest, row = asset_metadata_fixture(root)
+    run = Path(row["run_dir"])
     from reliability.config import CoreConfig
     from reliability.shadow import D0ShadowRuntime
     from reliability.topology import TopologyChange
@@ -199,33 +257,82 @@ def completed_run_fixture(root):
         if iteration == 4000:
             runtime.on_topology_change(TopologyChange(
                 torch.tensor([0, 1, 0]), torch.tensor([False, False, True])))
-        inputs = refresh_inputs()
+        inputs = refresh_inputs(centers=torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
         if iteration >= 4000:
-            from dataclasses import fields
+            from dataclasses import fields, replace
+            changed = {}
             for field in fields(inputs):
                 value = getattr(inputs, field.name)
                 if isinstance(value, torch.Tensor):
                     dim = 1 if field.name == "pixel_hits" else 0
                     if value.shape[dim] == 2:
-                        setattr(inputs, field.name, torch.cat((value, value.narrow(dim, 0, 1)), dim=dim))
+                        changed[field.name] = torch.cat((value, value.narrow(dim, 0, 1)), dim=dim)
+            inputs = replace(inputs, **changed)
         result = runtime.maybe_refresh(iteration, lambda: inputs)
         write_snapshot(run, iteration, result, transition_diagnostics=runtime.latest_transition_diagnostics)
         if iteration in (3000, 7000):
             params, optimizer = optimizer_fixture(n=runtime.accumulator.point_count,
                                                   step=2975 if iteration == 3000 else 6935)
             params = [torch.from_numpy(value) for value in params]
+            params[0] = inputs.centers.clone()
             for state in optimizer["state"].values():
                 for key, value in state.items():
                     state[key] = torch.from_numpy(value)
-            capture = (0, *params, *[torch.zeros(len(params[0])) for _ in range(6)], optimizer, 1.0)
+            capture = (0, *[params[index] for index in (0, 1, 2, 3, 5, 6, 4)],
+                       *[torch.zeros(len(params[0])) for _ in range(6)], optimizer, 1.0)
             torch.save({"schema_version": 1, "iteration": iteration, "gaussian_state": capture,
                         "core_state": runtime.state_dict()}, run / f"chkpnt{iteration}.pth")
-    return confirmation, confirmation_path, published["sha256"], row
+    return confirmation, confirmation_path, digest, row
 
 
-@unittest.skipIf(torch is None, "Torch checkpoint/runtime integration requires AutoDL")
-class PriorTransferAssetIntegrationTests(unittest.TestCase):
+class AssetMetadataTests(unittest.TestCase):
+    def test_actual_loader_cache_is_allowed_only_in_private_view(self):
+        with tempfile.TemporaryDirectory() as directory:
+            confirmation, _, _, row = asset_metadata_fixture(Path(directory).resolve())
+            cache = Path(row["view_dir"]) / "sparse_da3_aligned/0/points3D.ply"
+            cache.write_bytes(b"private-loader-generated-point-cloud")
+            _snapshot_binding(confirmation, row)
+            snapshot_root = Path(json.loads(Path(confirmation["snapshot_record"]["path"]).read_text())["snapshot_root"])
+            (snapshot_root / "sparse_da3_aligned/0/points3D.ply").write_bytes(b"changed-canonical")
+            with self.assertRaises(ValueError):
+                _snapshot_binding(confirmation, row)
+
+    def test_added_split_or_shadowing_colmap_model_is_not_a_frozen_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            confirmation, _, _, row = asset_metadata_fixture(Path(directory).resolve())
+            view = Path(row["view_dir"])
+            for relative in ("split.json", "sparse/0/images.bin", "images/extra.jpg"):
+                added = view / relative
+                added.write_bytes(b"unexpected-loader-input")
+                with self.subTest(relative=relative), self.assertRaises(ValueError):
+                    _snapshot_binding(confirmation, row)
+                added.unlink()
+
+    def test_invalid_identity_config_and_manifest_fail_before_checkpoint_loading(self):
+        with tempfile.TemporaryDirectory() as directory:
+            confirmation, _, _, row = asset_metadata_fixture(Path(directory).resolve())
+            run = Path(row["run_dir"])
+            with patch("reliability.prior_transfer_assets._processes", return_value=[]):
+                for filename, field, wrong in (("run_identity.json", "git_commit", "b" * 40),
+                                               ("resolved_config.json", "training_path", "legacy")):
+                    path = run / filename
+                    original = path.read_bytes()
+                    value = json.loads(original)
+                    value[field] = wrong
+                    write_json(path, value)
+                    with self.subTest(field=field), self.assertRaises(ValueError):
+                        qualify_prior_transfer_run(run, 0, confirmation)
+                    path.write_bytes(original)
+                view_depth = Path(row["view_dir"]) / "estimated_depths/frame000.jpg.npy"
+                view_depth.write_bytes(b"corrupt-depth")
+                with self.assertRaisesRegex(ValueError, "immutable input changed"):
+                    qualify_prior_transfer_run(run, 0, confirmation)
+
+
+class RunIntegrationFixture(unittest.TestCase):
     def setUp(self):
+        if torch is None:
+            self.skipTest("Torch checkpoint/runtime integration requires AutoDL")
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
@@ -236,6 +343,9 @@ class PriorTransferAssetIntegrationTests(unittest.TestCase):
         self.process.start()
         self.addCleanup(self.process.stop)
 
+
+@unittest.skipIf(torch is None, "Torch checkpoint/runtime integration requires AutoDL")
+class PriorTransferAssetIntegrationTests(RunIntegrationFixture):
     def test_real_runtime_topology_checkpoint_join_without_opening_gt(self):
         before = {p: file_sha(p) for p in self.root.rglob("*") if p.is_file()}
         report = qualify_prior_transfer_run(self.run, 0, self.confirmation)
@@ -269,7 +379,7 @@ class PriorTransferAssetIntegrationTests(unittest.TestCase):
     def test_rejects_old_evidence_bad_temporal_nonfinite_and_row_permutation(self):
         path = self.run / "chkpnt7000.pth"
         original = path.read_bytes()
-        for defect in ("version", "temporal", "nonfinite", "row"):
+        for defect in ("version", "temporal", "age", "transitions", "nonfinite", "row", "centers", "gt"):
             payload = torch.load(path, weights_only=False)
             evidence = payload["core_state"]["evidence"]
             if defect == "version":
@@ -278,10 +388,18 @@ class PriorTransferAssetIntegrationTests(unittest.TestCase):
                 evidence["temporal_transition_diagnostics"]["previous_stable"][0] = 4
             elif defect == "nonfinite":
                 payload["gaussian_state"][1][0, 0] = float("nan")
+            elif defect == "age":
+                evidence["temporal_transition_diagnostics"]["stable_age_refreshes"][0] = 100000
+            elif defect == "transitions":
+                evidence["temporal_transition_diagnostics"]["stable_transition_count"][0] += 1
+            elif defect == "centers":
+                center = payload["gaussian_state"][1]
+                center[[0, 1]] = center[[1, 0]]
+            elif defect == "gt":
+                payload["gt_distance"] = torch.zeros(3)
             else:
                 evidence["a_value"][0] += 0.1
             torch.save(payload, path)
             with self.subTest(defect=defect), self.assertRaises(ValueError):
                 qualify_prior_transfer_run(self.run, 0, self.confirmation)
             path.write_bytes(original)
-
