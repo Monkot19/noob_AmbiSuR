@@ -1,4 +1,4 @@
-"""Immutable information-firewall records; no mesh parsing or experiment launch.
+"""Immutable information firewall and post-token, fail-closed mesh admission.
 
 This is a prerequisite, not human execution approval. A caller must separately
 verify completed runs and obtain GT-probe approval (Task 8). Inputs to
@@ -13,6 +13,9 @@ from pathlib import Path
 import re
 import uuid
 from collections.abc import Mapping
+from dataclasses import dataclass
+
+import numpy as np
 
 from reliability.g1_prior_transfer_confirmation import (
     _canonical_bytes, _validate_record,
@@ -282,3 +285,219 @@ def authorize_first_gt_access(prior_record, geometry_record, *, access_log_path:
     finally:
         temporary.unlink(missing_ok=True)
     return {"path": str(log), "sha256": hashlib.sha256(payload).hexdigest(), "record": record}
+
+
+@dataclass(frozen=True)
+class UtilityMeshAdmission:
+    """Compact admission evidence only: never a filter or repaired surface."""
+
+    outcome: str
+    reasons: tuple[str, ...]
+    summary: dict
+
+
+def _verify_mesh_access(confirmation, token):
+    if not isinstance(token, Mapping) or set(token) != {"path", "sha256", "record"}:
+        raise ValueError("verified first-access token required before mesh parsing")
+    prior = _validate_record(confirmation, require_targets_absent=False, verify_record_files=False)
+    identity = {key: token[key] for key in ("path", "sha256")}
+    log = _absolute(prior["probe_targets"]["access_log_path"])
+    if _absolute(identity["path"]) != log:
+        raise ValueError("access token target mismatch")
+    payload = _read_verified(identity, protected=[_absolute(prior["gt_mesh"]["path"])])
+    record = json.loads(payload)
+    fields = {"schema_version", "kind", "created_utc", "prior_confirmation", "geometry_release",
+              "geometry_outcome", "gt_mesh", "access_log_path", "mesh_parse_preceded_by_this_record",
+              "utility_feedback_cannot_reopen_geometry"}
+    if set(record) != fields or payload != _canonical_bytes(record) or record != token["record"]:
+        raise ValueError("first-access record payload mismatch")
+    if (type(record["schema_version"]) is not int or record["schema_version"] != 1
+            or record["kind"] != "utility_first_gt_access"
+            or record["mesh_parse_preceded_by_this_record"] is not True
+            or record["utility_feedback_cannot_reopen_geometry"] is not True
+            or record["access_log_path"] != str(log) or record["gt_mesh"] != prior["gt_mesh"]):
+        raise ValueError("first-access record contract mismatch")
+    reloaded, geometry = _reloaded(record["prior_confirmation"], record["geometry_release"])
+    if reloaded != prior or record["geometry_outcome"] != geometry["outcome"]:
+        raise ValueError("first-access confirmation/release binding mismatch")
+    when = _time(record["created_utc"])
+    if not max(_time(prior["created_utc"]), _time(geometry["created_utc"])) <= when <= datetime.now(timezone.utc):
+        raise ValueError("first-access chronology mismatch")
+    return prior
+
+
+def select_admission_points(points):
+    """Frozen SHA-minhash: LE uint64 ID || LE float64 XYZ; at most 50,000."""
+    ranked = []
+    for point_id, point in points.items():
+        if not isinstance(point_id, (int, np.integer)) or not 0 <= point_id < 2**64:
+            raise ValueError("invalid COLMAP point identity")
+        xyz = np.asarray(point.xyz, dtype="<f8")
+        if xyz.shape != (3,) or not np.isfinite(xyz).all():
+            raise ValueError("nonfinite/invalid registered sparse point")
+        payload = np.asarray([point_id], dtype="<u8").tobytes() + xyz.tobytes()
+        ranked.append((hashlib.sha256(payload).digest(), int(point_id), xyz))
+    if not ranked:
+        raise ValueError("no registered sparse points for mesh admission")
+    ranked.sort(key=lambda row: (row[0], row[1]))
+    selected = ranked[:50000]
+    return np.array([row[1] for row in selected], dtype=np.uint64), np.array([row[2] for row in selected])
+
+
+def utility_camera_rays(camera, image):
+    """8x6 full-frame cell-center rays, no crop or image resampling."""
+    from reliability.g1_visualization import camera_to_world_for_ray_cast
+    from scripts.preprocess.read_write_model import qvec2rotmat
+    params = np.asarray(camera.params, dtype=np.float64)
+    if camera.model == "PINHOLE" and params.shape == (4,):
+        fx, fy, cx, cy = params
+    elif camera.model == "SIMPLE_PINHOLE" and params.shape == (3,):
+        fx, cx, cy = params
+        fy = fx
+    else:
+        raise ValueError("unsupported admission camera model")
+    if not np.isfinite(params).all() or min(fx, fy, camera.width, camera.height) <= 0:
+        raise ValueError("invalid admission camera intrinsics")
+    qvec, tvec = np.asarray(image.qvec), np.asarray(image.tvec)
+    if (qvec.shape != (4,) or tvec.shape != (3,) or not np.isfinite(qvec).all()
+            or not np.isfinite(tvec).all() or not np.isclose(np.linalg.norm(qvec), 1., rtol=0., atol=1e-6)):
+        raise ValueError("invalid admission camera pose")
+    intrinsic = np.array([[fx, 0., cx], [0., fy, cy], [0., 0., 1.]])
+    w2c = np.eye(4)
+    w2c[:3, :3], w2c[:3, 3] = qvec2rotmat(qvec), tvec
+    # Reuse the established W2C inversion boundary, without constructing Scene
+    # or any training/rendering runtime.
+    class Calibration:
+        def get_calib_matrix_nerf(self, scale):
+            return intrinsic, w2c
+    _, c2w = camera_to_world_for_ray_cast(Calibration())
+    x, y = np.meshgrid((np.arange(8) + .5) * camera.width / 8.,
+                       (np.arange(6) + .5) * camera.height / 6., indexing="xy")
+    directions = np.stack(((x-cx)/fx, (y-cy)/fy, np.ones_like(x)), axis=-1).reshape(48, 3)
+    directions = directions @ c2w[:3, :3].T
+    rays = np.concatenate((np.broadcast_to(c2w[:3, 3], directions.shape), directions), axis=1)
+    if not np.isfinite(rays).all() or np.any(np.linalg.norm(directions, axis=1) <= 0.):
+        raise ValueError("nonfinite/zero admission camera rays")
+    return rays
+
+
+def _load_admission_mesh(path):
+    from reliability.offline_g1 import load_valid_mesh
+    return load_valid_mesh(path)
+
+
+def _admission_distances(points, mesh):
+    from reliability.offline_g1 import closest_triangle_distances
+    return closest_triangle_distances(points, mesh)
+
+
+def _admission_ray_depths(rays, mesh):
+    # Same Open3D full-surface raycast backend as cast_gt_depth; batch only the
+    # fixed 7,056 admission rays so the full triangle scene is built once.
+    import open3d as o3d
+    surface = o3d.t.geometry.TriangleMesh(
+        o3d.core.Tensor(np.asarray(mesh.vertices, dtype=np.float32)),
+        o3d.core.Tensor(np.asarray(mesh.triangles, dtype=np.int32)))
+    scene = o3d.t.geometry.RaycastingScene()
+    scene.add_triangles(surface)
+    return scene.cast_rays(o3d.core.Tensor(rays.astype(np.float32)))["t_hit"].numpy().astype(np.float64)
+
+
+def _mesh_identity(path, expected):
+    # Do not silently admit another lexical path/symlink to the frozen asset.
+    path = Path(path)
+    if not path.is_absolute() or str(path) != expected["path"] or path.is_symlink() or not path.is_file():
+        raise ValueError("GT mesh path identity mismatch")
+    before = path.stat()
+    if before.st_size != expected["bytes"]:
+        raise ValueError("GT mesh byte size mismatch")
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        opened = os.fstat(stream.fileno())
+        if (before.st_dev, before.st_ino, before.st_size) != (opened.st_dev, opened.st_ino, opened.st_size):
+            raise ValueError("GT mesh changed at open")
+        for chunk in iter(lambda: stream.read(1024*1024), b""):
+            digest.update(chunk)
+    after = path.stat()
+    identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    if identity(before) != identity(after) or digest.hexdigest() != expected["sha256"]:
+        raise ValueError("GT mesh SHA256/mutation mismatch")
+
+
+def _admission_source(source_root, prior):
+    from reliability.utility_snapshot import audit_utility_source, source_manifest
+    protected = [_absolute(prior["gt_mesh"]["path"]),
+                 *[_absolute(path) for path in prior["probe_targets"].values()]]
+    source = json.loads(_read_verified(prior["source_record"], protected=protected))
+    root = _absolute(source_root)
+    if (root != _absolute(source["source_root"]) or source.get("audit_kind") != "utility_source"
+            or source.get("gt_access") != "NONE"):
+        raise ValueError("mesh admission source binding mismatch")
+    _reject_aliases([{"path": str(path)} for path in root.rglob("*") if path.is_file()], protected)
+    current = source_manifest(audit_utility_source(root, expected_count=147))
+    if any(source.get(key) != value for key, value in current.items()):
+        raise ValueError("mesh admission source manifest changed")
+    from scripts.preprocess.read_write_model import read_model
+    cameras, images, points = read_model(str(root / "sparse/0"), ext=".txt")
+    if len(images) != 147 or sorted(image.name for image in images.values()) != current["image_names"]:
+        raise ValueError("mesh admission registered camera inventory mismatch")
+    rays = np.stack([utility_camera_rays(cameras[image.camera_id], image)
+                     for _, image in sorted(images.items())])
+    ids, xyz = select_admission_points(points)
+    return current, ids, xyz, rays
+
+
+def audit_utility_mesh(mesh_path: Path, source_root: Path, confirmation: Mapping, *, access_token) -> UtilityMeshAdmission:
+    """Post-firewall, read-only admission; any failure stops as INCONCLUSIVE.
+
+    Not a geometry release generator, execution approval, or model fitter.
+    No admission statistic selects Gaussian rows, faces, or a new transform.
+    """
+    summary = {}
+    try:
+        prior = _verify_mesh_access(confirmation, access_token)
+        source, ids, points, rays = _admission_source(source_root, prior)
+        _mesh_identity(mesh_path, prior["gt_mesh"])
+        mesh = _load_admission_mesh(mesh_path)
+        if mesh.nonfinite_vertex_count or len(mesh.vertices) == 0 or len(mesh.triangles) == 0:
+            raise ValueError("mesh contains nonfinite vertices or no valid surface")
+        summary.update(gt_mesh=dict(prior["gt_mesh"]), coordinate_transform=prior["mesh_admission"]["coordinate_transform"],
+                       world_unit="meter", source_sha256=source["source_sha256"],
+                       surface={"source_vertex_count": mesh.source_vertex_count,
+                                "source_triangle_count": mesh.source_triangle_count,
+                                "valid_vertex_count": len(mesh.vertices), "valid_triangle_count": len(mesh.triangles),
+                                "rejected_nonfinite_triangle_count": mesh.rejected_nonfinite_triangle_count,
+                                "rejected_degenerate_triangle_count": mesh.rejected_degenerate_triangle_count})
+        distances = np.asarray(_admission_distances(points, mesh), dtype=np.float64)
+        if distances.shape != (len(points),) or not np.isfinite(distances).all() or np.any(distances < 0):
+            raise ValueError("invalid admission sparse-point distances")
+        median, p90 = np.quantile(distances, [.5, .9])
+        fraction = float(np.mean(distances <= .10))
+        summary["alignment"] = {"sample_count": len(points), "registered_point_count": source["point_count"],
+                                "sample_ids_sha256": hashlib.sha256(ids.astype("<u8").tobytes()).hexdigest(),
+                                "median_distance_m": float(median), "p90_distance_m": float(p90),
+                                "fraction_within_0_10_m": fraction}
+        limits = prior["mesh_admission"]
+        if (median > limits["point_distance_median_at_most_m"] or p90 > limits["point_distance_p90_at_most_m"]
+                or fraction < limits["point_fraction_within_0.10_m_at_least"]):
+            raise ValueError("mesh sparse-point alignment gate failed; no repair permitted")
+        depths = np.asarray(_admission_ray_depths(rays, mesh), dtype=np.float64)
+        if depths.shape != (147, 48) or np.isnan(depths).any() or (depths <= 0).any():
+            raise ValueError("invalid admission ray-depth inventory")
+        hit = np.isfinite(depths)
+        per_camera = hit.mean(axis=1)
+        aggregate, camera_fraction = float(hit.mean()), float(np.mean(per_camera >= .50))
+        summary["coverage"] = {"registered_camera_count": 147, "rays_per_camera": 48,
+                               "aggregate_hit_fraction": aggregate, "per_camera_hit_fraction": per_camera.tolist(),
+                               "camera_fraction_at_least_half": camera_fraction}
+        if (aggregate < limits["aggregate_ray_hit_fraction_at_least"]
+                or camera_fraction < limits["camera_fraction_with_hit_fraction_at_least_0.50"]):
+            raise ValueError("mesh camera coverage gate failed; no crop permitted")
+        # Recheck every consumed input, not just the mesh, before admission.
+        _mesh_identity(mesh_path, prior["gt_mesh"])
+        _verify_mesh_access(confirmation, access_token)
+        if _admission_source(source_root, prior)[0] != source:
+            raise ValueError("mesh admission source changed during query")
+        return UtilityMeshAdmission("ADMITTED", (), summary)
+    except (ValueError, TypeError, KeyError, OSError, RuntimeError, ImportError) as exc:
+        return UtilityMeshAdmission("INCONCLUSIVE", (f"{type(exc).__name__}: {exc}",), summary)
