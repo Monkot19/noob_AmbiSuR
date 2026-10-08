@@ -1,6 +1,6 @@
-# Storage recovery — inventory only, no deletion yet
+# Storage recovery — approved offload complete, post-exit storage gate PASS
 
-User prefers inspection/verified offload before paid expansion. F0 remains stopped before target creation. Server-reported persistent available bytes:12308430848 (approximately11.46GiB); operational launch headroom is15GiB. No threshold change or automatic retry.
+User prefers inspection/verified offload before paid expansion. Approved36-file cleanup is complete. A fresh user-operated post-exit measurement reports17218138112 available bytes (16.036GiB), passing the unchanged15GiB operational gate. F0 has not started; resume its previously authorized seed0-only launch through the unchanged pinned handoff. No threshold change, further deletion or added experiment authorization.
 
 ## Verified local result copies
 
@@ -35,7 +35,7 @@ Expected logical reclaim:4909886174 bytes (~4.57GiB); adding the reported free12
 
 Keep all JSON/CSV/PNG/PDF/SVG, manifests and scientific receipts, all small component/complementarity/semantic audits, all training assets, models, canonical inputs and the Utility snapshot. Local manifest inspection shows the largest files are actually formal `report.json` (~2.12/2.34GB), not vector figures; those frozen records are explicitly excluded. Current Utility F0/probe code consumes training assets and confirmations, not these old visualization exports or archives.
 
-User approved this exact scope on2026-10-08. If performed, the two server formal output folders become partial/offloaded copies. Preserve original manifests unchanged and publish a separate offload receipt; do not claim their full server inventory still passes. Verify all selected paths/bytes/SHA before any removal, reject links/escapes, and log exact removed targets outside the frozen result folders. Server execution remains pending; no deletion command has been run.
+User approved this exact scope on2026-10-08. Subsequent AutoDL receipt confirms36 removals at handoff commit68f2df85c3815338536aced9628442e764715acf; the two formal server folders are now partial/offloaded copies. Original manifests remain unchanged; do not claim their full server inventory still passes. Recovery uses the verified local paths above. The original compressed archive bytes are not locally retained, as explicitly accepted by the user.
 
 ### Operational handoff plan
 
@@ -49,3 +49,11 @@ User approved this exact scope on2026-10-08. If performed, the two server formal
 One read-only review found a validation/unlink mutation window and missing receipt-directory fsync. A temporary regression reproduced the mutation before the fix. The operation now retains file descriptors and POSIX exclusive advisory locks, traverses and unlinks through no-follow retained parent directory descriptors, checks descriptor/entry identity immediately before removal, rejects existing writable target descriptors via Linux `/proc`, and fsyncs both journal parent and affected directories. Windows temporary checks close their handles before unlink; real execution requires Linux. As with any advisory lock workflow, this requires an explicitly quiescent operator boundary: do not start concurrent writers/copies while it runs. It is not a sandbox against malicious root processes ignoring locks/admission.
 
 Tests cover corrupted final target (zero removal), report preservation, existing receipt, path escape, leaf/ancestor symlinks, hardlinks and late mutation. Real local pinned manifests yield exactly36 targets/4909886174 bytes without modifying local artifacts. Actual POSIX checks and target hashes run on AutoDL before removal; no local test result substitutes for the server receipt.
+
+### Actual AutoDL receipt / premature disk measurement
+
+User-operated checker9/9 PASS, cleanup return0, removed_count36. Offload journal: `/root/autodl-tmp/ambisur_diagnostics/storage-offload-20261008-v1.jsonl`. No training or Utility GT content access. Removal is complete; never rerun the destructive operation.
+
+Printed free_bytes12308262912 and F0_STORAGE_GATE=FAIL were sampled while all deleted-file descriptors were still retained in ExitStack (`after_free` at line190 precedes ExitStack closure). POSIX unlink does not reclaim an open file until its last descriptor closes. The script then exits/closes handles but prints the already captured value. This is an operational measurement-order defect in the handoff, not evidence that additional files need deletion. Obtain a fresh post-process read-only disk measurement before any further action; actual F0 storage admission remains pending. Preserve the original journal and reconcile its pre-close free-space sample in a separate receipt rather than overwriting it. No cleanup-code change or extra deletion is authorized by this diagnosis.
+
+Subsequent authoritative read-only post-exit receipt: free_bytes17218138112, free_GiB16.036, F0_STORAGE_GATE=PASS, training_started=NO. This resolves storage admission and supersedes only the stale pre-close free-space/gate fields, not the original removal journal. Do not rerun cleanup. Resume the already authorized F0 operation from unchanged docs commit89417a05be5d999715696398e9ec94797ecd1bc8; its own clean commit/confirmation/snapshot/process/target/disk gates still run. Qualification follows actual launcher exit. No seed1/2, DA3, Utility GT, geometry or C1 approval is inferred.
