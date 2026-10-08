@@ -15,7 +15,7 @@ import uuid
 from collections.abc import Mapping
 
 from reliability.g1_prior_transfer_confirmation import (
-    _canonical_bytes, _validate_record, load_prior_transfer_confirmation,
+    _canonical_bytes, _validate_record,
 )
 
 
@@ -62,16 +62,32 @@ def _time(value):
         raise ValueError("invalid UTC chronology") from exc
 
 
-def _read_verified(identity, *, detached=False):
+def _read_bytes_guarded(path, protected):
+    _reject_aliases([{"path": str(path)}], protected)
+    with path.open("rb") as stream:
+        # Check the opened object too: a path may be replaced after its initial
+        # metadata check. No bytes are read until the descriptor is admitted.
+        opened = os.fstat(stream.fileno())
+        for target in protected:
+            try:
+                info = target.stat()
+            except FileNotFoundError:
+                continue
+            if (opened.st_dev, opened.st_ino) == (info.st_dev, info.st_ino):
+                raise ValueError("opened firewall artifact aliases protected GT/target")
+        return stream.read()
+
+
+def _read_verified(identity, *, detached=False, protected=()):
     identity = _identity(identity)
     path = Path(identity["path"])
-    payload = path.read_bytes()
+    payload = _read_bytes_guarded(path, protected)
     if hashlib.sha256(payload).hexdigest() != identity["sha256"]:
         raise ValueError("firewall artifact SHA256 mismatch")
     if detached:
         # Only the canonical detached digest format is admitted (not shell input).
         accepted = [(identity["sha256"] + ending).encode("ascii") for ending in ("\n", "\r\n")]
-        if Path(str(path) + ".sha256").read_bytes() not in accepted:
+        if _read_bytes_guarded(Path(str(path) + ".sha256"), protected) not in accepted:
             raise ValueError("detached geometry release SHA256 mismatch")
     return payload
 
@@ -135,25 +151,31 @@ def _release_shape(record):
 
 
 def validate_geometry_release(record: Mapping) -> str:
-    """Validate a reviewed envelope, not the truth of a scientific claim.
+    """Shape-only classification; no referenced artifact is opened/authorized.
 
-    Scientific definitions remain in the approved spec/contract. Approval is a
-    separate hash-bound review artifact; no formula or termination is invented.
+    Full review/evidence verification is private to the protected first-access
+    boundary. An outcome string from this function is NOT an access token.
     """
-    outcome = _release_shape(record)
+    return _release_shape(record)
+
+
+def _verify_geometry_references(record, protected):
     identities = [*record["specifications"].values(), *record["evidence"], record["approval"]]
     for identity in identities:
-        _read_verified(identity)
-    approval = json.loads(_read_verified(record["approval"]))
+        _read_verified(identity, protected=protected)
+    approval = json.loads(_read_verified(record["approval"], protected=protected))
     expected = {"schema_version": 1, "kind": "geometry_release_approval",
                 **{key: record[key] for key in _APPROVED_FIELDS},
                 "frozen_contract_sha256": hashlib.sha256(_canonical_bytes(record["frozen_contract"])).hexdigest()}
     if approval != expected:
         raise ValueError("geometry release differs from reviewed approval")
-    return outcome
 
 
 def load_geometry_release(path: Path, expected_sha256: str) -> dict:
+    """Hash-check release JSON + detached SHA, without opening its references.
+
+    Use authorize_first_gt_access for full review/evidence verification.
+    """
     payload = _read_verified({"path": str(path), "sha256": expected_sha256}, detached=True)
     record = json.loads(payload)
     if _canonical_bytes(record) != payload:
@@ -174,12 +196,19 @@ def _reloaded(prior_identity, geometry_identity):
     protected = [_absolute(prior["gt_mesh"]["path"]),
                  *[_absolute(path) for path in prior["probe_targets"].values()]]
     _reject_aliases([prior_identity, geometry_identity, prior["source_record"], prior["snapshot_record"]], protected)
-    geometry = json.loads(_read_verified(geometry_identity, detached=True))
-    _release_shape(geometry)
+    geometry_payload = _read_verified(geometry_identity, detached=True, protected=protected)
+    geometry = json.loads(geometry_payload)
+    if _canonical_bytes(geometry) != geometry_payload:
+        raise ValueError("geometry release must be canonical JSON")
+    validate_geometry_release(geometry)
     _reject_aliases([*geometry["specifications"].values(), *geometry["evidence"], geometry["approval"]], protected)
-    prior = load_prior_transfer_confirmation(**{
-        "path": Path(prior_identity["path"]), "expected_sha256": prior_identity["sha256"]})
-    geometry = load_geometry_release(Path(geometry_identity["path"]), geometry_identity["sha256"])
+    # Reuse the production schema validator, with guarded I/O for its two file
+    # identities. The general loader's unguarded opens cannot enforce this
+    # boundary's protected-descriptor contract against replacement races.
+    for name in ("source_record", "snapshot_record"):
+        identity = {key: prior[name][key] for key in ("path", "sha256")}
+        _read_verified(identity, protected=protected)
+    _verify_geometry_references(geometry, protected)
     return prior, geometry
 
 
@@ -188,6 +217,15 @@ def _reject_aliases(identities, protected):
         for path in (_absolute(item["path"]), _absolute(str(item["path"]) + ".sha256")):
             if any(path == target or path in target.parents or target in path.parents for target in protected):
                 raise ValueError("firewall artifact aliases GT or a probe target")
+            if path.exists():
+                info = path.stat()
+                for target in protected:
+                    try:
+                        other = target.stat()
+                    except FileNotFoundError:
+                        continue
+                    if (info.st_dev, info.st_ino) == (other.st_dev, other.st_ino):
+                        raise ValueError("firewall artifact hardlinks protected GT/target")
 
 
 def authorize_first_gt_access(prior_record, geometry_record, *, access_log_path: Path) -> dict:

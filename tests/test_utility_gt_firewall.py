@@ -98,7 +98,7 @@ class UtilityGtFirewallTests(unittest.TestCase):
             mutations.append(changed)
         for changed in mutations:
             with self.subTest(changed=changed), self.assertRaises(ValueError):
-                validate_geometry_release(changed)
+                self.authorize(self.publish("release.json", changed))
 
     def test_terminal_requires_permanent_reviewed_no_candidate_outcome(self):
         record = self.release()
@@ -243,6 +243,70 @@ class UtilityGtFirewallTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.authorize(identity)
         self.assertTrue(self.log.exists())
+
+    def test_public_release_validation_never_opens_references(self):
+        record = self.release()
+        mesh = Path(self.prior["gt_mesh"]["path"])
+        record["evidence"] = [{"path": str(mesh), "sha256": "3" * 64}]
+        identity = self.publish("release.json", record)
+        real_open = Path.open
+        def guarded_open(path, *args, **kwargs):
+            self.assertNotEqual(path, mesh, "Early structural validation cannot read GT")
+            return real_open(path, *args, **kwargs)
+        with mock.patch.object(Path, "open", guarded_open):
+            self.assertEqual(validate_geometry_release(record), "NO_ACTION_SPECIFIC_SIGNAL")
+            self.assertEqual(load_geometry_release(Path(identity["path"]), identity["sha256"]), record)
+        self.assertFalse(self.log.exists())
+
+    def test_hardlink_alias_is_rejected_without_reading_protected_inode(self):
+        import os
+        record = self.release()
+        mesh = Path(self.prior["gt_mesh"]["path"])
+        mesh.write_bytes(Path(self.evidence["path"]).read_bytes())
+        alias = self.root / "hardlink.json"
+        os.link(mesh, alias)
+        record["evidence"] = [{"path": str(alias), "sha256": self.evidence["sha256"]}]
+        identity = self.publish("release.json", record)
+        real_open = Path.open
+        def guarded_open(path, *args, **kwargs):
+            if path.is_file():
+                self.assertFalse(path.samefile(mesh), "Do not open a protected hardlink")
+            return real_open(path, *args, **kwargs)
+        with mock.patch.object(Path, "open", guarded_open), self.assertRaises(ValueError):
+            self.authorize(identity)
+        self.assertFalse(self.log.exists())
+
+    def test_reference_replaced_at_open_is_rejected_before_read(self):
+        import os
+        record = self.release()
+        mesh = Path(self.prior["gt_mesh"]["path"])
+        evidence = Path(self.evidence["path"])
+        mesh.write_bytes(evidence.read_bytes())
+        identity = self.publish("release.json", record)
+        real_open = Path.open
+        reads = []
+        class WatchedStream:
+            def __init__(self, stream):
+                self.stream = stream
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return self.stream.__exit__(*args)
+            def fileno(self):
+                return self.stream.fileno()
+            def read(self, *args):
+                reads.append("protected bytes read")
+                return self.stream.read(*args)
+        def replace_at_open(path, *args, **kwargs):
+            if path == evidence:
+                path.unlink()
+                os.link(mesh, path)
+                return WatchedStream(real_open(path, *args, **kwargs))
+            return real_open(path, *args, **kwargs)
+        with mock.patch.object(Path, "open", replace_at_open), self.assertRaises(ValueError):
+            self.authorize(identity)
+        self.assertEqual(reads, [])
+        self.assertFalse(self.log.exists())
 
 
 if __name__ == "__main__":
