@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 import unittest
 from unittest import mock
+from types import SimpleNamespace
+import importlib.util
+
+import numpy as np
 
 from tests import test_g1_prior_transfer_confirmation as prior_tests
 from reliability.g1_prior_transfer_confirmation import (
@@ -12,6 +16,7 @@ from reliability.g1_prior_transfer_confirmation import (
 )
 from reliability.utility_gt_firewall import (
     authorize_first_gt_access, load_geometry_release, validate_geometry_release,
+    audit_utility_mesh, select_admission_points, utility_camera_rays,
 )
 
 
@@ -307,6 +312,188 @@ class UtilityGtFirewallTests(unittest.TestCase):
             self.authorize(identity)
         self.assertEqual(reads, [])
         self.assertFalse(self.log.exists())
+
+
+class UtilityMeshAdmissionTests(unittest.TestCase):
+    """New admission contracts only; statistical probe remains untouched."""
+
+    def setUp(self):
+        from tests.test_utility_snapshot import _write_source
+        from reliability.utility_snapshot import audit_utility_source, source_manifest
+        self.firewall = UtilityGtFirewallTests()
+        self.firewall.setUp()
+        self.addCleanup(self.firewall.doCleanups)
+        self.root = self.firewall.root
+        self.source = _write_source(self.root / "source", tuple(f"frame{i:03d}.jpg" for i in range(147)))
+        sparse = self.source / "sparse/0"
+        (sparse / "images.txt").write_text("".join(
+            f"{i+1} 1 0 0 0 0 0 0 1 frame{i:03d}.jpg\n\n" for i in range(147)))
+        (sparse / "points3D.txt").write_text("".join(
+            f"{i} 0 0 1 10 20 30 0.1 1 0\n" for i in range(1, 11)))
+        self.mesh = self.root / "mesh_aligned_0.05.ply"
+        self.mesh.write_text(
+            "ply\nformat ascii 1.0\nelement vertex 4\nproperty float x\nproperty float y\n"
+            "property float z\nelement face 3\nproperty list uchar int vertex_indices\nend_header\n"
+            "-10 -10 1\n10 -10 1\n10 10 1\n-10 10 1\n3 0 1 2\n3 0 2 3\n3 0 0 0\n")
+        manifest = source_manifest(audit_utility_source(self.source, 147))
+        manifest.update(audit_kind="utility_source", gt_access="NONE")
+        f = self.firewall.fixture
+        f.source_record.write_bytes(canonical(manifest))
+        request = f.request()
+        request["gt_mesh"].update(bytes=self.mesh.stat().st_size,
+                                  sha256=hashlib.sha256(self.mesh.read_bytes()).hexdigest())
+        self.prior = build_prior_transfer_confirmation(**request)
+        published = self.firewall.publish("mesh-prior.json", self.prior)
+        self.firewall.prior_identity = published
+        self.token = self.firewall.authorize(self.firewall.publish("release.json", self.firewall.release()))
+        self.surface = SimpleNamespace(
+            vertices=np.array([[-10., -10., 1.], [10., -10., 1.], [10., 10., 1.], [-10., 10., 1.]]),
+            triangles=np.array([[0, 1, 2], [0, 2, 3]]), source_vertex_count=4,
+            source_triangle_count=3, nonfinite_vertex_count=0,
+            rejected_nonfinite_triangle_count=0, rejected_degenerate_triangle_count=1,
+            rejected_triangle_count=1)
+
+    def run_admission(self, *, distances=None, depths=None, loader=None, token=None, prior=None, mesh=None, source=None):
+        with mock.patch("reliability.utility_gt_firewall._load_admission_mesh", return_value=self.surface) as load, \
+             mock.patch("reliability.utility_gt_firewall._admission_distances", return_value=(
+                 np.zeros(10) if distances is None else distances)) as query, \
+             mock.patch("reliability.utility_gt_firewall._admission_ray_depths", return_value=(
+                 np.ones((147, 48)) if depths is None else depths)) as cast:
+            if loader is not None:
+                load.side_effect = loader
+            result = audit_utility_mesh(mesh or self.mesh, source or self.source, prior or self.prior,
+                                        access_token=self.token if token is None else token)
+            return result, load, query, cast
+
+    def test_requires_verified_disk_token_before_parser(self):
+        for token in ({}, {**self.token, "sha256": "0"*64},
+                      {**self.token, "record": {}}):
+            with self.subTest(token=token):
+                result, load, query, cast = self.run_admission(token=token)
+                self.assertEqual(result.outcome, "INCONCLUSIVE")
+                load.assert_not_called()
+                query.assert_not_called()
+                cast.assert_not_called()
+        Path(self.token["path"]).write_bytes(b"changed")
+        result, load, _, _ = self.run_admission()
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+        load.assert_not_called()
+
+    def test_mesh_identity_and_frozen_contract_fail_before_parse(self):
+        wrong = self.root / "wrong.ply"
+        wrong.write_bytes(self.mesh.read_bytes())
+        changed = copy.deepcopy(self.prior)
+        changed["mesh_admission"]["coordinate_transform"][0][0] = 2.0
+        for kwargs in ({"mesh": wrong}, {"prior": changed}, {"source": self.root}):
+            with self.subTest(kwargs=kwargs):
+                result, load, _, _ = self.run_admission(**kwargs)
+                self.assertEqual(result.outcome, "INCONCLUSIVE")
+                load.assert_not_called()
+        self.mesh.write_bytes(b"invalid replacement")
+        result, load, _, _ = self.run_admission()
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+        load.assert_not_called()
+
+    def test_all_valid_faces_retained_and_summary_has_no_domain_selector(self):
+        result, load, query, cast = self.run_admission()
+        self.assertEqual(result.outcome, "ADMITTED")
+        self.assertEqual(result.reasons, ())
+        self.assertEqual(result.summary["surface"]["valid_triangle_count"], 2)
+        self.assertEqual(result.summary["surface"]["rejected_degenerate_triangle_count"], 1)
+        self.assertEqual(result.summary["coordinate_transform"], np.eye(4).tolist())
+        self.assertIs(query.call_args.args[1], self.surface)
+        self.assertIs(cast.call_args.args[1], self.surface)
+        self.assertEqual(cast.call_args.args[0].shape, (147, 48, 6))
+        self.assertEqual(set(vars(result)), {"outcome", "reasons", "summary"})
+        self.assertNotIn("mask", json.dumps(result.summary))
+        self.assertNotIn("selected_rows", json.dumps(result.summary))
+        load.assert_called_once_with(self.mesh)
+
+    def test_unloadable_nonfinite_or_empty_surface_is_inconclusive(self):
+        for loader in (ValueError("no valid triangles"), OSError("unloadable mesh")):
+            result, _, query, cast = self.run_admission(loader=loader)
+            self.assertEqual(result.outcome, "INCONCLUSIVE")
+            query.assert_not_called()
+            cast.assert_not_called()
+        self.surface.nonfinite_vertex_count = 1
+        result, _, query, _ = self.run_admission()
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+        query.assert_not_called()
+
+    def test_sha_minhash_sampling_is_byte_defined_order_independent_and_bounded(self):
+        points = {i: SimpleNamespace(xyz=np.array([i/100., 0., 1.])) for i in range(50002)}
+        expected = sorted(points, key=lambda i: (
+            hashlib.sha256(np.array([i], dtype="<u8").tobytes() +
+                           np.asarray(points[i].xyz, dtype="<f8").tobytes()).digest(), i))[:50000]
+        ids, xyz = select_admission_points(points)
+        self.assertEqual(ids.tolist(), expected)
+        reverse_ids, reverse_xyz = select_admission_points(dict(reversed(list(points.items()))))
+        np.testing.assert_array_equal(ids, reverse_ids)
+        np.testing.assert_array_equal(xyz, reverse_xyz)
+        ids, xyz = select_admission_points({2: points[2], 1: points[1]})
+        self.assertEqual(len(ids), 2)
+        np.testing.assert_array_equal(xyz, [points[i].xyz for i in ids])
+
+    def test_point_distance_thresholds_are_inclusive_and_fail_closed(self):
+        admitted = np.array([0.]*8 + [0.15]*2)
+        result, _, _, _ = self.run_admission(distances=admitted)
+        self.assertEqual(result.outcome, "ADMITTED")
+        self.assertEqual(result.summary["alignment"]["fraction_within_0_10_m"], 0.8)
+        for distances in (np.full(10, .050001), np.array([0.]*8 + [.150001]*2),
+                          np.array([0.]*7 + [.100001]*3), np.full(10, np.nan),
+                          np.full(10, -1.), np.zeros(9)):
+            with self.subTest(distances=distances):
+                result, _, _, cast = self.run_admission(distances=distances)
+                self.assertEqual(result.outcome, "INCONCLUSIVE")
+                cast.assert_not_called()
+
+    def test_full_frame_grid_and_inverse_pose_match_pixel_centers(self):
+        from scripts.preprocess.read_write_model import Camera, Image
+        camera = Camera(1, "PINHOLE", 80, 60, np.array([40., 40., 40., 30.]))
+        image = Image(9, np.array([1., 0., 0., 0.]), np.array([-2., -3., -4.]), 1,
+                      "synthetic.jpg", np.empty((0, 2)), np.empty(0, dtype=int))
+        rays = utility_camera_rays(camera, image)
+        self.assertEqual(rays.shape, (48, 6))
+        np.testing.assert_allclose(rays[:, :3], np.tile([2., 3., 4.], (48, 1)))
+        np.testing.assert_allclose(rays[0, 3:], [-.875, -.625, 1.])
+        np.testing.assert_allclose(rays[-1, 3:], [.875, .625, 1.])
+        simple = camera._replace(model="SIMPLE_PINHOLE", params=np.array([40., 40., 30.]))
+        np.testing.assert_allclose(utility_camera_rays(simple, image), rays)
+
+    def test_coverage_aggregate_and_per_camera_gates_are_both_required(self):
+        admitted = np.ones((147, 48))
+        admitted[100:, 24:] = np.inf
+        self.assertEqual(self.run_admission(depths=admitted)[0].outcome, "ADMITTED")
+        poor_aggregate = np.ones((147, 48))
+        poor_aggregate[:, 38:] = np.inf
+        poor_cameras = np.ones((147, 48))
+        poor_cameras[132:] = np.inf
+        for depths in (poor_aggregate, poor_cameras, np.ones((146, 48)),
+                       np.full((147, 48), np.nan), np.full((147, 48), -1.)):
+            with self.subTest(shape=depths.shape):
+                self.assertEqual(self.run_admission(depths=depths)[0].outcome, "INCONCLUSIVE")
+
+    def test_source_mutation_camera_inventory_and_invalid_ray_stop_before_gt_parse(self):
+        camera = self.source / "sparse/0/cameras.txt"
+        camera.write_text("1 PINHOLE 8 6 0 4 4 3\n")
+        result, load, _, _ = self.run_admission()
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+        load.assert_not_called()
+
+    def test_post_read_input_mutation_cannot_return_admitted(self):
+        def mutate(path):
+            self.mesh.write_bytes(b"changed after parse")
+            return self.surface
+        result, _, _, _ = self.run_admission(loader=mutate)
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+
+    @unittest.skipUnless(importlib.util.find_spec("torch") and importlib.util.find_spec("open3d"),
+                         "real mesh backend requires Torch/Open3D; qualify on AutoDL")
+    def test_real_synthetic_mesh_backend_keeps_full_surface_and_casts_all_cameras(self):
+        result = audit_utility_mesh(self.mesh, self.source, self.prior, access_token=self.token)
+        self.assertEqual(result.outcome, "ADMITTED", result.reasons)
+        self.assertEqual(result.summary["surface"]["valid_triangle_count"], 2)
+        self.assertEqual(result.summary["coverage"]["aggregate_hit_fraction"], 1.)
 
 
 if __name__ == "__main__":
