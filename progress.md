@@ -467,3 +467,11 @@
 - [x] Geometry Stage G-A exact sub-specification drafted at `docs/superpowers/specs/2026-09-30-geometry-stage-ga-exact-subspecification.md` and committed separately as `ac8a6c0`.
 - [x] `1-r_p` Utility transfer TDD implementation plan drafted at `docs/superpowers/plans/2026-09-30-prior-risk-utility-transfer.md`; no implementation or server action was performed.
 - [ ] Continue to block implementation planning/execution, DA3, Utility training, GT evaluation, geometry intervention, five-state routing, and C1 unless separately authorized.
+
+## 2026-10-08 bounded preprocessing repair
+- User approved minimal sparse/0 text discovery repair, commit/push and replacement confirmation workflow; no DA3 execution during repair.
+- TDD RED: new text layout raises FileNotFoundError and incorrectly falls back to legacy directory 1. Existing layouts pass.
+- GREEN: 4 new tests plus 17 Utility snapshot/CLI regressions pass (21 total). Production change is two lookup lines plus final newline normalization.
+- Full discovery attempted with bundled Python: 211 tests, 22 errors, 31 skips; unavailable dependencies prevent local full qualification. Do not interpret as a full-suite PASS.
+- Pending fresh review and exact-commit AutoDL qualification; server assets and old confirmation untouched.
+- Fresh-context review: no Important/Critical findings; lookup order and scope confirmed. Static compilation and git diff --check pass. AutoDL qualification remains pending.

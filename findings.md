@@ -469,3 +469,9 @@
 - The plan creates the canonical experiment confirmation after a one-time DA3 snapshot is frozen and before any seed run/view/state/launcher or probe target exists. It separates source audit, DA3 confirmation, DA3 execution/finalization, confirmation, each seed, geometry release, first GT access, and publication into distinct future approvals.
 - The GT firewall explicitly rejects the existing `NO_SEMANTIC_REPAIR_JUSTIFIED` record as sufficient release by itself. First Utility GT access still requires either a Stage G-C confirmation or a canonical `NO_ACTION_SPECIFIC_SIGNAL` termination record with a detached SHA and no-resurrection clause.
 - No production code, data, training run, GT parse/evaluation, geometry intervention, five-state arbitration, or C1 action occurred while drafting these documents.
+
+## 2026-10-08 DA3 preprocessing compatibility
+- The frozen shell passes sparse to pose_align; production lookup omitted sparse/0 text models. Missing-model handling returns normally, so inference must remain stopped until compatibility qualification.
+- Approved repair adds only sparse/0 text discovery after sparse/0 binary. Real COLMAP reader integration verifies unchanged source bytes, without conversion or alignment changes.
+- Local bundled Python avoids the user's broken Conda runtime. Full discovery cannot qualify this checkout here: 211 tests, 22 errors, 31 skips, including missing torch. AutoDL qualification remains required; focused tests pass.
+- Existing preprocessing confirmation/runtime binding remain immutable. No DA3, staging creation, Utility GT, training or C1 was performed by this repair.

@@ -174,6 +174,8 @@ def find_model_path(base_path):
     path_bin = os.path.join(base_path, '0')
     if os.path.exists(os.path.join(path_bin, 'images.bin')):
         return path_bin, '.bin'
+    if os.path.exists(os.path.join(path_bin, 'images.txt')):
+        return path_bin, '.txt'
         
     path_txt = os.path.join(base_path, '1')
     if os.path.exists(os.path.join(path_txt, 'images.txt')):

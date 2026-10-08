@@ -867,3 +867,9 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Preserve separate commits and the no-execution boundary; await separate user reviews before either line advances.
 - [x] Drafting note: two initial planning-file patches failed closed because one contained an empty update hunk and one targeted text that lived in `progress.md`; neither changed repository contents, and the corrected exact-context patch succeeded.
 - [x] Verification note: the first literal contract checker expected `does not authorize implementation`, while the reviewed Geometry text says `would not authorize implementation`; the check stopped without repository change and was corrected to the document's exact phrase.
+
+## 2026-10-08 approved DA3 compatibility repair
+- [x] Preserve existing isolated branch; write bounded plan and observe new-layout RED.
+- [x] Add sparse/0 text lookup after binary; focused/Utility regression 21/21 PASS.
+- [ ] Fresh review, commit/push, then exact-commit AutoDL qualification.
+- [ ] Preserve v1 confirmation; freeze a replacement before any DA3 inference.
