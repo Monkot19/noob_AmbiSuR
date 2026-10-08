@@ -542,3 +542,9 @@
 - Receipt-only documentation does not alter qualified code or require another 415-test run. Pin subsequent execution to `c701424`; retain frozen Tool Room M0/M1/solver/folds/bootstrap/gates and the single DA3 snapshot.
 - Next external step is separately approved replacement Gate E confirmation before all run/view/state/launcher/probe targets, then separately approved seed 0/1/2 GT-free training/qualification. Geometry Stage G-A plan writing needs separate approval and can advance independently; real GT remains blocked on a valid geometry release and probe approval.
 - No new confirmation, server step, geometry experiment, Utility training, GT access, production code or C1 was performed when recording this receipt. Prior-only transfer success cannot automatically pass the original G1 or authorize C1.
+
+## 2026-10-08 replacement Gate E handoff
+- User explicitly authorized creation only. Prepared a user-operated AutoDL script binding qualified `c701424`, old Gate E/source/snapshot record SHA, frozen protocol and fresh v2 targets; it preserves v1 and calls the existing canonical constructor/reloader.
+- Script creates only confirmation JSON and detached SHA, not run/view/state/launcher/probe targets. It never opens Utility GT bytes or invokes DA3/training/evaluation. Actual creation and SHA remain pending server receipt; the assistant has no direct server access.
+- Missing guessed filenames during inspection were corrected to tracked `create_g1_prior_transfer_confirmation.py` and `collector.py`; a literal PowerShell rg wildcard was replaced by actual paths. An initial ledger patch failed exact-context verification and made no changes; corrected below. No runtime or production-code modification occurred.
+- `bash -n` and AST parsing of the embedded Python passed locally; no operational script or server step was executed. Existing code remains pinned to its 57/415-test server-qualified commit.
