@@ -487,6 +487,33 @@ class UtilityMeshAdmissionTests(unittest.TestCase):
         result, _, _, _ = self.run_admission(loader=mutate)
         self.assertEqual(result.outcome, "INCONCLUSIVE")
 
+    def test_transient_mesh_rewrite_and_restore_is_not_admitted(self):
+        original = self.mesh.read_bytes()
+        def mutate_restore(path):
+            self.mesh.write_bytes(original.replace(b"-10 -10 1", b"-10 -10 9"))
+            self.mesh.write_bytes(original)
+            return self.surface
+        result, _, _, _ = self.run_admission(loader=mutate_restore)
+        self.assertEqual(self.mesh.read_bytes(), original)
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+
+    def test_transient_colmap_rewrite_and_restore_stops_before_mesh_parser(self):
+        from scripts.preprocess.read_write_model import read_model
+        path = self.source / "sparse/0/points3D.txt"
+        original = path.read_bytes()
+        def mutate_restore(*args, **kwargs):
+            path.write_bytes(original.replace(b" 0 0 1 ", b" 9 0 1 "))
+            try:
+                return read_model(*args, **kwargs)
+            finally:
+                path.write_bytes(original)
+        with mock.patch("scripts.preprocess.read_write_model.read_model", side_effect=mutate_restore):
+            result, load, query, _ = self.run_admission()
+        self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(result.outcome, "INCONCLUSIVE")
+        load.assert_not_called()
+        query.assert_not_called()
+
     @unittest.skipUnless(importlib.util.find_spec("torch") and importlib.util.find_spec("open3d"),
                          "real mesh backend requires Torch/Open3D; qualify on AutoDL")
     def test_real_synthetic_mesh_backend_keeps_full_surface_and_casts_all_cameras(self):
