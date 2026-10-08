@@ -349,6 +349,19 @@ class PriorTransferCliTests(unittest.TestCase):
         self.assertEqual(self.dependencies.events, [])
         self.assertTrue(self.firewall.log.exists())
 
+    def test_gt_mutation_during_initial_hash_does_not_publish_inconclusive(self):
+        from scripts.diagnostics.evaluate_g1_prior_transfer import _fingerprint
+        def reject_changing_gt(path, protected):
+            if Path(path) == Path(self.args.gt_mesh):
+                raise ValueError("input changed while hashing")
+            return _fingerprint(path, protected)
+        with mock.patch("scripts.diagnostics.evaluate_g1_prior_transfer._fingerprint", side_effect=reject_changing_gt):
+            with self.assertRaises(ValueError):
+                run_evaluator(self.args, self.dependencies)
+        self.assertEqual(self.dependencies.events, [])
+        self.assertFalse(self.target().exists())
+        self.assertTrue(self.firewall.log.exists())
+
     def test_gt_write_restore_during_admission_aborts_before_evaluation(self):
         original_admit = self.dependencies.admit_mesh
         def mutate_restore(*a, **k):

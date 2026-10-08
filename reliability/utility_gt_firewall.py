@@ -191,13 +191,16 @@ def _exists(path):
     return os.path.lexists(path)
 
 
-def _reloaded(prior_identity, geometry_identity):
+def _reloaded(prior_identity, geometry_identity, *, protected=()):
     # Inspect only the small confirmation itself before loading any referenced
     # artifact: a disguised evidence/source reference must never open GT.
-    prior = json.loads(_read_verified(prior_identity))
+    prior_payload = _read_verified(prior_identity, protected=protected)
+    prior = json.loads(prior_payload)
     prior = _validate_record(prior, require_targets_absent=False, verify_record_files=False)
-    protected = [_absolute(prior["gt_mesh"]["path"]),
+    protected = [*protected, _absolute(prior["gt_mesh"]["path"]),
                  *[_absolute(path) for path in prior["probe_targets"].values()]]
+    if _read_verified(prior_identity, protected=protected) != prior_payload:
+        raise ValueError("prior confirmation changed during reload")
     _reject_aliases([prior_identity, geometry_identity, prior["source_record"], prior["snapshot_record"]], protected)
     geometry_payload = _read_verified(geometry_identity, detached=True, protected=protected)
     geometry = json.loads(geometry_payload)
@@ -231,15 +234,19 @@ def _reject_aliases(identities, protected):
                         raise ValueError("firewall artifact hardlinks protected GT/target")
 
 
-def authorize_first_gt_access(prior_record, geometry_record, *, access_log_path: Path) -> dict:
+def authorize_first_gt_access(prior_record, geometry_record, *, access_log_path: Path, protected=()) -> dict:
     """Reload both identities and publish a one-shot record before any mesh parse.
 
     Any existing access log is fail-closed, even if identical. A failed attempt
     after log publication stays recorded; never delete it to obtain a retry.
     The future evaluator must call this immediately before its mesh boundary.
+    A caller that already knows GT/target paths must pass them as protected,
+    so the initial confirmation reload cannot consume a replaced GT alias.
     """
     prior_identity, geometry_identity = _identity(prior_record), _identity(geometry_record)
-    prior, geometry = _reloaded(prior_identity, geometry_identity)
+    prior, geometry = _reloaded(prior_identity, geometry_identity, protected=protected)
+    protected = [*protected, _absolute(prior["gt_mesh"]["path"]),
+                 *[_absolute(path) for path in prior["probe_targets"].values()]]
     log = _absolute(access_log_path)
     targets = prior["probe_targets"]
     if log != _absolute(targets["access_log_path"]):
@@ -270,13 +277,13 @@ def authorize_first_gt_access(prior_record, geometry_record, *, access_log_path:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
-        _reloaded(prior_identity, geometry_identity)
+        _reloaded(prior_identity, geometry_identity, protected=protected)
         for name in ("output_dir", "staging_dir"):
             if _exists(targets[name]):
                 raise ValueError("Utility probe target appeared before publication")
         # Hardlink publication is exclusive. os.replace would overwrite a racer.
         os.link(temporary, log)
-        _reloaded(prior_identity, geometry_identity)
+        _reloaded(prior_identity, geometry_identity, protected=protected)
         for name in ("output_dir", "staging_dir"):
             if _exists(targets[name]):
                 raise ValueError("Utility probe target appeared during publication")
@@ -317,7 +324,9 @@ def _verify_mesh_access(confirmation, token):
             or record["utility_feedback_cannot_reopen_geometry"] is not True
             or record["access_log_path"] != str(log) or record["gt_mesh"] != prior["gt_mesh"]):
         raise ValueError("first-access record contract mismatch")
-    reloaded, geometry = _reloaded(record["prior_confirmation"], record["geometry_release"])
+    protected = [_absolute(prior["gt_mesh"]["path"]),
+                 *[_absolute(path) for path in prior["probe_targets"].values()]]
+    reloaded, geometry = _reloaded(record["prior_confirmation"], record["geometry_release"], protected=protected)
     if reloaded != prior or record["geometry_outcome"] != geometry["outcome"]:
         raise ValueError("first-access confirmation/release binding mismatch")
     when = _time(record["created_utc"])

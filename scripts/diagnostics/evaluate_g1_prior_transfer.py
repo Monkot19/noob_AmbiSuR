@@ -18,7 +18,7 @@ from reliability.prior_transfer_assets import _file_inventory
 from reliability.utility_gt_firewall import (
     _absolute, _canonical_bytes, _file_identity, _identity, _read_verified,
     _reject_aliases, _verify_mesh_access, authorize_first_gt_access,
-    audit_utility_mesh,
+    audit_utility_mesh, UtilityMeshAdmission,
 )
 from scripts.diagnostics.evaluate_d0_g1 import build_manifest, assert_inputs_unchanged
 from scripts.diagnostics.probe_g1_prior_complementarity import (
@@ -222,11 +222,26 @@ def run_evaluator(args, dependencies=None):
     dependencies = dependencies or ProductionDependencies()
     (prior, prior_identity, geometry_identity, source, snapshot, paths, roots,
      before, generations) = _admit_request(args, dependencies)
-    token = authorize_first_gt_access(prior_identity, geometry_identity,
+    protected = [Path(args.gt_mesh), *(Path(path) for path in prior["probe_targets"].values())]
+    token = authorize_first_gt_access(prior_identity, geometry_identity, protected=protected,
                                       access_log_path=Path(prior["probe_targets"]["access_log_path"]))
     _verify_mesh_access(prior, token)
     # From this point a failed attempt remains logged. No retry deletes the log.
-    admission = dependencies.admit_mesh(Path(args.gt_mesh), Path(args.source_root), prior, access_token=token)
+    # Never reset the GT baseline after admission: the very same bytes and
+    # generation must span admission, evaluation, and final publication.
+    gt_before = None
+    try:
+        gt_before = _fingerprint(Path(args.gt_mesh), [])
+    except OSError as exc:
+        admission = UtilityMeshAdmission("INCONCLUSIVE", (f"{type(exc).__name__}: {exc}",), {})
+    else:
+        expected_gt = {"resolved_path": prior["gt_mesh"]["path"],
+                       "bytes": prior["gt_mesh"]["bytes"], "sha256": prior["gt_mesh"]["sha256"]}
+        if gt_before[0] != expected_gt:
+            admission = UtilityMeshAdmission("INCONCLUSIVE", ("preregistered GT mesh identity mismatch",), {})
+        else:
+            admission = dependencies.admit_mesh(Path(args.gt_mesh), Path(args.source_root), prior, access_token=token)
+        assert_inputs_unchanged(gt_before, _fingerprint(Path(args.gt_mesh), []))
     provenance = {"diagnostic_commit": args.expected_commit, "confirmation_id": prior["confirmation_id"],
                   "confirmation_sha256": args.confirmation_sha, "geometry_release": geometry_identity,
                   "first_access_log": {key: token[key] for key in ("path", "sha256")},
@@ -235,9 +250,7 @@ def run_evaluator(args, dependencies=None):
     results, reasons = {}, list(admission.reasons)
     if admission.outcome != "ADMITTED" and not reasons:
         reasons = ["mesh admission did not succeed"]
-    gt_before = None
     if not reasons:
-        gt_before = _fingerprint(Path(args.gt_mesh), [])
         try:
             mesh = dependencies.load_mesh(Path(args.gt_mesh))
             for row in prior["runs"]:
@@ -260,7 +273,8 @@ def run_evaluator(args, dependencies=None):
         staging.mkdir()
         owned_staging = True
         inputs = {"schema_version": 1, "diagnostic_only": True, "provenance": provenance,
-                  "input_fingerprints": before, "protocol": prior["protocol"]}
+                  "input_fingerprints": before, "gt_fingerprint": gt_before[0] if gt_before else None,
+                  "protocol": prior["protocol"]}
         for name, record in (("inputs.json", inputs), ("mesh_admission.json", {
                 "outcome": admission.outcome, "reasons": list(admission.reasons), "summary": admission.summary}),
                 ("report.json", report)):
