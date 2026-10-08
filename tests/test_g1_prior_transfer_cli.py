@@ -10,10 +10,12 @@ from unittest import mock
 
 import numpy as np
 
-from tests.test_utility_gt_firewall import UtilityGtFirewallTests, canonical
+from tests import test_utility_gt_firewall as firewall_tests
 from tests.test_g1_complementarity_cli import iteration_summary
 from reliability.g1_prior_transfer_confirmation import build_prior_transfer_confirmation
 from scripts.diagnostics.evaluate_g1_prior_transfer import build_parser, run_evaluator
+
+canonical = firewall_tests.canonical
 
 
 class Dependencies:
@@ -67,7 +69,7 @@ class Dependencies:
 
 class PriorTransferCliTests(unittest.TestCase):
     def setUp(self):
-        self.firewall = UtilityGtFirewallTests()
+        self.firewall = firewall_tests.UtilityGtFirewallTests()
         self.firewall.setUp()
         self.addCleanup(self.firewall.doCleanups)
         self.root = self.firewall.root
@@ -83,9 +85,22 @@ class PriorTransferCliTests(unittest.TestCase):
         f.snapshot_record.write_bytes(canonical({"kind": "utility_da3_snapshot", "snapshot_sha256": "2"*64,
                                                 "source_sha256": "1"*64, "gt_access": "NONE",
                                                 "snapshot_root": str(self.snapshot)}))
-        self.prior = build_prior_transfer_confirmation(**f.request())
+        self.repository = self.root / "repository"
+        self.repository.mkdir()
+        mesh_path = self.root / "mesh_aligned_0.05.ply"
+        mesh_path.write_bytes(b"synthetic mesh")
+        request = f.request()
+        request["repository"]["root"] = str(self.repository)
+        request["gt_mesh"].update(bytes=mesh_path.stat().st_size,
+                                sha256=hashlib.sha256(mesh_path.read_bytes()).hexdigest())
+        self.prior = build_prior_transfer_confirmation(**request)
         self.firewall.prior_identity = self.firewall.publish("evaluator-prior.json", self.prior)
-        self.geometry = self.firewall.publish("release.json", self.firewall.release())
+        release = self.firewall.release()
+        release["repository"]["root"] = str(self.repository)
+        approval = json.loads(Path(release["approval"]["path"]).read_text())
+        approval["repository"]["root"] = str(self.repository)
+        release["approval"] = self.firewall.publish("approval.json", approval)
+        self.geometry = self.firewall.publish("release.json", release)
         self.checkpoints = []
         self.qualifications = []
         for row in self.prior["runs"]:
@@ -112,7 +127,7 @@ class PriorTransferCliTests(unittest.TestCase):
                       "point_counts": [100, 110, 120, 130, 140, 150, 160], "source_sha256": "1"*64,
                       "checkpoints": [], "input_fingerprints": fingerprints, "run_binding": binding}
             self.qualifications.append(self.firewall.publish(Path(row["qualification_path"]).name, report))
-        self.args = SimpleNamespace(repository=str(self.root), expected_commit="a"*40,
+        self.args = SimpleNamespace(repository=str(self.repository), expected_commit="a"*40,
             confirmation=self.firewall.prior_identity["path"], confirmation_sha=self.firewall.prior_identity["sha256"],
             qualification_record=[[q["path"], q["sha256"]] for q in self.qualifications],
             geometry_release=self.geometry["path"], geometry_release_sha=self.geometry["sha256"],
@@ -250,6 +265,67 @@ class PriorTransferCliTests(unittest.TestCase):
                 run_evaluator(self.args, self.dependencies)
         self.assertFalse(self.target().exists())
         self.assertFalse(Path(self.prior["probe_targets"]["staging_dir"]).exists())
+        self.assertTrue(self.firewall.log.exists())
+
+    def test_bad_geometry_release_stops_before_any_mesh_or_checkpoint(self):
+        self.args.geometry_release_sha = "0"*64
+        with self.assertRaises(ValueError):
+            run_evaluator(self.args, self.dependencies)
+        self.assertEqual(self.dependencies.events, [])
+        self.assertFalse(self.firewall.log.exists())
+
+    def test_prior_and_qualification_gt_aliases_are_rejected_before_byte_read(self):
+        import os
+        from reliability import utility_gt_firewall
+        for which in ("confirmation", "qualification"):
+            args = copy.deepcopy(self.args)
+            alias = self.root / (which + "-alias.json")
+            os.link(self.args.gt_mesh, alias)
+            if which == "confirmation":
+                args.confirmation = str(alias)
+            else:
+                args.qualification_record[0][0] = str(alias)
+            original = Path.open
+            def reject_gt(path, *a, **k):
+                if path.exists() and path.samefile(Path(self.args.gt_mesh)):
+                    raise AssertionError("GT alias read before first-access log")
+                return original(path, *a, **k)
+            with mock.patch.object(Path, "open", reject_gt):
+                with self.assertRaises(ValueError):
+                    run_evaluator(args, self.dependencies)
+            self.assertFalse(self.firewall.log.exists())
+
+    def test_protected_binding_does_not_reopen_general_reference_loader(self):
+        with mock.patch("reliability.g1_prior_transfer_confirmation._verify_record_file",
+                        side_effect=AssertionError("unguarded reference read")):
+            code, _ = run_evaluator(self.args, self.dependencies)
+        self.assertEqual(code, 0)
+
+    def test_atomic_publication_preserves_concurrent_output_and_own_log(self):
+        from scripts.diagnostics.evaluate_g1_prior_transfer import _rename_exclusive
+        def racing_rename(staging, target):
+            target.mkdir()
+            (target / "user.txt").write_bytes(b"preserve concurrent result")
+            _rename_exclusive(staging, target)
+        with mock.patch("scripts.diagnostics.evaluate_g1_prior_transfer._rename_exclusive", side_effect=racing_rename):
+            with self.assertRaises(OSError):
+                run_evaluator(self.args, self.dependencies)
+        self.assertEqual((self.target()/"user.txt").read_bytes(), b"preserve concurrent result")
+        self.assertFalse(Path(self.prior["probe_targets"]["staging_dir"]).exists())
+        self.assertTrue(self.firewall.log.exists())
+
+    def test_transient_checkpoint_write_restore_aborts_publication(self):
+        original_evaluate = self.dependencies.evaluate_iteration
+        def temporary_change(*a, **k):
+            path = self.checkpoints[0]
+            before = path.read_bytes()
+            path.write_bytes(b"temporary mutation")
+            path.write_bytes(before)
+            return original_evaluate(*a, **k)
+        self.dependencies.evaluate_iteration = temporary_change
+        with self.assertRaises(RuntimeError):
+            run_evaluator(self.args, self.dependencies)
+        self.assertFalse(self.target().exists())
         self.assertTrue(self.firewall.log.exists())
 
 

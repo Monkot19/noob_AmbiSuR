@@ -357,9 +357,14 @@ def load_prior_transfer_confirmation(path, expected_sha256):
     )
 
 
-def validate_completed_run_binding(record, run_records):
+def validate_completed_run_binding(record, run_records, *, verify_record_files=True):
+    """Validate exact bindings; protected callers may supply already-read records.
+
+    The default retains full reference verification. False is only for callers
+    that hash-verified both references through their guarded I/O boundary.
+    """
     record = _validate_record(
-        record, require_targets_absent=False, verify_record_files=True
+        record, require_targets_absent=False, verify_record_files=verify_record_files
     )
     if not isinstance(run_records, list) or [row.get("seed") for row in run_records if isinstance(row, dict)] != [0, 1, 2]:
         raise ValueError("completed run seed inventory mismatch")
