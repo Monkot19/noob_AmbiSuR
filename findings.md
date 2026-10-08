@@ -481,3 +481,4 @@
 - Asset identities and exact server paths are recorded in `docs/research/utility-room-asset-identity-2026-10-08.md`; file-record SHA and internal snapshot SHA are distinct identities.
 - Utility GT metadata-only identity is 24490351 bytes, SHA256 `213dbdfff9ba992000039533463e4fcd941708d9fd8fe077df53a8495b63cd75`. Hashing is not mesh parsing or geometry admission; no alignment/coverage claim follows.
 - Gate E is explicitly authorized, but no Utility training, semantic GT access, geometry intervention or C1 is authorized.
+- Readiness correction: Task 5 GT-free run qualification and Tasks 6–8 firewall/evaluator are absent at `8980d58`. Existing 348-test PASS qualifies only implemented code. User approved bounded Task 5 recovery before any Utility seed launch; preserve the frozen DA3 snapshot and v1 confirmation.

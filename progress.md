@@ -481,4 +481,11 @@
 - V2 preprocessing confirmation/runtime binding published without overwriting v1; single DA3 execution and snapshot finalization completed, exit 0, 87 seconds.
 - Gate E preflight: 5 confirmation tests OK; snapshot record/internal/source identities verified.
 - User authorized GT metadata-only hashing: regular non-symlink file, stable stat identity before/after, 24490351 bytes, SHA256 recorded in the dedicated asset identity note. No mesh parsing/visualization/evaluation.
-- User explicitly authorized Gate E. Canonical three-seed confirmation is not yet created; seed training, geometry release, semantic GT access and C1 remain separately gated.
+- Gate E subsequently completed on the server: v1 confirmation SHA `b991a1624f03060f0633b6b70eee16b763b4fd3fc1739daf1d956a29ea2f62c9`. All run/probe targets were absent.
+
+## 2026-10-08 Task 5 recovery (in progress)
+- Admitted readiness error: existing discovery passing did not establish that planned Task 5 files existed. F0 launch paused before training.
+- User now authorizes Task 5 TDD only. Reuse isolated branch, approved plan/spec, existing checkpoint/timeline/runtime parsers; no server actions, DA3 rerun, GT parse, production training/method changes or C1.
+- Local bundled Python lacks torch; genuine runtime/checkpoint integration tests must run on AutoDL, not be reported as locally qualified.
+- Task 5 RED observed: both new test modules fail on the planned missing audit module/CLI imports. No production training files changed.
+- Ruling: Task 5 defines the launcher evidence contract before the first Utility run (none exists): immutable launch JSON + simple state env + completion metadata, bound to the canonical confirmation. This makes later launch/audit interfaces explicit; cost if wrong is revising launcher records before launch, not changing scientific thresholds.

@@ -874,4 +874,11 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Fresh review, commit/push, then exact-commit AutoDL qualification: 21 focused and 348 discovery tests passed on `81c0acb`.
 - [x] Preserve v1 confirmation; freeze v2 confirmation/runtime binding before single-use DA3; snapshot finalization passed, exit 0, 87 seconds.
 - [x] Record metadata-only Utility GT identity and frozen snapshot in `docs/research/utility-room-asset-identity-2026-10-08.md`.
-- [ ] Gate E explicitly authorized: create/reload canonical three-seed confirmation before any run/probe target; no training or semantic GT access.
+- [x] Gate E v1 completed on the server at `8980d58`; canonical SHA `b991a1624f03060f0633b6b70eee16b763b4fd3fc1739daf1d956a29ea2f62c9`.
+
+## 2026-10-08 Utility Task 5 implementation recovery
+- [x] Identify missing Task 5 qualifier despite previous 348-test regression; user authorized this bounded implementation. No Utility seed has started.
+- [ ] Task 5 RED: completion/identity, real checkpoint/runtime joins, topology/lazy Adam, CLI/no-GT/immutable publication.
+- [ ] Task 5 GREEN: reuse production parsers; local available regression/static checks; fresh review; commit/push; exact-commit AutoDL tests still required.
+- [ ] Preserve old confirmation; request replacement confirmation binding the qualified new commit before any seed launch.
+- [ ] Tasks 6–8 remain distinct uncompleted work; do not label the complete Utility pipeline ready.
