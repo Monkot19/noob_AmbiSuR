@@ -1,9 +1,11 @@
 """Local fake-subprocess checks only. Never run AutoDL, Torch or real data."""
 import contextlib
+import copy
 from datetime import datetime, timedelta, timezone
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import types
@@ -17,6 +19,143 @@ spec.loader.exec_module(handoff)
 
 
 class HandoffChecks(unittest.TestCase):
+    def test_digest_sidecar_is_guarded_before_any_payload_read(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'digest'
+            path.write_text('a' * 64 + '\n')
+            firewall = types.ModuleType('reliability.utility_gt_firewall')
+            from unittest.mock import Mock
+            firewall._read_bytes_guarded = Mock(side_effect=ValueError('protected alias'))
+            with patch.dict('sys.modules', {'reliability.utility_gt_firewall': firewall}):
+                with self.assertRaisesRegex(ValueError, 'protected alias'):
+                    getattr(handoff, 'read_digest', lambda p: p.read_text().strip())(path)
+            firewall._read_bytes_guarded.assert_called_once_with(path, (handoff.GT,))
+
+    def test_dangling_new_probe_link_is_rejected_without_normalization(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            probe = root / 'probe'
+            try:
+                probe.symlink_to(root / 'absent')
+            except OSError:
+                self.skipTest('symlink privilege unavailable; must run on AutoDL')
+            record = {'runs': [], 'probe_targets': {'output_dir': str(probe)}}
+            with self.assertRaisesRegex(RuntimeError, 'target exists'):
+                getattr(handoff, 'require_absent_targets', lambda r: None)(record)
+
+    def test_existing_qualification_digest_blocks_preregistration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            row = {key: str(root / key) for key in ('run_dir', 'view_dir', 'state_file',
+                'launcher_dir', 'qualification_path')}
+            Path(row['qualification_path'] + '.sha256').write_text('already reserved')
+            with self.assertRaisesRegex(RuntimeError, 'target exists'):
+                getattr(handoff, 'require_absent_targets', lambda r: None)(
+                    {'runs': [row], 'probe_targets': {}})
+
+    def test_import_failure_creates_no_recovery_targets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with patch.object(handoff, 'ROOT', root), \
+                 patch.object(handoff, 'clean_checkout'), \
+                 patch.object(handoff, 'import_smoke', side_effect=RuntimeError('import failed')):
+                with self.assertRaisesRegex(RuntimeError, 'import failed'):
+                    handoff.recover()
+            self.assertEqual(list(root.iterdir()), [])
+
+    def test_startup_failure_requires_no_checkpoint_or_refresh_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run, launch = root / 'run', root / 'launch'
+            run.mkdir(); launch.mkdir()
+            (run / 'train.log').write_text(
+                'MKL_THREADING_LAYER=INTEL is incompatible with libgomp.so.1\n')
+            (launch / 'exit_code.txt').write_text('2\n')
+            (launch / 'launcher.log').write_text('train_return_code=1\n')
+            row = dict(run_dir=str(run), launcher_dir=str(launch))
+            read = lambda path: Path(path).read_bytes()
+            before = {path: path.read_bytes() for path in root.rglob('*') if path.is_file()}
+            handoff.validate_startup_failure(row, read)
+            self.assertEqual(before, {path: path.read_bytes() for path in before})
+            (run / 'chkpnt3000.pth').write_bytes(b'evidence')
+            with self.assertRaisesRegex(RuntimeError, 'training evidence'):
+                handoff.validate_startup_failure(row, read)
+
+    def test_recovery_binding_rejects_formula_change_before_inventory(self):
+        old = dict(confirmation_id='old')
+        new = dict(confirmation_id='new', created_utc='stamp', protocol={'changed': True})
+        firewall = types.ModuleType('reliability.utility_gt_firewall')
+        firewall._read_verified = lambda identity, **kw: json.dumps(
+            old if identity['sha256'] == handoff.OLD_DIGEST else new).encode()
+        confirmation = types.ModuleType('reliability.g1_prior_transfer_confirmation')
+        confirmation._validate_record = lambda *a, **kw: None
+        with patch.dict('sys.modules', {'reliability.utility_gt_firewall': firewall,
+            'reliability.g1_prior_transfer_confirmation': confirmation}), \
+             patch.object(handoff, 'recovery_record', return_value={**new, 'protocol': {'frozen': True}}), \
+             patch.object(handoff, 'failed_inventory') as inventory:
+            with self.assertRaisesRegex(RuntimeError, 'frozen contract'):
+                handoff.recovery_binding('test-digest')
+        inventory.assert_not_called()
+
+    def test_threading_environment_reaches_real_child_without_parent_mutation(self):
+        parent = dict(os.environ, MKL_THREADING_LAYER='INTEL',
+                      MKL_SERVICE_FORCE_INTEL='1', PYTHONPATH='unsafe', PYTHONHOME='unsafe',
+                      OMP_NUM_THREADS='16')
+        before = dict(parent)
+        # Without the fix this exercises the existing inherited environment.
+        environment = getattr(handoff, 'runtime_environment', dict)(parent)
+        result = __import__('subprocess').run(
+            [__import__('sys').executable, '-E', '-B', '-c',
+             'import os,json; print(json.dumps(dict(os.environ)))'],
+            env=environment, text=True, capture_output=True, check=True)
+        child = json.loads(result.stdout)
+        self.assertEqual(child['MKL_THREADING_LAYER'], 'GNU')
+        self.assertEqual(child['OMP_NUM_THREADS'], '1')
+        for key in ('MKL_SERVICE_FORCE_INTEL', 'PYTHONPATH', 'PYTHONHOME'):
+            self.assertNotIn(key, child)
+        self.assertEqual(parent, before)
+
+    def test_recovery_record_changes_only_attempt_identity_and_paths(self):
+        old = {'confirmation_id': 'utility_prior_transfer_softv4_20261008_v2',
+               'created_utc': 'old', 'protocol': {'solver': 'frozen'},
+               'repository': {'commit': 'frozen'}, 'snapshot_record': {'sha256': 'frozen'},
+               'runs': [], 'probe_targets': {'output_dir': '/tmp/v2',
+                   'staging_dir': '/tmp/stage-v2', 'access_log_path': '/tmp/log-v2'}}
+        for seed in (0, 1, 2):
+            old['runs'].append(dict(seed=seed, run_dir=f'/tmp/run-v2-{seed}',
+                view_dir=f'/tmp/view-v2-{seed}/colmap_undistorted',
+                state_file=f'/tmp/state-v2-{seed}', launcher_dir=f'/tmp/launch-v2-{seed}',
+                qualification_path=f'/tmp/qual-v2-{seed}',
+                training_argv=['python', 'train.py', '--source_path',
+                    f'/tmp/view-v2-{seed}/colmap_undistorted', '--model_path', f'/tmp/run-v2-{seed}',
+                    '--seed', str(seed)]))
+        original = copy.deepcopy(old)
+        new = getattr(handoff, 'recovery_record', lambda value, stamp: value)(old, 'new')
+        self.assertEqual(new['confirmation_id'], 'utility_prior_transfer_softv4_20261008_v3')
+        self.assertEqual(new['created_utc'], 'new')
+        self.assertEqual(old, original)
+        for key in ('protocol', 'repository', 'snapshot_record'):
+            self.assertEqual(new[key], old[key])
+        for row in new['runs']:
+            self.assertIn('_v3_seed' + str(row['seed']), row['run_dir'])
+            before = list(old['runs'][row['seed']]['training_argv'])
+            after = list(row['training_argv'])
+            for flag in ('--source_path', '--model_path'):
+                after[after.index(flag) + 1] = before[before.index(flag) + 1]
+            self.assertEqual(after, before)
+
+    def test_completed_attempt_cannot_be_recovered_as_startup_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run, launch = root / 'run', root / 'launch'
+            run.mkdir(); launch.mkdir()
+            (run / 'train.log').write_text('Training complete.\n')
+            (launch / 'exit_code.txt').write_text('0\n')
+            read = lambda path: Path(path).read_bytes()
+            with self.assertRaises(RuntimeError):
+                getattr(handoff, 'validate_startup_failure', lambda *a: None)(
+                    dict(run_dir=str(run), launcher_dir=str(launch)), read)
+
     def test_worker_receipts_match_existing_completion_contract(self):
         self.run_worker()
 
@@ -29,7 +168,7 @@ class HandoffChecks(unittest.TestCase):
     def run_worker(self, *, monitor_failure=False, wrong_binding=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            launch = root / 'utility_prior_transfer_softv4_20261008_v2_seed0.launch'
+            launch = root / 'utility_prior_transfer_softv4_20261008_v3_seed0.launch'
             launch.mkdir()
             run = root / 'run'
             run.mkdir()
@@ -81,6 +220,7 @@ class HandoffChecks(unittest.TestCase):
                 return
             start.assert_called_once()
             self.assertEqual(start.call_args.args[0], argv)
+            self.assertEqual(start.call_args.kwargs.get('env', {}).get('MKL_THREADING_LAYER'), 'GNU')
             self.assertFalse((run / '.training_active').exists())
             self.assertFalse((launch / '.training_active').exists())
             self.assertEqual((launch / 'exit_code.txt').read_text().strip(),
