@@ -885,4 +885,6 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [ ] Tasks 6–8 remain distinct uncompleted work; do not label the complete Utility pipeline ready.
 - [x] Persist user-confirmed cross-scene reuse rules in AGENTS.md and project handoff; no statistics redevelopment or broad framework rewrite.
 - [x] Task 6 authoritative AutoDL qualification at `6bdbb5ce1bd33efee5cdbff629fabd836acda4e0`: 61 focused / 382 discovery tests OK, clean checkout, exit 0. No real geometry release, GT access, training or C1.
-- [ ] Task 7: implement synthetic-only mesh admission under the approved inline TDD plan; Task 8 evaluator remains unimplemented. Real Utility GT access stays separately blocked.
+- [x] Task 7 synthetic-only implementation and one fresh review fix pass: exact token/source/mesh identity, fixed minhash, 147-camera rays, frozen admission gates, and transient write/restore rejection. No statistical-core change.
+- [ ] Task 7 authoritative AutoDL qualification pending: local focused 74 tests OK (one real backend skip); required existing geometry suite/full discovery cannot pass locally without Torch. Do not mark the stage qualified yet.
+- [ ] Task 8 evaluator remains unimplemented. Real Utility GT access and replacement confirmation creation stay separately blocked.

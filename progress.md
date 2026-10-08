@@ -516,3 +516,11 @@
 ## 2026-10-08 Task 6 server qualification / Task 7 start
 - User-supplied AutoDL evidence at `6bdbb5ce1bd33efee5cdbff629fabd836acda4e0`: focused 61 tests OK; discovery 382 tests OK; exit 0; clean checkout. This supersedes Task 6's local dependency limitation, not any later code's qualification.
 - No real geometry release created, no Utility GT accessed, no training or C1. Continue approved Task 7 inline TDD on synthetic fixtures only. Preserve frozen statistical core and existing geometric-query implementation; Task 8 remains pending.
+
+## 2026-10-08 Task 7 synthetic mesh admission
+- RED `717d71a` observed the missing audit API; GREEN `ed5abe2` adds only fail-closed admission with exact access-log/source/mesh identities, every valid surface face, deterministic point sampling, 147 fixed camera grids and unchanged admission thresholds.
+- One fresh read-only review found an Important transient input-mutation gap. RED `6d142a2` reproduced both mesh write/restore and COLMAP point write/parse/restore admission; both are now rejected by filesystem identity checks spanning parsing/query. No Minor findings; no re-review loop.
+- Final focused regression: 74 tests OK, one actual backend fixture skipped for missing local Torch/Open3D. Existing `tests.test_g1_geometry` cannot import without Torch. Full discovery: 258 tests, 22 missing-Torch import errors, 37 skips; NOT a full PASS. Exact-commit AutoDL verification is the next gate.
+- Interface rulings: the plan omitted token transport, so mesh admission requires keyword-only `access_token`; minhash byte encoding and cell-center grid are frozen in the contract note. Cost if wrong: Task 8 adapter/reproducibility correction before execution, never a silent scientific change.
+- Review boundaries: actual Utility GT identity/alignment/coverage and real geometry release are unverified and separately authorized; Task 8 must still bind completed runs and parser order. Open3D/full-suite behavior needs AutoDL. Transfer validity, DA3, training and C1 are outside this synthetic code review; no authority is inferred.
+- No real Utility GT parse, release/confirmation creation, server diagnostic, DA3, Utility seed training, routing or C1 occurred. Task 8 remains pending; do not declare the complete Utility workflow ready.

@@ -83,3 +83,35 @@ A failure after publication leaves the consumed log intact. It must not be
 deleted to retry; recovery requires an explicitly reviewed audit trail. Later
 pipeline tasks must bind and verify this token, not recreate a first-access
 record or treat a synthetic test fixture as an actual release.
+
+## Post-token mesh admission (Task 7)
+
+`audit_utility_mesh(mesh_path, source_root, confirmation, access_token=token)`
+consumes that exact on-disk token. It reloads and verifies the log, both referenced
+identities, chronology, the original confirmation and frozen source before any
+mesh parse. A token is an integrity transport, not new human approval; Task 8
+still owns completed-run binding and the separately authorized execution boundary.
+
+The result is `UtilityMeshAdmission(outcome, reasons, summary)`: either `ADMITTED`
+or `INCONCLUSIVE`. It contains no Gaussian mask, transformed mesh or repaired
+domain. The existing full-surface loader/distance query are reused; all finite,
+non-degenerate faces remain. Nonfinite vertices, identity/parse/alignment/coverage
+failure stop admission. No fallback changes a coordinate frame or threshold.
+
+The deterministic sparse-point encoding is unsigned 64-bit little-endian point
+ID followed by three little-endian float64 world coordinates. Sort SHA256 digests
+ascending, break a digest tie by point ID, and use at most 50,000 points. The
+8x6 camera grid samples the equal-area full-frame cell centers
+`((j+0.5)*width/8, (k+0.5)*height/6)` through the original intrinsics. W2C inversion
+uses the established camera-ray calibration helper; all 147 cameras are used.
+Only the 7,056 admission rays are batched against one full-surface Open3D scene;
+this is not rendering, candidate selection, or a replacement statistical probe.
+
+Mesh/source/access identities are checked again before returning `ADMITTED`.
+Mesh and source filesystem identities (device, inode, size, nanosecond modification
+and change timestamps) are retained across parsing and queries, not only across
+each hash call. A transient write-and-restore or replacement therefore fails
+closed even when the final content SHA matches the preregistered bytes.
+Synthetic tests do not establish that the real Utility mesh is admitted. That
+first parse remains blocked by the real geometry release and explicit probe
+authorization, irrespective of code-test results.

@@ -403,6 +403,15 @@ def _admission_ray_depths(rays, mesh):
     return scene.cast_rays(o3d.core.Tensor(rays.astype(np.float32)))["t_hit"].numpy().astype(np.float64)
 
 
+def _file_identity(info):
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _source_identities(root):
+    return {str(path.relative_to(root)): _file_identity(path.stat())
+            for path in root.rglob("*") if path.is_file()}
+
+
 def _mesh_identity(path, expected):
     # Do not silently admit another lexical path/symlink to the frozen asset.
     path = Path(path)
@@ -419,9 +428,9 @@ def _mesh_identity(path, expected):
         for chunk in iter(lambda: stream.read(1024*1024), b""):
             digest.update(chunk)
     after = path.stat()
-    identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
-    if identity(before) != identity(after) or digest.hexdigest() != expected["sha256"]:
+    if _file_identity(before) != _file_identity(after) or digest.hexdigest() != expected["sha256"]:
         raise ValueError("GT mesh SHA256/mutation mismatch")
+    return _file_identity(before)
 
 
 def _admission_source(source_root, prior):
@@ -433,6 +442,7 @@ def _admission_source(source_root, prior):
     if (root != _absolute(source["source_root"]) or source.get("audit_kind") != "utility_source"
             or source.get("gt_access") != "NONE"):
         raise ValueError("mesh admission source binding mismatch")
+    identities = _source_identities(root)
     _reject_aliases([{"path": str(path)} for path in root.rglob("*") if path.is_file()], protected)
     current = source_manifest(audit_utility_source(root, expected_count=147))
     if any(source.get(key) != value for key, value in current.items()):
@@ -444,7 +454,9 @@ def _admission_source(source_root, prior):
     rays = np.stack([utility_camera_rays(cameras[image.camera_id], image)
                      for _, image in sorted(images.items())])
     ids, xyz = select_admission_points(points)
-    return current, ids, xyz, rays
+    if _source_identities(root) != identities:
+        raise ValueError("mesh admission source changed during parsing")
+    return current, ids, xyz, rays, identities
 
 
 def audit_utility_mesh(mesh_path: Path, source_root: Path, confirmation: Mapping, *, access_token) -> UtilityMeshAdmission:
@@ -456,8 +468,8 @@ def audit_utility_mesh(mesh_path: Path, source_root: Path, confirmation: Mapping
     summary = {}
     try:
         prior = _verify_mesh_access(confirmation, access_token)
-        source, ids, points, rays = _admission_source(source_root, prior)
-        _mesh_identity(mesh_path, prior["gt_mesh"])
+        source, ids, points, rays, source_identities = _admission_source(source_root, prior)
+        mesh_identity = _mesh_identity(mesh_path, prior["gt_mesh"])
         mesh = _load_admission_mesh(mesh_path)
         if mesh.nonfinite_vertex_count or len(mesh.vertices) == 0 or len(mesh.triangles) == 0:
             raise ValueError("mesh contains nonfinite vertices or no valid surface")
@@ -494,9 +506,11 @@ def audit_utility_mesh(mesh_path: Path, source_root: Path, confirmation: Mapping
                 or camera_fraction < limits["camera_fraction_with_hit_fraction_at_least_0.50"]):
             raise ValueError("mesh camera coverage gate failed; no crop permitted")
         # Recheck every consumed input, not just the mesh, before admission.
-        _mesh_identity(mesh_path, prior["gt_mesh"])
+        if _mesh_identity(mesh_path, prior["gt_mesh"]) != mesh_identity:
+            raise ValueError("GT mesh changed during parsing/query")
         _verify_mesh_access(confirmation, access_token)
-        if _admission_source(source_root, prior)[0] != source:
+        final_source, _, _, _, final_identities = _admission_source(source_root, prior)
+        if final_source != source or final_identities != source_identities:
             raise ValueError("mesh admission source changed during query")
         return UtilityMeshAdmission("ADMITTED", (), summary)
     except (ValueError, TypeError, KeyError, OSError, RuntimeError, ImportError) as exc:
