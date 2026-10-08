@@ -1,6 +1,6 @@
 # Authorized Utility Gate E v2 handoff
 
-Status: creation authorized; **server receipt pending**. No confirmation digest is invented locally.
+Status: **server receipt accepted by the user**. Canonical confirmation SHA256 is `51376355bb19434ebfd118090ea2c1b38371156a9dbaf4da51bb96aaf385020e`. Seed0 Gate F0 is separately authorized; seeds1/2 and GT access are not authorized. Do not rerun this creation script.
 
 Run `2026-10-08-create-utility-gate-e-v2.sh` on the AutoDL checkout at exact qualified `c701424c1b1f5a9006e6f19776769ee7bc8cb299`, with a clean worktree and no training/DA3. Fetching the documentation commit does not require switching the execution checkout or rerunning415 tests. The script must be transported from its pinned documentation commit, not from an unreviewed moving branch.
 

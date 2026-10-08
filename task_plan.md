@@ -39,7 +39,15 @@
 
 在不混入 Supporting 模块的前提下，完成可复现、可消融的 AmbiSuR Core：观测校准、双可靠性、五状态仲裁、参数级梯度路由和 Gaussian 生命周期，并通过 G0–G2。
 
-## Current Phase
+## Current authoritative handoff — 2026-10-08 Gate F0
+
+- [x] User accepted Gate E v2 receipt: confirmation SHA256 `51376355bb19434ebfd118090ea2c1b38371156a9dbaf4da51bb96aaf385020e`; execution remains pinned to clean `c701424c1b1f5a9006e6f19776769ee7bc8cb299` and the single frozen DA3 snapshot.
+- [x] Seed0-only 7k D0 shadow launch and asset qualification explicitly authorized. Prepare user-operated handoff; do not claim actual server launch before receipt. No retries or seed1/2 launch on failure.
+- [ ] Receive seed0 launch/completion receipts and qualify through existing `audit_prior_transfer_run.py`; no new scientific/statistical implementation.
+- [ ] Submit four-item Geometry Gate0 amendment proposal for review only. Approved spec and blocked plan remain unchanged; no synthetic execution or scientific termination/release.
+- Read/write boundary: F0 reads confirmation, code and canonical source/snapshot; writes only seed0 private view/run/state/launcher and qualification. No DA3, GT content, geometry intervention, five-state, routing or C1.
+
+## Current Phase (historical entry; latest handoff above takes precedence)
 
 Phase 0、E0/G0 与 D0 temporal-v2 工程链已完成。原正式 Tool Room/r2/seed0/7000 D0-v2 的 G1 主门失败（`AUROC(N)=0.542911`、best `A=0.550844`、gain `-0.007933`）后，根因诊断确认 `S_count/S_angle` 饱和；用户已批准固定 soft half-saturation 方案 A。新公式、Evidence v4、formal confirmation 与 evaluator admission 已按 TDD 实现，并在 exact `8bb2710e138f2ecf23a2e5b64a412922a45aad2f` 通过 AutoDL 70 项 focused、269 项 full discovery、8 项显式 CUDA 总门。随后同一代码提交的新路径 Tool Room/r2/seed0 500-step/refresh-100 shadow smoke 通过五刷新、v4 round-trip、finite、checkpoint join、no-GT、输入哈希与训练隔离深审计。confirmation resolved-config 字段路径修复 `815ccb8700e4aad4a2dbecf5959d0b9c54a17126` 又通过 AutoDL 40 项 formal、269 项 full discovery 与 8 项 CUDA；其后 immutable formal-7k confirmation 已在 run/view/output 均不存在时生成并由 production loader、detached SHA 和 chronology gate 验证。当前状态为 **Task 8 complete / awaiting explicit formal-7k authorization**；C1、阶段 tag、正式 7k、30k 与 Supporting 均未启动。下一步仅在用户明确授权后按 confirmation 中冻结的 argv 启动 Task 9 formal 7k。
 
