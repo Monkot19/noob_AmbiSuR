@@ -882,11 +882,13 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Task 5 implementation and local available checks: 44 focused tests, 39 passed and 5 Torch integration tests skipped; static compile and diff check passed. Fresh review's three Important findings addressed with regression tests.
 - [x] Task 5 authoritative GREEN: user-supplied AutoDL output at `916ca24e611ecf2488510eeeefe3fa71c8af6fdc` shows 48 focused and 366 full-discovery tests OK, clean checkout, no training/GT evaluation. Supersedes local missing-Torch qualification limitation.
 - [ ] Preserve old confirmation; request replacement confirmation binding the qualified new commit before any seed launch.
-- [ ] Tasks 6–8 remain distinct uncompleted work; do not label the complete Utility pipeline ready.
+- [x] Tasks 6–8 implementation and code qualification completed; real-data admission and scientific transfer remain uncompleted external gates.
 - [x] Persist user-confirmed cross-scene reuse rules in AGENTS.md and project handoff; no statistics redevelopment or broad framework rewrite.
 - [x] Task 6 authoritative AutoDL qualification at `6bdbb5ce1bd33efee5cdbff629fabd836acda4e0`: 61 focused / 382 discovery tests OK, clean checkout, exit 0. No real geometry release, GT access, training or C1.
 - [x] Task 7 synthetic-only implementation and one fresh review fix pass: exact token/source/mesh identity, fixed minhash, 147-camera rays, frozen admission gates, and transient write/restore rejection. No statistical-core change.
 - [x] Task 7 authoritative AutoDL qualification: exact `18bbbf1b14d15d1b4979e8bbd88e4d30f9ce6977`, 37 focused / 395 discovery tests OK, exit 0, clean checkout; supersedes the local missing-dependency limit.
 - [x] Task 8 code and one-pass review fixes committed through `66b7d16`: compact three-run evaluator, unchanged frozen probe, exact run/release binding, retained GT identity and guarded repeated reloads. Available local focused tests: 142 total, 6 skipped; full qualification still pending AutoDL.
-- [ ] Task 9 final qualification: review and command preparation done; local full discovery has 22 missing-Torch errors and 37 skips (278 total), so do not claim full PASS. Request exact-commit AutoDL code-only qualification; no real-data execution.
+- [x] Task 9 authoritative AutoDL qualification at exact `c701424c1b1f5a9006e6f19776769ee7bc8cb299`: CUDA/Open3D PASS, 57 focused / 415 discovery tests OK, exit 0, clean checkout. Supersedes local dependency limits; no training, real GT access or C1.
 - [ ] Preserve v1 confirmation and all real targets; later replacement confirmation, each seed launch, geometry release and first GT probe still need separate approval.
+- [ ] Request replacement Gate E confirmation pinned to qualified `c701424`, before any run/view/state/launcher/probe target exists. Do not repeat code qualification for documentation-only receipt changes.
+- [ ] Separately request Geometry Stage G-A TDD plan-writing authorization. Utility GT-free seed stages need not wait for geometry, but semantic Utility GT access still requires the approved geometry release and its own approval.
