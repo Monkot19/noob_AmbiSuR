@@ -880,6 +880,8 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Identify missing Task 5 qualifier despite previous 348-test regression; user authorized this bounded implementation. No Utility seed has started.
 - [x] Task 5 RED committed as `eb5d4b8`: completion/identity, real checkpoint/runtime joins, topology/lazy Adam, CLI/no-GT/immutable publication.
 - [x] Task 5 implementation and local available checks: 44 focused tests, 39 passed and 5 Torch integration tests skipped; static compile and diff check passed. Fresh review's three Important findings addressed with regression tests.
-- [ ] Task 5 authoritative GREEN: exact-commit AutoDL focused and full-discovery tests required. Local full discovery is not PASS (22 missing-Torch import errors).
+- [x] Task 5 authoritative GREEN: user-supplied AutoDL output at `916ca24e611ecf2488510eeeefe3fa71c8af6fdc` shows 48 focused and 366 full-discovery tests OK, clean checkout, no training/GT evaluation. Supersedes local missing-Torch qualification limitation.
 - [ ] Preserve old confirmation; request replacement confirmation binding the qualified new commit before any seed launch.
 - [ ] Tasks 6–8 remain distinct uncompleted work; do not label the complete Utility pipeline ready.
+- [x] Persist user-confirmed cross-scene reuse rules in AGENTS.md and project handoff; no statistics redevelopment or broad framework rewrite.
+- [ ] Task 6 in progress: test and implement only shared geometry-release validation and immutable first-access logging. No real release creation or GT access.
