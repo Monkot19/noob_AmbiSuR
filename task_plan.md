@@ -871,5 +871,7 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 ## 2026-10-08 approved DA3 compatibility repair
 - [x] Preserve existing isolated branch; write bounded plan and observe new-layout RED.
 - [x] Add sparse/0 text lookup after binary; focused/Utility regression 21/21 PASS.
-- [ ] Fresh review, commit/push, then exact-commit AutoDL qualification.
-- [ ] Preserve v1 confirmation; freeze a replacement before any DA3 inference.
+- [x] Fresh review, commit/push, then exact-commit AutoDL qualification: 21 focused and 348 discovery tests passed on `81c0acb`.
+- [x] Preserve v1 confirmation; freeze v2 confirmation/runtime binding before single-use DA3; snapshot finalization passed, exit 0, 87 seconds.
+- [x] Record metadata-only Utility GT identity and frozen snapshot in `docs/research/utility-room-asset-identity-2026-10-08.md`.
+- [ ] Gate E explicitly authorized: create/reload canonical three-seed confirmation before any run/probe target; no training or semantic GT access.

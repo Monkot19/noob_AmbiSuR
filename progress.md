@@ -475,3 +475,10 @@
 - Full discovery attempted with bundled Python: 211 tests, 22 errors, 31 skips; unavailable dependencies prevent local full qualification. Do not interpret as a full-suite PASS.
 - Pending fresh review and exact-commit AutoDL qualification; server assets and old confirmation untouched.
 - Fresh-context review: no Important/Critical findings; lookup order and scope confirmed. Static compilation and git diff --check pass. AutoDL qualification remains pending.
+
+## 2026-10-08 server completion and Gate E handoff
+- Subsequent user-provided server evidence supersedes the pending qualification above: 21 focused and 348 full-discovery tests OK at `81c0acb`; worktree clean.
+- V2 preprocessing confirmation/runtime binding published without overwriting v1; single DA3 execution and snapshot finalization completed, exit 0, 87 seconds.
+- Gate E preflight: 5 confirmation tests OK; snapshot record/internal/source identities verified.
+- User authorized GT metadata-only hashing: regular non-symlink file, stable stat identity before/after, 24490351 bytes, SHA256 recorded in the dedicated asset identity note. No mesh parsing/visualization/evaluation.
+- User explicitly authorized Gate E. Canonical three-seed confirmation is not yet created; seed training, geometry release, semantic GT access and C1 remain separately gated.

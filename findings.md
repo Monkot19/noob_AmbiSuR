@@ -475,3 +475,9 @@
 - Approved repair adds only sparse/0 text discovery after sparse/0 binary. Real COLMAP reader integration verifies unchanged source bytes, without conversion or alignment changes.
 - Local bundled Python avoids the user's broken Conda runtime. Full discovery cannot qualify this checkout here: 211 tests, 22 errors, 31 skips, including missing torch. AutoDL qualification remains required; focused tests pass.
 - Existing preprocessing confirmation/runtime binding remain immutable. No DA3, staging creation, Utility GT, training or C1 was performed by this repair.
+
+## 2026-10-08 server evidence after compatibility repair
+- AutoDL qualified `81c0acb`: 21 focused tests and 348 discovery tests OK, clean worktree. Single-use DA3 then finalized successfully (exit 0, 87 seconds).
+- Asset identities and exact server paths are recorded in `docs/research/utility-room-asset-identity-2026-10-08.md`; file-record SHA and internal snapshot SHA are distinct identities.
+- Utility GT metadata-only identity is 24490351 bytes, SHA256 `213dbdfff9ba992000039533463e4fcd941708d9fd8fe077df53a8495b63cd75`. Hashing is not mesh parsing or geometry admission; no alignment/coverage claim follows.
+- Gate E is explicitly authorized, but no Utility training, semantic GT access, geometry intervention or C1 is authorized.
