@@ -524,3 +524,7 @@
 - Interface rulings: the plan omitted token transport, so mesh admission requires keyword-only `access_token`; minhash byte encoding and cell-center grid are frozen in the contract note. Cost if wrong: Task 8 adapter/reproducibility correction before execution, never a silent scientific change.
 - Review boundaries: actual Utility GT identity/alignment/coverage and real geometry release are unverified and separately authorized; Task 8 must still bind completed runs and parser order. Open3D/full-suite behavior needs AutoDL. Transfer validity, DA3, training and C1 are outside this synthetic code review; no authority is inferred.
 - No real Utility GT parse, release/confirmation creation, server diagnostic, DA3, Utility seed training, routing or C1 occurred. Task 8 remains pending; do not declare the complete Utility workflow ready.
+
+## 2026-10-08 Task 7 server qualification / Task 8 start
+- User-supplied AutoDL result qualifies exact `18bbbf1b14d15d1b4979e8bbd88e4d30f9ce6977`: 37 focused and 395 discovery tests OK, clean checkout, exit 0. Task 7 code qualification is complete; no real GT admission is inferred.
+- Continue approved inline Task 8 only: strict three-run binding, first-access ordering and seven compact publication artifacts. Reuse frozen statistics and geometric queries; do not execute any real-data phase.

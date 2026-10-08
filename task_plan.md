@@ -886,5 +886,5 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Persist user-confirmed cross-scene reuse rules in AGENTS.md and project handoff; no statistics redevelopment or broad framework rewrite.
 - [x] Task 6 authoritative AutoDL qualification at `6bdbb5ce1bd33efee5cdbff629fabd836acda4e0`: 61 focused / 382 discovery tests OK, clean checkout, exit 0. No real geometry release, GT access, training or C1.
 - [x] Task 7 synthetic-only implementation and one fresh review fix pass: exact token/source/mesh identity, fixed minhash, 147-camera rays, frozen admission gates, and transient write/restore rejection. No statistical-core change.
-- [ ] Task 7 authoritative AutoDL qualification pending: local focused 74 tests OK (one real backend skip); required existing geometry suite/full discovery cannot pass locally without Torch. Do not mark the stage qualified yet.
-- [ ] Task 8 evaluator remains unimplemented. Real Utility GT access and replacement confirmation creation stay separately blocked.
+- [x] Task 7 authoritative AutoDL qualification: exact `18bbbf1b14d15d1b4979e8bbd88e4d30f9ce6977`, 37 focused / 395 discovery tests OK, exit 0, clean checkout; supersedes the local missing-dependency limit.
+- [ ] Task 8: implement the compact evaluator through approved inline TDD. Real Utility GT access and replacement confirmation creation stay separately blocked.
