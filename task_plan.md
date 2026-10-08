@@ -44,7 +44,7 @@
 - [x] User accepted Gate E v2 receipt: confirmation SHA256 `51376355bb19434ebfd118090ea2c1b38371156a9dbaf4da51bb96aaf385020e`; execution remains pinned to clean `c701424c1b1f5a9006e6f19776769ee7bc8cb299` and the single frozen DA3 snapshot.
 - [x] Seed0-only 7k D0 shadow launch and asset qualification explicitly authorized. Prepare user-operated handoff; do not claim actual server launch before receipt. No retries or seed1/2 launch on failure.
 - [ ] Receive seed0 launch/completion receipts and qualify through existing `audit_prior_transfer_run.py`; no new scientific/statistical implementation.
-- [ ] Submit four-item Geometry Gate0 amendment proposal for review only. Approved spec and blocked plan remain unchanged; no synthetic execution or scientific termination/release.
+- [x] Submit four-item Geometry Gate0 amendment proposal for review only: `docs/superpowers/specs/2026-10-08-geometry-ga-gate0-amendment-proposal.md`. Approved spec and blocked plan remain unchanged; no synthetic execution or scientific termination/release. Await item-by-item approval; item3 also requires a filled literal execution annex before closure.
 - Read/write boundary: F0 reads confirmation, code and canonical source/snapshot; writes only seed0 private view/run/state/launcher and qualification. No DA3, GT content, geometry intervention, five-state, routing or C1.
 
 ## Current Phase (historical entry; latest handoff above takes precedence)
