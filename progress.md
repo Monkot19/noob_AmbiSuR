@@ -2,6 +2,21 @@
 
 ## Session Log
 
+### 2026-10-08 Utility Gate F1 operational extension
+- One fresh read-only reviewer approves scoped F1 with no actionable Critical/Important/Minor; independently repeats23 checks (21pass/two Windowslinkskips), AST/diff and launch-schema compatibility. Server/POSIX/CUDA/resources/real qualification/science are not certified locally; actual user-operated gates remain mandatory. Concurrent filesystem writers are disallowed, not claimed transactionally safe.
+- User authorizes seed1 only, same v3 confirmation/snapshot and seed0 qualification prerequisite. Existing isolated codex branch reused; no production method code or environment installation.
+- Narrow plan: `docs/superpowers/plans/2026-10-08-utility-f1-handoff.md`. First RED suite inventory20: one missing-check FAIL/four missing-seed-keyword TypeErrors, original15 remain regression. GREEN20 then expanded23 checks:21 pass/two Windows link-privilege skips. AutoDL must run POSIX cases before dispatch.
+- Shared operational prepare/worker/audit now take internal0/1 only; explicit seed1 CLI pins accepted8ae3 confirmation and fbad915 seed0 qualification, protects predecessor fingerprints and target absence. No new confirmation, seed2 selector or scientific implementation. Actual server F1 launch/qualification pending.
+
+### 2026-10-08 Utility Gate F0 asset qualification complete
+- User-operated existing auditor returns QUALIFIED/exit0; worker exit0, child0, wall394s, sampled GPU peak4166MiB. Qualification SHA `fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9`, v3 seed0 filename. No GT access; audit itself started no training.
+- Gate F0 complete on supplied server evidence, superseding earlier pending receipt entries. Updated only root ledgers; no scientific code change/test-suite rerun or server action by assistant. Await separate seed1 approval; seed2, Utility GT, Geometry intervention, five-state/routing and C1 remain unstarted/unauthorized.
+
+### 2026-10-08 Utility F0 v3 completion-log handoff
+- User supplied7000/7000,3000/7000 checkpoint-save and `Training complete.` log; no repeated MKL error. Actual launcher final exit/telemetry/frozen-input receipts and qualification still pending.
+- Reused unchanged operational artifact `launcher.py --audit`, which calls production `audit_prior_transfer_run.py` after recovery binding. Next user-operated command must require launcher exit0 and inactive launcher, then publish only seed0 qualification JSON/SHA. No retraining, DA3, seed1/2, GT content/evaluation, Geometry or C1.
+- Inspection initially used a nonexistent guessed filename `reliability/g1_prior_transfer_run.py`; corrected to tracked `reliability/prior_transfer_assets.py`. No production file modified; no local Conda/Torch or server operation executed by the assistant.
+
 ### 2026-09-01 read-only audit and planning
 - **Status:** audit_complete_waiting_for_approval
 - [x] 读取指定 skills 及 Codex 适配说明
@@ -584,6 +599,7 @@
 - `training_started=AWAIT_WORKER_RECEIPT`: this proves dispatch, not worker success, actual iteration progress, completion or asset qualification. Next only observe logs; qualify after exit using the existing auditor. Do not launch twice. Seeds1/2, DA3, GT, geometry, five-state and C1 remain unstarted/unauthorized.
 
 ## 2026-10-08 MKL startup recovery authorization
+- Authoritative AutoDL receipt: docs4ec59149c494ef65ed83438d031bee5ca49a243d passes15/15 including both POSIX link checks; GNU_IMPORT_CHAIN=PASS Torch2.7.1+cu128/NumPy1.26.3. Published v3 confirmation SHA `8ae37c8d0d884936c9f8416b9fd833f05f2c4c03efc7e073c8f78dccaa7653a1`; dispatch return0/PID3729. Run `/root/autodl-tmp/ambisur_runs/Utility_Room/prior-transfer-softv4-7k/utility_prior_transfer_softv4_20261008_v3_seed0`; launch `/root/autodl-tmp/ambisur_diagnostics/Utility_Room/prior-transfer/utility_prior_transfer_softv4_20261008_v3_seed0.launch`. Dispatch is not training completion/qualification. Next observe only, then existing auditor after exit. No repeat dispatch, DA3, seed1/2, GT, geometry or C1.
 - One fresh read-only review identified two Important firewall/absence boundaries: shell SHA sidecar read could precede protection; resolving a dangling target before lexists could consume a single-use confirmation ID. Added failing protected-sidecar and existing-qualification-SHA regressions, then guarded digest helper + raw target lexists/ancestor checks before schema normalization. Actual dangling-link regression is retained for AutoDL (Windows privilege skip). Audit delegates through the same operational artifact to unchanged production qualifier; no general unguarded SHA shell read.
 - Final local operational verification:15 tests,13 pass/2 Windows symlink skips; AST, Bash `-n`, diff whitespace checks pass. No production files changed. No full scientific suite rerun for this operation-only patch, per explicit user reuse policy. Actual AutoDL import gate/dispatch/training/qualification still pending; fresh review declines server/GT/scientific outcome judgment, which remains correctly outside this local phase.
 - TDD: initial targeted tests exposed5 expected behavioral failures; one initial subprocess ERROR from intentional PYTHONHOME contamination was corrected to `-E` in the test so assertions observe environment rather than bootstrap failure. Final first GREEN9 tests:8 pass/1 Windows symlink privilege skip. AutoDL real import-chain and POSIX link regression remain required before recovery dispatch.

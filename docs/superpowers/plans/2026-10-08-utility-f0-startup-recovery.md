@@ -31,4 +31,4 @@
 - [x] Observe RED using bundled stdlib Python (no local Conda/Torch).
 - [x] Add minimal recovery adapter and launcher env/binding changes; preserve original server artifact through immutable commits. Reuse existing guarded I/O/canonical serializer/qualifier.
 - [x] Run focused operational checks, AST/diff checks; obtain one read-only review. Two review findings fixed with RED-to-GREEN checks. Local15 checks:13 pass/2 Windows link privilege skips; AutoDL must exercise both. Real import-chain check runs before publication/launch and must stop on failure.
-- [ ] Commit/push exact operational artifacts; provide one user-operated command. Qualify after exit with the original auditor and new confirmation digest. No success claim until server receipts.
+- [x] Operational artifacts committed/pushed at4ec59149c494ef65ed83438d031bee5ca49a243d; user-operated AutoDL15/15 checks and GNU import passed, v3 seed0 completed exit0/394s and existing auditor QUALIFIED with SHAfbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9. No GT/scientific conclusion follows.

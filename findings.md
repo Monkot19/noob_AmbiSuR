@@ -2,6 +2,12 @@
 
 本文件只记录新项目通过代码、测试和实验得到的事实。设计假设不得写成已证实结论。
 
+## 2026-10-08 Utility F0 v3 training-log receipt
+
+- Gate F1 uses the same canonical v3 confirmation, not a fresh attempt identity. Its only operational difference is selecting preregistered row1 after verifying accepted seed0 qualification and its immutable fingerprints. Existing worker/monitor/copy/auditor are shared; the original frozen production code and statistics remain unchanged. Keep15GiB launch headroom; any storage failure requires a new read-only inventory, not silent relaxation or more deletion.
+- Follow-up authoritative AutoDL receipt confirms launcher inactive, exit0/train_return_code0, wall394s and sampled whole-device GPU peak4166MiB; original asset auditor returns QUALIFIED, exit0, gt_access NONE. Qualification `/root/autodl-tmp/ambisur_diagnostics/Utility_Room/prior-transfer/utility_prior_transfer_softv4_20261008_v3_seed0.qualification.json`, SHA `fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9`. Seed0 is now a qualified asset, not a scientific transfer result; next seed requires explicit separate approval. This supersedes the pending status in the earlier log-only observation below.
+- User-operated train.log reaches7000, logs3000/7000 checkpoint saving and `Training complete.` (19:13:13 server log time); final progress598693 points, train PSNR31.158919906616212. These are training-log facts, not GT/transfer/G1 metrics or asset qualification. Worker exit0 and immutable-input recheck must still be confirmed before the existing qualifier publishes QUALIFIED. Continue only seed0 audit, without any new experiment or Utility GT access.
+
 ## Confirmed Inputs
 
 - Spec：`docs/research/ambisur-reliability-routing-design.md`
@@ -518,3 +524,4 @@
 - Confirmed F0 child exits1 in1s, wrapper records2 on exception, no active process. Outer-shell MKL unset does not establish child MKL unset: Intel source `mkl/_mklinitmodule.c` initializes an unset layer and can write it into process environment; inspect/test launcher import→subprocess inheritance. Source: https://raw.githubusercontent.com/IntelPython/mkl-service/master/mkl/_mklinitmodule.c .
 - AutoDL minimal paired reproduction confirms DEFAULT parent_MKL=None then child_MKL=INTEL / exit1; explicit GNU stays GNU in both and imports Torch2.7.1+cu128/NumPy1.26.3 / exit0. User authorizes process-local GNU plus new confirmation/attempt seed0 recovery. This does not prove a completed CUDA run and does not authorize forcing Intel, installing packages, deleting/reusing failure targets or changing science.
 - Recovery stays in operational documents, not production: v3 scientific contract is cloned unchanged, cross-confirmation attempt2/failed-file hashes live in a separate SHA-bound receipt, while the existing auditor's exact first-launch schema remains attempt1 within v3. Protected digest reads and raw target/link checks precede normalization/publication; old v2 failure is immutable. Local checks cannot establish server recovery, and the original415-test c701424 qualification is not repeated for transported docs only.
+- Subsequent AutoDL receipt resolves the local POSIX-test limitation:15/15 recovery checks and real GNU import chain pass, v3 seed0 dispatched at PID3729 with pinned new SHA8ae37c8d0d884936c9f8416b9fd833f05f2c4c03efc7e073c8f78dccaa7653a1. This establishes operational admission/dispatch, not actual training progress, successful assets or scientific transfer. Do not relaunch.

@@ -1,4 +1,4 @@
-"""User-operated seed0-only handoff; not a new training/evaluation engine.
+"""User-operated sequential F0/F1 handoff; not a training/evaluation engine.
 
 Run from a transported pinned documentation artifact on AutoDL. The checkout
 stays at the already qualified execution commit. Recovery is explicit, single-use,
@@ -26,6 +26,8 @@ NEW_ID = 'utility_prior_transfer_softv4_20261008_v3'
 OLD_DIGEST = '51376355bb19434ebfd118090ea2c1b38371156a9dbaf4da51bb96aaf385020e'
 CONFIRMATION = ROOT / (NEW_ID + '.confirmation.json')
 DIGEST = None  # Supplied by the exclusive recovery publication, not an unchecked file.
+V3_DIGEST = '8ae37c8d0d884936c9f8416b9fd833f05f2c4c03efc7e073c8f78dccaa7653a1'
+SEED0_QUALIFICATION_SHA = 'fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9'
 GT = Path('/root/autodl-tmp/ambisur_data/gt/ScanNetpp/Utility_Room/mesh_aligned_0.05.ply')
 
 
@@ -67,6 +69,47 @@ def require_absent_targets(record):
         require(not os.path.lexists(path), 'target exists: ' + str(path))
         require(not any(parent.is_symlink() for parent in path.parents),
                 'linked target ancestor: ' + str(path))
+
+
+def require_seed_targets(record, *, seed):
+    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
+    require_absent_targets({'runs': record['runs'][seed:],
+                            'probe_targets': record['probe_targets']})
+
+
+def validate_seed0_qualification(confirmation):
+    """Verify the accepted predecessor without rewriting or re-qualifying it."""
+    from reliability.utility_gt_firewall import _read_verified, _reject_aliases
+    from reliability.prior_transfer_assets import _file_inventory
+    row = confirmation['runs'][0]
+    report = json.loads(_read_verified({'path': row['qualification_path'],
+        'sha256': SEED0_QUALIFICATION_SHA}, detached=True, protected=(GT,)))
+    require(report['outcome'] == 'QUALIFIED' and report['gt_access'] == 'NONE' and
+            report['confirmation_sha256'] == DIGEST, 'seed0 qualification binding mismatch')
+    require(report['run_binding'] == dict(seed=0, run_dir=row['run_dir'],
+        view_dir=row['view_dir'], repository_commit=COMMIT, snapshot_sha256=
+        '307b176e41111af403a565db94cfe8ada0a7d739361e1e380dcfaca08f49fc22',
+        evidence_version=4, qualification_path=row['qualification_path']),
+        'seed0 qualification row mismatch')
+    fingerprints = report['input_fingerprints']
+    for key in ('run_dir', 'view_dir', 'launcher_dir'):
+        root = Path(row[key])
+        require(root.is_dir() and not root.is_symlink() and
+                not any(parent.is_symlink() for parent in root.parents), 'linked predecessor root')
+        require(not any(path.is_symlink() for path in root.rglob('*')), 'linked predecessor input')
+        actual = {str(root / name) for name in _file_inventory(root)}
+        expected = {name for name in fingerprints if Path(name).is_relative_to(root)}
+        require(actual == expected, 'seed0 input inventory changed')
+    for key in ('source_record', 'snapshot_record'):
+        require(confirmation[key]['path'] in fingerprints, 'seed0 record fingerprint missing')
+    require(row['state_file'] in fingerprints, 'seed0 state fingerprint missing')
+    for name, entry in fingerprints.items():
+        path = Path(name)
+        _reject_aliases([{'path': name}], protected=(GT,))
+        require(path.is_absolute() and str(path.resolve()) == entry['resolved_path'],
+                'seed0 resolved input changed')
+        payload = _read_verified({'path': name, 'sha256': entry['sha256']}, protected=(GT,))
+        require(len(payload) == entry['bytes'], 'seed0 input size changed')
 
 
 def recovery_record(old, stamp):
@@ -225,15 +268,20 @@ def recover():
     prepare()
 
 
-def audit():
+def audit(*, seed=0):
     global DIGEST
+    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
     clean_checkout()
     DIGEST = read_digest(str(CONFIRMATION) + '.sha256')
+    if seed == 1:
+        require(DIGEST == V3_DIGEST, 'wrong accepted v3 confirmation')
     os.environ['UTILITY_F0_RECOVERY_SHA'] = read_digest(
         ROOT / (NEW_ID + '.recovery.json.sha256'))
-    recovery_binding(DIGEST)
+    confirmation = recovery_binding(DIGEST)
+    if seed == 1:
+        validate_seed0_qualification(confirmation)
     subprocess.run([PYTHON, '-B', 'scripts/diagnostics/audit_prior_transfer_run.py',
-        '--confirmation', str(CONFIRMATION), '--confirmation-sha', DIGEST, '--seed', '0'],
+        '--confirmation', str(CONFIRMATION), '--confirmation-sha', DIGEST, '--seed', str(seed)],
         cwd=REPO, env=runtime_environment(os.environ), check=True)
 
 
@@ -307,7 +355,8 @@ def frozen_trees(confirmation, row, *, destination=None):
         verified_tree(row['view_dir'], entries, private=True)
 
 
-def prepare():
+def prepare(*, seed=0):
+    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
     clean_checkout()
     require(DIGEST is not None, 'missing explicit recovery digest')
     commands = subprocess.check_output(['ps', '-eo', 'args='], text=True)
@@ -324,19 +373,24 @@ def prepare():
         {'path': str(CONFIRMATION), 'sha256': DIGEST}, detached=True, protected=(GT,)))
     require(hashlib.sha256(_canonical_bytes(confirmation)).hexdigest() == DIGEST,
             'noncanonical confirmation')
-    _validate_record(confirmation, require_targets_absent=True, verify_record_files=False)
+    # Check raw paths before schema normalization; completed seed0 is not absent in F1.
+    require_seed_targets(confirmation, seed=seed)
+    _validate_record(confirmation, require_targets_absent=(seed == 0), verify_record_files=False)
     require(confirmation['repository'] == {'root': str(REPO), 'commit': COMMIT,
                                            'clean': True}, 'repository binding mismatch')
     # No general loader's unguarded file reopens; known record bytes are guarded below.
-    for item in confirmation['runs']:
+    for item in confirmation['runs'][seed:]:
         for key in ('run_dir', 'view_dir', 'state_file', 'launcher_dir', 'qualification_path'):
             require(not os.path.lexists(item[key]), 'preregistered target exists')
     for target in confirmation['probe_targets'].values():
         require(not os.path.lexists(target), 'probe target exists')
-    row = confirmation['runs'][0]
-    require(row['seed'] == 0 and row['training_argv'][0] == PYTHON,
-            'seed0/interpreter mismatch')
+    row = confirmation['runs'][seed]
+    require(row['seed'] == seed and row['training_argv'][0] == PYTHON,
+            'seed/interpreter mismatch')
     _no_gt(row)
+    if seed == 1:
+        require(DIGEST == V3_DIGEST, 'wrong accepted v3 confirmation')
+        validate_seed0_qualification(confirmation)
     require(shutil.disk_usage('/root/autodl-tmp').free >= 15 * 1024**3,
             'less than 15 GiB free; stop without creating targets')
     gpu_memory()  # Qualify monitoring before launch, without CUDA inference.
@@ -348,11 +402,13 @@ def prepare():
     frozen_trees(confirmation, row, destination=view)
     clean_checkout()
     # Preserve absent unauthorized targets, including all probe/firewall targets.
-    for other in confirmation['runs'][1:]:
+    for other in confirmation['runs'][seed + 1:]:
         for key in ('run_dir', 'view_dir', 'state_file', 'launcher_dir', 'qualification_path'):
             require(not os.path.lexists(other[key]), 'unauthorized target appeared')
     for target in confirmation['probe_targets'].values():
         require(not os.path.lexists(target), 'probe target appeared')
+    if seed == 1:
+        validate_seed0_qualification(confirmation)
     run.mkdir(parents=True, exist_ok=False)
     launch.mkdir(parents=True, exist_ok=False)
     # attempt=1 is the existing auditor's first-launch-within-this-confirmation
@@ -363,7 +419,7 @@ def prepare():
                                          'launcher_dir', 'training_argv')}}
     exclusive(launch / 'launch_record.json', json.dumps(record, sort_keys=True) + '\n')
     state = {'RUN_DIR': str(run), 'VIEW_DIR': str(view), 'LAUNCH_DIR': str(launch),
-             'SEED': '0', 'CONFIRMATION_SHA256': DIGEST}
+             'SEED': str(seed), 'CONFIRMATION_SHA256': DIGEST}
     exclusive(row['state_file'], ''.join(key + '=' + shlex.quote(value) + '\n'
                                          for key, value in state.items()))
     exclusive(launch / 'confirmation_sha256.txt', DIGEST + '\n')
@@ -371,38 +427,43 @@ def prepare():
     exclusive(worker, Path(__file__).read_text(encoding='utf-8'))
     env = runtime_environment(os.environ)
     with (launch / 'launcher.log').open('x', encoding='utf-8') as log:
-        process = subprocess.Popen([PYTHON, '-B', str(worker), '--worker', str(launch), DIGEST],
+        mode = '--worker' if seed == 0 else '--worker-seed1'
+        process = subprocess.Popen([PYTHON, '-B', str(worker), mode, str(launch), DIGEST],
                                    cwd=REPO, env=env, stdin=subprocess.DEVNULL,
                                    stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-    print('F0_LAUNCH_DISPATCHED=YES')
+    print(f'F{seed}_LAUNCH_DISPATCHED=YES')
     print('launcher_pid=' + str(process.pid))
     print('train_log=' + str(run / 'train.log'))
     print('launch_dir=' + str(launch))
     print('training_started=AWAIT_WORKER_RECEIPT')
-    print('seed1_seed2_started=NO\ngt_content_accessed=NO\nC1_started=NO')
+    print(('seed1_seed2_started=NO' if seed == 0 else 'seed2_started=NO') +
+          '\ngt_content_accessed=NO\nC1_started=NO')
 
 
-def worker(launch):
-    require(launch == ROOT / (NEW_ID + '_seed0.launch'),
+def worker(launch, *, seed=0):
+    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
+    require(launch == ROOT / (NEW_ID + f'_seed{seed}.launch'),
             'unexpected worker target')
     clean_checkout()
     from reliability.utility_gt_firewall import _read_bytes_guarded
     record = json.loads(_read_bytes_guarded(launch / 'launch_record.json', (GT,)))
-    require(record['seed'] == 0 and record['confirmation_sha256'] == DIGEST,
+    require(record['seed'] == seed and record['confirmation_sha256'] == DIGEST,
             'worker binding mismatch')
     # Recheck canonical argv immediately before the subprocess, never reconstruct it.
     from reliability.utility_gt_firewall import _read_verified
     confirmation = json.loads(_read_verified(
         {'path': str(CONFIRMATION), 'sha256': DIGEST}, detached=True, protected=(GT,)))
-    row = confirmation['runs'][0]
+    row = confirmation['runs'][seed]
     require(all(record[key] == row[key] for key in
                 ('seed', 'run_dir', 'view_dir', 'state_file', 'launcher_dir', 'training_argv')),
             'worker row mismatch')
+    if seed == 1:
+        validate_seed0_qualification(confirmation)
     frozen_trees(confirmation, row)
     run = Path(record['run_dir'])
     exclusive(launch / 'launcher.pid', str(os.getpid()) + '\n')
-    exclusive(run / '.training_active', 'seed0\n')
-    exclusive(launch / '.training_active', 'seed0\n')
+    exclusive(run / '.training_active', f'seed{seed}\n')
+    exclusive(launch / '.training_active', f'seed{seed}\n')
     start = datetime.now(timezone.utc)
     exclusive(launch / 'start_utc.txt', start.isoformat() + '\n')
     rc, peak, training = 2, 0, None
@@ -443,7 +504,7 @@ def worker(launch):
         exclusive(launch / 'exit_code.txt', str(rc) + '\n')
         for sentinel in (run / '.training_active', launch / '.training_active'):
             sentinel.unlink(missing_ok=True)  # Only the two markers created above.
-    print('F0_TRAINING_COMPLETE=YES', flush=True)
+    print(f'F{seed}_TRAINING_COMPLETE=YES', flush=True)
     print('qualification_pending=YES', flush=True)
 
 
@@ -456,6 +517,21 @@ if __name__ == '__main__':
     os.environ.update(runtime_environment(os.environ))
     if sys.argv[1:] == ['--audit']:
         audit()
+    elif sys.argv[1:] == ['--audit-seed1']:
+        audit(seed=1)
+    elif sys.argv[1:] == ['--launch-seed1']:
+        DIGEST = V3_DIGEST
+        clean_checkout()
+        import_smoke()
+        os.environ['UTILITY_F0_RECOVERY_SHA'] = read_digest(
+            ROOT / (NEW_ID + '.recovery.json.sha256'))
+        recovery_binding(DIGEST)
+        prepare(seed=1)
+    elif sys.argv[1:2] == ['--worker-seed1'] and len(sys.argv) == 4:
+        require(sys.argv[3] == V3_DIGEST, 'wrong accepted v3 confirmation')
+        DIGEST = V3_DIGEST
+        recovery_binding(DIGEST)
+        worker(Path(sys.argv[2]), seed=1)
     elif sys.argv[1:2] == ['--worker'] and len(sys.argv) == 4:
         DIGEST = sys.argv[3]
         recovery_binding(DIGEST)
