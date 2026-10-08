@@ -328,6 +328,63 @@ class PriorTransferCliTests(unittest.TestCase):
         self.assertFalse(self.target().exists())
         self.assertTrue(self.firewall.log.exists())
 
+    def test_gt_replacement_after_admission_cannot_become_new_baseline(self):
+        original_admit = self.dependencies.admit_mesh
+        def replace_after_admission(*a, **k):
+            admitted = original_admit(*a, **k)
+            Path(self.args.gt_mesh).write_bytes(b"different post-admission mesh")
+            return admitted
+        self.dependencies.admit_mesh = replace_after_admission
+        with self.assertRaises((ValueError, RuntimeError)):
+            run_evaluator(self.args, self.dependencies)
+        self.assertEqual(self.dependencies.events, ["admit"])
+        self.assertFalse(self.target().exists())
+        self.assertTrue(self.firewall.log.exists())
+
+    def test_initial_gt_identity_failure_is_inconclusive_without_parsing(self):
+        Path(self.args.gt_mesh).write_bytes(b"wrong initial mesh identity")
+        code, publication = run_evaluator(self.args, self.dependencies)
+        self.assertEqual(code, 2)
+        self.assertEqual(publication["report"]["outcome"], "INCONCLUSIVE")
+        self.assertEqual(self.dependencies.events, [])
+        self.assertTrue(self.firewall.log.exists())
+
+    def test_gt_write_restore_during_admission_aborts_before_evaluation(self):
+        original_admit = self.dependencies.admit_mesh
+        def mutate_restore(*a, **k):
+            admitted = original_admit(*a, **k)
+            path = Path(self.args.gt_mesh)
+            before = path.read_bytes()
+            path.write_bytes(b"transient GT mutation")
+            path.write_bytes(before)
+            return admitted
+        self.dependencies.admit_mesh = mutate_restore
+        with self.assertRaises((ValueError, RuntimeError)):
+            run_evaluator(self.args, self.dependencies)
+        self.assertEqual(self.dependencies.events, ["admit"])
+        self.assertFalse(self.target().exists())
+
+    def test_prior_replaced_by_gt_alias_at_authorizer_reload_is_not_opened(self):
+        import os
+        from reliability.utility_gt_firewall import authorize_first_gt_access
+        original_open = Path.open
+        def guarded_open(path, *a, **k):
+            if path.exists() and path.samefile(Path(self.args.gt_mesh)):
+                raise AssertionError("GT inode opened during confirmation reload")
+            return original_open(path, *a, **k)
+        def replaced_authorize(*a, **k):
+            path = Path(self.args.confirmation)
+            path.unlink()
+            os.link(self.args.gt_mesh, path)
+            with mock.patch.object(Path, "open", guarded_open):
+                return authorize_first_gt_access(*a, **k)
+        with mock.patch("scripts.diagnostics.evaluate_g1_prior_transfer.authorize_first_gt_access",
+                        side_effect=replaced_authorize):
+            with self.assertRaises(ValueError):
+                run_evaluator(self.args, self.dependencies)
+        self.assertFalse(self.firewall.log.exists())
+        self.assertEqual(self.dependencies.events, [])
+
 
 if __name__ == "__main__":
     unittest.main()
