@@ -2,6 +2,24 @@
 
 ## Session Log
 
+### 2026-10-09 Gate F2 authorization and minimal transport
+
+- User accepts F1, authorizes only seed2 frozen7k D0 shadow/qualification;15GiB guard unchanged, failures stop, no DA3 or GT. After three seeds summarize assets before separately authorized GT release/evaluation/Geometry/C1.
+- Existing isolated codex branch retained. Baseline operational23 checks pass (two Windows link skips). Added row2/pinned-seed1/disk/monitor/audit cases first: RED4 failures4 errors from unsupported seed2 and missing predecessor verification. Shared helper/explicit mode extension yields GREEN32 checks (two link skips); production scientific core unchanged, no415-suite reimplementation/rerun.
+- Geometry Gate0 review packet/actual literal annex remains required written work; original four proposals are pending, not silently approved and not a scientific failure/GT release. Prioritized F2 handoff; subsequent Geometry delivery must explicitly enumerate human choices and all literal parameters, not claim the existing checklist is the annex.
+- Fresh read-only operational review independently reran32 checks (two Windows link skips), found no substantive F2 blocker and verified original production --seed2 support. AST/diff checks pass. Server input identities/POSIX/import/GPU/disk/training/qualification/scientific results remain unjudged and require actual authorized receipts; do not infer them from local GREEN. No production files changed.
+
+### 2026-10-08 Gate F1 qualified — authoritative server receipt
+
+- Storage: approved single old formal-v2 report removed, original manifest retained, cleanup exit0; fresh free16940032000 bytes passes15GiB. Recover full report from verified read-only local backup. No repeat deletion.
+- Unchanged handoff33cc0b6 selected preregistered seed1 using existing v3 confirmation; dispatch exit0/PID6265, GNU import PASS. Actual run reached7000, checkpoints3000/7000 saved, Training complete19:55:15 server log time.
+- User-operated launcher receipt exit0, wall376s, whole-device sampled GPU peak4068MiB. Existing `launcher.py --audit-seed1` returned QUALIFIED/exit0 with gt_access NONE. Record `/root/autodl-tmp/ambisur_diagnostics/Utility_Room/prior-transfer/utility_prior_transfer_softv4_20261008_v3_seed1.qualification.json`, SHA `d0b3eae76beab3261097239d23d9f70b6e1bc96b66ebc099c1b34f4279391bf4`.
+- F0/F1 complete; F2 awaits separate authorization. Updated only planning records; no production change, server action, DA3 rerun, GT access, Geometry intervention or C1. No statistical/scientific inference from training PSNR or QUALIFIED.
+
+### 2026-10-08 Gate F1 disk-admission receipt
+- User-operated docs33cc0b6:23/23 checks PASS (including POSIX links), GNU_IMPORT_CHAIN PASS, then15GiB free-space guard rejects prepare(seed=1), dispatch return1. Source inspection confirms the guard precedes any view/run/state/launcher creation; no seed1 training started.
+- No method/runtime regression inferred; seed0 qualification remains valid. No source edits, package changes, deletion, automatic retry or threshold relaxation. Next request is read-only current free bytes, directory usage and target absence; no GT payload read. Exact deficit pending server receipt.
+
 ### 2026-10-08 Utility Gate F1 operational extension
 - One fresh read-only reviewer approves scoped F1 with no actionable Critical/Important/Minor; independently repeats23 checks (21pass/two Windowslinkskips), AST/diff and launch-schema compatibility. Server/POSIX/CUDA/resources/real qualification/science are not certified locally; actual user-operated gates remain mandatory. Concurrent filesystem writers are disallowed, not claimed transactionally safe.
 - User authorizes seed1 only, same v3 confirmation/snapshot and seed0 qualification prerequisite. Existing isolated codex branch reused; no production method code or environment installation.

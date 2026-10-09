@@ -36,7 +36,41 @@ class HandoffChecks(unittest.TestCase):
                     check(record, seed=1)
                 Path(value).unlink()
             with self.assertRaises(RuntimeError):
-                check(record, seed=2)
+                check(record, seed=3)
+
+    def test_seed2_admission_preserves_predecessors_and_blocks_probe_and_sidecar(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rows = [dict(seed=seed, **{key: str(root / f'{seed}-{key}') for key in
+                    ('run_dir', 'view_dir', 'state_file', 'launcher_dir', 'qualification_path')})
+                    for seed in (0, 1, 2)]
+            for row in rows[:2]:
+                Path(row['run_dir']).mkdir()
+            record = dict(runs=rows, probe_targets={'output_dir': str(root / 'probe')})
+            handoff.require_seed_targets(record, seed=2)
+            for value in (rows[2]['qualification_path'] + '.sha256', record['probe_targets']['output_dir']):
+                Path(value).write_text('reserved')
+                with self.assertRaises(RuntimeError):
+                    handoff.require_seed_targets(record, seed=2)
+                Path(value).unlink()
+
+    def test_seed2_worker_reuses_exact_row_and_receipts(self):
+        self.run_worker(seed=2)
+
+    def test_seed2_wrong_binding_never_starts_training(self):
+        self.run_worker(seed=2, wrong_binding=True)
+
+    def test_seed2_monitor_failure_stops_child(self):
+        self.run_worker(seed=2, monitor_failure=True)
+
+    def test_seed2_prepare_preserves_both_qualified_runs(self):
+        self.prepare_seed1(seed=2)
+
+    def test_seed2_changed_seed1_stops_before_targets(self):
+        self.prepare_seed1(seed=2, bad_predecessor=True)
+
+    def test_seed2_low_space_stops_before_targets(self):
+        self.prepare_seed1(seed=2, low_space=True)
 
     def test_seed1_worker_reuses_exact_argv_environment_and_receipts(self):
         self.run_worker(seed=1)
@@ -53,21 +87,24 @@ class HandoffChecks(unittest.TestCase):
     def test_seed1_bad_predecessor_stops_before_any_target(self):
         self.prepare_seed1(bad_predecessor=True)
 
-    def prepare_seed1(self, *, bad_predecessor=False):
+    def prepare_seed1(self, *, bad_predecessor=False, seed=1, low_space=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             rows = []
-            for seed in (0, 1, 2):
-                row = dict(seed=seed, run_dir=str(root / f'run{seed}'),
-                    view_dir=str(root / f'view{seed}' / 'colmap_undistorted'),
-                    launcher_dir=str(root / f'launch{seed}'), state_file=str(root / f'state{seed}'),
-                    qualification_path=str(root / f'qualification{seed}'))
-                row['training_argv'] = [handoff.PYTHON, 'train.py', '--seed', str(seed),
+            for row_seed in (0, 1, 2):
+                row = dict(seed=row_seed, run_dir=str(root / f'run{row_seed}'),
+                    view_dir=str(root / f'view{row_seed}' / 'colmap_undistorted'),
+                    launcher_dir=str(root / f'launch{row_seed}'), state_file=str(root / f'state{row_seed}'),
+                    qualification_path=str(root / f'qualification{row_seed}'))
+                row['training_argv'] = [handoff.PYTHON, 'train.py', '--seed', str(row_seed),
                     '--source_path', row['view_dir'], '--model_path', row['run_dir']]
                 rows.append(row)
             Path(rows[0]['run_dir']).mkdir()
             payload = Path(rows[0]['run_dir']) / 'original'
             payload.write_bytes(b'qualified seed0')
+            if seed == 2:
+                Path(rows[1]['run_dir']).mkdir()
+                (Path(rows[1]['run_dir']) / 'original').write_bytes(b'qualified seed1')
             confirmation = dict(runs=rows, probe_targets={'output_dir': str(root / 'probe')},
                 repository=dict(root=str(handoff.REPO), commit=handoff.COMMIT, clean=True))
             frozen = json.dumps(confirmation, sort_keys=True).encode()
@@ -86,30 +123,54 @@ class HandoffChecks(unittest.TestCase):
                  patch.object(handoff, 'clean_checkout'), patch.object(handoff, 'gpu_memory', return_value=400), \
                  patch.object(handoff, 'frozen_trees'), \
                  patch.object(handoff, 'validate_seed0_qualification', side_effect=
-                    RuntimeError('prior qualification changed') if bad_predecessor else None) as previous, \
-                 patch.object(handoff.shutil, 'disk_usage', return_value=types.SimpleNamespace(free=16*1024**3)), \
+                    RuntimeError('prior qualification changed') if bad_predecessor and seed == 1 else None) as previous, \
+                 patch.object(handoff, 'validate_seed1_qualification', create=True, side_effect=
+                    RuntimeError('prior qualification changed') if bad_predecessor and seed == 2 else None) as previous1, \
+                 patch.object(handoff.shutil, 'disk_usage', return_value=types.SimpleNamespace(
+                    free=15*1024**3-1 if low_space else 16*1024**3)), \
                  patch.object(handoff.subprocess, 'check_output', return_value=''), \
                  patch.object(handoff.subprocess, 'Popen', return_value=types.SimpleNamespace(pid=123)) as start, \
                  contextlib.redirect_stdout(io.StringIO()):
-                if bad_predecessor:
-                    with self.assertRaisesRegex(RuntimeError, 'prior qualification changed'):
-                        handoff.prepare(seed=1)
+                if bad_predecessor or low_space:
+                    with self.assertRaisesRegex(RuntimeError,
+                            'prior qualification changed' if bad_predecessor else '15 GiB'):
+                        handoff.prepare(seed=seed)
                     start.assert_not_called()
-                    self.assertFalse(Path(rows[1]['view_dir']).parent.exists())
+                    self.assertFalse(Path(rows[seed]['view_dir']).parent.exists())
                 else:
-                    handoff.prepare(seed=1)
+                    handoff.prepare(seed=seed)
                     self.assertEqual(previous.call_count, 2)
-                    self.assertEqual(start.call_args.args[0][3], '--worker-seed1')
-                    record = json.loads((Path(rows[1]['launcher_dir']) / 'launch_record.json').read_text())
-                    self.assertEqual(record['training_argv'], rows[1]['training_argv'])
-                    self.assertEqual(record['seed'], 1)
-                    self.assertIn('SEED=1', Path(rows[1]['state_file']).read_text())
-                    self.assertFalse(Path(rows[2]['run_dir']).exists())
+                    self.assertEqual(previous1.call_count, 2 if seed == 2 else 0)
+                    self.assertEqual(start.call_args.args[0][3], f'--worker-seed{seed}')
+                    record = json.loads((Path(rows[seed]['launcher_dir']) / 'launch_record.json').read_text())
+                    self.assertEqual(record['training_argv'], rows[seed]['training_argv'])
+                    self.assertEqual(record['seed'], seed)
+                    self.assertIn(f'SEED={seed}', Path(rows[seed]['state_file']).read_text())
+                    if seed == 1:
+                        self.assertFalse(Path(rows[2]['run_dir']).exists())
                     self.assertFalse((root / 'probe').exists())
                     schema._validate_record.assert_called_once_with(confirmation,
                         require_targets_absent=False, verify_record_files=False)
             self.assertEqual(payload.read_bytes(), b'qualified seed0')
+            if seed == 2:
+                self.assertEqual((Path(rows[1]['run_dir']) / 'original').read_bytes(), b'qualified seed1')
             self.assertEqual(json.dumps(confirmation, sort_keys=True).encode(), frozen)
+
+    def test_seed2_audit_uses_both_predecessors_and_existing_cli(self):
+        with patch.object(handoff, 'clean_checkout'), \
+             patch.object(handoff, 'read_digest', side_effect=[handoff.V3_DIGEST, 'recovery']), \
+             patch.object(handoff, 'recovery_binding', return_value={'frozen': True}), \
+             patch.object(handoff, 'validate_seed0_qualification') as previous0, \
+             patch.object(handoff, 'validate_seed1_qualification', create=True) as previous1, \
+             patch.object(handoff.subprocess, 'run') as run, \
+             patch.object(handoff.subprocess, 'Popen') as start, \
+             patch.dict(os.environ), patch.object(handoff, 'DIGEST', handoff.V3_DIGEST):
+            handoff.audit(seed=2)
+            previous0.assert_called_once_with({'frozen': True})
+            previous1.assert_called_once_with({'frozen': True})
+            self.assertEqual(run.call_args.args[0][-2:], ['--seed', '2'])
+            self.assertIn('scripts/diagnostics/audit_prior_transfer_run.py', run.call_args.args[0])
+            start.assert_not_called()
 
     def test_seed1_audit_reuses_existing_cli_without_training(self):
         with patch.object(handoff, 'clean_checkout'), \
@@ -126,9 +187,15 @@ class HandoffChecks(unittest.TestCase):
             start.assert_not_called()
 
     def test_seed0_qualification_is_pinned_and_revalidates_recorded_payloads(self):
+        self.check_qualification(seed=0)
+
+    def test_seed1_qualification_is_pinned_and_revalidates_recorded_payloads(self):
+        self.check_qualification(seed=1)
+
+    def check_qualification(self, *, seed):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            row = dict(seed=0, run_dir=str(root / 'run'), view_dir=str(root / 'view'),
+            row = dict(seed=seed, run_dir=str(root / 'run'), view_dir=str(root / 'view'),
                        launcher_dir=str(root / 'launch'), state_file=str(root / 'state'),
                        qualification_path=str(root / 'qualification'))
             for key in ('run_dir', 'view_dir', 'launcher_dir'):
@@ -137,13 +204,13 @@ class HandoffChecks(unittest.TestCase):
             Path(row['state_file']).write_bytes(b'frozen')
             source, snapshot = root / 'source', root / 'snapshot'
             source.write_bytes(b'frozen'); snapshot.write_bytes(b'frozen')
-            confirmation = dict(runs=[row], source_record=dict(path=str(source)),
+            confirmation = dict(runs=[{}] * seed + [row], source_record=dict(path=str(source)),
                                 snapshot_record=dict(path=str(snapshot)))
             files = [path for path in root.rglob('*') if path.is_file()]
             fingerprints = {str(path): dict(resolved_path=str(path.resolve()), bytes=6,
                 sha256=handoff.hashlib.sha256(b'frozen').hexdigest()) for path in files}
             report = dict(outcome='QUALIFIED', gt_access='NONE', confirmation_sha256='frozen-confirmation',
-                run_binding=dict(seed=0, run_dir=row['run_dir'], view_dir=row['view_dir'],
+                run_binding=dict(seed=seed, run_dir=row['run_dir'], view_dir=row['view_dir'],
                     repository_commit=handoff.COMMIT, snapshot_sha256=
                     '307b176e41111af403a565db94cfe8ada0a7d739361e1e380dcfaca08f49fc22',
                     evidence_version=4, qualification_path=row['qualification_path']),
@@ -154,7 +221,8 @@ class HandoffChecks(unittest.TestCase):
                 reads.append((identity, kwargs))
                 if identity['path'] == row['qualification_path']:
                     self.assertEqual(identity['sha256'],
-                        'fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9')
+                        'fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9' if seed == 0 else
+                        'd0b3eae76beab3261097239d23d9f70b6e1bc96b66ebc099c1b34f4279391bf4')
                     return json.dumps(report).encode()
                 payload = Path(identity['path']).read_bytes()
                 if handoff.hashlib.sha256(payload).hexdigest() != identity['sha256']:
@@ -164,16 +232,16 @@ class HandoffChecks(unittest.TestCase):
             firewall._reject_aliases = lambda *a, **kw: None
             assets = types.ModuleType('reliability.prior_transfer_assets')
             assets._file_inventory = lambda path: {'payload'}
-            check = getattr(handoff, 'validate_seed0_qualification', lambda *a: None)
+            check = getattr(handoff, f'validate_seed{seed}_qualification', lambda *a: None)
             with patch.dict('sys.modules', {'reliability.utility_gt_firewall': firewall,
                                            'reliability.prior_transfer_assets': assets}), \
                  patch.object(handoff, 'DIGEST', 'frozen-confirmation'):
                 check(confirmation)
                 self.assertTrue(reads, 'predecessor must be read and pinned')
-                report['run_binding']['seed'] = 1
+                report['run_binding']['seed'] = 1 - seed
                 with self.assertRaises(RuntimeError):
                     check(confirmation)
-                report['run_binding']['seed'] = 0
+                report['run_binding']['seed'] = seed
                 Path(row['state_file']).write_bytes(b'changed')
                 with self.assertRaises(ValueError):
                     check(confirmation)
@@ -362,6 +430,7 @@ class HandoffChecks(unittest.TestCase):
                  patch.object(handoff, 'ROOT', root), \
                  patch.object(handoff, 'clean_checkout'), \
                  patch.object(handoff, 'validate_seed0_qualification', create=True), \
+                 patch.object(handoff, 'validate_seed1_qualification', create=True), \
                  patch.object(handoff, 'frozen_trees') as trees, \
                  patch.object(handoff, 'datetime', clock), \
                  patch.object(handoff.subprocess, 'Popen', return_value=process) as start, \

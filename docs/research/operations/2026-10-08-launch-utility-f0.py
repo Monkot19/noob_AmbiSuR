@@ -1,4 +1,4 @@
-"""User-operated sequential F0/F1 handoff; not a training/evaluation engine.
+"""User-operated sequential F0/F1/F2 handoff; not a training/evaluation engine.
 
 Run from a transported pinned documentation artifact on AutoDL. The checkout
 stays at the already qualified execution commit. Recovery is explicit, single-use,
@@ -28,6 +28,7 @@ CONFIRMATION = ROOT / (NEW_ID + '.confirmation.json')
 DIGEST = None  # Supplied by the exclusive recovery publication, not an unchecked file.
 V3_DIGEST = '8ae37c8d0d884936c9f8416b9fd833f05f2c4c03efc7e073c8f78dccaa7653a1'
 SEED0_QUALIFICATION_SHA = 'fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9'
+SEED1_QUALIFICATION_SHA = 'd0b3eae76beab3261097239d23d9f70b6e1bc96b66ebc099c1b34f4279391bf4'
 GT = Path('/root/autodl-tmp/ambisur_data/gt/ScanNetpp/Utility_Room/mesh_aligned_0.05.ply')
 
 
@@ -72,21 +73,31 @@ def require_absent_targets(record):
 
 
 def require_seed_targets(record, *, seed):
-    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
+    require(type(seed) is int and seed in (0, 1, 2), 'seed is not authorized')
     require_absent_targets({'runs': record['runs'][seed:],
                             'probe_targets': record['probe_targets']})
 
 
 def validate_seed0_qualification(confirmation):
+    validate_qualification(confirmation, seed=0)
+
+
+def validate_seed1_qualification(confirmation):
+    validate_qualification(confirmation, seed=1)
+
+
+def validate_qualification(confirmation, *, seed):
     """Verify the accepted predecessor without rewriting or re-qualifying it."""
+    require(type(seed) is int and seed in (0, 1), 'predecessor is not authorized')
     from reliability.utility_gt_firewall import _read_verified, _reject_aliases
     from reliability.prior_transfer_assets import _file_inventory
-    row = confirmation['runs'][0]
+    row = confirmation['runs'][seed]
+    expected_sha = (SEED0_QUALIFICATION_SHA, SEED1_QUALIFICATION_SHA)[seed]
     report = json.loads(_read_verified({'path': row['qualification_path'],
-        'sha256': SEED0_QUALIFICATION_SHA}, detached=True, protected=(GT,)))
+        'sha256': expected_sha}, detached=True, protected=(GT,)))
     require(report['outcome'] == 'QUALIFIED' and report['gt_access'] == 'NONE' and
             report['confirmation_sha256'] == DIGEST, 'seed0 qualification binding mismatch')
-    require(report['run_binding'] == dict(seed=0, run_dir=row['run_dir'],
+    require(report['run_binding'] == dict(seed=seed, run_dir=row['run_dir'],
         view_dir=row['view_dir'], repository_commit=COMMIT, snapshot_sha256=
         '307b176e41111af403a565db94cfe8ada0a7d739361e1e380dcfaca08f49fc22',
         evidence_version=4, qualification_path=row['qualification_path']),
@@ -270,16 +281,18 @@ def recover():
 
 def audit(*, seed=0):
     global DIGEST
-    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
+    require(type(seed) is int and seed in (0, 1, 2), 'seed is not authorized')
     clean_checkout()
     DIGEST = read_digest(str(CONFIRMATION) + '.sha256')
-    if seed == 1:
+    if seed in (1, 2):
         require(DIGEST == V3_DIGEST, 'wrong accepted v3 confirmation')
     os.environ['UTILITY_F0_RECOVERY_SHA'] = read_digest(
         ROOT / (NEW_ID + '.recovery.json.sha256'))
     confirmation = recovery_binding(DIGEST)
-    if seed == 1:
+    if seed in (1, 2):
         validate_seed0_qualification(confirmation)
+    if seed == 2:
+        validate_seed1_qualification(confirmation)
     subprocess.run([PYTHON, '-B', 'scripts/diagnostics/audit_prior_transfer_run.py',
         '--confirmation', str(CONFIRMATION), '--confirmation-sha', DIGEST, '--seed', str(seed)],
         cwd=REPO, env=runtime_environment(os.environ), check=True)
@@ -356,7 +369,7 @@ def frozen_trees(confirmation, row, *, destination=None):
 
 
 def prepare(*, seed=0):
-    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
+    require(type(seed) is int and seed in (0, 1, 2), 'seed is not authorized')
     clean_checkout()
     require(DIGEST is not None, 'missing explicit recovery digest')
     commands = subprocess.check_output(['ps', '-eo', 'args='], text=True)
@@ -388,9 +401,11 @@ def prepare(*, seed=0):
     require(row['seed'] == seed and row['training_argv'][0] == PYTHON,
             'seed/interpreter mismatch')
     _no_gt(row)
-    if seed == 1:
+    if seed in (1, 2):
         require(DIGEST == V3_DIGEST, 'wrong accepted v3 confirmation')
         validate_seed0_qualification(confirmation)
+    if seed == 2:
+        validate_seed1_qualification(confirmation)
     require(shutil.disk_usage('/root/autodl-tmp').free >= 15 * 1024**3,
             'less than 15 GiB free; stop without creating targets')
     gpu_memory()  # Qualify monitoring before launch, without CUDA inference.
@@ -407,8 +422,10 @@ def prepare(*, seed=0):
             require(not os.path.lexists(other[key]), 'unauthorized target appeared')
     for target in confirmation['probe_targets'].values():
         require(not os.path.lexists(target), 'probe target appeared')
-    if seed == 1:
+    if seed in (1, 2):
         validate_seed0_qualification(confirmation)
+    if seed == 2:
+        validate_seed1_qualification(confirmation)
     run.mkdir(parents=True, exist_ok=False)
     launch.mkdir(parents=True, exist_ok=False)
     # attempt=1 is the existing auditor's first-launch-within-this-confirmation
@@ -427,7 +444,7 @@ def prepare(*, seed=0):
     exclusive(worker, Path(__file__).read_text(encoding='utf-8'))
     env = runtime_environment(os.environ)
     with (launch / 'launcher.log').open('x', encoding='utf-8') as log:
-        mode = '--worker' if seed == 0 else '--worker-seed1'
+        mode = '--worker' if seed == 0 else f'--worker-seed{seed}'
         process = subprocess.Popen([PYTHON, '-B', str(worker), mode, str(launch), DIGEST],
                                    cwd=REPO, env=env, stdin=subprocess.DEVNULL,
                                    stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -436,12 +453,13 @@ def prepare(*, seed=0):
     print('train_log=' + str(run / 'train.log'))
     print('launch_dir=' + str(launch))
     print('training_started=AWAIT_WORKER_RECEIPT')
-    print(('seed1_seed2_started=NO' if seed == 0 else 'seed2_started=NO') +
+    print(({0: 'seed1_seed2_started=NO', 1: 'seed2_started=NO',
+            2: 'additional_training_started=NO'}[seed]) +
           '\ngt_content_accessed=NO\nC1_started=NO')
 
 
 def worker(launch, *, seed=0):
-    require(type(seed) is int and seed in (0, 1), 'seed is not authorized')
+    require(type(seed) is int and seed in (0, 1, 2), 'seed is not authorized')
     require(launch == ROOT / (NEW_ID + f'_seed{seed}.launch'),
             'unexpected worker target')
     clean_checkout()
@@ -457,8 +475,10 @@ def worker(launch, *, seed=0):
     require(all(record[key] == row[key] for key in
                 ('seed', 'run_dir', 'view_dir', 'state_file', 'launcher_dir', 'training_argv')),
             'worker row mismatch')
-    if seed == 1:
+    if seed in (1, 2):
         validate_seed0_qualification(confirmation)
+    if seed == 2:
+        validate_seed1_qualification(confirmation)
     frozen_trees(confirmation, row)
     run = Path(record['run_dir'])
     exclusive(launch / 'launcher.pid', str(os.getpid()) + '\n')
@@ -519,6 +539,21 @@ if __name__ == '__main__':
         audit()
     elif sys.argv[1:] == ['--audit-seed1']:
         audit(seed=1)
+    elif sys.argv[1:] == ['--audit-seed2']:
+        audit(seed=2)
+    elif sys.argv[1:] == ['--launch-seed2']:
+        DIGEST = V3_DIGEST
+        clean_checkout()
+        import_smoke()
+        os.environ['UTILITY_F0_RECOVERY_SHA'] = read_digest(
+            ROOT / (NEW_ID + '.recovery.json.sha256'))
+        recovery_binding(DIGEST)
+        prepare(seed=2)
+    elif sys.argv[1:2] == ['--worker-seed2'] and len(sys.argv) == 4:
+        require(sys.argv[3] == V3_DIGEST, 'wrong accepted v3 confirmation')
+        DIGEST = V3_DIGEST
+        recovery_binding(DIGEST)
+        worker(Path(sys.argv[2]), seed=2)
     elif sys.argv[1:] == ['--launch-seed1']:
         DIGEST = V3_DIGEST
         clean_checkout()

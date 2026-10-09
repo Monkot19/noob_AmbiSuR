@@ -39,8 +39,15 @@
 
 在不混入 Supporting 模块的前提下，完成可复现、可消融的 AmbiSuR Core：观测校准、双可靠性、五状态仲裁、参数级梯度路由和 Gaussian 生命周期，并通过 G0–G2。
 
-## Current authoritative handoff — 2026-10-08 Gate F0
+## Current authoritative handoff — 2026-10-09 Gate F2 authorized
 
+- [ ] Gate F2 separately authorized: same v3 confirmation, DA3 snapshot, c701424 execution commit and exact row2 argv;15GiB admission rechecked, failure stops with no automatic cleanup/retry. Extend only existing thin operational adapter and reuse worker/asset auditor. No GT/DA3/Geometry/C1 authority. Three qualified seeds must first be summarized, not automatically evaluated.
+- [ ] Geometry remains unexecuted. Submit full Gate0 four-amendment review packet plus literal execution-contract annex, identifying every human choice. Existing proposal/checklist is not a complete annex or approved amendment; do not merely wait, silently choose values or issue GT release. Keep this separate from F2 execution.
+
+- [x] User-operated v3 seed1 dispatch returned0/PID6265 after authorized single-report offload restored15GiB admission. Actual training reached7000, saved3000/7000 checkpoints and completed19:55:15 server log time. Launcher exit0, wall376s, sampled whole-device GPU peak4068MiB. Existing `--audit-seed1` returns QUALIFIED/exit0, gt_access NONE; qualification SHA `d0b3eae76beab3261097239d23d9f70b6e1bc96b66ebc099c1b34f4279391bf4`. Seed0 and seed1 are qualified assets only; no transfer/G1/C1 conclusion. Earlier pending/storage-stop statements below are superseded history.
+- [x] Gate F2 separately authorized2026-10-09, superseding the earlier waiting-for-authorization state; actual server launch remains pending. Utility GT firewall, Geometry amendment approval and C1/five-state/routing blocks remain unchanged.
+
+- [ ] Gate F1 storage admission stopped before any seed1 target creation/dispatch: AutoDL23/23 operational tests and GNU import PASS, pinned seed0 qualification verification reached unchanged15GiB free-space guard then returned1. Exact current bytes/occupancy pending read-only inventory; do not repeat launch, delete assets or relax threshold. Seed0 remains qualified; no scientific failure or GT authority.
 - [ ] User explicitly authorizes Gate F1 only: same v3 confirmation/snapshot seed1 7k plus qualification. Minimal operational extension plan `docs/superpowers/plans/2026-10-08-utility-f1-handoff.md`; shared production core untouched. Preserve qualified seed0; no seed2/GT/Geometry/C1 authority.
 - [x] Authoritative v3 seed0 completion and qualification receipt: launcher inactive, exit0/train_return_code0, wall394s, whole-device GPU sampled peak4166MiB; existing auditor returns QUALIFIED/exit0, gt_access NONE, qualification SHA `fbad915581157be0c89e24ae13e605ddc9f1fe03a1495dc94dc44e61ce59a1c9`. Gate F0 complete; await separate seed1 authorization. Prior pending statements below are historical/superseded, not current blockers. No transfer/G1/C1 conclusion or GT release.
 - [x] User-supplied v3 seed0 train.log reaches7000 and `Training complete.` at2026-10-08 19:13:13 server log time, with3000/7000 checkpoint-save messages. MKL startup failure no longer occurs in this run. Launcher post-run exit/frozen-input receipts and existing asset qualification are still pending; no scientific transfer conclusion or seed1/2/GT authorization follows.
