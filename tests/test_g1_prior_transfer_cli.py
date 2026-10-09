@@ -144,7 +144,7 @@ class PriorTransferCliTests(unittest.TestCase):
         options = {option for action in build_parser()._actions for option in action.option_strings}
         self.assertEqual(options, {"-h", "--help", "--repository", "--expected-commit", "--confirmation",
             "--confirmation-sha", "--qualification-record", "--geometry-release", "--geometry-release-sha",
-            "--source-root", "--gt-mesh", "--output-root", "--diagnostic-id"})
+            "--source-root", "--gt-mesh", "--output-root", "--diagnostic-id", "--access-amendment", "--access-amendment-sha"})
 
     def test_binds_all_runs_before_first_access_and_queries_all_finite_rows(self):
         from reliability.utility_gt_firewall import authorize_first_gt_access

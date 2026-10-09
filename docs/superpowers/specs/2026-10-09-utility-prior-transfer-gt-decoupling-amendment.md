@@ -1,6 +1,6 @@
 # Utility prior-transfer 首次 GT 访问：最小解耦修订案
 
-**2026-10-09，待用户确认；仅书面交付，尚不授权代码修改或GT访问。** 对[已批准Utility规格](2026-09-30-prior-risk-utility-transfer-design.md)仅修订§3与§7的GT准入依赖。Geometry Q按用户范围/预算决定暂停，保留文档和结果；不是科学否定、不是 `NO_ACTION_SPECIFIC_SIGNAL`，不生成geometry termination/release。
+**2026-10-09，用户明确要求立即执行冻结Utility GT评价，授权本最小准入适配、补充记录及一次评价；不扩大科学范围。** 对[已批准Utility规格](2026-09-30-prior-risk-utility-transfer-design.md)仅修订§3与§7的GT准入依赖。Geometry Q按用户范围/预算决定暂停，保留文档和结果；不是科学否定、不是 `NO_ACTION_SPECIFIC_SIGNAL`，不生成geometry termination/release。
 
 ## 1. 唯一协议改动
 
@@ -39,7 +39,7 @@
 
 新增测试仅覆盖六组合同：①暂停本身/未批准补充记录不解锁GT；②补充记录与三seed/原v3/新评价commit及未改core的正确绑定；③任一身份、科学字段、授权或输出路径变动拒绝；④任何伪科学终止/geometry准入请求拒绝；⑤日志先于解析、别名/变异和既存目标拒绝；⑥CLI经新路径仍委托同一模型/统计/聚合与compact出版，并在mesh失败时不拟合。使用合成fixture和现有测试依赖，无真实GT。
 
-已有 `test_g1_complementarity`、`test_g1_prior_transfer` 只作回归；confirmation/firewall/CLI运行直接受影响的测试，不跑无关全套，不增加Tool Room探针。本轮只交付书面修订；测试与适配尚未执行。
+已有 `test_g1_complementarity`、`test_g1_prior_transfer` 只作回归；confirmation/firewall/CLI运行直接受影响的测试，不跑无关全套，不增加Tool Room探针。此次授权后最小适配按TDD落实，不改既有统计核心。
 
 ## 5. 论文主线与本验证的关系
 
@@ -50,6 +50,8 @@
 一致性可以作为未来策略假设的输入，但当前r_g未验证外部正确性或安全授权；恢复五状态需要另行明确一致性与动作语义、反例和配对消融，不能跳回原“可靠性授权”称谓。已有Tool Room soft-v4/7000稳定Consensus=0、Geometry-led=22；原因尚未被逐门/迟滞分解定位，不能归因为7k短，也不要求人为凑齐状态。这个未解诊断不阻塞本次prior-transfer，不启动新研究线或Q。
 
 ## 6. 缺口、审批与批准后直接执行的步骤
+
+**执行状态补充：** 以下审批描述为首次书面提案的历史流程。用户随后明确要求“现在就开始进行utility的gt测试”，已授权最小准入适配与一次评价；不再等待本段所述新审批。三seed资产仍需在实际执行时重核，真实mesh与科学门不预先宣称通过。
 
 **没有新数据或训练缺口。** 目前缺的是用户批准本准入修订、最小适配/必要TDD落地和新评价commit、带SHA的补充记录，以及明确的首次GT访问/评价授权。GT对齐/覆盖尚未经真实解析，这不是预先假定会通过的条件。
 

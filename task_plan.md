@@ -41,6 +41,10 @@
 
 ## Current authoritative handoff — 2026-10-09 Utility transfer only / Geometry paused
 
+- [x] User explicitly requests Utility GT test now and reaffirms core reuse. Authority covers the minimum prior-only admission supplement and one frozen three-seed evaluation; no Geometry release, training, DA3, routing or C1.
+- [x] New admission contracts RED→GREEN locally using bundled Python. Original statistical files unchanged against c701424. Plan: docs/superpowers/plans/2026-10-09-utility-access-minimal-adapter-plan.md.
+- [x] Final focused regression:87 tests OK (one optional local backend skip); bounded fresh-context review's four Important issues each reproduced RED→GREEN. Static parse/whitespace checks pass. Exact commit push/handoff next; real mesh admission and scientific result remain pending user execution.
+
 - [x] User explicitly pauses Geometry Q for scope/budget, retaining all documents/results. Not a scientific rejection or geometry termination; no release/firewall unlock. Previous Geometry writing/backend/synthetic plans below are historical and suspended, not active deliverables.
 - [x] Three Utility seeds remain QUALIFIED under original v3 confirmation and one DA3 snapshot. Current sole priority: frozen 1-r_p independent validation; no DA3/training/statistical redevelopment, new N, r_g routing, five-state/lifecycle/30k or C1.
 - [ ] Submit minimal pending amendment `docs/superpowers/specs/2026-10-09-utility-prior-transfer-gt-decoupling-amendment.md`. Preserve original pre-run v3/qualifications; propose a separate checksummed prior-transfer-only approval supplement, explicit new evaluation-vs-training commit binding, and permanent exclusion of Utility feedback from Geometry development/confirmation. Current turn writing only; user protocol approval then explicit minimal-adapter/GT evaluation authority required. No server or GT content access now.

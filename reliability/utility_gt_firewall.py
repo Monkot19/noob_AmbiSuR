@@ -306,6 +306,9 @@ class UtilityMeshAdmission:
 def _verify_mesh_access(confirmation, token):
     if not isinstance(token, Mapping) or set(token) != {"path", "sha256", "record"}:
         raise ValueError("verified first-access token required before mesh parsing")
+    if isinstance(token["record"], Mapping) and token["record"].get("kind") == "utility_prior_transfer_first_gt_access":
+        from reliability.prior_transfer_access_amendment import verify_prior_transfer_mesh_access
+        return verify_prior_transfer_mesh_access(confirmation, token)
     prior = _validate_record(confirmation, require_targets_absent=False, verify_record_files=False)
     identity = {key: token[key] for key in ("path", "sha256")}
     log = _absolute(prior["probe_targets"]["access_log_path"])

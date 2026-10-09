@@ -99,7 +99,8 @@ def _admit_request(args, dependencies):
     prior_identity = _identity({"path": args.confirmation, "sha256": args.confirmation_sha})
     prior = _read_json(prior_identity, protected)
     prior = _validate_record(prior, require_targets_absent=False, verify_record_files=False)
-    if prior["repository"] != {"root": str(repository), "commit": args.expected_commit, "clean": True}:
+    amended = bool(getattr(args, "access_amendment", None))
+    if not amended and prior["repository"] != {"root": str(repository), "commit": args.expected_commit, "clean": True}:
         raise ValueError("confirmation/evaluator repository binding mismatch")
     targets = prior["probe_targets"]
     if target != Path(targets["output_dir"]) or gt != Path(prior["gt_mesh"]["path"]):
@@ -159,13 +160,27 @@ def _admit_request(args, dependencies):
                         Path(row["run_dir"]) / "d0_evidence" / f"iteration_{iteration:06d}.npz"]
             if any(str(path) not in expected_fingerprints for path in required):
                 raise ValueError("qualification omits required checkpoint/snapshot")
-    geometry_identity = _identity({"path": args.geometry_release, "sha256": args.geometry_release_sha})
-    geometry = _read_json(geometry_identity, protected, detached=True)
-    # Structural loader is reused only after guarded release-byte verification.
-    from reliability.utility_gt_firewall import validate_geometry_release
-    validate_geometry_release(geometry)
-    records = [prior_identity, geometry_identity, *handles, *geometry["specifications"].values(),
-               *geometry["evidence"], geometry["approval"]]
+    if amended:
+        if getattr(args, "geometry_release", None) or getattr(args, "geometry_release_sha", None):
+            raise ValueError("access amendment and geometry release are mutually exclusive")
+        from reliability.prior_transfer_access_amendment import load_amendment
+        geometry_identity = _identity({"path": args.access_amendment, "sha256": args.access_amendment_sha})
+        amendment = load_amendment(geometry_identity, protected=protected)
+        if (amendment["prior_confirmation"] != prior_identity
+                or amendment["qualification_records"] != handles
+                or amendment["repository"] != {"root": str(repository), "commit": args.expected_commit, "clean": True}):
+            raise ValueError("access amendment/evaluator binding mismatch")
+        records = [prior_identity, geometry_identity, *handles, amendment["specification"], amendment["approval"]]
+        paths.add(Path(amendment["approval"]["path"] + ".sha256"))
+        paths.update(repository / name for name in amendment["core_sha256"] if "/" in name)
+        paths.add(repository / "reliability/utility_gt_firewall.py")
+    else:
+        geometry_identity = _identity({"path": args.geometry_release, "sha256": args.geometry_release_sha})
+        geometry = _read_json(geometry_identity, protected, detached=True)
+        from reliability.utility_gt_firewall import validate_geometry_release
+        validate_geometry_release(geometry)
+        records = [prior_identity, geometry_identity, *handles, *geometry["specifications"].values(),
+                   *geometry["evidence"], geometry["approval"]]
     for identity in records:
         _reject_aliases([identity], protected)
         paths.add(Path(identity["path"]))
@@ -223,13 +238,18 @@ def run_evaluator(args, dependencies=None):
     (prior, prior_identity, geometry_identity, source, snapshot, paths, roots,
      before, generations) = _admit_request(args, dependencies)
     protected = [Path(args.gt_mesh), *(Path(path) for path in prior["probe_targets"].values())]
-    token = authorize_first_gt_access(prior_identity, geometry_identity, protected=protected,
+    authorizer = authorize_first_gt_access
+    if getattr(args, "access_amendment", None):
+        from reliability.prior_transfer_access_amendment import authorize_prior_transfer_gt_access
+        authorizer = authorize_prior_transfer_gt_access
+    token = authorizer(prior_identity, geometry_identity, protected=protected,
                                       access_log_path=Path(prior["probe_targets"]["access_log_path"]))
     _verify_mesh_access(prior, token)
     # From this point a failed attempt remains logged. No retry deletes the log.
     # Never reset the GT baseline after admission: the very same bytes and
     # generation must span admission, evaluation, and final publication.
     gt_before = None
+    print("FIRST_GT_ACCESS_LOGGED; checking frozen mesh admission", flush=True)
     try:
         gt_before = _fingerprint(Path(args.gt_mesh), [])
     except OSError as exc:
@@ -243,11 +263,14 @@ def run_evaluator(args, dependencies=None):
             admission = dependencies.admit_mesh(Path(args.gt_mesh), Path(args.source_root), prior, access_token=token)
         assert_inputs_unchanged(gt_before, _fingerprint(Path(args.gt_mesh), []))
     provenance = {"diagnostic_commit": args.expected_commit, "confirmation_id": prior["confirmation_id"],
-                  "confirmation_sha256": args.confirmation_sha, "geometry_release": geometry_identity,
+                  "confirmation_sha256": args.confirmation_sha,
+                  "training_commit": prior["repository"]["commit"],
+                  ("access_amendment" if getattr(args, "access_amendment", None) else "geometry_release"): geometry_identity,
                   "first_access_log": {key: token[key] for key in ("path", "sha256")},
                   "snapshot_sha256": snapshot["snapshot_sha256"], "source_sha256": source["source_sha256"],
                   "gt_mesh": prior["gt_mesh"], "qualification_records": args.qualification_record}
     results, reasons = {}, list(admission.reasons)
+    print(f"MESH_ADMISSION={admission.outcome}", flush=True)
     if admission.outcome != "ADMITTED" and not reasons:
         reasons = ["mesh admission did not succeed"]
     if not reasons:
@@ -256,10 +279,12 @@ def run_evaluator(args, dependencies=None):
             for row in prior["runs"]:
                 results[row["seed"]] = {}
                 for iteration in (3000, 7000):
+                    print(f"EVALUATING seed={row['seed']} iteration={iteration}", flush=True)
                     joined = dependencies.load_iteration(Path(row["run_dir"]), iteration, expected_evidence_version=4)
                     distances = dependencies.distances(joined.centers, mesh)
                     results[row["seed"]][iteration] = dependencies.evaluate_iteration(
                         joined, distances, training_seed=row["seed"], iteration=iteration)
+                    print(f"COMPLETED seed={row['seed']} iteration={iteration}", flush=True)
         except (ValueError, OSError, RuntimeError, ImportError, KeyError) as exc:
             reasons = [f"{type(exc).__name__}: {exc}"]
     try:
@@ -306,9 +331,14 @@ def run_evaluator(args, dependencies=None):
 
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
-    for flag in ("repository", "expected-commit", "confirmation", "confirmation-sha", "geometry-release",
-                 "geometry-release-sha", "source-root", "gt-mesh", "output-root", "diagnostic-id"):
+    for flag in ("repository", "expected-commit", "confirmation", "confirmation-sha",
+                 "source-root", "gt-mesh", "output-root", "diagnostic-id"):
         parser.add_argument("--" + flag, required=True)
+    access = parser.add_mutually_exclusive_group(required=True)
+    access.add_argument("--geometry-release")
+    access.add_argument("--access-amendment")
+    parser.add_argument("--geometry-release-sha")
+    parser.add_argument("--access-amendment-sha")
     parser.add_argument("--qualification-record", nargs=2, action="append", required=True, metavar=("PATH", "SHA256"))
     return parser
 

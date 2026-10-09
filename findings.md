@@ -1,5 +1,10 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-09 Authorized minimum GT admission adapter
+
+- User now authorizes prior-transfer-only GT evaluation, superseding the pending-approval status below. Reuse is enforced by original Git-blob/file hashes and mesh-function AST identities; frozen statistics/mesh algorithms remain unchanged. New code is admission and operational handoff only. Three Utility assets are not regenerated; original v3/training provenance is separate from evaluation provenance.
+- Local focused regression and a bounded fresh-context review precede exact-commit AutoDL handoff. Real scientific outcome is still unknown. Geometry pause is never encoded as scientific failure or a geometry release; Utility feedback remains prohibited for any future Geometry candidate.
+
 ## 2026-10-09 Utility-only priority / pending GT-decoupling amendment
 
 - User clarifies paper priority: five-state arbitration/routing/lifecycle are main contribution targets; N/error detection is enabling and must not consume unbounded Q development. Q concerns action-specific authorization, not a prerequisite for simple 1-r_p detection. Predictive replication, deployable GT-free formula, action benefit and consistency-based policy are distinct questions. Utility multi-seed tests scene transfer plus training variability; same-Tool-Room seeds would test variability only, not independent-scene transfer.

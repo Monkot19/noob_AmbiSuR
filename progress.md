@@ -2,6 +2,13 @@
 
 ## Session Log
 
+### 2026-10-09 Authorized prior-transfer-only evaluation handoff
+
+- User explicitly asks for Utility GT now and repeats reuse requirement. No new candidate, solver, folds, bootstrap, threshold, mesh algorithm or training. Original v3 qualifications retain their identities; post-training canonical supplement binds evaluation commit, approval audit, original Git blobs and frozen protocol/mesh/targets. Geometry remains paused, no release.
+- Six new access tests observed RED at missing adapter, then GREEN; operational tests reuse the old synthetic orchestration fixture. Specification-GT-alias case observed RED at unguarded wrapper read, then GREEN via the existing guarded streaming fingerprint. Input mutation refusal reuses the old invariant. No local dataset/GT content read or server execution.
+- Final focused admission/statistical regression:87 tests OK, one optional backend skipped in local bundled runtime; static AST parse and diff whitespace pass. No unrelated discovery. One bounded fresh-context reviewer found four Important issues: phantom original core path, descriptor-at-open GT alias, output race during access publication, and dirty-checkout public authorizer. Each has targeted RED→GREEN tests and a scoped fix; no remaining Important/Critical findings or deferred minors. Reviewer declined new stats/Geometry/training/real-GT claims, correctly outside this task. No second review loop.
+- Ruling: preserve the existing isolated branch and previously user-operated commit/push deployment workflow; no worktree/merge/PR menu or new approval round. Cost if wrong is an admission implementation revision, not a scientific threshold change. User's focused-only instruction overrides unrelated full-suite discovery. Scratch test logs and their sync-agent sidecars remain preserved and locally ignored; no user state or experiment outputs deleted.
+
 ### 2026-10-09 Utility GT-decoupling amendment — writing only
 
 - User replaces Geometry priority with sole frozen Utility 1-r_p validation. Geometry paused for budget/scope, not science negative; all files/results retained, no termination/release or automatic GT unlock. Read existing Utility specification and real confirmation/firewall/CLI constraints, without dataset/GT reads, imports or execution.
