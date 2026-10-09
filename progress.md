@@ -2,6 +2,11 @@
 
 ## Session Log
 
+### 2026-10-09 Actual completion diagnosis and reusable-interface rule — record only
+
+- Accepted user completion and checksummed publication audit: mesh admitted, six evaluations computed, report INCONCLUSIVE at the bootstrap interface. Reproduced the true ndarray/list mismatch with a tiny synthetic call to the original production bootstrap; existing Tool Room JSON normalization preserves allvalues. No repair implemented or evaluation rerun.
+- User asks to persist cross-scene generality requirement. Added mandatory real producer→adapter/aggregation→existing normalization→schema/publication boundary tests to AGENTS.md and authoritative handoff; scientific implementation stays shared, hand-built list fixtures cannot be the only proof. Do not claim future defects impossible. Original failed outputs/access history retained; post-GT recovery still needs explicit approval.
+
 ### 2026-10-09 Receipt-bound ID recovery — real evaluation pending
 
 - Accepted exact readonly receipt/target-absence evidence; preserved old failed attempts. The bounded recovery plan extends only orchestration and approval binding, not candidate, solver, folds, bootstrap, thresholds, meshes, assets or training.

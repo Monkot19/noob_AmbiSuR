@@ -1,5 +1,11 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-09 Real Utility completion / bootstrap type boundary
+
+- Serverb454b127: first GT access logged, mesh ADMITTED, all six measurements completed;116.131s. Completion outcome INCONCLUSIVE, manifestSHA c53441b9cff3c351ed2c4ecf5e439679d3f661597964516acbcd5dc2b122e5c0; user verifies all publication files. Report reason `ValueError: bootstrap must contain exactly 2000 replicates`, seeds empty, macro null. Original scientific outcome unknown; no pre-GT retry is admissible now.
+- Readonly small synthetic production-bootstrap reproduction returns ndarray shape(2000,) with replicate_count2000. Utility normalizer rejects ndarray because it requireslist; original Tool Room report first uses existing `_json_safe`. Same conversion preserves all2000 values and passes the consumer. Earlier aggregation fixtures manually converted tolist, concealing a real producer/consumer mismatch. No production code or real data changed/read by this diagnosis.
+- User strengthens reuse: real producer-to-consumer/publishing contract tests, existing serializers/normalization, scientific-core reuse and exact operational names. Recorded in AGENTS.md/handoff; no statistical redevelopments or absolute zero-defect promise. Minimal implementation and explicit post-GT recovery authorization remain pending.
+
 ## 2026-10-09 Verified pre-GT ID failure / bounded explicit recovery
 
 - User readonly audit confirms the preserved format-recovery receipt SHA `1618c56f6d9cfac4a6825a71d8443e6609b71639878176fd7c72b8415102afb0`, exact `prior_transfer_operational_failure` / `ValueError: unsafe diagnostic ID`, amendment02b475fe and all three original targets absent. No science result exists.

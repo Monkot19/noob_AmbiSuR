@@ -41,6 +41,10 @@
 
 ## Current authoritative handoff — 2026-10-09 Utility transfer only / Geometry paused
 
+- [x] Real id-recovery1 completed six calculations after first GT access/mesh ADMITTED, but publication is INCONCLUSIVE at bootstrap ndarray/list normalization. User verified manifest/all files. Small readonly production-bootstrap reproduction confirms2000 values exist; Tool Room already normalizes them. Supersedes all earlier pre-access target-absence/pending-evaluation entries below.
+- [x] User-strengthened real producer/consumer reuse gate persisted in AGENTS.md, handoff/findings/progress. This turn documentation only: no method/evaluator fix or experiment.
+- [ ] Await explicit minimal normalization-repair and preserved-record post-GT recovery authorization. Do not reset original one-shot targets, reuse pre-GT recovery, change statistics/thresholds or infer scientific failure.
+
 - [x] Latest readonly audit verifies exact unsafe-ID failure receipt `1618c56f6d9cfac4a6825a71d8443e6609b71639878176fd7c72b8415102afb0`, bound to preserved format-recovery amendment02b475fe; access/output/staging remain absent. Real evaluation not started.
 - [x] Receipt-bound ID recovery RED→GREEN:41 affected tests pass using actual producer formats/operational probe names, complete two-attempt preservation, rejection of absent/wrong receipt and consumed targets. Original science/core unchanged.
 - [x] One bounded recovery review: no Critical/Important/Minor findings, independent41 tests pass. Focused six-module regression104 tests OK/one optional-backend skip; AST/whitespace checks pass, frozen-core diff empty.
