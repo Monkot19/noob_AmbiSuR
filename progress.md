@@ -2,6 +2,20 @@
 
 ## Session Log
 
+### 2026-10-09 Single minimal-feasibility approval packet — writing/commit diagnosis only
+
+- User chooses shrinking/topology deferral and asks for one consolidated delivery, no repeated probe development or unrelated full suite. Math and backend directions are principles, not approved exact equations/check execution. Keep existing staged review, production and all assets untouched.
+- Current Git diagnosis: exclusive read of index succeeds; commit --dry-run and write-tree both return0, HEAD remains80399fd. No current index.lock, ample disk, no custom hooks/splitIndex/fsmonitor. Last failure is not currently reproducible; cannot identify Baidu or stale ACLs as proven cause. These bounded index-writing diagnostics modify only ordinary Git cache/object metadata, not tracked content or branch/history. No forced cleanup or permission change.
+- One package-path lookup failed because the actual module name is diff_plane_rasterization_ambisur; rg --files located it. No runtime import/check performed. Complete pending contract will freeze one exact Jacobian strategy and forbid unapproved fallback.
+- One bounded read-only reviewer found no Critical issue, one Important measurement-graph mismatch and one Minor allocation ambiguity. Source inspection confirms production depth_normal uses alpha.detach(); proposal now explicitly reconstructs a forward-equivalent differentiable-alpha research graph, pending approval, leaving production/evidence/r_g untouched. E_b allocations are sequential, not simultaneously retained. No second review loop or experiment; scope/whitespace checks only, no unrelated full suite.
+- Consolidated written packet is saved; exact math/validity, unique full-J strategy, independent references, timer/resource boundaries and MF approval/stop map are design proposals only. Normal publication is next; original index failure remains unproven/transient, not a claimed permanent fix.
+### 2026-10-09 Geometry feasibility review in progress — writing only
+
+- User accepts1A/2A in principle with rejection-control/spatial-scale caveats;3A/4A withheld. Inspect local formulas, renderer and actual lineage-test mock boundaries; no runtime or dataset access. One initial apply_patch failed on a mismatched findings heading, with no edits applied; corrected the heading and retried the scoped documentation patch.
+- Reuse existing isolated branch and scientific code; do not construct128 fixtures, run a backend check, change approved equations/spec/TDD, grant release or consume Utility GT. Review-only document and persistent status are the current deliverables.
+- Completed written review with one independent read-only reviewer: no Critical/Important issues; corrected two Minor precision points (weighted R derivative reference with frozen weights, independent CPU footprint/alpha computation). Native performance/support, Q prediction, fixture validity and GT release explicitly not judged; no execution took place. Documents provide continue/shrink/stop choices and separate approval requests.
+- Documentation-only scope/whitespace verified; no broad scientific tests rerun. Two new untracked Baidu upload `.cfg` files are unrelated user/sync artifacts and are preserved/excluded from this commit; no ignore rule or deletion. This local state is not a clean-worktree cloud launch authorization.
+- Publication attempt: `git commit` stopped with `fatal: unable to write new index file`; no new HEAD or push. Read-only diagnosis finds ample local disk (~1.37TB free), no persistent index.lock, BaiduNetdisk active and old sandbox-SID deny ACL entries; current user SID differs, so a permission or concurrent-sharing cause is not yet proved. Do not delete locks, alter ACLs, stop sync or force a commit. Written review is saved and staged; commit/push remain incomplete, not a scientific or GT-release result.
 ### 2026-10-09 Geometry Gate0 literal proposal delivery
 
 - User asks to continue after three qualified Utility assets. Scope is outstanding written Gate0 packet, not experiments. Read approved exact spec, Oct8 amendment proposal, blocked TDD map and production collector/reprojection/topology boundaries.
