@@ -2,6 +2,13 @@
 
 ## Session Log
 
+### 2026-10-09 Utility GT-decoupling amendment — writing only
+
+- User replaces Geometry priority with sole frozen Utility 1-r_p validation. Geometry paused for budget/scope, not science negative; all files/results retained, no termination/release or automatic GT unlock. Read existing Utility specification and real confirmation/firewall/CLI constraints, without dataset/GT reads, imports or execution.
+- Wrote one small amendment: prior-transfer-only immutable approval supplement preserves original v3/three qualifications while binding future exact evaluation commit; unchanged candidate/statistical/mesh/aggregate contracts; no Utility feedback into future Geometry. Lists six minimal new contract-test groups, focused old-core regression and one direct post-authorization mesh/evaluation/publication workflow. Code/tests/server/GT remain unexecuted pending approval and explicit authority.
+- User adds main-contribution clarification; read only existing Tool Room frozen text and actual arbitration branch/three-refresh hysteresis. Recorded detector-vs-action distinction, Q not a mandatory detector prerequisite, same-scene seeds vs independent-scene confirmation, and unresolved empty Consensus cause. No permission inferred for r_g routing or30k; no new investigation executed. Consolidated amendment includes this interpretation while leaving original frozen statistical gates intact.
+- Previous combined Geometry packet e005e6825c51ea06081a06cc195785cb5aeee441 was normally committed and pushed with matching remote/clean status. Historical index error was not reproduced and root cause remains unproven; no force/ACL/index cleanup. That packet is retained but now paused, not approved for execution.
+
 ### 2026-10-09 Single minimal-feasibility approval packet — writing/commit diagnosis only
 
 - User chooses shrinking/topology deferral and asks for one consolidated delivery, no repeated probe development or unrelated full suite. Math and backend directions are principles, not approved exact equations/check execution. Keep existing staged review, production and all assets untouched.
