@@ -2,6 +2,8 @@
 
 状态：**仅提案，未生效**。对应已批准精确子规格 `2026-09-30-geometry-stage-ga-exact-subspecification.md`，以及实施计划 `2026-10-08-geometry-stage-ga-tdd.md` 的 Gate0。原规格正文、公式、常数、门槛、计划状态均未修改。本稿不生成 fixture、预测或 outcome，不构成 `NO_ACTION_SPECIFIC_SIGNAL`、geometry termination 或 Utility GT release。
 
+2026-10-09审阅补件：具体参数附件已另写为 `2026-10-09-geometry-ga-execution-annex-proposal.md`，含逐项推荐值、生成规则及其超出旧文字的解释影响。它同样未获批准；请同时审阅，不能把本稿的字段清单当作已完成执行闭包。下文“另行提交附件”描述原2026-10-08阶段，现由上述待审补件承接，不表示Gate0已关闭。
+
 建议分别审批四项，不把它们捆绑成科学结果。第1、2项需要明确的实验合同变更；第3项需要另行完成并审核逐字段冻结附件；第4项需要明确计算图和数值语义。审批前不实施任何一项。
 
 ## 0. 不变范围与审议含义

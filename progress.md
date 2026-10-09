@@ -2,6 +2,25 @@
 
 ## Session Log
 
+### 2026-10-09 Geometry Gate0 literal proposal delivery
+
+- User asks to continue after three qualified Utility assets. Scope is outstanding written Gate0 packet, not experiments. Read approved exact spec, Oct8 amendment proposal, blocked TDD map and production collector/reprojection/topology boundaries.
+- Wrote `2026-10-09-geometry-ga-execution-annex-proposal.md` with explicit recommendations and parameter-generation tables; linked from original proposal without changing approved spec/plan. Lists required human choices and new scientific interpretations, plus honest unverified backend/geometry/compute feasibility. No implementation, synthetic fixtures/outcomes, GT release/evaluation or C1.
+- One required read-only document review found two Important ambiguities (abs-before-clamp normal semantics; P-dependent corruption/support ordering) and one literal numeric-tolerance omission; corrected all in the draft without formula/threshold changes or execution. Self-review also found degree0 empty SH storage incompatible with the unconditional production15-coefficient reshape: explicitly proposed max-degree3 zero storage padding with active degree0, no production patch. Backend capability/science/release were explicitly outside review and remain future gated evidence, not assumed PASS.
+### 2026-10-09 Gate F2 qualified / three-seed asset summary
+
+- AutoDL handoff32/32 operational checks and GNU imports passed; dispatch PID2847/return0. Actual seed2 reaches7000, saves3000/7000 checkpoints, Training complete09:21:04. Launcher exit0,wall368s,sampled whole-device peak4074MiB. Existing auditor QUALIFIED/return0,gt_access NONE, SHA `7688190747a595c23c766b4d66d55b4516c66157c2e5eb1ba5db096874de445a`.
+- Seeds0/1/2 are now qualified under the same v3 confirmation, snapshot and production execution commit. Asset summary recorded in findings; no scientific prediction/generalization inference from PSNR or QUALIFIED.
+- No new experiment, GT release/parse/evaluation, Geometry intervention, five-state/routing or C1. Next outstanding written work is the complete Geometry Gate0 four-amendment/literal execution annex review packet; existing checklist does not satisfy it. Approval still pending, not a scientific negative or release.
+### 2026-10-09 F2 storage recovery complete — authoritative receipt
+
+- User approved only the old softcal-v4 formal report. Server exact revalidation and removal returned0, removed_count1, manifest preserved; durable receipt `storage-offload-softcal-v4-report-20261009.txt`. Fresh free17458491392 bytes passes unchanged15GiB. Local backup retained; deletion is recoverable by restoring that report, not by rerunning evaluation.
+- Continue already authorized seed2 via unchanged pinned7c5b029 operational adapter and c701424 production checkout, same v3 confirmation/snapshot/argv. Actual F2 dispatch/qualification remain pending. No automatic deletion/retry, DA3, GT, Geometry or C1.
+### 2026-10-09 F2 disk stop / read-only backup verification
+
+- Authoritative user receipt: outer15GiB guard sees15122100224 bytes and stops return3 before all fetch/checker/target/launch steps. F2 remains unstarted; F0/F1 remain qualified. No threshold change, automatic retry or cleanup.
+- Verified existing local softcal formal report backup by size/SHA and manifest SHA; propose only read-only server identity checks next, not removal. Geometry full Gate0 amendment/parameter annex remains separately pending; no GT release, Geometry execution, five-state or C1.
+- Receipt-only planning updates; production and operational code unchanged. No scientific regression rerun needed. One guessed historical documentation filename was absent during search; corrected to tracked storage-recovery note, with no runtime consequence.
 ### 2026-10-09 Gate F2 authorization and minimal transport
 
 - User accepts F1, authorizes only seed2 frozen7k D0 shadow/qualification;15GiB guard unchanged, failures stop, no DA3 or GT. After three seeds summarize assets before separately authorized GT release/evaluation/Geometry/C1.
