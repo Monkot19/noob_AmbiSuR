@@ -17,3 +17,10 @@ User authorization covers this minimum adapter and one GT evaluation, not DA3, t
 - [x] GREEN: select each existing producer's canonical serializer only for source/snapshot references; keep approval/confirmation/token strict indented JSON and exact original SHA. No asset conversion.
 - [x] RED/GREEN: explicit pre-GT recovery handle pins previous amendment/approval and requires old scientific/input/target/core identities unchanged. New record names and evaluator commit; preserve all old records. Existing access/output/staging refuses recovery. No automatic retry.
 - [x] Focused admission regression91 tests OK / one local optional-backend skip; one bounded read-only repair review without findings, AST/whitespace checks. Exact commit push/handoff next. Scientific test remains unexecuted until user runs the recovery command. No statistical code changes or full unrelated discovery.
+
+## Real frozen output-name mismatch — no further dispatch yet
+
+- [x] RED: mirror the actual v3 operation's `<confirmation_id>.probe`, hidden `.probe-staging` and `.first-gt-access.json` targets in the existing fixture, retaining actual producer serializers. Run the complete existing wrapper/evaluator path, not just a regex assertion.
+- [x] GREEN: admit the existing single-basename `.probe` suffix without admitting traversal, hidden IDs or arbitrary dotted names; exact confirmation/path binding remains mandatory. No frozen record renaming or science change.
+- [x] Focused38 tests OK; bounded repair review without code findings; AST/whitespace checks pass. Normal commit/push next.
+- [ ] Before any new explicit recovery, obtain the failed recovery receipt and current three one-shot target absence. Preserve both failed attempts; do not dispatch again in this phase.

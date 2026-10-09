@@ -2,6 +2,12 @@
 
 ## Session Log
 
+### 2026-10-09 Probe-name admission diagnosis — evaluation remains stopped
+
+- Server719621f focused36/36 pass; format recovery publishes amendment02b475fe2b1981d7719c382d8bd53967686df8a8b4f18c1648f65a0e8f45dec2 then rejects actual frozen `.probe` basename before first-access logging. This is a second adapter integration mismatch, not independent-evidence failure. The outer dispatch exit0 reports background start only.
+- Reproduced the real operation's three target names through the existing complete wrapper/evaluator fixture; observed RED at the same unsafe-ID line. Minimal suffix fix keeps original paths and exact confirmation binding. Statistics, training, DA3 and Geometry untouched; preserve original and format-recovery records/logs. No new server dispatch in this turn; final failure receipt/current target absence still to verify.
+- Parent focused38 access/CLI tests pass in bundled Python; AST and diff whitespace pass. One bounded fresh-context reviewer finds no Critical/Important/Minor issue; its independent test attempt used old local Conda and stopped at missingPIL (no assertion failure, no environment modification). No second review/test-development loop; parent bundled-runtime evidence retained. Reviewer declined broader adapter/science/server judgments, correctly outside the suffix repair. User-operated readonly audit is next, not another launch.
+
 ### 2026-10-09 Pre-GT serialization repair / server recovery pending
 
 - User's real format audit confirms the single cause: actual source/snapshot producer compact canonical bytes were wrongly checked against indented confirmation bytes. Original SHA and untouched one-shot targets verified; preserve failed approval/amendment/logs.

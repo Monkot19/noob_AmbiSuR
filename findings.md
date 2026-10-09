@@ -1,5 +1,11 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-09 Actual frozen `.probe` target rejected by admission
+
+- Authoritative AutoDL at719621f:36 focused tests OK, PID15539 dispatch; recovery amendment SHA `02b475fe2b1981d7719c382d8bd53967686df8a8b4f18c1648f65a0e8f45dec2`. Real evaluator stops `unsafe diagnostic ID` before the first-access authorizer, not a GT/metric failure. Dispatch rc0 is not evaluator rc0.
+- Exact conflict: the preserved MKL startup-recovery confirmation operation preregisters `<ID>.probe`, hidden `.<ID>.probe-staging` and `<ID>.first-gt-access.json`; evaluator's letters/digits/underscore/hyphen-only diagnostic basename rejects the legitimate `.probe`. Prior synthetic fixture used `probe-output`, concealing this interface mismatch.
+- Add a complete wrapper/evaluator regression with the actual target naming and actual producer formats; allow only the known single-basename suffix, keep exact SHA-bound full-path equality and traversal refusal. No rename, confirmation/schema/statistics change. Preserve both stopped attempts. Before another explicit recovery, inspect the latest operational failure receipt plus all three original target absence; do not dispatch again blindly.
+
 ## 2026-10-09 Confirmed pre-GT record-format compatibility bug
 
 - AutoDL proves original source/snapshot SHA intact and both match their actual compact canonical producers, not the consumer's indented confirmation serializer. Access/output/staging all absent; no Utility scientific outcome exists. The first attempt published approval/amendment but stopped before first-access logging.

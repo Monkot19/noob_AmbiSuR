@@ -92,7 +92,10 @@ def _admit_request(args, dependencies):
     # The explicit GT/output paths let even a disguised confirmation be rejected
     # before its first byte read. Later require exact binding to its payload.
     target = _absolute(args.output_root) / args.diagnostic_id
-    if re.fullmatch(r"[A-Za-z0-9_-]+", args.diagnostic_id) is None:
+    # The frozen training recovery preregisters <confirmation_id>.probe.
+    # Admit that single basename suffix, not arbitrary dotted/traversal paths;
+    # the full target must still equal the SHA-bound confirmation below.
+    if re.fullmatch(r"[A-Za-z0-9_-]+(?:[.]probe)?", args.diagnostic_id) is None:
         raise ValueError("unsafe diagnostic ID")
     gt = _absolute(args.gt_mesh)
     protected = [gt, target]

@@ -41,6 +41,10 @@
 
 ## Current authoritative handoff — 2026-10-09 Utility transfer only / Geometry paused
 
+- Current blocker supersedes the prior serialization-only handoff:719621f passes36 server tests but real frozen `<ID>.probe` target is rejected before GT. Local regression now mirrors the actual operational target naming, not fake `probe-output`. Preserve both failed attempts; do not reuse/overwrite them or infer a scientific outcome. Bounded suffix repair plus readonly receipt/target audit before any further separately explicit recovery.
+- [x] Suffix RED→GREEN;38 affected bundled-runtime tests, AST/whitespace, bounded code review without findings. No statistical or frozen-data changes.
+- [ ] User-operated readonly audit of latest format-recovery failure receipt and three preregistered targets; no further dispatch in this phase.
+
 - Current access adapter repair: original Utility source/snapshot records are intact compact canonical JSON. First authorized evaluation stopped before GT at an indented-only consumer check; access/output/staging remain absent. No scientific outcome.
 - [x] Producer-format RED → exact original serializer reuse; no frozen asset rewrite or statistical change.
 - [x] Explicit pre-GT recovery RED → preserve and pin previous records, same experiment/targets, new evaluator commit, refuse consumed targets/replay.

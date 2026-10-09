@@ -12,6 +12,27 @@ from scripts.diagnostics.evaluate_g1_prior_transfer import run_evaluator
 
 
 class AccessAmendmentTests(unittest.TestCase):
+    def test_real_operation_probe_suffix_reaches_existing_wrapper_and_evaluator(self):
+        prefix = self.f.prior["confirmation_id"]
+        self.f.prior["probe_targets"] = {
+            "output_dir": str(self.f.root / (prefix + ".probe")),
+            "staging_dir": str(self.f.root / ("." + prefix + ".probe-staging")),
+            "access_log_path": str(self.f.root / (prefix + ".first-gt-access.json")),
+        }
+        self.f.firewall.log = Path(self.f.prior["probe_targets"]["access_log_path"])
+        self.f.args.diagnostic_id = prefix + ".probe"
+        self.use_real_producer_serialization()
+        self.run_original_wrapper_case()
+
+    def test_probe_suffix_does_not_admit_traversal_or_unbound_output(self):
+        self.prepare()
+        for value in ("../escape.probe", ".hidden.probe", "bad/part.probe", "bad.probe.extra", "other.probe"):
+            self.f.args.diagnostic_id = value
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                run_evaluator(self.f.args, self.f.dependencies)
+            self.assertFalse(self.f.firewall.log.exists())
+        self.assertEqual(self.f.dependencies.events, [])
+
     def use_real_producer_serialization(self):
         from scripts.diagnostics.audit_utility_source import _canonical_bytes as source_bytes
         from reliability.utility_snapshot import _canonical_bytes as snapshot_bytes
@@ -242,7 +263,7 @@ class AccessAmendmentTests(unittest.TestCase):
         self.assertFalse(self.f.target().exists())
         self.assertTrue(self.f.firewall.log.exists())
 
-    def test_operational_wrapper_reuses_original_targets_and_writes_compact_receipt(self):
+    def run_original_wrapper_case(self):
         self.prepare()
         # Start from the original completed assets, before any amendment exists.
         for handle in (self.handle, self.approval):
@@ -261,6 +282,9 @@ class AccessAmendmentTests(unittest.TestCase):
         self.assertFalse(record["training_started"])
         self.assertFalse(record["c1_started"])
         self.assertEqual(sum(e[0] == "evaluate" for e in self.f.dependencies.events if isinstance(e, tuple)), 6)
+
+    def test_operational_wrapper_reuses_original_targets_and_writes_compact_receipt(self):
+        self.run_original_wrapper_case()
 
     def test_wrapper_rejects_gt_alias_specification_before_gt_read(self):
         self.prepare()
