@@ -47,20 +47,23 @@ def git_identity(repository):
             "clean": not command("status", "--porcelain", "--untracked-files=all")}
 
 
-def _json(identity, protected, detached=False):
+def _json(identity, protected, detached=False, *, serialize=_canonical_bytes):
     payload = _read_verified(identity, protected=protected, detached=detached)
     record = json.loads(payload)
-    if payload != _canonical_bytes(record):
+    if payload != serialize(record):
         raise ValueError("access artifact must be canonical")
     return record
 
 
-def approval_record(prior_identity, qualifications, repository, specification):
-    return {"schema_version": 1, "kind": "utility_prior_transfer_execution_approval",
+def approval_record(prior_identity, qualifications, repository, specification, *, recovery_from=None):
+    record = {"schema_version": 1, "kind": "utility_prior_transfer_execution_approval",
             "prior_confirmation": _identity(prior_identity),
             "qualification_records": [_identity(q) for q in qualifications],
             "repository": dict(repository), "specification": _identity(specification),
             "authorization": AUTHORIZATION, **POLICY}
+    if recovery_from is not None:
+        record["pre_gt_recovery_from"] = _identity(recovery_from)
+    return record
 
 
 def _core_hashes(prior, repository, protected):
@@ -97,6 +100,42 @@ def _core_hashes(prior, repository, protected):
     return hashes
 
 
+def validate_pre_gt_recovery(identity, prior_identity, qualifications, repository, specification, *, protected=()):
+    """Bind a preserved pre-access attempt, without relaxing current-code checks.
+
+    Absence is checked by the operational wrapper and first-access authorizer;
+    this integrity check also runs after access, when validating its token.
+    Only one format recovery is allowed, not a chain of scientific retries.
+    """
+    identity = _identity(identity)
+    prior = _validate_record(_json(prior_identity, protected),
+                            require_targets_absent=False, verify_record_files=False)
+    protected = [*protected, Path(prior["gt_mesh"]["path"]),
+                 *(Path(p) for p in prior["probe_targets"].values())]
+    old = _json(identity, protected, detached=True)
+    old_repository = old.get("repository", {})
+    if (set(old_repository) != {"root", "commit", "clean"}
+            or old_repository["root"] != repository["root"]
+            or old_repository["clean"] is not True
+            or re.fullmatch(r"[0-9a-f]{40}", str(old_repository["commit"])) is None
+            or old_repository["commit"] == repository["commit"]):
+        raise ValueError("pre-GT recovery requires preserved old and exact new evaluator identities")
+    old_approval = _json(old.get("approval"), protected, detached=True)
+    if old_approval != approval_record(prior_identity, qualifications, old_repository, specification):
+        raise ValueError("previous approval does not bind the same frozen experiment")
+    expected = {"schema_version": 1, "kind": "utility_prior_transfer_access_amendment",
+        "created_utc": old.get("created_utc"), "prior_confirmation": _identity(prior_identity),
+        "qualification_records": [_identity(q) for q in qualifications],
+        "approval": _identity(old.get("approval")), "specification": _identity(specification),
+        "repository": old_repository, "training_commit": prior["repository"]["commit"],
+        "core_sha256": _core_hashes(prior, repository, protected),
+        **{k: prior[k] for k in ("source_record", "snapshot_record", "gt_mesh", "protocol", "mesh_admission", "probe_targets")},
+        **POLICY}
+    if (old != expected or not _time(prior["created_utc"]) <= _time(old["created_utc"]) <= datetime.now(timezone.utc)):
+        raise ValueError("pre-GT recovery changed the frozen contract or chronology")
+    return identity
+
+
 def build_amendment(prior_identity, qualifications, approval_identity, *, protected=()):
     prior_identity = _identity(prior_identity)
     prior = _json(prior_identity, protected)
@@ -109,7 +148,8 @@ def build_amendment(prior_identity, qualifications, approval_identity, *, protec
     repository = approval.get("repository", {})
     specification = approval.get("specification", {})
     qualifications = [_identity(q) for q in qualifications]
-    if approval != approval_record(prior_identity, qualifications, repository, specification):
+    recovery = approval.get("pre_gt_recovery_from")
+    if approval != approval_record(prior_identity, qualifications, repository, specification, recovery_from=recovery):
         raise ValueError("explicit reviewed prior-only execution approval required")
     _read_verified(specification, protected=protected)
     if [q["path"] for q in qualifications] != [r["qualification_path"] for r in prior["runs"]]:
@@ -122,7 +162,7 @@ def build_amendment(prior_identity, qualifications, approval_identity, *, protec
             raise ValueError("access amendment requires three original qualified runs")
     for name in ("source_record", "snapshot_record"):
         _read_verified({k: prior[name][k] for k in ("path", "sha256")}, protected=protected)
-    return {"schema_version": 1, "kind": "utility_prior_transfer_access_amendment",
+    record = {"schema_version": 1, "kind": "utility_prior_transfer_access_amendment",
             "created_utc": datetime.now(timezone.utc).isoformat(),
             "prior_confirmation": prior_identity, "qualification_records": qualifications,
             "approval": _identity(approval_identity), "specification": specification,
@@ -130,6 +170,10 @@ def build_amendment(prior_identity, qualifications, approval_identity, *, protec
             "core_sha256": _core_hashes(prior, repository, protected),
             **{k: prior[k] for k in ("source_record", "snapshot_record", "gt_mesh", "protocol", "mesh_admission", "probe_targets")},
             **POLICY}
+    if recovery is not None:
+        record["pre_gt_recovery_from"] = validate_pre_gt_recovery(
+            recovery, prior_identity, qualifications, repository, specification, protected=protected)
+    return record
 
 
 def load_amendment(identity, *, protected=()):

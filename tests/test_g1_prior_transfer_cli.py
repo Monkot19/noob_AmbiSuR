@@ -14,6 +14,8 @@ from tests import test_utility_gt_firewall as firewall_tests
 from tests.test_g1_complementarity_cli import iteration_summary
 from reliability.g1_prior_transfer_confirmation import build_prior_transfer_confirmation
 from scripts.diagnostics.evaluate_g1_prior_transfer import build_parser, run_evaluator
+from scripts.diagnostics.audit_utility_source import _canonical_bytes as source_bytes
+from reliability.utility_snapshot import _canonical_bytes as snapshot_bytes
 
 canonical = firewall_tests.canonical
 
@@ -80,9 +82,9 @@ class PriorTransferCliTests(unittest.TestCase):
         (self.source / "source.txt").write_bytes(b"synthetic source")
         (self.snapshot / "prior.npy").write_bytes(b"synthetic frozen prior")
         f = self.firewall.fixture
-        f.source_record.write_bytes(canonical({"kind": "utility_source", "source_sha256": "1"*64,
+        f.source_record.write_bytes(source_bytes({"kind": "utility_source", "source_sha256": "1"*64,
                                               "source_root": str(self.source)}))
-        f.snapshot_record.write_bytes(canonical({"kind": "utility_da3_snapshot", "snapshot_sha256": "2"*64,
+        f.snapshot_record.write_bytes(snapshot_bytes({"kind": "utility_da3_snapshot", "snapshot_sha256": "2"*64,
                                                 "source_sha256": "1"*64, "gt_access": "NONE",
                                                 "snapshot_root": str(self.snapshot)}))
         self.repository = self.root / "repository"

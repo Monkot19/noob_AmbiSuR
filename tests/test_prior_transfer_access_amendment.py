@@ -12,6 +12,105 @@ from scripts.diagnostics.evaluate_g1_prior_transfer import run_evaluator
 
 
 class AccessAmendmentTests(unittest.TestCase):
+    def use_real_producer_serialization(self):
+        from scripts.diagnostics.audit_utility_source import _canonical_bytes as source_bytes
+        from reliability.utility_snapshot import _canonical_bytes as snapshot_bytes
+        for key, serialize in (("source_record", source_bytes), ("snapshot_record", snapshot_bytes)):
+            path = Path(self.f.prior[key]["path"])
+            raw = serialize(json.loads(path.read_bytes()))
+            path.write_bytes(raw)
+            digest = hashlib.sha256(raw).hexdigest()
+            self.f.prior[key]["sha256"] = digest
+            Path(str(path) + ".sha256").write_text(digest + "\n", encoding="ascii")
+        self.f.firewall.prior_identity = self.f.firewall.publish("evaluator-prior.json", self.f.prior)
+        self.f.args.confirmation_sha = self.f.firewall.prior_identity["sha256"]
+        for index, handle in enumerate(self.f.qualifications):
+            record = json.loads(Path(handle["path"]).read_bytes())
+            record["confirmation_sha256"] = self.f.args.confirmation_sha
+            for key in ("source_record", "snapshot_record"):
+                path = Path(self.f.prior[key]["path"])
+                record["input_fingerprints"][str(path)].update(
+                    bytes=path.stat().st_size, sha256=self.f.prior[key]["sha256"])
+            self.f.qualifications[index] = self.f.firewall.publish(Path(handle["path"]).name, record)
+        self.f.args.qualification_record = [[q["path"], q["sha256"]] for q in self.f.qualifications]
+
+    def test_real_source_snapshot_producer_bytes_reach_existing_evaluator_without_rewrite(self):
+        self.use_real_producer_serialization()
+        self.prepare()
+        before = {key: Path(self.f.prior[key]["path"]).read_bytes() for key in ("source_record", "snapshot_record")}
+        code, _ = run_evaluator(self.f.args, self.f.dependencies)
+        self.assertEqual(code, 0)
+        for key, raw in before.items():
+            self.assertEqual(Path(self.f.prior[key]["path"]).read_bytes(), raw)
+        self.assertEqual(self.f.dependencies.events[:2], ["admit", "mesh"])
+
+    def wrapper_recovery_fixture(self):
+        self.prepare()
+        spec = self.f.repository / "docs/superpowers/specs/2026-10-09-utility-prior-transfer-gt-decoupling-amendment.md"
+        spec.parent.mkdir(parents=True)
+        spec.write_bytes(Path(self.spec["path"]).read_bytes())
+        self.spec = {"path": str(spec), "sha256": hashlib.sha256(spec.read_bytes()).hexdigest()}
+        approval = self.access.approval_record(self.f.firewall.prior_identity, self.f.qualifications,
+            {"root": str(self.f.repository), "commit": "c" * 40, "clean": True}, self.spec)
+        self.approval = self.f.firewall.publish("access-approval.json", approval)
+        record = self.access.build_amendment(self.f.firewall.prior_identity,
+            self.f.qualifications, self.approval, protected=[Path(self.f.args.gt_mesh)])
+        self.handle = self.f.firewall.publish("access-amendment.json", record)
+        self.f.args.expected_commit = "d" * 40
+        self.f.dependencies.git_identity = lambda p: {"commit": "d" * 40, "clean": True}
+        self.f.args.pre_gt_recovery_from = [self.handle["path"], self.handle["sha256"]]
+        self.old = {Path(h["path"] + suffix): Path(h["path"] + suffix).read_bytes()
+                    for h in (self.handle, self.approval) for suffix in ("", ".sha256")}
+        return record
+
+    def run_wrapper_recovery(self):
+        from scripts.diagnostics import run_approved_prior_transfer as runner
+        with mock.patch.object(self.access, "git_identity", return_value={"commit": "d" * 40, "clean": True}), \
+             mock.patch.object(runner, "git_identity", return_value={"commit": "d" * 40, "clean": True}), \
+             mock.patch.object(runner, "run_evaluator", side_effect=lambda request: run_evaluator(request, self.f.dependencies)):
+            return runner.prepare_and_run(self.f.args)
+
+    def test_explicit_pre_gt_recovery_preserves_old_records_and_frozen_targets(self):
+        old = self.wrapper_recovery_fixture()
+        self.assertEqual(self.run_wrapper_recovery(), 0)
+        log = json.loads(self.f.firewall.log.read_bytes())
+        new = json.loads(Path(log["access_amendment"]["path"]).read_bytes())
+        self.assertEqual(new["pre_gt_recovery_from"], self.handle)
+        self.assertEqual(new["repository"]["commit"], "d" * 40)
+        for key in ("prior_confirmation", "protocol", "mesh_admission", "core_sha256", "probe_targets",
+                    "source_record", "snapshot_record", "qualification_records", "training_commit"):
+            self.assertEqual(new[key], old[key])
+        for path, raw in self.old.items():
+            self.assertEqual(path.read_bytes(), raw)
+        with self.assertRaises(FileExistsError):
+            self.run_wrapper_recovery()
+
+    def test_pre_gt_recovery_rejects_bad_old_sha_or_changed_contract_before_new_records(self):
+        self.wrapper_recovery_fixture()
+        self.f.args.pre_gt_recovery_from[1] = "0" * 64
+        with self.assertRaises(ValueError):
+            self.run_wrapper_recovery()
+        self.f.args.pre_gt_recovery_from[1] = self.handle["sha256"]
+        previous = json.loads(Path(self.handle["path"]).read_bytes())
+        previous["protocol"] = {"candidate": "r_g"}
+        changed = self.f.firewall.publish("changed-old-amendment.json", previous)
+        self.f.args.pre_gt_recovery_from = [changed["path"], changed["sha256"]]
+        with self.assertRaises(ValueError):
+            self.run_wrapper_recovery()
+        self.assertFalse(self.f.firewall.log.exists())
+        self.assertFalse(list(self.f.root.glob("*.format-recovery1*")))
+
+    def test_pre_gt_recovery_refuses_every_consumed_probe_target_before_gt(self):
+        self.wrapper_recovery_fixture()
+        for path in self.f.prior["probe_targets"].values():
+            path = Path(path)
+            path.write_bytes(b"already consumed")
+            with self.subTest(path=path), self.assertRaises(FileExistsError):
+                self.run_wrapper_recovery()
+            path.unlink()
+        self.assertEqual(self.f.dependencies.events, [])
+        self.assertFalse(list(self.f.root.glob("*.format-recovery1*")))
+
     def test_frozen_core_paths_are_real_original_git_objects(self):
         from reliability.prior_transfer_access_amendment import CORE_PATHS, git_blob
         repository = Path(__file__).resolve().parents[1]

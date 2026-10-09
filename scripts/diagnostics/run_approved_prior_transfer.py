@@ -17,8 +17,10 @@ if __package__ in (None, ""):
 
 from reliability.prior_transfer_access_amendment import (
     _json, approval_record, build_amendment, git_identity, publish_record,
+    validate_pre_gt_recovery,
 )
 from reliability.utility_gt_firewall import _identity, _validate_record
+from scripts.diagnostics.audit_utility_source import _canonical_bytes as source_bytes
 from scripts.diagnostics.evaluate_g1_prior_transfer import _fingerprint, run_evaluator
 
 
@@ -38,15 +40,24 @@ def prepare_and_run(args):
     handles = [_identity({"path": pair[0], "sha256": pair[1]}) for pair in args.qualification_record]
     specification = repository / "docs/superpowers/specs/2026-10-09-utility-prior-transfer-gt-decoupling-amendment.md"
     spec_handle = {"path": str(specification), "sha256": _fingerprint(specification, protected)[0]["sha256"]}
+    current_repository = {"root": str(repository), "commit": args.expected_commit, "clean": True}
+    recovery_pair = getattr(args, "pre_gt_recovery_from", None)
+    recovery = None
+    suffix = ""
+    if recovery_pair:
+        recovery = validate_pre_gt_recovery(
+            {"path": recovery_pair[0], "sha256": recovery_pair[1]}, prior_handle,
+            handles, current_repository, spec_handle, protected=protected)
+        suffix = ".format-recovery1"
     directory = Path(prior_handle["path"]).parent
-    approval_path = directory / (prior["confirmation_id"] + ".prior-only-approval.json")
-    amendment_path = directory / (prior["confirmation_id"] + ".access-amendment.json")
-    receipt_path = directory / (prior["confirmation_id"] + ".evaluation-receipt.json")
+    approval_path = directory / (prior["confirmation_id"] + suffix + ".prior-only-approval.json")
+    amendment_path = directory / (prior["confirmation_id"] + suffix + ".access-amendment.json")
+    receipt_path = directory / (prior["confirmation_id"] + suffix + ".evaluation-receipt.json")
     for path in (approval_path, amendment_path, receipt_path):
         if os.path.lexists(path) or os.path.lexists(str(path) + ".sha256"):
             raise FileExistsError("prior-only execution record already exists; do not retry")
     approval = approval_record(prior_handle, handles,
-        {"root": str(repository), "commit": args.expected_commit, "clean": True}, spec_handle)
+        current_repository, spec_handle, recovery_from=recovery)
     approval_handle = publish_record(approval_path, approval)
     amendment = build_amendment(prior_handle, handles, approval_handle, protected=protected)
     # Only the original target parents are created; run/view/state stay read-only.
@@ -59,7 +70,7 @@ def prepare_and_run(args):
         confirmation=prior_handle["path"], confirmation_sha=prior_handle["sha256"],
         qualification_record=args.qualification_record, geometry_release=None, geometry_release_sha=None,
         access_amendment=amendment_handle["path"], access_amendment_sha=amendment_handle["sha256"],
-        source_root=_json(prior["source_record"], protected)["source_root"],
+        source_root=_json(prior["source_record"], protected, serialize=source_bytes)["source_root"],
         gt_mesh=prior["gt_mesh"]["path"], output_root=str(Path(prior["probe_targets"]["output_dir"]).parent),
         diagnostic_id=Path(prior["probe_targets"]["output_dir"]).name)
     try:
@@ -86,6 +97,8 @@ def main(argv=None):
     for flag in ("repository", "expected-commit", "confirmation", "confirmation-sha", "gt-mesh"):
         parser.add_argument("--" + flag, required=True)
     parser.add_argument("--qualification-record", nargs=2, action="append", required=True)
+    parser.add_argument("--pre-gt-recovery-from", nargs=2, metavar=("PATH", "SHA256"),
+                        help="explicit preserved format-failure amendment; never an automatic retry")
     parser.add_argument("--execute-approved-prior-transfer", action="store_true", required=True)
     try:
         return prepare_and_run(parser.parse_args(argv))

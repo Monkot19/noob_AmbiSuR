@@ -1,5 +1,11 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-09 Confirmed pre-GT record-format compatibility bug
+
+- AutoDL proves original source/snapshot SHA intact and both match their actual compact canonical producers, not the consumer's indented confirmation serializer. Access/output/staging all absent; no Utility scientific outcome exists. The first attempt published approval/amendment but stopped before first-access logging.
+- Reuse the source-audit and utility-snapshot canonical serializers only at those read boundaries; do not convert frozen records or relax approval/confirmation/token canonical checks. Existing statistical and mesh algorithms remain untouched.
+- Explicit format-recovery handle pins the preserved old amendment/approval and all unchanged science, inputs, qualifications and targets. New evaluator identity and separate recovery record names; refuse consumed targets, mutation or replay. Not a new scientific attempt after viewing results, not automatic retry or geometry release.
+
 ## 2026-10-09 Authorized minimum GT admission adapter
 
 - User now authorizes prior-transfer-only GT evaluation, superseding the pending-approval status below. Reuse is enforced by original Git-blob/file hashes and mesh-function AST identities; frozen statistics/mesh algorithms remain unchanged. New code is admission and operational handoff only. Three Utility assets are not regenerated; original v3/training provenance is separate from evaluation provenance.

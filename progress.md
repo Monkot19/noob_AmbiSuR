@@ -2,6 +2,13 @@
 
 ## Session Log
 
+### 2026-10-09 Pre-GT serialization repair / server recovery pending
+
+- User's real format audit confirms the single cause: actual source/snapshot producer compact canonical bytes were wrongly checked against indented confirmation bytes. Original SHA and untouched one-shot targets verified; preserve failed approval/amendment/logs.
+- TDD producer-format case observed RED at `input record is not canonical`; same actual serializers now reach all six existing synthetic evaluator calls without rewriting records. The shared CLI fixture now uses the real producer formats, preventing fake-format coverage.
+- Explicit recovery RED showed ignored previous handle/missing binding and bad SHA not rejected. GREEN adds only pinned pre-GT history, new evaluator identity, exclusive format-recovery record names and existing target refusal. Old records remain byte-identical. No local datasets/GT or server execution.
+- Focused six-module regression:91 tests OK, one optional backend skipped in bundled local runtime. AST parse and diff whitespace pass; existing M0/M1/statistical/mesh core untouched. One bounded fresh-context read-only repair reviewer reports no Critical/Important/Minor findings. Review's declined statistics redesign, real mesh/CUDA/scientific outcome and Geometry questions remain outside this repair; no new research or broad regression follows. Commit/push and user-operated recovery next; actual Utility metric outcome remains unknown.
+
 ### 2026-10-09 Authorized prior-transfer-only evaluation handoff
 
 - User explicitly asks for Utility GT now and repeats reuse requirement. No new candidate, solver, folds, bootstrap, threshold, mesh algorithm or training. Original v3 qualifications retain their identities; post-training canonical supplement binds evaluation commit, approval audit, original Git blobs and frozen protocol/mesh/targets. Geometry remains paused, no release.

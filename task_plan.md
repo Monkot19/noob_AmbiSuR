@@ -41,6 +41,13 @@
 
 ## Current authoritative handoff — 2026-10-09 Utility transfer only / Geometry paused
 
+- Current access adapter repair: original Utility source/snapshot records are intact compact canonical JSON. First authorized evaluation stopped before GT at an indented-only consumer check; access/output/staging remain absent. No scientific outcome.
+- [x] Producer-format RED → exact original serializer reuse; no frozen asset rewrite or statistical change.
+- [x] Explicit pre-GT recovery RED → preserve and pin previous records, same experiment/targets, new evaluator commit, refuse consumed targets/replay.
+- [x] Focused affected regression:91 tests OK / one local optional-backend skip.
+- [x] Bounded repair review: no Critical/Important/Minor findings; AST and whitespace checks pass; frozen-core files unchanged.
+- [ ] Commit/push and user-operated exact-commit recovery. No automatic server retry; Geometry/C1 remain blocked.
+
 - [x] User explicitly requests Utility GT test now and reaffirms core reuse. Authority covers the minimum prior-only admission supplement and one frozen three-seed evaluation; no Geometry release, training, DA3, routing or C1.
 - [x] New admission contracts RED→GREEN locally using bundled Python. Original statistical files unchanged against c701424. Plan: docs/superpowers/plans/2026-10-09-utility-access-minimal-adapter-plan.md.
 - [x] Final focused regression:87 tests OK (one optional local backend skip); bounded fresh-context review's four Important issues each reproduced RED→GREEN. Static parse/whitespace checks pass. Exact commit push/handoff next; real mesh admission and scientific result remain pending user execution.

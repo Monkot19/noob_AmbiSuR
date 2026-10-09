@@ -63,10 +63,10 @@ def _fingerprint(path, protected):
             "sha256": digest.hexdigest()}, _file_identity(before)
 
 
-def _read_json(identity, protected, *, detached=False):
+def _read_json(identity, protected, *, detached=False, serialize=_canonical_bytes):
     payload = _read_verified(identity, protected=protected, detached=detached)
     record = json.loads(payload)
-    if payload != _canonical_bytes(record):
+    if payload != serialize(record):
         raise ValueError("input record is not canonical")
     return record
 
@@ -111,9 +111,11 @@ def _admit_request(args, dependencies):
         if os.path.lexists(path):
             raise FileExistsError("one-shot probe target already exists")
     protected.extend((staging, log))
-    source = _read_json(prior["source_record"], protected)
+    from scripts.diagnostics.audit_utility_source import _canonical_bytes as source_bytes
+    from reliability.utility_snapshot import _canonical_bytes as snapshot_bytes
+    source = _read_json(prior["source_record"], protected, serialize=source_bytes)
     snapshot_identity = {key: prior["snapshot_record"][key] for key in ("path", "sha256")}
-    snapshot = _read_json(snapshot_identity, protected)
+    snapshot = _read_json(snapshot_identity, protected, serialize=snapshot_bytes)
     if (_absolute(args.source_root) != _absolute(source["source_root"])
             or snapshot["snapshot_sha256"] != prior["snapshot_record"]["snapshot_sha256"]
             or snapshot["source_sha256"] != source["source_sha256"] or snapshot["gt_access"] != "NONE"):
@@ -171,6 +173,12 @@ def _admit_request(args, dependencies):
                 or amendment["repository"] != {"root": str(repository), "commit": args.expected_commit, "clean": True}):
             raise ValueError("access amendment/evaluator binding mismatch")
         records = [prior_identity, geometry_identity, *handles, amendment["specification"], amendment["approval"]]
+        if "pre_gt_recovery_from" in amendment:
+            from reliability.prior_transfer_access_amendment import _json
+            previous = amendment["pre_gt_recovery_from"]
+            preserved = _json(previous, protected, detached=True)
+            records.extend((previous, preserved["approval"]))
+            paths.update(Path(h["path"] + ".sha256") for h in (previous, preserved["approval"]))
         paths.add(Path(amendment["approval"]["path"] + ".sha256"))
         paths.update(repository / name for name in amendment["core_sha256"] if "/" in name)
         paths.add(repository / "reliability/utility_gt_firewall.py")
