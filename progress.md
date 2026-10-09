@@ -2,6 +2,12 @@
 
 ## Session Log
 
+### 2026-10-09 Receipt-bound ID recovery — real evaluation pending
+
+- Accepted exact readonly receipt/target-absence evidence; preserved old failed attempts. The bounded recovery plan extends only orchestration and approval binding, not candidate, solver, folds, bootstrap, thresholds, meshes, assets or training.
+- Existing actual-format/actual-target fixture reproduced RED at previous-approval binding. GREEN admits only a checksummed unsafe-ID operational receipt, preserving and validating both attempts, original targets and all six existing evaluator calls;41 affected tests pass. Wrong/missing receipt, scientific/completion receipt and consumed targets stop before new records/GT. Local tests use synthetic temporary assets, no real GT or server access.
+- Single bounded read-only reviewer finds no Critical/Important/Minor issues and independently reruns41 affected tests successfully. Six-module affected/frozen-core regression104 tests OK, one local optional-backend skip; AST/whitespace pass and frozen-core diff empty. Declined real server/backend/GT/science judgments are correctly outside this repair. Normal commit/push and exact-commit user handoff follow; no second review loop or broad discovery. Geometry stays paused; no Geometry release, C1 or deployment claim.
+
 ### 2026-10-09 Probe-name admission diagnosis — evaluation remains stopped
 
 - Server719621f focused36/36 pass; format recovery publishes amendment02b475fe2b1981d7719c382d8bd53967686df8a8b4f18c1648f65a0e8f45dec2 then rejects actual frozen `.probe` basename before first-access logging. This is a second adapter integration mismatch, not independent-evidence failure. The outer dispatch exit0 reports background start only.

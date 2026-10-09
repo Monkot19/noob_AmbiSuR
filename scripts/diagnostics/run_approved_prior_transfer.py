@@ -42,13 +42,17 @@ def prepare_and_run(args):
     spec_handle = {"path": str(specification), "sha256": _fingerprint(specification, protected)[0]["sha256"]}
     current_repository = {"root": str(repository), "commit": args.expected_commit, "clean": True}
     recovery_pair = getattr(args, "pre_gt_recovery_from", None)
+    failure_pair = getattr(args, "pre_gt_failure_receipt", None)
+    failure = _identity({"path": failure_pair[0], "sha256": failure_pair[1]}) if failure_pair else None
+    if failure is not None and not recovery_pair:
+        raise ValueError("failure receipt requires explicit preserved recovery amendment")
     recovery = None
     suffix = ""
     if recovery_pair:
         recovery = validate_pre_gt_recovery(
             {"path": recovery_pair[0], "sha256": recovery_pair[1]}, prior_handle,
-            handles, current_repository, spec_handle, protected=protected)
-        suffix = ".format-recovery1"
+            handles, current_repository, spec_handle, protected=protected, failure_receipt=failure)
+        suffix = ".id-recovery1" if failure else ".format-recovery1"
     directory = Path(prior_handle["path"]).parent
     approval_path = directory / (prior["confirmation_id"] + suffix + ".prior-only-approval.json")
     amendment_path = directory / (prior["confirmation_id"] + suffix + ".access-amendment.json")
@@ -57,7 +61,7 @@ def prepare_and_run(args):
         if os.path.lexists(path) or os.path.lexists(str(path) + ".sha256"):
             raise FileExistsError("prior-only execution record already exists; do not retry")
     approval = approval_record(prior_handle, handles,
-        current_repository, spec_handle, recovery_from=recovery)
+        current_repository, spec_handle, recovery_from=recovery, failure_receipt=failure)
     approval_handle = publish_record(approval_path, approval)
     amendment = build_amendment(prior_handle, handles, approval_handle, protected=protected)
     # Only the original target parents are created; run/view/state stay read-only.
@@ -99,6 +103,8 @@ def main(argv=None):
     parser.add_argument("--qualification-record", nargs=2, action="append", required=True)
     parser.add_argument("--pre-gt-recovery-from", nargs=2, metavar=("PATH", "SHA256"),
                         help="explicit preserved format-failure amendment; never an automatic retry")
+    parser.add_argument("--pre-gt-failure-receipt", nargs=2, metavar=("PATH", "SHA256"),
+                        help="exact unsafe-ID operational receipt from the preserved format recovery")
     parser.add_argument("--execute-approved-prior-transfer", action="store_true", required=True)
     try:
         return prepare_and_run(parser.parse_args(argv))

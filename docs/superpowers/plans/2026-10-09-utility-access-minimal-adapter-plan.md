@@ -23,4 +23,13 @@ User authorization covers this minimum adapter and one GT evaluation, not DA3, t
 - [x] RED: mirror the actual v3 operation's `<confirmation_id>.probe`, hidden `.probe-staging` and `.first-gt-access.json` targets in the existing fixture, retaining actual producer serializers. Run the complete existing wrapper/evaluator path, not just a regex assertion.
 - [x] GREEN: admit the existing single-basename `.probe` suffix without admitting traversal, hidden IDs or arbitrary dotted names; exact confirmation/path binding remains mandatory. No frozen record renaming or science change.
 - [x] Focused38 tests OK; bounded repair review without code findings; AST/whitespace checks pass. Normal commit/push next.
-- [ ] Before any new explicit recovery, obtain the failed recovery receipt and current three one-shot target absence. Preserve both failed attempts; do not dispatch again in this phase.
+- [x] User readonly audit verifies failure receipt1618c56f, exact unsafe diagnostic ID error, preserved amendment02b475fe, and all three original targets absent. No GT measurement occurred.
+
+## Receipt-bound ID recovery (same authorized experiment)
+
+1. RED: extend the existing real-format/real-target fixture through the two preserved attempts and exact operational-failure receipt. Reject absent/wrong receipt, changed error/binding and consumed targets before publication/access.
+2. GREEN: narrowly accept this known pre-GT ID failure with an explicit receipt handle, preserve the complete two-attempt chain and new exclusive `.id-recovery1` records. No automatic retries or scientific-failure recovery.
+3. Reuse the original evaluator; fingerprint both old approval/amendment pairs plus receipt/sidecars. Run affected contracts and existing frozen-core regression only, then one bounded review.
+4. Commit/push and supply exact-commit user-operated command. Do not claim real GT admission or metrics pass from synthetic tests; no server execution by the assistant.
+
+Verification:41 affected tests pass, independently confirmed by the one bounded reviewer (no findings);104 focused affected/statistical tests OK with one optional local backend skip. AST/whitespace checks pass; frozen scientific-core files unchanged. Actual AutoDL first access/mesh admission/metrics remain pending.

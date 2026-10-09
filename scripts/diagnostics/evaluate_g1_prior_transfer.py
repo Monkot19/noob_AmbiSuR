@@ -182,6 +182,13 @@ def _admit_request(args, dependencies):
             preserved = _json(previous, protected, detached=True)
             records.extend((previous, preserved["approval"]))
             paths.update(Path(h["path"] + ".sha256") for h in (previous, preserved["approval"]))
+            if "pre_gt_failure_receipt" in amendment:
+                failure = amendment["pre_gt_failure_receipt"]
+                root_attempt = preserved["pre_gt_recovery_from"]
+                root_record = _json(root_attempt, protected, detached=True)
+                old_records = (failure, root_attempt, root_record["approval"])
+                records.extend(old_records)
+                paths.update(Path(h["path"] + ".sha256") for h in old_records)
         paths.add(Path(amendment["approval"]["path"] + ".sha256"))
         paths.update(repository / name for name in amendment["core_sha256"] if "/" in name)
         paths.add(repository / "reliability/utility_gt_firewall.py")

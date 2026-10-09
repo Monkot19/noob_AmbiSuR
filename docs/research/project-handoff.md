@@ -2,6 +2,8 @@
 
 ## 1. 项目目标
 
+**最新恢复状态（2026-10-09）：** 格式恢复尝试也在GT前因冻结合法`.probe`名称被拒绝而停止。用户只读审计确认失败凭据SHA `1618c56f6d9cfac4a6825a71d8443e6609b71639878176fd7c72b8415102afb0`、前次amendment SHA `02b475fe2b1981d7719c382d8bd53967686df8a8b4f18c1648f65a0e8f45dec2`，三个原始一次性目标均不存在。后续只能以两份确切handle进行显式`.id-recovery1`恢复，保存两轮旧审批/修订/失败记录，不重用旧记录名，不自动重试。原confirmation、三seed、输出路径和全部统计合同不变；GT准入和科学结果仍未知。局部修复41项测试及既有核心范围内104项回归通过（1本地可选后端跳过），一次范围受限审阅无问题；不得将此当成真实GT评价完成。
+
 **当前优先级（2026-10-09 用户决定）：** Geometry Q因范围/预算暂停，全部文档/结果保留，不是科学否定，也不产生geometry termination/release。唯一优先任务为已合格Utility seeds0/1/2的冻结 `1-r_p` 独立验证。用户现已明确授权[最小 prior-transfer-only 解耦修订](../superpowers/specs/2026-10-09-utility-prior-transfer-gt-decoupling-amendment.md)与一次冻结 GT 评价；首次尝试因读取器误要求缩进 JSON 而在 GT 访问前停止。原 source/snapshot SHA 正确、实际生产格式为紧凑 JSON；首次访问日志/输出/staging 均不存在。仅修复格式读取，保留并绑定旧审批/失败记录，新的明确恢复仍须检查相同一次性目标与冻结核心，不自动重试。Utility结果不得回流Geometry候选恢复/选择/调整；GT访问后Utility不再是Geometry未触碰确认场景。无DA3/训练重跑、新N、r_g路由、五状态、生命周期、30k或C1授权。
 
 **论文优先级澄清：** 五状态仲裁、参数路由与Gaussian生命周期是主要贡献目标；N/高误差检测是前置辅助。Q研究并非检测必需前置，不能继续以其复杂化阻塞Utility已有资产评价。冻结predictive信号不等于GT-free部署公式或训练动作收益；当前r_g仍只是内部一致性telemetry。未来若不依赖Q研究一致性驱动五状态，须另批语义/动作/消融，不可静默恢复原几何可靠性授权。Consensus为空的原因仍未逐门定位，不归咎于7k或强行调阈值造状态。

@@ -86,10 +86,96 @@ class AccessAmendmentTests(unittest.TestCase):
 
     def run_wrapper_recovery(self):
         from scripts.diagnostics import run_approved_prior_transfer as runner
-        with mock.patch.object(self.access, "git_identity", return_value={"commit": "d" * 40, "clean": True}), \
-             mock.patch.object(runner, "git_identity", return_value={"commit": "d" * 40, "clean": True}), \
+        current = {"commit": self.f.args.expected_commit, "clean": True}
+        with mock.patch.object(self.access, "git_identity", return_value=current), \
+             mock.patch.object(runner, "git_identity", return_value=current), \
              mock.patch.object(runner, "run_evaluator", side_effect=lambda request: run_evaluator(request, self.f.dependencies)):
             return runner.prepare_and_run(self.f.args)
+
+    def id_recovery_fixture(self):
+        prefix = "utility_prior_transfer_softv4_20261008_v3"
+        self.f.prior["probe_targets"] = {
+            "output_dir": str(self.f.root / (prefix + ".probe")),
+            "staging_dir": str(self.f.root / ("." + prefix + ".probe-staging")),
+            "access_log_path": str(self.f.root / (prefix + ".first-gt-access.json")),
+        }
+        self.f.firewall.log = Path(self.f.prior["probe_targets"]["access_log_path"])
+        self.use_real_producer_serialization()
+        self.wrapper_recovery_fixture()
+        self.root_attempt = self.handle
+        with mock.patch.object(self.access, "git_identity", return_value={"commit": "d" * 40, "clean": True}):
+            approval = self.access.approval_record(self.f.firewall.prior_identity,
+                self.f.qualifications, {"root": str(self.f.repository), "commit": "d" * 40, "clean": True},
+                self.spec, recovery_from=self.handle)
+            previous_approval = self.f.firewall.publish("failed-format-approval.json", approval)
+            previous = self.access.build_amendment(self.f.firewall.prior_identity,
+                self.f.qualifications, previous_approval)
+            previous_handle = self.f.firewall.publish("failed-format-amendment.json", previous)
+        receipt = {"kind": "prior_transfer_operational_failure",
+            "error": "ValueError: unsafe diagnostic ID", "access_amendment": previous_handle,
+            "wall_seconds": 1.0, "automatic_retry": False}
+        self.failure = self.f.firewall.publish("failed-format-receipt.json", receipt)
+        for handle in (previous_handle, previous_approval, self.failure):
+            for suffix in ("", ".sha256"):
+                path = Path(handle["path"] + suffix)
+                self.old[path] = path.read_bytes()
+        self.handle = previous_handle
+        self.f.args.expected_commit = "e" * 40
+        self.f.dependencies.git_identity = lambda p: {"commit": "e" * 40, "clean": True}
+        self.f.args.pre_gt_recovery_from = [self.handle["path"], self.handle["sha256"]]
+        self.f.args.pre_gt_failure_receipt = [self.failure["path"], self.failure["sha256"]]
+        return previous
+
+    def test_receipt_bound_id_recovery_preserves_two_attempts_and_reuses_real_probe_contract(self):
+        previous = self.id_recovery_fixture()
+        self.assertEqual(self.run_wrapper_recovery(), 0)
+        log = json.loads(self.f.firewall.log.read_bytes())
+        new = json.loads(Path(log["access_amendment"]["path"]).read_bytes())
+        self.assertEqual(new["pre_gt_recovery_from"], self.handle)
+        self.assertEqual(new["pre_gt_failure_receipt"], self.failure)
+        self.assertEqual(new["repository"]["commit"], "e" * 40)
+        for key in ("prior_confirmation", "qualification_records", "probe_targets", "protocol",
+                    "mesh_admission", "core_sha256", "source_record", "snapshot_record", "training_commit"):
+            self.assertEqual(new[key], previous[key])
+        for path, raw in self.old.items():
+            self.assertEqual(path.read_bytes(), raw)
+        inputs = json.loads((self.f.target() / "inputs.json").read_bytes())
+        fingerprints = inputs["input_fingerprints"]
+        for path in self.old:
+            self.assertIn(str(path), fingerprints)
+        self.assertEqual(sum(e[0] == "evaluate" for e in self.f.dependencies.events if isinstance(e, tuple)), 6)
+        with self.assertRaises(FileExistsError):
+            self.run_wrapper_recovery()
+
+    def test_id_recovery_requires_exact_operational_failure_receipt_before_new_records(self):
+        self.id_recovery_fixture()
+        receipt = json.loads(Path(self.failure["path"]).read_bytes())
+        bad = [None, [self.failure["path"], "0" * 64]]
+        for key, value in (("error", "ValueError: metric failed"),
+                           ("kind", "prior_transfer_evaluation_completion"),
+                           ("access_amendment", self.root_attempt),
+                           ("automatic_retry", True), ("wall_seconds", -1)):
+            changed = {**receipt, key: value}
+            handle = self.f.firewall.publish("wrong-failure-" + key + ".json", changed)
+            bad.append([handle["path"], handle["sha256"]])
+        for pair in bad:
+            self.f.args.pre_gt_failure_receipt = pair
+            with self.subTest(pair=pair), self.assertRaises(ValueError):
+                self.run_wrapper_recovery()
+            self.assertFalse(self.f.firewall.log.exists())
+            self.assertFalse(list(self.f.root.glob("*.id-recovery1*")))
+        self.assertEqual(self.f.dependencies.events, [])
+
+    def test_id_recovery_stops_on_consumed_targets_without_new_records(self):
+        self.id_recovery_fixture()
+        for name in self.f.prior["probe_targets"].values():
+            path = Path(name)
+            path.write_bytes(b"consumed")
+            with self.subTest(path=path), self.assertRaises(FileExistsError):
+                self.run_wrapper_recovery()
+            path.unlink()
+        self.assertFalse(list(self.f.root.glob("*.id-recovery1*")))
+        self.assertEqual(self.f.dependencies.events, [])
 
     def test_explicit_pre_gt_recovery_preserves_old_records_and_frozen_targets(self):
         old = self.wrapper_recovery_fixture()

@@ -6,6 +6,7 @@ signature. No pause, outcome string or command-line boolean alone grants access.
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -55,7 +56,7 @@ def _json(identity, protected, detached=False, *, serialize=_canonical_bytes):
     return record
 
 
-def approval_record(prior_identity, qualifications, repository, specification, *, recovery_from=None):
+def approval_record(prior_identity, qualifications, repository, specification, *, recovery_from=None, failure_receipt=None):
     record = {"schema_version": 1, "kind": "utility_prior_transfer_execution_approval",
             "prior_confirmation": _identity(prior_identity),
             "qualification_records": [_identity(q) for q in qualifications],
@@ -63,6 +64,10 @@ def approval_record(prior_identity, qualifications, repository, specification, *
             "authorization": AUTHORIZATION, **POLICY}
     if recovery_from is not None:
         record["pre_gt_recovery_from"] = _identity(recovery_from)
+    if failure_receipt is not None:
+        if recovery_from is None:
+            raise ValueError("failure receipt requires a preserved pre-GT attempt")
+        record["pre_gt_failure_receipt"] = _identity(failure_receipt)
     return record
 
 
@@ -100,12 +105,13 @@ def _core_hashes(prior, repository, protected):
     return hashes
 
 
-def validate_pre_gt_recovery(identity, prior_identity, qualifications, repository, specification, *, protected=()):
+def validate_pre_gt_recovery(identity, prior_identity, qualifications, repository, specification, *, protected=(), failure_receipt=None):
     """Bind a preserved pre-access attempt, without relaxing current-code checks.
 
     Absence is checked by the operational wrapper and first-access authorizer;
     this integrity check also runs after access, when validating its token.
-    Only one format recovery is allowed, not a chain of scientific retries.
+    Only the original format failure and its receipt-proven ID failure are
+    admitted. No arbitrary recovery chains or scientific retries are supported.
     """
     identity = _identity(identity)
     prior = _validate_record(_json(prior_identity, protected),
@@ -113,6 +119,28 @@ def validate_pre_gt_recovery(identity, prior_identity, qualifications, repositor
     protected = [*protected, Path(prior["gt_mesh"]["path"]),
                  *(Path(p) for p in prior["probe_targets"].values())]
     old = _json(identity, protected, detached=True)
+    previous = old.get("pre_gt_recovery_from")
+    if previous is not None:
+        if failure_receipt is None:
+            raise ValueError("ID recovery requires the exact preserved operational failure receipt")
+        receipt = _json(failure_receipt, protected, detached=True)
+        duration = receipt.get("wall_seconds")
+        if (set(receipt) != {"kind", "error", "access_amendment", "wall_seconds", "automatic_retry"}
+                or receipt["kind"] != "prior_transfer_operational_failure"
+                or receipt["error"] != "ValueError: unsafe diagnostic ID"
+                or receipt["access_amendment"] != identity
+                or receipt["automatic_retry"] is not False
+                or type(duration) not in (int, float) or not math.isfinite(duration) or duration < 0):
+            raise ValueError("not the preserved pre-GT diagnostic-ID operational failure")
+        # This recursive call must be a root attempt (no receipt): bounded to
+        # two preserved attempts, not a generic retry mechanism.
+        validate_pre_gt_recovery(previous, prior_identity, qualifications, repository,
+                                 specification, protected=protected)
+        root_attempt = _json(previous, protected, detached=True)
+        if _time(root_attempt["created_utc"]) > _time(old["created_utc"]):
+            raise ValueError("preserved recovery chronology mismatch")
+    elif failure_receipt is not None:
+        raise ValueError("ID failure receipt must bind the failed format recovery")
     old_repository = old.get("repository", {})
     if (set(old_repository) != {"root", "commit", "clean"}
             or old_repository["root"] != repository["root"]
@@ -121,7 +149,7 @@ def validate_pre_gt_recovery(identity, prior_identity, qualifications, repositor
             or old_repository["commit"] == repository["commit"]):
         raise ValueError("pre-GT recovery requires preserved old and exact new evaluator identities")
     old_approval = _json(old.get("approval"), protected, detached=True)
-    if old_approval != approval_record(prior_identity, qualifications, old_repository, specification):
+    if old_approval != approval_record(prior_identity, qualifications, old_repository, specification, recovery_from=previous):
         raise ValueError("previous approval does not bind the same frozen experiment")
     expected = {"schema_version": 1, "kind": "utility_prior_transfer_access_amendment",
         "created_utc": old.get("created_utc"), "prior_confirmation": _identity(prior_identity),
@@ -131,6 +159,8 @@ def validate_pre_gt_recovery(identity, prior_identity, qualifications, repositor
         "core_sha256": _core_hashes(prior, repository, protected),
         **{k: prior[k] for k in ("source_record", "snapshot_record", "gt_mesh", "protocol", "mesh_admission", "probe_targets")},
         **POLICY}
+    if previous is not None:
+        expected["pre_gt_recovery_from"] = _identity(previous)
     if (old != expected or not _time(prior["created_utc"]) <= _time(old["created_utc"]) <= datetime.now(timezone.utc)):
         raise ValueError("pre-GT recovery changed the frozen contract or chronology")
     return identity
@@ -149,7 +179,8 @@ def build_amendment(prior_identity, qualifications, approval_identity, *, protec
     specification = approval.get("specification", {})
     qualifications = [_identity(q) for q in qualifications]
     recovery = approval.get("pre_gt_recovery_from")
-    if approval != approval_record(prior_identity, qualifications, repository, specification, recovery_from=recovery):
+    failure = approval.get("pre_gt_failure_receipt")
+    if approval != approval_record(prior_identity, qualifications, repository, specification, recovery_from=recovery, failure_receipt=failure):
         raise ValueError("explicit reviewed prior-only execution approval required")
     _read_verified(specification, protected=protected)
     if [q["path"] for q in qualifications] != [r["qualification_path"] for r in prior["runs"]]:
@@ -172,7 +203,9 @@ def build_amendment(prior_identity, qualifications, approval_identity, *, protec
             **POLICY}
     if recovery is not None:
         record["pre_gt_recovery_from"] = validate_pre_gt_recovery(
-            recovery, prior_identity, qualifications, repository, specification, protected=protected)
+            recovery, prior_identity, qualifications, repository, specification, protected=protected, failure_receipt=failure)
+    if failure is not None:
+        record["pre_gt_failure_receipt"] = _identity(failure)
     return record
 
 

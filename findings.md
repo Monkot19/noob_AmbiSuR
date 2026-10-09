@@ -1,5 +1,10 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-09 Verified pre-GT ID failure / bounded explicit recovery
+
+- User readonly audit confirms the preserved format-recovery receipt SHA `1618c56f6d9cfac4a6825a71d8443e6609b71639878176fd7c72b8415102afb0`, exact `prior_transfer_operational_failure` / `ValueError: unsafe diagnostic ID`, amendment02b475fe and all three original targets absent. No science result exists.
+- New recovery is restricted to this receipt-proven operational failure, with both old amendment/approval pairs and receipt/sidecars retained and fingerprinted. No arbitrary retry chain, metric-failure recovery, target reset or statistical redevelopment. Exclusive `.id-recovery1` records leave old history untouched. Existing `.probe` path fix remains the only evaluator-name change.
+
 ## 2026-10-09 Actual frozen `.probe` target rejected by admission
 
 - Authoritative AutoDL at719621f:36 focused tests OK, PID15539 dispatch; recovery amendment SHA `02b475fe2b1981d7719c382d8bd53967686df8a8b4f18c1648f65a0e8f45dec2`. Real evaluator stops `unsafe diagnostic ID` before the first-access authorizer, not a GT/metric failure. Dispatch rc0 is not evaluator rc0.

@@ -41,9 +41,14 @@
 
 ## Current authoritative handoff — 2026-10-09 Utility transfer only / Geometry paused
 
+- [x] Latest readonly audit verifies exact unsafe-ID failure receipt `1618c56f6d9cfac4a6825a71d8443e6609b71639878176fd7c72b8415102afb0`, bound to preserved format-recovery amendment02b475fe; access/output/staging remain absent. Real evaluation not started.
+- [x] Receipt-bound ID recovery RED→GREEN:41 affected tests pass using actual producer formats/operational probe names, complete two-attempt preservation, rejection of absent/wrong receipt and consumed targets. Original science/core unchanged.
+- [x] One bounded recovery review: no Critical/Important/Minor findings, independent41 tests pass. Focused six-module regression104 tests OK/one optional-backend skip; AST/whitespace checks pass, frozen-core diff empty.
+- [ ] Normal commit/push, then exact-commit user-operated receipt-bound recovery. No server retry by assistant; no claim of GT admission or metric result yet.
+
 - Current blocker supersedes the prior serialization-only handoff:719621f passes36 server tests but real frozen `<ID>.probe` target is rejected before GT. Local regression now mirrors the actual operational target naming, not fake `probe-output`. Preserve both failed attempts; do not reuse/overwrite them or infer a scientific outcome. Bounded suffix repair plus readonly receipt/target audit before any further separately explicit recovery.
 - [x] Suffix RED→GREEN;38 affected bundled-runtime tests, AST/whitespace, bounded code review without findings. No statistical or frozen-data changes.
-- [ ] User-operated readonly audit of latest format-recovery failure receipt and three preregistered targets; no further dispatch in this phase.
+- [x] User-operated readonly audit of latest format-recovery failure receipt and three preregistered targets; no further dispatch occurred during that audit.
 
 - Current access adapter repair: original Utility source/snapshot records are intact compact canonical JSON. First authorized evaluation stopped before GT at an indented-only consumer check; access/output/staging remain absent. No scientific outcome.
 - [x] Producer-format RED → exact original serializer reuse; no frozen asset rewrite or statistical change.
