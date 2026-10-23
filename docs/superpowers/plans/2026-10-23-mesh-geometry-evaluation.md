@@ -19,7 +19,7 @@ Review: explicit unit/frame/model identity; bounded triangle working sets; PRF d
 - [x] Implement `scripts/evaluate_mesh_geometry.py`: `summarize_distances`, `surface_samples`, `closest_triangle_distances`, `evaluate_meshes`, `main`; add `experiments/mesh_geometry/scannetpp_surface_v1.json`.
 - [x] Focused tests, actual native integration if dependency available; compare real old TnT PRF producer on synthetic arrays.
 - [x] One independent review and material fixes with regression tests; compile/whitespace, update handoff/ledgers.
-- [ ] Commit/push and pinned AutoDL handoff; no remote execution or new training.
+- [x] Commit/push implementation4010fd01e4b5bbe651ac4e221e00532bf99f4ff9; origin ref matched and D clean. Pinned AutoDL handoff in evaluation guide/final response; no remote execution or new training.
 
 ## Execution ledger
 

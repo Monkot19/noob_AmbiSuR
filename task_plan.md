@@ -112,3 +112,5 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 
 - [x] Unified evaluator implemented;8/8 native tests pass/zero skips, Python3.10 grammar and whitespace pass; one review seed finding fixed RED→GREEN.
 - [ ] Server native acceptance and first formal Tool Room metrics using existing meshes; no baseline rerun.
+
+- Evaluator published:4010fd01e4b5bbe651ac4e221e00532bf99f4ff9, origin branch hash matched; D clean after push. Server native tests and formal GT metrics pending, no training changes. Closing receipt is documentation-only; server can pin4010fd0.
