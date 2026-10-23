@@ -104,3 +104,11 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - [x] User returns exitcode0,30K PLY307M and app.pth15K; approves new-model mesh extraction and comparison. Training completion confirmed.
 - [ ] User-operated existing extract_general.py atiteration30000 with frozen baseline5.0/0.005/4.0/2; output only inside new method run. Receive extract exitcode/log and raw/post meshes.
 - [ ] Define matching ScanNet++GT coordinate/observable domain and use applicable existing distance/metric primitives for geometry comparison; no DTU/TnT domain substitution or old detector-label metric. C cleanup remains unapproved.
+
+## 2026-10-23 Formal mesh evaluation
+User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main5cm.
+- [x] Read existing DTU/TnT and archived point-to-triangle helper; write scoped spec/plan.
+- [ ] TDD shared evaluator, focused native integration, review, publish and AutoDL handoff.
+
+- [x] Unified evaluator implemented;8/8 native tests pass/zero skips, Python3.10 grammar and whitespace pass; one review seed finding fixed RED→GREEN.
+- [ ] Server native acceptance and first formal Tool Room metrics using existing meshes; no baseline rerun.

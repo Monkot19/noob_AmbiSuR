@@ -1,0 +1,11 @@
+{
+  "protocol_name": "scannetpp_surface_v1",
+  "domain": "full_surface",
+  "coordinate_frame": "ScanNet++ metric scan-aligned COLMAP; meshes must already share this frame",
+  "unit_scale_to_m": 1.0,
+  "sample_count": 1000000,
+  "seed": 0,
+  "chunk_size": 65536,
+  "thresholds_m": [0.01, 0.02, 0.05],
+  "primary_threshold_m": 0.05
+}

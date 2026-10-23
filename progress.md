@@ -98,3 +98,11 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - User returns train.exitcode0,PLY307M and app.pth15K and asks to extract and compare geometry. This confirms training completion/nonempty artifacts and authorizes the discussed extraction batch; final geometry protocol still needs matching GT frame/domain.
 - Read actual extraction entry and dataset-specific metric code; render opt=None supported. Prepare no-code-change background command pinned toserver3d85faf, existing standalone extension and exactbaseline parameters5/0.005/4/2. Guard against existing extraction outputs and record exitcode/log in new model directory; no baseline path or canonical data write.
 - Update completion/handoff records only and publish so D stays clean before cloud handoff. No new tests,dependency install,framework,remote launch or GT read; server stays on tested code, local documentation commit does not require server pull.
+
+## 2026-10-23 Formal evaluator implementation starts
+User supplies successful406-view extraction and two mesh/GT paths, then authorizes shared formal evaluator; async reply fixes1/2/5cm/main5cm. D second-run clean432ca9f. Spec/plan recorded. Initial multi-file patch rejected for unmatched task_plan heading before writes; reapplied additions and appended ledgers separately. No training/server/GT execution.
+
+### Evaluator native verification and review
+Observed initial RED import failure before implementation; three pure numeric tests pass. Installed Open3D0.19.0 in external isolated venv D:/research_Space/ambisur-eval-runtime, preserving existing env. Fresh one-pass reviewer found reconstruction sampler used seed+1 while protocol declares0. Added real pipeline spy test; observed RED [0,1] != [0,0], fixed to declared seed. Native geometry and CLI tests execute, but old TnT producer import needs matplotlib; installing only in external venv. Closed CSV test stream after ResourceWarning. No real GT accessed.
+
+Final verification:8tests pass/zero skips in6.490s with Open3D0.19.0/NumPy2.5.2/Matplotlib3.11.2. Real old TnT producer imported after isolated matplotlib install; no baseline code changes. Python3.10 grammar and git diff whitespace pass. Spec/plan/user guide/handoff updated; preparing one scoped feat commit/push then pinned server handoff. No remote or realGT execution.
