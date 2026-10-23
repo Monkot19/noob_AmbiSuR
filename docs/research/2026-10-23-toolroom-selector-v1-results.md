@@ -46,3 +46,17 @@
 3. `/root/autodl-tmp/ambisur_runs/Tool_Room/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z/`中的本次参考mesh、配置和训练/提取日志，归档为独立`baseline_reference_c0/`。本地original与这份服务器C0资产尚未证明相同，不能默认用前者代替。GT若已有本地副本，可按results.json的SHA256核对，无需盲目重复下载。
 
 建议本地父目录：`D:\research_Space\output\AmbiSuR_second_run\ScanNetpp\Tool_Room\selector_v1\`，保留服务器下`3d85faf_seed0_30k_v1/`与`evaluation/`的相对结构。原始JSON/CSV直接下载，勿只保存截图；下载后再核对大小/mesh哈希，当前不声称本地归档已完成。服务器原件暂不删除。
+
+## 训练日志与代码的初步机制分析（非根因判定）
+
+用户询问4096是否过少，并告知大output下载较慢。只读发现新run的日志/配置已在本地 `D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/selector_v1_2026_10_23/3d85faf_seed0_30k_v1` 可读；大mesh/完整评价归档仍不宣告完成。
+
+从实际train.log解析115条每200轮记录（7200..30000）：sampled中位4096、comparable2699、added983；added均值1011.9304，sampled=0共2条。日志样本合计comparable/sample=0.6336615908，added/comparable=0.3967826956，added/sample=0.2514259541；这些不是全训练逐轮或去重覆盖统计。train/extract.exitcode均0。实际参数unc_weight0.1、unc_decay1、unc_conf_thresh_ratio0、预算4096、7x7灰度patch、两个nearest支持、cP<cG且cP<0.5，与规格一致。
+
+代码事实：7001..30000每轮当前参考相机都抽样，200只是日志间隔；预算不代表总训练只检查4096个。A阴性且中心在前/patch在图内的池先抽样，不是按参考视角alpha贡献优先。新标签只当前迭代/相机有效，不累积。候选胜出比较同时依赖平面法线和距离；真正追加的ALR仍只有深度导出法线残差，原全局DA3深度L1不因补选而改变。Sparse2DGS update_points直接替换位置，与本适配动作不同。
+
+固定同一模型/相机时，标签渲染线性：DeltaM(p)=sum_{i in extra} T_i(p)*alpha_i(p)。额外ALR为lambda/(HW)*sum_p DeltaM(p)*confidence(p)*(1-nP dot nD)。因此added计数不能替代额外权重/残差/梯度量，total_alr_weight包括原A，不能证明新增剂量。实际池大小/可见贡献/跨轮重复未记录，不能单凭4096/总Gaussian数判定预算充分或不足。
+
+优先待判别假设：①抽样标签的有效渲染覆盖/剂量不足；②NCC胜出但不代表目标几何或法线可靠（两源best-source、无margin、0.5供体阈值）；③平面位置证据没有在新增法线动作中兑现。平行移位平面保持深度导出法线，构成③的数学反例；不等于声称法线不能影响位置，也不证明该反例主导本次退化。CD恶化不能只用“作用太小”解释，必须检查伤害来源。PSNR是train指标，且先前original日志与服务器C0资产未证明同一身份，不能拼成严格配套正式渲染表。
+
+待讨论动作：下载完整后优先少数相同视角的mesh/G-P patch/额外mask检查；若只做数值对照，单改预算并跑一项30K，保持其余不变，区分更多监督改善/放大伤害/无明显变化；不同时改阈值/支持视角/损失。不已获执行授权，不自动实验或恢复旧诊断架构。

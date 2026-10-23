@@ -119,3 +119,6 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 - [x] Server8/8 tests/zero skips; formal paired mesh evaluation completed, full CSV received.
 - [x] Preserve mixed outcome: F1@5cm+0.1151pp,CD+13.0463%,Accuracy/Completeness worse; no overall benefit claim.
 - [ ] User self-downloads full run/evaluation; original files retained. Next focused analysis discussed before any code/training change.
+
+- [x] Initial4096-budget hypothesis analysis: actual115 log records and producer/consumer source checked, competing coverage/selection/action explanations recorded; no causal conclusion.
+- [ ] Discuss one narrow follow-up after download completes; no new method or training authorized this turn.

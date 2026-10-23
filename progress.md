@@ -111,3 +111,6 @@ Final verification:8tests pass/zero skips in6.490s with Open3D0.19.0/NumPy2.5.2/
 
 ## 2026-10-23 Server acceptance and formal evaluation complete
 User receipt:8/8 native tests pass/zero skips in10.591s at4010fd0; nohupPID12484,initial RSS4074600KiB/173%CPU,then PID gone. Latest full log confirms normal Completed with JSON/CSV; no failure/retry. Recomputed all deltas from pasted CSV, recorded full result report and updated handoff. No realGT access,new evaluation,test repetition,method/threshold changes or server action. User explicitly chooses self-download; agent will not request connection credentials or start transfers. Full original artifact/hash verification still pending.
+
+## 2026-10-23 Initial causal analysis requested
+User proposes4096 budget insufficiency and notes slow download. Read existing local new-run train.log/config/identity/extraction metadata (not meshes/GT); derive115 logged snapshot statistics and verify both exitcodes0. Re-read actual selector/ALR/renderer/NCC and cached donor train/update_points source; corroborate primary papers. Record observations and falsifiable hypotheses in result report; no experiment, parameter change, package install or mesh loading. Next narrow analysis/ablation remains a proposal for discussion.

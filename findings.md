@@ -83,3 +83,6 @@ Formal evaluator evidence: Open3D0.19.0 on external isolated Windows Python3.12 
 
 ## 2026-10-23 First formal Tool Room result
 User provides Completed log and full6-row CSV at evaluator4010fd0: baseline CD40.715599347687984mm,selector46.02748794544195mm (+13.046322988870841%); accuracy+5.964331533667264%,completeness+18.418124068287643%. F1@1/2/5cm +0.2192956064/+0.4510731129/+0.1150998749 percentage points.5cm recall-0.282pp. Mixed result, no stable/overall geometry benefit established; no automatic new modules or protocol changes. Threshold counts vs mean distance differ mathematically, aggregate values do not identify spatial cause.
+
+## 2026-10-23 Budget hypothesis: observed logs vs inference
+Read already-downloaded run metadata/log only.115 selector log snapshots:sample/comparable/added medians4096/2699/983,added mean1011.93,logged added/sample25.1426%; only2 zero-sample snapshots. Selector executes EVERY iteration7001..30000,200 is log interval. No proof budget4096 sufficient/insufficient: actual eligible pools/rendered extra mass not logged. More important competing hypotheses: invisible/low-contribution additions and full-image normalization; best-source NCC selection precision; plane position evidence vs unchanged normal-only ALR action. Uniform shared-depth prior loss already exists. No root cause claimed, no new training/code.
