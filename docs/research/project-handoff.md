@@ -1,6 +1,6 @@
 # AmbiSuR 可靠性路由项目交接说明
 
-> **2026-10-22 当前入口：** 用户批准从c0-baseline建立干净二周目分支codex/second-run-selector；旧内容为历史，不继续旧Core/五状态路线。见docs/superpowers/plans/2026-10-22-clean-selector-migration.md及已批准selector规格。仅本地移植完成，AutoDL原生验证/30k未运行；固定baseline结果不重训不改写，旧工作目录保留。
+> **2026-10-23 当前入口：** 用户批准从c0-baseline建立干净二周目分支codex/second-run-selector；旧内容为历史，不继续旧Core/五状态路线。见docs/superpowers/plans/2026-10-22-clean-selector-migration.md及已批准selector规格。用户回执确认3d85faf在AutoDL RTX4090上23项统一测试全通过、零跳过；真实数据30k未运行、无重建收益结论。固定baseline结果不重训不改写，旧工作目录保留。
 
 ## 1. 项目目标
 

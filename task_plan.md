@@ -79,10 +79,12 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - [x] Local validation, baseline-boundary check and one review; AutoDL pending.
 - [x] Clean-base RED and minimal selector/metadata port.
 - [x] Local scoped tests, compile/whitespace, baseline source boundary and one review.
-- [ ] AutoDL native validation and then separately discussed30k; not completed by local checks.
+- [x] AutoDL native validation: user receipt at3d85faf onRTX4090,23tests passed/zero skips. Separate real-data30k discussion remains pending.
 
 ### 2026-10-23 Approved version handoff
 - User confirms next batch and reports GPU server rented. Finish local commit/push of reviewed selector-only migration and provide exact server commit/extension/unified-test commands; no method changes or baseline rerun.
 - Fresh precommit validation:23 tests,18CPU pass/5native skips;8 code files compile; diff whitespace and unchanged baseline source boundary pass. Prior whole-migration review remains applicable; only server receipt documentation changed since review.
 - [x] Commit/push exact migration; feature commit d979c070925a9dc9a5f5ce3a5563de56614fa192 verified against origin ref with a clean local tree. Documentation follow-up records this receipt.
-- [ ] User-operated AutoDL native test run with all23 tests executing and zero skips; remains pending.
+- [x] User-operated AutoDL native test run at3d85faf95951b4806eee18498841e66551b93320:23tests passed in2.875s,zero skips.
+- [x] Discuss first real-data run and resolve input: user supplied existing c0_candidate_r2_30k_seed0_20260902T082615Z/colmap_undistorted. Prepare thin per-run view from it (link read-only inputs, independently copy aligned COLMAP) and new output; tested training commit remains3d85faf. Fresh real-parser comparison confirms frozen baseline cfg_args/cfg_opts fields unchanged except input/output paths and new seed/selector/budget fields.
+- [ ] User executes proposed Tool Room/r2/seed0/30k/budget4096 launch; inspect startup and first active logs at7200 without restarting or changing total-iteration schedules. No launch result inferred from directory listing.
