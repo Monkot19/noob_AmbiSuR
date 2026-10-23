@@ -1,6 +1,6 @@
 # AmbiSuR Core 实施计划状态
 
-> **当前（2026-10-23）：** D 盘 `D:\research_Space\noob_AmbiSuR` 已接管 `codex/second-run-selector`；旧 Core 计划为历史。30K退出码0、点云和app权重非空已确认，train PSNR基本持平。用户已同意同参数提取新mesh并比较几何；提取结果和几何收益仍待验证。
+> **当前（2026-10-23）：** D盘为主目录；旧Core计划为历史。二周目30K、提取、正式评价均完成，实际C0/new已下载核验；CD变差13.05%，F1略升。退化集中上部，区域分布差异早于7001模块启动。下一批待讨论1219输入文件哈希核对；不改方法/预算，不重训baseline。
 
 ## Goal
 
@@ -125,3 +125,12 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 
 - [x] Verify downloaded new-run/evaluation identities and numerical reports;compute final-snapshot3-view candidate pools and inspect existing debug images.
 - [ ] User downloading actual formalC0 baseline;paired spatial comparison waits for matching asset. No rerun or method changes approved.
+
+## 2026-10-23 Actual C0 paired analysis completed
+- [x] Verify actual C0 SHA and actual C0/new configs, logs, input/cameras/neighbors.
+- [x] Reuse original evaluation core/identical GT samples for offline height/tail diagnosis; original means reproduce to4.62e-13mm, official files unchanged.
+- [x] Separate raw/post effects, check GT first-hit visibility and existing same-view products.
+- [x] Establish pre7001 distribution/log divergence; correct paired PSNR to+0.0286911dB on5training views; preserve causal uncertainty.
+- [x] Record artifacts/handoff; no method, training or baseline edits.
+- [ ] Discuss user-operated read-only1219-file input hash check against C0 manifest; noGPU/GT/baseline rerun.
+- [ ] Decide next single-variable experiment after input/early-trajectory investigation;4096 remains a hypothesis.

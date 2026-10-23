@@ -117,3 +117,11 @@ User proposes4096 budget insufficiency and notes slow download. Read existing lo
 
 ## 2026-10-23 Downloaded output inspected (read-only)
 Read evaluation originals,configs/logs;hash selectorpostmesh and localGT against report;verify CSV/JSON and PLY lengths,406render triplets. User confirms C0 missing and begins downloading. Viewed3 existing debug montages and memmapped finalGaussian only;AST reused real SH method and label helper,restored saved camera geometry for3 final snapshot pool estimates. No mesh distance evaluation,GT labels,renders,training or method edits. Findings updated;C0 same-view comparison pending,do not substitute original.
+
+## 2026-10-23 Actual C0 received and paired diagnosis
+
+User confirms actual C0 download. Verified matching formal mesh SHA/config/logs and identical initial pointcloud/cameras/neighbors. Reused frozen evaluator helpers and exact GT sample SHA for offline spatial/raw-post queries; all original means reproduce within4.62e-13mm. Independent artifacts under selector archive analysis/toolroom_pair_seed0_30k_diagnosis_v1; official inputs/results untouched. Upper region dominates completeness tail;raw already accounts for88.03% of completeness gap;GT first-hit visibility excludes wholly unseen geometry as the main explanation for worst1% points.
+
+Found large upper-region Gaussian center-count difference already at7000, prior to selector7001;early log pointcounts diverge at600. This is a confound,not proof of worse7K surface or a confirmed cause. Correct actualC0 paired trainPSNR delta+0.0286911dB on5views. Checked actual seed reset0 in both sources;atomicAdd/densification effects remain hypotheses. Full actual image/depth/confidence/scale hashes not available in downloaded output;prepared read-only1219-file server comparison for discussion,no GPU/new training.
+
+Initial documentation patch failed context verification before any write;clean status confirmed,then reapplied scoped docs changes. No production code/test/framework,method parameters,server operations,new renders,baseline retraining or data mutation.

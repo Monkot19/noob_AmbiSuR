@@ -1,5 +1,7 @@
 # Tool Room：二周目selector_v1首次正式几何评价
 
+> **最新状态：实际C0已下载核验，配对空间诊断已完成。** 各轮记录按发生顺序保留；以末节为当前结论。下一步优先核对训练输入身份，暂不增加预算或启动训练。
+
 ## 来源与身份
 
 2026-10-23用户粘贴AutoDL日志及完整metrics.csv六行。服务器8项评价测试全部通过/零跳过，用时10.591s；正式进程PID12484随后正常完成，日志明确打印Completed并列出四个JSON/CSV产物。此前PID消失不是异常退出证据。本文为用户回传记录的整理，不冒称原始服务器文件已下载或校验。
@@ -97,3 +99,125 @@
 查看30000_DSC06293、15600_DSC06337、20000_DSC06676三幅已保存debug图：源照片/渲染图、直接法线、深度法线和总掩码均存在；未做GT空间误差定位。右下掩码是A|extra且每图除自身max；pg_view是原NCC训练采样，不是selector G/P比较证据。故现有图不能还原原A/extra各自的绝对监督质量，也不能从亮红区域宣布补选已覆盖到位。20000轮added=1但总掩码仍广，直观说明两者不可混同。
 
 当前不重算评价，不修改代码/训练参数。待C0到齐后，用正确参考资产做同视角空间对比；若需要新增渲染/距离分析或单预算30K对照，先讨论范围。
+
+## 实际C0到齐后的配对诊断
+
+用户再次确认下载完成后，读取正式C0及新run现有产物，复用原评价核心进行离线空间诊断；没有训练、重新提取mesh、修改方法或改变正式评价域。此前“尚缺C0”“未读取GT距离”的记录只描述前一轮状态。
+
+### 资产与计算一致性
+
+- 实际C0目录：`D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/baseline/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z`。post mesh大小605468503字节，SHA256与正式报告的`396676490395879cbefe49c776b05f4094641c2a17835d4250e2812c70ec7e61`完全相同。
+- C0与新run的`input.ply`、`cameras.json`、`multi_view.json`分别字节相同。配置差异仅输入/输出路径及新增seed/selector/预算字段。实际C0和新run均在主入口重置seed0，不能将模块顶层`setup_seed(22)`误当成实际seed不同。
+- 复用原生产评价核心与同一组1M GT面积样本，样本SHA256为`efb1f2f330fdabdffa0d4db5f426b411eedfa670cb030b9727c9ffbed46212b9`。本地Open3D0.19.0与服务器0.18.0的原均值指标最大差仅`4.62e-13 mm`。
+- 新产物独立保存在`D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/selector_v1_2026_10_23/analysis/toolroom_pair_seed0_30k_diagnosis_v1`。原run、baseline、GT、正式JSON/CSV未写入。GT仅用于离线最终评价诊断；局部坐标文件不得进入训练、可靠性缓存、训练mask或checkpoint。
+
+### 空间定位：均值退化主要集中在上部
+
+对同一组GT点分别查询到两个post mesh的距离，再按世界坐标z事后分层。分层只解释整体成绩，不替换正式评价，也不据此裁掉上部。
+
+| GT分层 | GT面积样本占比 | C0平均Completeness mm | Selector平均Completeness mm | 对整体均值差贡献 mm |
+|---|---:|---:|---:|---:|
+| z<4m | 72.2129% | 31.748934 | 29.904191 | −1.332142 |
+| z>=4m | 27.7871% | 84.139603 | 119.627232 | +9.860983 |
+| 全部 | 100% | 46.306782 | 54.835622 | +8.528841 |
+
+z<4m各0.5m分层的平均完整性距离均改善；不表示其中每个点都改善，也不能认定改善由selector造成。最明显退化集中在上部角落，特别是x约5.5–7m、y约2–3.5m、z约4–5m。逐点距离增量最大的1% GT样本对整体均值差贡献+4.528411mm，占净退化约53.1%。Completeness中位数19.5971→19.5102mm略改善，但P99为363.611→530.335mm，解释了F1略升与平均距离变差为何可以同时出现。
+
+### 后处理与完全未观测都不是主要解释
+
+保持同一GT样本，补查raw mesh的完整性方向，不替代正式post mesh评价：
+
+| Completeness mm | C0 | Selector | Selector−C0 |
+|---|---:|---:|---:|
+| raw mesh | 42.752573 | 50.260804 | +7.508231 |
+| post mesh | 46.306782 | 54.835622 | +8.528841 |
+| 后处理新增距离 | +3.554209 | +4.574818 | +1.020609 |
+
+差距约88.03%在raw mesh中已存在，不能主要归因于只保留两个连通域。raw仍包含渲染和TSDF融合影响，不能进一步宣称训练本身贡献了88%。
+
+对逐点退化最大的1%（10000个GT位置），使用保存相机与GT first-hit射线检查：84.67%在至少一个相机满足1cm可见容差，2cm为89.25%。多数最坏点不能简单解释为根本没拍到。有限GT mesh和容差不证明充分纹理或可靠NCC。DSC06627可查看其中大量位置；已查看双方保存的同名法线图与源图。
+
+### 关键混杂：区域分布差异早于selector启动
+
+在相同事后诊断包围盒`x∈[4,7), y∈[2,3.5), z∈[4,5)`统计现有Gaussian中心：
+
+| 区域内Gaussian中心数 | C0 | Selector run |
+|---|---:|---:|
+| iteration7000 | 29904 | 14205 |
+| iteration30000 | 28431 | 15848 |
+
+候选比较与补选从7001才启动（`utils/candidate_selector.py::candidate_selector_active`）。7000时已相差15699个区域内中心，不能把最终差距都归因于selector后续删掉或错误监督了上部高斯。中心数不是覆盖率、几何误差或7K mesh成绩；没有7K表面评价，不能宣布7K表面已差同等幅度。
+
+进度日志在100轮已出现打印loss微差，600轮首次记录点数差异206119/206134，早于1001轮深度监督和7001轮补选。舍入日志不能定位首个浮点分叉；固定输入功能关闭等价测试也不证明完整7K训练轨迹逐位相同，不能排除移植代码运行路径或环境差异。
+
+两run的Python3.10/Torch2.7.1+cu128/CUDA12.8/GPU类别一致；相同seed不足以证明逐位复现。原CUDA backward有多处`atomicAdd`，例如607/624/650行，浮点累加次序与后续增密阈值放大是合理待查假设，**未被确认为本次根因**。[PyTorch 2.7复现说明](https://docs.pytorch.org/docs/2.7/notes/randomness.html)
+
+### 正确配套PSNR只覆盖5个训练视角
+
+| 30000轮日志 | 实际C0 | Selector |
+|---|---:|---:|
+| train PSNR | 31.074060440063477 | 31.102751541137696 |
+| train L1 | 0.016422624699771404 | 0.0163764713332057 |
+
+配套PSNR差为+0.0286911dB；此前+0.0042744dB来自另一份本地original，不是正式C0。`train.py:631`只选择索引5/10/15/20/25的五个训练相机，不能称406视角均值或新视角PSNR。这一很小差值不足以支持明显渲染收益。
+
+### 下一步只核对输入，暂不调整4096
+
+已证明初始点云、相机、邻居相同，但下载output没有全部训练图像、深度、置信图和对齐scale。`scene/dataset_readers.py:123–128`消费`estimated_depths`、`estimated_confs`及`trans.json`中的scale；`input.ply`相同不能代替这些身份检查。
+
+建议下一批利用C0已有`dataset_sha256.txt`，只读核对新工作视图406原图+406深度npy+406置信npy+1个对齐trans.json，共1219文件。不用GPU、GT、依赖安装或baseline重训。以下仅打印检查结果；待用户讨论该批次后在服务器执行。
+
+```bash
+python -B - <<'PY'
+from pathlib import Path
+from collections import Counter
+import hashlib
+
+baseline = Path('/root/autodl-tmp/ambisur_runs/Tool_Room/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z')
+current = Path('/root/autodl-tmp/ambisur_work/data_views/second_run_selector/toolroom_r2_seed0_30k_v1/colmap_undistorted')
+records = []
+for line in (baseline / 'dataset_sha256.txt').read_text().splitlines():
+    expected, relative = line.split(None, 1)
+    relative = relative.removeprefix('./')
+    if relative.startswith('images/'):
+        group = 'images'
+    elif relative.startswith('estimated_depths/') and relative.endswith('.npy'):
+        group = 'depth'
+    elif relative.startswith('estimated_confs/') and relative.endswith('.npy'):
+        group = 'confidence'
+    elif relative == 'sparse_da3_aligned/0/trans.json':
+        group = 'alignment'
+    else:
+        continue
+    records.append((group, relative, expected))
+counts = Counter(group for group, _, _ in records)
+assert counts == {'images': 406, 'depth': 406, 'confidence': 406, 'alignment': 1}, counts
+assert len({relative for _, relative, _ in records}) == 1219
+print('Selected:', dict(counts), flush=True)
+missing, mismatched = [], []
+for index, (_, relative, expected) in enumerate(records, 1):
+    path = current / relative
+    if not path.is_file():
+        missing.append(relative)
+        continue
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b''):
+            digest.update(chunk)
+    actual = digest.hexdigest()
+    if actual != expected:
+        mismatched.append((relative, expected, actual))
+    if index % 200 == 0:
+        print('Checked:', index, flush=True)
+print('Total:', len(records), 'Missing:', len(missing), 'Mismatched:', len(mismatched))
+for relative in missing[:40]:
+    print('MISSING', relative)
+for relative, expected, actual in mismatched[:40]:
+    print('DIFFERENT', relative, 'C0=' + expected, 'current=' + actual)
+raise SystemExit(1 if missing or mismatched else 0)
+PY
+```
+
+全部匹配也只证明当前工作视图与C0记录一致；若软链接目标曾在训练后变化，不能追溯证明开训时逐字节相同。发现差异先查身份；全部相同再调查7001前轨迹，并讨论预算单变量实验。现有剂量推导支持预算假设，但不支持“4096就是主因”或“扩大必然修复上部”。不自动叠加梯度/VCR/DP模块。
+
+诊断数值见独立分析目录的`diagnosis.json`、`raw_post_diagnosis.json`、`primitive_7000_30000_counts.json`、`early_training_log_comparison.json`、`worst_region_gt_visibility.json`、`analysis_receipt.json`。高度贡献与raw/post分解闭合误差小于1e-9mm；跨场景继续复用现有正式评价核心。
