@@ -32,8 +32,14 @@
 
 - [完整结果与解释](2026-10-23-toolroom-selector-v1-results.md)：baseline→selector的Accuracy35.1244→37.2194mm，Completeness46.3068→54.8356mm，Surface Chamfer40.7156→46.0275mm（+13.0463%，变差）。
 - F1@1/2/5cm均略升，5cm为0.77933825→0.78048925（+0.1151个百分点）；5cm Recall下降0.2820个百分点。结论为混合结果、尚无整体几何收益，不隐去正负任一方向。
-- PID12484消失由正式Completed日志解释为正常结束；不重启评价。日志/CSV已回传，完整results.json/配置/身份文件和大模型尚待用户自行下载；用户明确不由agent SSH连接。
+- PID12484消失由正式Completed日志解释为正常结束；不重启评价。日志/CSV已回传，新run与完整评价已下载到D盘，postmesh/本地GT哈希与报告完全匹配，JSON/CSV一致；实际C0 baseline尚缺，用户正在自行下载，不由agent SSH连接。
 - 训练、mesh与评价原件保全；阈值、评价域与方法不变。先归档，下一批定位/改动须讨论，不自动叠加模块或新训练。
+
+## 最新本地分析（2026-10-23）
+
+- 新归档位于 `D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/selector_v1_2026_10_23`。原本地original不是正式参考C0（mesh哈希不同）；不混用两者PSNR/空间对照。新run与original输入点云/相机/邻居哈希相同，7K已存在差异，不能全部归因于7001开始的selector。
+- 最终快照三个既有debug视角的A阴性候选池约129416/741704/164701，4096覆盖3.165%/0.552%/2.487%。固定预算在不同视角改变新增ALR剂量，给预算不足提供具体机制线索，但尚无因果结论；总掩码图不能分离extra。
+- 仅核对文件/日志/既有图和Gaussian参数，未重算几何距离或新渲染。等待正确C0资产后进行待讨论的空间定位，暂不改预算或新训练。
 
 ## 接手后的下一步
 

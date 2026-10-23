@@ -122,3 +122,6 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 
 - [x] Initial4096-budget hypothesis analysis: actual115 log records and producer/consumer source checked, competing coverage/selection/action explanations recorded; no causal conclusion.
 - [ ] Discuss one narrow follow-up after download completes; no new method or training authorized this turn.
+
+- [x] Verify downloaded new-run/evaluation identities and numerical reports;compute final-snapshot3-view candidate pools and inspect existing debug images.
+- [ ] User downloading actual formalC0 baseline;paired spatial comparison waits for matching asset. No rerun or method changes approved.

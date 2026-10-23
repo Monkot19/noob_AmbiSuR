@@ -114,3 +114,6 @@ User receipt:8/8 native tests pass/zero skips in10.591s at4010fd0; nohupPID12484
 
 ## 2026-10-23 Initial causal analysis requested
 User proposes4096 budget insufficiency and notes slow download. Read existing local new-run train.log/config/identity/extraction metadata (not meshes/GT); derive115 logged snapshot statistics and verify both exitcodes0. Re-read actual selector/ALR/renderer/NCC and cached donor train/update_points source; corroborate primary papers. Record observations and falsifiable hypotheses in result report; no experiment, parameter change, package install or mesh loading. Next narrow analysis/ablation remains a proposal for discussion.
+
+## 2026-10-23 Downloaded output inspected (read-only)
+Read evaluation originals,configs/logs;hash selectorpostmesh and localGT against report;verify CSV/JSON and PLY lengths,406render triplets. User confirms C0 missing and begins downloading. Viewed3 existing debug montages and memmapped finalGaussian only;AST reused real SH method and label helper,restored saved camera geometry for3 final snapshot pool estimates. No mesh distance evaluation,GT labels,renders,training or method edits. Findings updated;C0 same-view comparison pending,do not substitute original.
