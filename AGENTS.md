@@ -1,10 +1,19 @@
-# AmbiSuR Reliability Routing Project Rules
+# AmbiSuR 二周目项目规则
+
+## 主工作目录与当前范围（2026-10-23 用户确认，优先于旧规则）
+
+- 二周目始终以 `D:\research_Space\noob_AmbiSuR` 为主工作目录，使用 `codex/second-run-selector`；后续修改、测试和提交均在这里完成。
+- 用户选择在 D 盘通过分支隔离工作；未经再次讨论，不把主开发转移到 C 盘或新建其他主 worktree。
+- C 盘 `C:\Users\DELL\.codex\worktrees\second-run-selector\noob_AmbiSuR` 保留在 detached `3775135`；清理由用户另行决定。
+- 当前方法为干净 `c0-baseline` 加已批准候选选择模块，复用原标签渲染和 ALR；旧 Core、五状态、可靠性路由和 Utility 恢复仅属历史，不自动继续。
+- 数据集与已有 baseline 输出只读，复用固定 baseline，不重新训练、覆盖或移动。AutoDL 当前训练固定 `3d85faf`，本地主目录整理不触碰服务器作业或版本。
+- 归档和换机入口见 `docs/research/second-run-workspace-and-recovery.md`；不复制覆盖 `.git` 或强制回退来迁移目录。
 
 ## 必读顺序
 
 1. `docs/research/project-handoff.md`
 2. `docs/research/baseline-audit.md`
-3. `docs/research/ambisur-reliability-routing-design.md`
+3. `docs/superpowers/specs/2026-10-21-candidate-selector-design.md`（当前规格；旧 `ambisur-reliability-routing-design.md` 为历史参考）
 4. 当前代码、配置、Git 状态与最近提交
 5. `task_plan.md`、`findings.md`、`progress.md`
 
@@ -20,7 +29,7 @@
 - 完成一个阶段后使用 `superpowers:requesting-code-review`。
 - 声称完成、通过或可运行前使用 `superpowers:verification-before-completion`。
 
-## 范围与阶段规则
+## 一周目阶段规则（历史；二周目按上方当前范围执行）
 
 1. 设计稿是已批准的规格合同。代码与规格冲突时先报告证据，不得擅自选择另一算法。
 2. 第一阶段只实现 Core：观测校准、双可靠性、五状态仲裁、参数路由、生命周期。
@@ -51,4 +60,14 @@
 
 
 ## 2026-10-22 User-approved clean second run: supersedes old Core stage rules
-Use c0-baseline plus approved candidate selector only, no reliability/Core/five-state/evidence/topology port. Preserve original worktree and fixed baseline output. See docs/superpowers/specs/2026-10-21-candidate-selector-design.md and docs/superpowers/plans/2026-10-22-clean-selector-migration.md. Lightweight seed/metadata reuse is authorized. Use one test entry, then AutoDL native validation, no new diagnostic platform. Progress updates follow the user five-item format. No server cleanup, push or training in this local batch.
+Use c0-baseline plus approved candidate selector only, no reliability/Core/five-state/evidence/topology port. Preserve historical work and fixed baseline output. See docs/superpowers/specs/2026-10-21-candidate-selector-design.md and docs/superpowers/plans/2026-10-22-clean-selector-migration.md. Lightweight seed/metadata reuse is authorized. Use one test entry, then AutoDL native validation, no new diagnostic platform. Progress updates follow the user five-item format. Each new implementation or experiment batch is discussed first; later explicit approval supersedes the original migration batch's no-push/no-training restriction.
+
+## 持续有效的复用约束
+
+- 同一科学问题只维护一套公共统计与审计核心；新场景主要增加数据身份、路径、seed、单位和协议配置，格式差异通过薄适配层处理。
+- 不按场景复制 evaluator、solver、空间分折、bootstrap 或状态审计；不为通用框架阻塞已批准的最小实验。
+- 不同数据集沿用各自正式评价定义，统一执行与 provenance，不用同一指标替代 DTU/TnT 等官方协议。
+- 真实接口复用须贯通 producer → 适配／聚合 → 原有类型规范化 → schema 校验 → 发布；新增边界用实际生产函数和真实返回类型验证，不只靠手写字典、list fixture 或 mock。
+- 原 JSON／NumPy serializer 直接复用，类型转换不改变数值、随机序列、统计方法或门槛；只为新增格式或协议边界补测试，不重建统计框架。
+- 接口异常与科学负结果分开记录；GT 后失败保留原记录，诊断后须获明确恢复授权，不删除一次性记录或自动重跑。
+- 历史 Utility 的冻结 `1-r_p`、M0/M1、目标命名、单 seed／多 seed 聚合与发布合同仍约束其后续恢复；二周目工作不构成恢复授权。

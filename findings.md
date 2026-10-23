@@ -1,5 +1,7 @@
 # AmbiSuR 新项目 Findings
 
+> 当前二周目主目录为 `D:\research_Space\noob_AmbiSuR`；旧 Core 内容为历史，最新状态见文末及 `docs/research/project-handoff.md`。
+
 本文件只记录新项目通过代码、测试和实验得到的事实。设计假设不得写成已证实结论。
 
 ## Confirmed Inputs
@@ -58,3 +60,9 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - Read-only frozen Tool_Room_r2 cfg_args/cfg_opts and train.log confirm406views,r2,eval=False,seed0 baseline defaults,30k,DA3,unc_from_iter7000,original ray/trunc/depth settings. No baseline checkpoint/resume required; candidate first activates at7001. Dataset source path in old cfg is historical and cannot be assumed still present.
 - Original project task plan requires canonical uploaded data to stay read-only: baseline loader can write sparse_da3_aligned/0/points3D.ply. Reuse a qualified writable Tool Room working view (or discuss a minimal private copy); do not launch directly against canonical data. Need current server path, not another scientific audit or new smoke framework.
 - Directory receipt resolves an existing c0 r2 working-view parent. To preserve old input state, use a new thin view; image/DA3 array links do not duplicate bulk data, and an independent aligned sparse copy absorbs loader's unconditional PLY rewrite. Fresh actual-parser comparison to frozen cfg_args/cfg_opts passes, with only intended path and new selector/seed fields differing. Directory existence alone is not proof of training success; launch command checks required input files before starting.
+
+## 2026-10-23 Primary D workspace and running evidence
+
+- User's latest excerpt reaches23760/30000, usually sampled4096 with nonzero additions; iteration21400 has sampled0. No cause inferred for that empty pool. total_alr_weight is the full rendered supervision weight, not the newly added weight or geometric improvement. Final metrics remain unknown.
+- Inventory: D candidate-selector-v1/62e9117 had8modified+16untracked files; C second-run/3775135 was clean; both share D/.git. Byte-exact backup preserves24files/987252bytes and54historical files. Complete bundle6121675bytes verified, SHA256193c8c88f628e6e881bdad7a873a6c96851ea7f3e797cb05fe2a88d39d0e9b34. Archive7b3154b pushed; original branch remains62e9117.
+- After user detached C, D normally switched to second-run. Fresh checks:1697tracked files present,8source/test files match C after LF normalization,192ignored hashes unchanged,C raw code unchanged. Existing D suite18pass/5native skips;8syntax checks pass. No new method/framework/dependency or server operation.

@@ -1,5 +1,7 @@
 # AmbiSuR 新项目 Progress
 
+> 当前主工作目录：`D:\research_Space\noob_AmbiSuR`，分支 `codex/second-run-selector`；C 保留 detached3775135。旧记录按时间保留，当前入口为 `docs/research/project-handoff.md`。
+
 ## Session Log
 
 ### Project bootstrap
@@ -75,3 +77,12 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - Fresh real argument-parser check against read-only baseline cfg_args/cfg_opts passed: all existing fields match except intended input/output paths; optimization adds only seed/enable_candidate_selector/candidate_selector_budget. Keep original eval=False,DA3,ALR7001 and30k schedules,default7k/30k saving,no checkpoint resume.
 - Protect both old private view and canonical data: new per-run thin view links images/sparse/estimated_depths/estimated_confs and copies sparse_da3_aligned with dereferenced independent files; require aligned points3D.bin/trans.json so loader cannot fall back to writing original sparse. Preserve split.json if present. Only the small writable subtree is copied; no new experiment/test framework.
 - Proposed roots: data_views/second_run_selector/toolroom_r2_seed0_30k_v1/colmap_undistorted and ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_30k_v1. Refuse existing destinations; background train logs and exitcode stored in the new output. Use exact tested3d85faf code/independent rasterizer. No mesh/GT/evaluation or server training performed by agent. This documentation-only receipt does not require changing the tested server code version.
+
+## 2026-10-23 User-approved primary workspace migration
+
+- User reports30k at23760 and approves the inspected backup/archive/detach/switch/verify/document plan. D62e9117 had8modified+16untracked, C3775135 clean/sharedGit; no local training/test worker and all three earlier review agents completed.
+- Created D:/research_Space/noob_AmbiSuR_workspace_backup_20261023T040116Z: verified24-file exact-byte zip,54historical-file zip,192ignored hashes,patches/refs/worktrees; archive7b3154b pushed, original branch unchanged,complete bundle verified including old branches/tags/stash.
+- C detach initially failed appending protected logs/HEAD; no force/ACL edit, user completed normal local command. A subsequent helper emitted a nonterminating PowerShell null-value message for empty branch output; Git completed D switch. Explicit Python assertions then confirmed both D second-run and C detached/clean at3775135 before documentation edits.
+- Fresh D verification:1697tracked files,8code/syntax checks,192ignored hashes,C raw hashes and bundle hash all correct. Existing suite23tests/18pass/5native skips; no local installation, server retest or baseline rerun.
+- Initial multi-file documentation patch was rejected before writes for duplicate operations on one path; status remained clean. Reapplied as one update per path. Updated AGENTS/current handoff/root ledgers and recovery records only; no production diff, data/baseline modification or C removal. Final scoped review and commit/push follow.
+- One fresh scoped read-only review passed with no Critical/Important/required Minor. It confirmed7documentation files,old/archive refs,empty production diff and correct running-versus-complete training boundary; no test/GT/server repetition. Preparing documentation publication and final status checks.

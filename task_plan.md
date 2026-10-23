@@ -1,5 +1,7 @@
 # AmbiSuR Core 实施计划状态
 
+> **当前（2026-10-23）：** D 盘 `D:\research_Space\noob_AmbiSuR` 已接管 `codex/second-run-selector`；旧 Core 计划为历史。GPU23项验证已通过；用户回传 Tool Room30K已到23760，最终结果待回执。目录接管见文末和 `docs/research/second-run-workspace-and-recovery.md`。
+
 ## Goal
 
 在不混入 Supporting 模块的前提下，完成可复现、可消融的 AmbiSuR Core：观测校准、双可靠性、五状态仲裁、参数级梯度路由和 Gaussian 生命周期，并通过 G0–G2。
@@ -87,4 +89,15 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - [x] Commit/push exact migration; feature commit d979c070925a9dc9a5f5ce3a5563de56614fa192 verified against origin ref with a clean local tree. Documentation follow-up records this receipt.
 - [x] User-operated AutoDL native test run at3d85faf95951b4806eee18498841e66551b93320:23tests passed in2.875s,zero skips.
 - [x] Discuss first real-data run and resolve input: user supplied existing c0_candidate_r2_30k_seed0_20260902T082615Z/colmap_undistorted. Prepare thin per-run view from it (link read-only inputs, independently copy aligned COLMAP) and new output; tested training commit remains3d85faf. Fresh real-parser comparison confirms frozen baseline cfg_args/cfg_opts fields unchanged except input/output paths and new seed/selector/budget fields.
-- [ ] User executes proposed Tool Room/r2/seed0/30k/budget4096 launch; inspect startup and first active logs at7200 without restarting or changing total-iteration schedules. No launch result inferred from directory listing.
+- [x] User executed Tool Room/r2/seed0/30k/budget4096 launch and returned active logs through23760; final completion and reconstruction benefit remain pending.
+
+## 2026-10-23 D drive primary workspace takeover
+
+- [x] User confirms30k is running and returns23760/30000 with active selector records; launch achieved, final completion/benefit still unverified.
+- [x] Read-only inventory and user-approved migration; preserve24files,54ignored historical records,complete bundle and original branch history.
+- [x] User completes C detach after tool permission denial; D switches normally to second-run at3775135, C retained detached/clean.
+- [x] Verify1697tracked files,8code/syntax files,192ignored hashes; unified local tests18pass/5native skips. No data/baseline/server modification.
+- [x] Update primary-directory rules and recovery/handoff documents; old Core preserved on archival branch.
+- [x] One scoped review passed with no Critical/Important/required Minor; production diff empty.
+- [ ] Documentation commit/push and remote/clean-tree checks; no production change.
+- [ ] Receive final training exitcode/log/artifacts; discuss existing mesh extraction and matching baseline evaluation. C cleanup remains unapproved.
