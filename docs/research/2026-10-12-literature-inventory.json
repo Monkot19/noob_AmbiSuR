@@ -1,0 +1,553 @@
+{
+  "audit_date": "2026-10-12",
+  "scope": "targeted search, not exhaustive; research only; no experiments",
+  "reading_codes": {
+    "M": "this-round methods and relevant experiments checked; not a claim of every sentence/supplement/code reproduced",
+    "R": "relevant full-text evidence checked in previous round, reused",
+    "B": "primary metadata/abstract or baseline-related screen only; no detailed method claims"
+  },
+  "counts": {
+    "M": 22,
+    "R": 11,
+    "B": 17
+  },
+  "records": [
+    {
+      "id": "S01",
+      "title": "Confidence matters: Leveraging Multi-view Geometric Priors for GS-based Reconstruction",
+      "publication": "2026 preprint (2608.06117)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2608.06117v1",
+      "role": "prior confidence / existing baseline overlap; not calibrated geometry-error probability",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\AA6UVAVV\\Zhou和Lähner - 2026 - Confidence matters Leveraging Multi-view Geometric Priors for GS-based Reconstruction.pdf",
+        "pages": 20,
+        "sha256": "b237c99cac9455077995ba9f0e6bf6e22aadf2ccc4dc584b9b9da17c907001d6",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S02",
+      "title": "Sparse2DGS: Geometry-Prioritized Gaussian Splatting for Surface Reconstruction from Sparse Views",
+      "publication": "CVPR 2025",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2504.20378v1",
+      "role": "fixed features, sampled primitive constraints, selective comparison of geometry hypotheses; distinguish 2505.19854",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\U4GXY32F\\Wu 等 - 2025 - Sparse2DGS Geometry-Prioritized Gaussian Splatting for Surface Reconstruction from Sparse Views.pdf",
+        "pages": 10,
+        "sha256": "1b6ccbb5df5d2fd60777e39fc69c2c43be1a26960696e08b01fc9adbf7c610ea",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S03",
+      "title": "DualSplat: Robust 3D Gaussian Splatting via Pseudo-Mask Bootstrapping from Reconstruction Failures",
+      "publication": "CVPR 2026",
+      "reading": "M",
+      "url": "https://arxiv.org/abs/2604.21631",
+      "role": "failure exposure / FiT3D+SAM2 pseudo masks, sequential source freeze; NVS/transient evidence",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\CT2BUEAP\\Wang 等 - DualSplat Robust 3D Gaussian Splatting via Pseudo-Mask Bootstrapping from Reconstruction Failures.pdf",
+        "pages": 10,
+        "sha256": "99818e57d149ce261b3221b98f1f4949217ab51ec46534d5bc08f3c1127f242f",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S04",
+      "title": "ConFixGS: Learning to Fix Feedforward 3D Gaussian Splatting with Confidence-Aware Diffusion Priors in Driving Scenes",
+      "publication": "2026 preprint (2605.09688)",
+      "reading": "M",
+      "url": "https://arxiv.org/abs/2605.09688",
+      "role": "G0 scaffold + input reprojection validates appearance priors; same confidence gates gradient/densification; NVS",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\JWJGXFR7\\Song 等 - 2026 - ConFixGS Learning to Fix Feedforward 3D Gaussian Splatting with Confidence-Aware Diffusion Priors i.pdf",
+        "pages": 28,
+        "sha256": "fc22d796a2d9ebb5b97a21742ed374f19e5694cbc0fcbd01d9e65170c486c6ec",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S05",
+      "title": "IndoorGS: Geometric Cues Guided Gaussian Splatting for Indoor Scene Reconstruction",
+      "publication": "CVPR 2025",
+      "reading": "R",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Ruan_IndoorGS_Geometric_Cues_Guided_Gaussian_Splatting_for_Indoor_Scene_Reconstruction_CVPR_2025_paper.pdf",
+      "role": "source-derived types and different ADC actions; prior round main+supplement checked",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\AZGMPWY6\\Ruan 等 - IndoorGS Geometric Cues Guided Gaussian Splatting for Indoor Scene Reconstruction.pdf",
+        "pages": 10,
+        "sha256": "1519bccdcd805b9c0936562ca5bcddce7b82d30cba9dbcc5c009cb17ee5d712b",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S06",
+      "title": "Confidence-Based Mesh Extraction from 3D Gaussians (CoMe)",
+      "publication": "ECCV 2026 (author repository acceptance statement)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2603.24725v2",
+      "role": "confidence/render residual and geometry/topology coupling; https://github.com/r4dl/CoMe",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\VJ9BX4DX\\Radl 等 - 2026 - Confidence-Based Mesh Extraction from 3D Gaussians.pdf",
+        "pages": 34,
+        "sha256": "613c30459c6bf112e46887c22b62671f207eda79126edcbfed628f6d59f59fde",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S07",
+      "title": "3D Gaussian Splatting with Self-Constrained Priors for High Fidelity Surface Reconstruction (GSPrior)",
+      "publication": "2026 preprint (2603.19682)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2603.19682v1",
+      "role": "self TSDF surface band, primitive projection; self-consistency is not independent truth",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\ICNANX97\\Noda 等 - 2026 - 3D Gaussian Splatting with Self-Constrained Priors for High Fidelity Surface Reconstruction.pdf",
+        "pages": 17,
+        "sha256": "be3f667651c4be8b5a4fcb62f89b627b2a32339e3b63e1c7543df563b0d1b6fb",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S08",
+      "title": "AmbiSuR: Revisiting Photometric Ambiguity for Accurate Gaussian-Splatting Surface Reconstruction",
+      "publication": "ICML 2026",
+      "reading": "R",
+      "url": "https://arxiv.org/html/2605.12494v1",
+      "role": "baseline full sections/code audit; official dual-ended SH selection",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\2GSV59QS\\Li 等 - 2026 - Revisiting Photometric Ambiguity for Accurate Gaussian-Splatting Surface Reconstruction.pdf",
+        "pages": 23,
+        "sha256": "3df6d7cb877c5987682d9bd27df000f6cfbb7b7f76db5eaf193ac77ef8e8e645",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S09",
+      "title": "CLEAR: Conflict-aware Learning via Evidence-guided Adaptive Routing for Unified Sparse-View 3D Gaussian Super-Resolution",
+      "publication": "2026 preprint (2608.02206)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2608.02206v1",
+      "role": "observed LR / generated HR conflicts; shared evidence for gradients and densification",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\EXHS4QWR\\Li 等 - 2026 - CLEAR Conflict-aware Learning via Evidence-guided Adaptive Routing for Unified Sparse-View 3D Gauss.pdf",
+        "pages": 9,
+        "sha256": "6741dc92996aba43d45b272359df99bec58f0887b2fdc3962c3cec9b21dd8a50",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S10",
+      "title": "HarmoGS: Robust 3D Gaussian Splatting in the Wild via Conflict-Aware Gradient Harmonization",
+      "publication": "2026 preprint (2605.13073)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2605.13073v1",
+      "role": "cross-view photo gradient rotation and topology; original-loss descent needs separate check",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\FK76JNNB\\Kang 等 - 2026 - HarmoGS Robust 3D Gaussian Splatting in the Wild via Conflict-Aware Gradient Harmonization.pdf",
+        "pages": 24,
+        "sha256": "abccf101254cf3e4c97de7a6bf1e3ac1631aa96a5c67a77f8330da306e62f2eb",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S11",
+      "title": "RobustSplat: Decoupling Densification and Dynamics for Transient-Free 3DGS",
+      "publication": "ICCV 2025",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2506.02751",
+      "role": "transient/densification setting; metadata/abstract only",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\VWMVEQ8H\\Fu 等 - RobustSplat Decoupling Densification and Dynamics for Transient-Free 3DGS.pdf",
+        "pages": 11,
+        "sha256": "1a74d4b706754b6da4b9389d45fa172fbff6cbfa4aad5c145827591baa7fcb4a",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S12",
+      "title": "VCR-GauS: View Consistent Depth-Normal Regularizer for Gaussian Surface Reconstruction",
+      "publication": "NeurIPS 2024",
+      "reading": "M",
+      "url": "https://arxiv.org/abs/2406.05774",
+      "role": "D-Normal couples depth and position; current rendered-normal agreement is not independent prior truth",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\MPPLZDRW\\Chen 等 - VCR-GauS View Consistent Depth-Normal Regularizer for Gaussian Surface Reconstruction.pdf",
+        "pages": 26,
+        "sha256": "ae8a2505af7860f195c43eb4e8e0058ac51284d17e0ec586c449baa9281bcb7f",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S13",
+      "title": "Quadratic Gaussian Splatting: High Quality Surface Reconstruction with Second-order Geometric Primitives",
+      "publication": "ICCV 2025; initial preprint 2024",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2411.16392",
+      "role": "representation change; earlier title alias deduplicated",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\JN9EN34Z\\Zhang 等 - 2024 - Quadratic Gaussian Splatting High Quality Surface Reconstruction with Second-order Geometric Primit.pdf",
+        "pages": 16,
+        "sha256": "c43fcb0871c1de07bd174783878a7affe3a4fe83cc2ae266772616da7f993814",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S14",
+      "title": "SurfaceSplat: Connecting Surface Reconstruction and Gaussian Splatting",
+      "publication": "ICCV 2025",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2507.15602",
+      "role": "representation/interface route; not first lightweight candidate",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\HGXV59PF\\Gao 等 - 2025 - SurfaceSplat Connecting Surface Reconstruction and Gaussian Splatting.pdf",
+        "pages": 16,
+        "sha256": "4658e3127885912247e8d9ae51e95c92cb1f546d8f3c8cd6f7a38cfbdf2bbe8f",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S15",
+      "title": "PGSR: Planar-based Gaussian Splatting for Efficient and High-Fidelity Surface Reconstruction",
+      "publication": "2024 preprint / TVCG record",
+      "reading": "M",
+      "url": "https://arxiv.org/abs/2406.06521",
+      "role": "local plane and multiview homography/occlusion; method and TnT ablations checked from local PDF",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\FJ3EB3TL\\Chen 等 - 2025 - PGSR Planar-based Gaussian Splatting for Efficient and High-Fidelity Surface Reconstruction.pdf",
+        "pages": 20,
+        "sha256": "c4374bfbff4c55700ef81595bdb9d58a13bd3d0e57788e5d5bea382aea0aafe8",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S16",
+      "title": "Ref-GS: Directional Factorization for 2D Gaussian Splatting",
+      "publication": "CVPR 2025; initial preprint 2024",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2412.00905",
+      "role": "reflective appearance representation; heavier alternative",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\92IWM8D4\\Zhang 等 - 2025 - Ref-GS Directional Factorization for 2D Gaussian Splatting.pdf",
+        "pages": 15,
+        "sha256": "3448469ba42da95c6222880b1d3dd6df3fdc32f6970b327b1e26f4e6abf62350",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S17",
+      "title": "3D Gaussian Splatting with Deferred Reflection",
+      "publication": "SIGGRAPH 2024",
+      "reading": "B",
+      "url": "https://gapszju.github.io/3DGS-DR/",
+      "role": "reflectance representation; metadata/abstract only",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\X8Q6CBIG\\Ye 等 - 2024 - 3D Gaussian Splatting with Deferred Reflection.pdf",
+        "pages": 10,
+        "sha256": "19cbede913a65170788d1ee411bf2f8f10e691bd9c15b16046f2fb94bd8dac43",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S18",
+      "title": "GS-2DGS: Geometrically Supervised 2DGS for Reflective Object Reconstruction",
+      "publication": "CVPR 2025",
+      "reading": "M",
+      "url": "https://arxiv.org/abs/2506.13110",
+      "role": "foundation geometry + PBR/deferred shading; geometry/photo trade-off Table4 checked",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\CQ9ML5ZW\\Tong 等 - GS-2DGS Geometrically Supervised 2DGS for Reflective Object Reconstruction.pdf",
+        "pages": 11,
+        "sha256": "dee99d8fa580c3dbd34f0b9ca87183cbcd5a38ebc5928e23684e6f5055180c8b",
+        "duplicate_paths": [
+          "C:\\Users\\DELL\\Zotero\\storage\\ZEDERKFJ\\Tong 等 - GS-2DGS Geometrically Supervised 2DGS for Reflective Object Reconstruction.pdf"
+        ]
+      }
+    },
+    {
+      "id": "S19",
+      "title": "SpecTRe-GS: Modeling Highly Specular Surfaces with Reflected Nearby Objects by Tracing Rays in 3D Gaussian Splatting",
+      "publication": "CVPR 2025",
+      "reading": "B",
+      "url": "https://spectre-gs.github.io/",
+      "role": "reflection tracing; substantial representation/runtime change",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\79YGJ7JP\\Tang 等 - SpecTRe-GS Modeling Highly Specular Surfaces with Reflected Nearby Objects by Tracing Rays in 3D Ga.pdf",
+        "pages": 10,
+        "sha256": "ce770b92a12c804836fe069791b6381eb34a2c94c18bf8e291cc3702edeeb450",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S20",
+      "title": "DN-Splatter: Depth and Normal Priors for Gaussian Splatting and Meshing",
+      "publication": "WACV 2025; initial preprint 2024",
+      "reading": "M",
+      "url": "https://arxiv.org/abs/2403.17822",
+      "role": "SfM scale/shift, edge-aware log depth and explicit normal; sensor-data ablation not RGB-only proof",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\9SW55VJH\\Turkulainen 等 - DN-Splatter Depth and Normal Priors for Gaussian Splatting and Meshing.pdf",
+        "pages": 11,
+        "sha256": "a8bc194db4c65d28bd42be2bf7f3ef9b121db2edd2fd0db02ff6d77c3bd6542a",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S21",
+      "title": "2D-SuGaR: Surface-Aware Gaussian Splatting for Geometrically Accurate Mesh Reconstruction",
+      "publication": "Eurographics 2026 short paper",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2605.00569",
+      "role": "mesh/representation route",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\JPJEJSR6\\R 等 - 2026 - 2D-SuGaR Surface-Aware Gaussian Splatting for Geometrically Accurate Mesh Reconstruction.pdf",
+        "pages": 4,
+        "sha256": "7e021d4f16a9a8931a3b9c1d86e5b1a6055792fb8add1563aa8f73f4f578853b",
+        "duplicate_paths": []
+      }
+    },
+    {
+      "id": "S22",
+      "title": "GS-SDF: LiDAR-Augmented Gaussian Splatting and Neural SDF for Geometrically Consistent Rendering and Reconstruction",
+      "publication": "IROS 2025",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2503.10170",
+      "role": "requires LiDAR; incompatible with current RGB-only input contract",
+      "local_pdf": {
+        "source_path": "C:\\Users\\DELL\\Zotero\\storage\\2YEPRW6F\\Liu 等 - 2025 - GS-SDF LiDAR-Augmented Gaussian Splatting and Neural SDF for Geometrically Consistent Rendering and.pdf",
+        "pages": 8,
+        "sha256": "4bb19f4bbe5649d57ab025dff49e3799f510745878c1013bcbe82f74274b43b0",
+        "duplicate_paths": [
+          "C:\\Users\\DELL\\Zotero\\storage\\LSFMM4PZ\\Liu 等 - 2025 - GS-SDF LiDAR-Augmented Gaussian Splatting and Neural SDF for Geometrically Consistent Rendering and.pdf"
+        ]
+      }
+    },
+    {
+      "id": "A01",
+      "title": "UA-GS: Uncertainty-Aware Gaussian Splatting with View-Dependent Regularization for High-Fidelity 3D Reconstruction",
+      "publication": "EGSR 2025 symposium",
+      "reading": "M",
+      "url": "https://diglib.eg.org/items/2396ac8a-1d30-40a8-8e51-c03cc4961c46",
+      "role": "DebSDF-style prior uncertainty already transferred to GS; publisher authors verified"
+    },
+    {
+      "id": "A02",
+      "title": "GeoSplat: A Deep Dive into Geometry-Constrained Gaussian Splatting",
+      "publication": "2025 preprint (2509.05075)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2509.05075v1",
+      "role": "normal/tangent gradient clipping assumes near-surface; not generic off-surface repair"
+    },
+    {
+      "id": "A03",
+      "title": "GPU-SDF: Leveraging Geometric Prior Uncertainty and Complementary Constraints for High-Fidelity Neural Indoor Surface Reconstruction",
+      "publication": "2026 preprint (2602.23926)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2602.23926v1",
+      "role": "perturbation stability, SDF-specific constraints; KL-inspired expression independently checked"
+    },
+    {
+      "id": "A04",
+      "title": "Multiview Geometric Regularization of Gaussian Splatting for Accurate Radiance Fields",
+      "publication": "CGF / EGSR 2025",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2506.13508v1",
+      "role": "MVS depth filtering/multiview gradients; main method checked, no ablation numbers used"
+    },
+    {
+      "id": "A05",
+      "title": "OracleGS: Grounding Generative Priors for Sparse View Gaussian Splatting",
+      "publication": "WACV 2026",
+      "reading": "M",
+      "url": "https://openaccess.thecvf.com/content/WACV2026/papers/Topaloglu_OracleGS_Grounding_Generative_Priors_for_Sparse-View_Gaussian_Splatting_WACV_2026_paper.pdf",
+      "role": "VGGT global attention proxy over generated views; proposal/validation pattern, not truth oracle"
+    },
+    {
+      "id": "A06",
+      "title": "ConfidentSplat",
+      "publication": "2025 preprint (2509.16863)",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2509.16863",
+      "role": "SLAM confidence fusion; abstract screen"
+    },
+    {
+      "id": "A07",
+      "title": "TVG-SLAM",
+      "publication": "LRA online 2025 / volume 2026",
+      "reading": "B",
+      "url": "https://doi.org/10.1109/LRA.2025.3641103",
+      "role": "tri-view uncertainty; abstract screen"
+    },
+    {
+      "id": "A08",
+      "title": "PolarGS",
+      "publication": "2025 preprint (2512.00794)",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2512.00794",
+      "role": "polarization input required; excluded current RGB-only candidate"
+    },
+    {
+      "id": "A09",
+      "title": "NOVA-GS: Noise-Aware View-Consistent Gaussian Splatting for Low-Light Novel View Synthesis",
+      "publication": "2026 preprint (2609.12682)",
+      "reading": "R",
+      "url": "https://arxiv.org/html/2609.12682v1",
+      "role": "noise-aware SH regularization, prior-round methods checked; NVS target"
+    },
+    {
+      "id": "A10",
+      "title": "Geometry Gaussians: Decoupling Appearance and Geometry in Gaussian Splatting",
+      "publication": "2026 preprint (2606.05124)",
+      "reading": "R",
+      "url": "https://arxiv.org/html/2606.05124v1",
+      "role": "geometry opacity separation; representation-level alternative"
+    },
+    {
+      "id": "A11",
+      "title": "Decoupling geometry and appearance in Gaussian splatting for reflective surface reconstruction: A glossy image prior-guided approach (GIP-GS)",
+      "publication": "Neural Networks 2026",
+      "reading": "B",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0893608026001152",
+      "role": "publisher metadata/abstract only; no method claims or author expansion"
+    },
+    {
+      "id": "A12",
+      "title": "UncertainGS: Uncertainty-aware indoor reconstruction via Gaussian splatting",
+      "publication": "Neurocomputing 664 (2026), online/DOI 2025",
+      "reading": "B",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0925231225028085",
+      "role": "publisher metadata/abstract only; no method claims"
+    },
+    {
+      "id": "A13",
+      "title": "In Depth We Trust: Reliable Monocular Depth Supervision for Gaussian Splatting",
+      "publication": "CVPR 2026 3DMV workshop (arXiv comments)",
+      "reading": "R",
+      "url": "https://arxiv.org/html/2604.05715v1",
+      "role": "selective depth correction; prior-round method sections checked"
+    },
+    {
+      "id": "A14",
+      "title": "From Uncertainty to Stability and Fidelity: Guiding Sparse-View 3D Gaussian Splatting with Fisher Information",
+      "publication": "2026 preprint (2606.20842)",
+      "reading": "R",
+      "url": "https://arxiv.org/html/2606.20842v1",
+      "role": "Fisher view selection/dropout; not independent geometry error evidence"
+    },
+    {
+      "id": "A15",
+      "title": "PUP 3D-GS: Principled Uncertainty Pruning for 3D Gaussian Splatting",
+      "publication": "CVPR 2025",
+      "reading": "R",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Hanson_PUP_3D-GS_Principled_Uncertainty_Pruning_for_3D_Gaussian_Splatting_CVPR_2025_paper.pdf",
+      "role": "current-model sensitivity for compression; no geometry-error detector proof"
+    },
+    {
+      "id": "A16",
+      "title": "FisherRF: Active View Selection and Uncertainty Quantification for Radiance Fields using Fisher Information",
+      "publication": "ECCV 2024",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2311.17874",
+      "role": "information/view acquisition; earlier theory citation, not full new method review"
+    },
+    {
+      "id": "A17",
+      "title": "CoR-GS: Sparse-View 3D Gaussian Splatting via Co-Regularization",
+      "publication": "ECCV 2024",
+      "reading": "R",
+      "url": "https://arxiv.org/abs/2405.12110",
+      "role": "dual-model disagreement; dense-view proxy truth limitation checked"
+    },
+    {
+      "id": "A18",
+      "title": "Ref-NeuS: Ambiguity-Reduced Neural Implicit Surface Learning for Multi-View Reconstruction with Reflection",
+      "publication": "ICCV 2023",
+      "reading": "R",
+      "url": "https://openaccess.thecvf.com/content/ICCV2023/papers/Ge_Ref-NeuS_Ambiguity-Reduced_Neural_Implicit_Surface_Learning_for_Multi-View_Reconstruction_with_Reflection_ICCV_2023_paper.pdf",
+      "role": "historical observation filtering; demoted from main recent route"
+    },
+    {
+      "id": "A19",
+      "title": "DebSDF: Delving into the Details and Bias of Neural Indoor Scene Reconstruction",
+      "publication": "TPAMI 2024",
+      "reading": "R",
+      "url": "https://arxiv.org/abs/2308.15536",
+      "role": "historical prior uncertainty filtering; recent UA-GS adaptation constrains novelty"
+    },
+    {
+      "id": "A20",
+      "title": "ND-SDF: Learning Normal Deflection Fields for High-Fidelity Indoor Reconstruction",
+      "publication": "ICLR 2025 spotlight",
+      "reading": "R",
+      "url": "https://zju3dv.github.io/nd-sdf/",
+      "role": "structured prior bias rather than scalar reliability; prior-round limitations/ablation checked"
+    },
+    {
+      "id": "A21",
+      "title": "ConFIG: Towards Conflict-free Training of Physics Informed Neural Networks",
+      "publication": "ICLR 2025 spotlight; preprint 2024",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2408.11104v3",
+      "role": "original-gradient common descent; rank feasibility matters per Gaussian block"
+    },
+    {
+      "id": "A22",
+      "title": "Gradient Surgery for Multi-Task Learning (PCGrad)",
+      "publication": "NeurIPS 2020",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2001.06782",
+      "role": "halfspace projection theory comparator; not a new transfer by itself"
+    },
+    {
+      "id": "A23",
+      "title": "Conflict-Averse Gradient Descent for Multi-task Learning (CAGrad)",
+      "publication": "NeurIPS 2021",
+      "reading": "B",
+      "url": "https://openreview.net/pdf?id=_61Qh8tULj_",
+      "role": "multiobjective comparator; metadata/abstract screen"
+    },
+    {
+      "id": "A24",
+      "title": "Recon: Reducing Conflicting Gradients from the Root for Multi-Task Learning",
+      "publication": "ICLR 2023",
+      "reading": "B",
+      "url": "https://arxiv.org/abs/2302.11289",
+      "role": "parameter/architecture separation alternative; abstract screen"
+    },
+    {
+      "id": "A25",
+      "title": "Learning to Reweight Examples for Robust Deep Learning",
+      "publication": "ICML 2018",
+      "reading": "M",
+      "url": "https://proceedings.mlr.press/v80/ren18a/ren18a.pdf",
+      "role": "validation-gradient affinity; clean unbiased validation assumption does not transfer automatically"
+    },
+    {
+      "id": "A26",
+      "title": "FatesGS: Fast and Accurate Sparse-View Surface Reconstruction using Gaussian Splatting with Depth-Feature Consistency",
+      "publication": "AAAI 2025",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2501.04628v1",
+      "role": "depth ranking/smoothing plus fixed feature complementarity; Table 4 checked"
+    },
+    {
+      "id": "A27",
+      "title": "VA-GS: Enhancing the Geometric Representation of Gaussian Splatting via View Alignment",
+      "publication": "NeurIPS 2025 (proceedings year may be 2026)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2510.11473v2",
+      "role": "visibility/occlusion + feature alignment, mesh ablations and RTX4090 runtime checked"
+    },
+    {
+      "id": "A28",
+      "title": "Sparse-View Surface Reconstruction using Gaussian Splatting through High-Confidence Depth Propagation with Normal Priors",
+      "publication": "ECCV 2026 (arXiv acceptance statement)",
+      "reading": "M",
+      "url": "https://arxiv.org/html/2607.03765v1",
+      "role": "anchor depth + normal-guided propagation for weak texture; local plane/far-anchor limits"
+    }
+  ],
+  "zotero_note": "All 22 screenshot papers + DA3 found locally; extraction is not full reading. Six additional methods/experiments checked; source PDFs read-only."
+}

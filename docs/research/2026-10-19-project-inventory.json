@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-19",
+  "root": "D:\\research_Space\\noob_AmbiSuR",
+  "scope": "All local files including ignored assets; excludes .git, __pycache__, .pytest_cache; metadata only",
+  "total_files": 1889,
+  "groups": [
+    {
+      "directory": ".superpowers",
+      "files": 54,
+      "bytes": 499801.0
+    },
+    {
+      "directory": ".vscode",
+      "files": 1,
+      "bytes": 135.0
+    },
+    {
+      "directory": "[root]",
+      "files": 12,
+      "bytes": 578996.0
+    },
+    {
+      "directory": "arguments",
+      "files": 1,
+      "bytes": 7080.0
+    },
+    {
+      "directory": "assets",
+      "files": 1,
+      "bytes": 210837.0
+    },
+    {
+      "directory": "docs",
+      "files": 59,
+      "bytes": 1013515.0
+    },
+    {
+      "directory": "experiments",
+      "files": 1,
+      "bytes": 1305.0
+    },
+    {
+      "directory": "gaussian_renderer",
+      "files": 2,
+      "bytes": 14633.0
+    },
+    {
+      "directory": "lpipsPyTorch",
+      "files": 4,
+      "bytes": 5546.0
+    },
+    {
+      "directory": "mesh_extract",
+      "files": 3,
+      "bytes": 32232.0
+    },
+    {
+      "directory": "multi_view_priors",
+      "files": 57,
+      "bytes": 449917.0
+    },
+    {
+      "directory": "reliability",
+      "files": 24,
+      "bytes": 335804.0
+    },
+    {
+      "directory": "scene",
+      "files": 6,
+      "bytes": 80639.0
+    },
+    {
+      "directory": "scripts",
+      "files": 46,
+      "bytes": 366973.0
+    },
+    {
+      "directory": "submodules",
+      "files": 1556,
+      "bytes": 20295440.0
+    },
+    {
+      "directory": "tests",
+      "files": 52,
+      "bytes": 503207.0
+    },
+    {
+      "directory": "utils",
+      "files": 10,
+      "bytes": 50476.0
+    }
+  ],
+  "largest_files": [
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\manual.pdf",
+      "Length": 1466032
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\manual\\frontpage1.png",
+      "Length": 731902
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00304.html",
+      "Length": 611351
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00035_source.html",
+      "Length": 486520
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00187_source.html",
+      "Length": 417415
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00364.html",
+      "Length": 396454
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00047_source.html",
+      "Length": 380363
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00161_source.html",
+      "Length": 376769
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00174_source.html",
+      "Length": 365738
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00161.html",
+      "Length": 255017
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\api\\a00303.html",
+      "Length": 254023
+    },
+    {
+      "path": "submodules\\diff-plane-rasterization-ambisur\\third_party\\glm\\doc\\manual\\frontpage2.png",
+      "Length": 233177
+    }
+  ],
+  "symlinks_or_junctions": []
+}

@@ -1,5 +1,15 @@
 # AmbiSuR Core Implementation Plan
 
+> **2026-10-22 开始执行：** 用户批准native实施，两任务/五代码文件合同不变；隔离分支codex/candidate-selector-v1，复用现有PyTorch环境，不安装依赖、不派发服务器/30k，不动固定baseline。
+
+> **2026-10-22 评价与汇报修订：** 用户基本通过实施清单，要求评价遵循基线各数据集协议：DTU双向距离/CD，TnT Precision/Recall/F1，Mip-NeRF360 PSNR/SSIM/LPIPS；主线汇报固定五句。本轮仅据论文与现有源码更新既有文档，不改selector算法/五文件边界，不运行训练/评价或重跑baseline。
+
+> **2026-10-21 书面规格已批准：** 用户要求严格按首版规格执行，需修改时先请示，并明确效率优先：尽快30k新方法训练与既有baseline output的PSNR等比较，禁止重建冒烟平台/安全架构。本轮将批准规格转换为最小TDD实施清单；不更改算法、不写实现、不启动训练。公共测试只做必要接口/活动路径检查，后续直接进入30k，不追加独立诊断阶段。
+
+> **2026-10-21 当前任务：** 用户确认 selector 首版口头约定：SH补集、两个真实邻近源、每轮最多4096候选、当前参考视角临时标签、失败保留基线。本轮只固化短规格和最小改动边界，供用户审阅；不实施、不执行方法测试/训练、不重跑 baseline、不恢复 Utility。每个后续行动批次先讨论，复用公共实现与参数化测试。
+
+> **2026-10-19 当前状态：** 本轮为项目盘点与二周目规划，进度见本文件末尾同日区块。用户认可的当前研究方向见 `docs/research/2026-10-15-source-faithful-research-route.md`，整体状态与启动建议见 `docs/research/2026-10-19-project-audit-and-second-run.md`。下述旧 Core Goal/阶段是历史计划，不能据此自动继续实施。新的 selector 实施合同尚未形成；原生产规格与数据/GT/复用约束保留，不自动启动训练或 Utility 恢复。
+
 > **For agentic workers:** 实施时必须先读本文件与 `docs/research/ambisur-reliability-routing-design.md`，使用 `superpowers:test-driven-development`；按用户选择使用 `superpowers:executing-plans`。除非用户明确授权，不使用多代理。每个阶段完成后使用 `superpowers:requesting-code-review`，声称完成前使用 `superpowers:verification-before-completion`。
 
 **Goal:** 在不混入 Supporting 模块的前提下，完成可复现、可消融的 AmbiSuR Core：观测校准、双可靠性、五状态仲裁、参数级梯度路由和 Gaussian 生命周期，并通过 G0–G2。
@@ -954,3 +964,86 @@ def test_split_clone_prune_migrate_adam_and_all_core_state(topology_fixture):
 - [x] Geometry Stage G-A TDD plan writing independently authorized; no implementation or experiment permission. Utility GT-free seed stages need not wait for geometry, but semantic Utility GT access still requires approved geometry release and probe approval.
 - [x] Wrote and self-reviewed `docs/superpowers/plans/2026-10-08-geometry-stage-ga-tdd.md`: Tasks1–9, existing module reuse, task-owned RED tests and separate synthetic gates. Draft is blocked for implementation on Gate0 specification conflicts/closure, not approved for execution.
 - [ ] Review G-A Gate0 addendum needs: ill-conditioned view/family coverage conflict, planar32-row radius feasibility, exact fixture/horizon/optimizer contract and differentiable residual closure. No constant or approved equation changed; no synthetic or production code was written/run.
+
+## 2026-10-09 Group-meeting scientific reassessment (research only)
+- User requests a critical, source-grounded answer on A/S/N theory, the necessity and derivation of five states, and mechanism-specific optimization, including IndoorGS and recent papers.
+- Scope: read existing contracts, code and frozen evidence; search primary literature; derive falsifiable alternatives; deliver an advisor-facing response. No algorithm change, training, GT access or automatic Utility recovery.
+- Plan: context/evidence audit, primary-paper reading, theoretical synthesis, and source/claim audit completed. Research memo: docs/research/2026-10-09-group-meeting-method-reassessment.md. Findings are research recommendations, not an implementation specification.
+- Preserve existing approved design and all pending Utility/Geometry gates. Proposed revisions are hypotheses, not amendments or implementation authorization.
+
+## 2026-10-09 Source-to-method follow-up (research only)
+- User requests deeper theory and primary-paper support for every recommendation, including explicit adaptation of several existing mechanisms into one algorithm.
+- [x] Recheck previous recommendations against full-text methods, assumptions, limitations and ablations; expand search to Ref-NeuS, robust estimation, variable projection and 2026 low-light/representation papers.
+- [x] Derive a common estimation objective and identify which proposed connections are mathematical consequences, empirical transfers, or untested hypotheses.
+- [x] Deliver a source-to-claim ledger, concrete candidate architecture, competing explanations and falsification plan in docs/research/2026-10-09-evidence-grounded-redesign.md; verify document-only changes.
+- This follow-up does not amend the approved design, reopen Geometry Q, authorize Utility recovery, or access evaluation assets.
+
+## 2026-10-12 Broad literature audit and baseline-specific synthesis (research only)
+- User rejects treating PUP sensitivity as established geometry-error evidence, requests wider 2025–2026 and cross-domain search, and explicitly prioritizes gradient fusion (HarmoGS/CLEAR) and deep A+B adaptation.
+- [x] Read current handoff, baseline audit, approved design, source/Git state and prior research records; preserve existing document edits.
+- [x] Deduplicate the 22 unique screenshot titles; resolve primary records and record discovery/full-text/verification status without pretending exhaustive coverage.
+- [x] Search additional recent surface/prior/failure/gradient methods and relevant cross-domain theory; trace citation neighbors.
+- [x] Read leading candidates' methods, equations and ablations; map exact changes to SH selection, ALR, parameter separation and densification.
+- [x] Develop 2–3 coherent candidate integrations with shared evidence/action logic, assumptions, risks and discriminating ablations.
+- [x] Audit references/claims and deliver an advisor-facing research report plus concrete recommendation.
+- Scope is literature and method research. No approved formula changes, implementation, training, GT access, Utility recovery, or Geometry Q restart.
+
+## 2026-10-13 Code feasibility and bounded baseline increments (research only)
+- User requests actual GitHub/source feasibility, correction of depth/gradient claims, explicit A integration, precise conflict semantics/execution and baseline fallback before expanding limitations.
+- [x] Re-read handoff, baseline/design contracts, Git and source/ledgers; preserve prior uncommitted research documents.
+- [x] Trace AmbiSuR/PGSR/VCR depth, normal and backward paths; distinguish existing ALR capabilities from incremental changes.
+- [x] Audit primary repositories at pinned revisions (or document unavailable code) for Sparse2DGS/FatesGS/VA-GS/HarmoGS/CLEAR/VCR/normal-guided propagation.
+- [x] Specify feature support cost, differentiability, source attribution/visibility, A-dependent bounded extension and exact fallback semantics.
+- [x] Check Taylor/evidence-to-update claims and projection counterexample; correct 10-12 report while deferring premature protected-set optimization.
+- [x] Deliver paper→code→baseline attachment map and staged research candidates; verify document/algebra/source provenance only.
+- No algorithm implementation, approved-design amendment, training, GT access or automatic operational recovery.
+- Deliverable: docs/research/2026-10-13-code-feasibility-and-bounded-increments.md + code-source-manifest.json. User further requires actual method source/call sites whenever code can be located; README-only and paper-only states remain explicit.
+- Read-only stage reviewer found DP confidence producer and pre-step topology/state boundaries; both clarified. Also corrected exact epsilon sign, VCR branch conditions and raw quaternion/activation semantics. No new method or experiment was executed.
+
+## 2026-10-15 Baseline-reuse research consolidation (research only)
+- User requests an integrated rationale/route, retaining donor algorithm choices before experiments; explicitly removes gradient admission/two-step previews and per-Gaussian exclusive-ownership gates from the first candidate-selection experiment.
+- [x] Re-read project contracts, current Git state, prior reports/ledgers and relevant skills; HEAD62e9117 unchanged; preserve all uncommitted research documents.
+- [x] Re-audit SH-label rendering/ALR, NCC producers, Sparse2DGS hypotheses and DP-GS propagation consumers; distinguish reused baseline scaffolding from actual additions.
+- [x] Read source functions/call sites in PCGrad official/reproduction, ConFIG, CAGrad and RotoGrad; verify CLEAR correspondence with explicit conditions; classify deferred comparators.
+- [x] Verify theory/data for A conditioned on observations, NCC vs frozen-feature matching, and anchor+normal propagation; separate established mathematics, donor evidence and our untested transfers.
+- [x] Write coherent revised research report and source/claim manifest: selector-only first, VCR and propagation independent, combine only useful parts; no automatic novel S/A score or runtime gates.
+- [x] Independent stage review and fresh document/algebra/source-hash/production-diff verification; deliver self-contained scientific synthesis.
+- Scope: read-only source/literature plus research docs. No production implementation, training, model/data download, GT access, Utility recovery, Geometry Q restart, or silent approved-design amendment.
+- User grants necessary temporary GitHub download/modification/execution; used for source retrieval and our NumPy probes, no donor-framework execution. Five pinned gradient repositories,16 retrieved files,8 method source paths; reused five donor repositories rehashed. No Torch/TensorFlow/SciPy in bundled runtime; no installation needed for this research-only answer.
+- Source/maths probe: conditional SH energy .175 vs .6725 with same observation count; label-mask linearity and nonexclusive derivative; squared-NCC affine/flat-patch behavior; ideal normal propagation metric-anchor recovery and prior-anchor redundancy; CLEAR full vs severity-weighted correction. Not actual method/runtime or geometry evidence.
+## 2026-10-19 Project audit and second-run startup
+- Scope: audit local project, recorded scientific results and reusable assets; write a current status and a bounded restart proposal. No training, GT parsing/recovery, production changes or silent replacement of approved specifications.
+- User steering: retain existing baseline fixed output as the comparator; no new baseline training/continuation or overwrite. New-method runs and any later authorized supplemental evaluation use separate outputs.
+- [x] Read mandatory handoff/baseline/design, Git/code/config and planning ledgers; record current branch/HEAD and document-only dirty state.
+- [x] Inventory project directories and experiment/report assets; trace actual runtime capabilities and authoritative result records.
+- [x] Separate reusable infrastructure, failed/unsupported hypotheses, incomplete operations and the accepted October 15 research direction.
+- [x] Write source-linked current status and a minimal second-run startup sequence; preserve old contracts and receipts.
+- [x] Independent read-only review, fresh document/path/Git checks and final user-facing assessment prepared. No Critical/Important/Minor findings; narrow follow-up confirms the user's no-baseline-rerun constraint throughout. Document checks and production diff checks pass; no runtime/efficacy claim.
+
+## 2026-10-21 Candidate selector short specification
+- [x] Re-read ordered context, confirmed verbal design, current source/Git and planning records; preserve pre-existing document changes.
+- [x] Close actual projection/depth/normal, support validity, label timing and fallback contracts against existing producer/consumer code.
+- [x] Write one concise selector specification and minimal change/test map; explicitly bound supersession of old unimplemented Core tasks.
+- [x] Self-review and bounded independent stage review; corrected one Important normal-coordinate error and one Minor ALR timing precision issue. Fresh document/source-hash and production-diff checks pass. Written spec is ready for user review; no runtime or benefit claim.
+- No branch creation, code/test changes, experiment, GT content access, baseline rerun, commit or push in this writing stage.
+
+## 2026-10-21 Approved selector implementation planning
+- [x] User approves the written first-version spec and requests strict execution; preserve formula, budget, sources, fallback and fixed baseline outputs.
+- [x] Map only the approved five files into two minimal TDD tasks with exact shared interfaces and one common test entry.
+- [x] Include a direct30k new-method handoff and existing-log PSNR/L1 comparison, without a new safety/diagnostics framework or baseline rerun.
+- [x] Self-review against the approved spec and verify document-only changes; plan ready for user review/native execution selection under writing-plans. Approved spec algorithm body preserved exactly; implementation not started.
+- No implementation, test execution, environment install, branch creation, commit/push, server dispatch or GT access at this planning stage.
+
+## 2026-10-22 Baseline-aligned evaluation and five-sentence updates
+- [x] Read feedback, current project context, baseline paper evaluation/supplement and actual existing evaluators rather than assuming metric names imply matching protocols.
+- [x] Update approved spec evaluation section and implementation-plan handoff with dataset-specific protocols, current Tool Room limits and reuse-only scope.
+- [x] Persist five-sentence reporting format; verify document-only changes and report actual evidence without efficacy claims.
+- No implementation, metrics computation, GT parsing, baseline mutation or expanded benchmark run in this review-amendment step.
+
+## 2026-10-22 Selector implementation
+- [x] Task1: one common test module; real RED in existing Torch environment.
+- [ ] Task2: five-file implementation, CPU/GPU tests where available, static checks and one stage review.
+- [ ] Record actual evidence and discuss commit/push/compatible GPU/30k batch; no automatic dispatch.
+- Pre-flight Task1→Task2: all three selector APIs, render ambiguity_labels and two train-local helpers match the approved plan; no interface conflict.
+- Task1 complete: test file written first, real missing-module RED observed; native integration tests are written, not run.
+- Task2 implementation/local verification/review done; AutoDL native validation and commit/push batch remain pending, so Task2 is not marked complete.

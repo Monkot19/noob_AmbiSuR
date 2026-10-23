@@ -48,6 +48,14 @@
 - 服务器实验开始时记录 `git rev-parse HEAD` 和 `git diff --exit-code`。
 - 不因单场景正结果跳过 Utility Room 或多 seed 确认。
 
+## 主线汇报与评价（2026-10-22 用户确认）
+
+- 每次主线口头汇报固定五句话，按顺序说明：本次做了什么（具体范围）；实际验证了什么（已运行与未运行）；证据是什么（结果/计数/产物）；现在能下什么结论（接线或真实收益）；下一步准备做什么（范围、成本、输出位置，交用户讨论）。不把计划/源码阅读写成已运行实验。
+- 评价沿用基线论文的各数据集协议与现成实现：DTU报告d-to-s、s-to-d、Chamfer；TnT报告Precision、Recall、F1；Mip-NeRF360报告PSNR、SSIM、LPIPS，区分室内/室外。不得只靠PSNR宣称表面重建收益。
+- 当前Tool Room/Utility不自动套用DTU/TnT的mask、裁剪、阈值或论文数值。正式几何评价先明确该数据集协议；训练日志中的train PSNR/L1只作开发进度，不能冒称独立测试或Mip-NeRF360结果。
+- 复用现有评测代码与冻结baseline模型/output，不因补指标重训baseline；补充评价与渲染结果写独立目录。指标计算器本身可能写results/per_view，禁止直接以只读baseline目录作为可写目标。
+- 不为补指标新建一套评测框架，不以全套benchmark或新统计平台作为首轮30k的前置；按已讨论批次逐步执行。
+
 ## 跨场景复用与统一评价（2026-10-08 用户确认）
 
 - 同一科学问题只维护一套公共统计与审计核心；禁止为每个场景复制 evaluator、solver、空间分折、fold-local 预处理、bootstrap 或 checkpoint/state 审计实现。

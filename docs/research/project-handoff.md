@@ -1,5 +1,15 @@
 # AmbiSuR 可靠性路由项目交接说明
 
+> **selector实施更新（2026-10-22）：** 用户确认native执行，五文件本地实现已写入codex/candidate-selector-v1（尚未提交/推送），统一测试14项CPU通过、4原生项未执行；加现有配置/metadata/seed回归共23项CPU通过。五文件编译/whitespace检查及一次阶段审阅完成，审阅两项Important已修正复核；不等于原生接线/G0通过。用户明确如一代目在AutoDL验证，使用原环境/同一测试命令，不本地安装依赖。一次只读SSH连接关闭，无服务器验证或训练发生；下一批讨论版本交接及真实原生检查，通过后才进入单次30k，baseline继续只读复用。
+
+> **评价/汇报更新（2026-10-22）：** 用户基本通过实施清单并要求按基线数据集协议评价，已补入规格§7/清单后续评价：DTU双向距离/CD、TnT Precision/Recall/F1、Mip-NeRF360 PSNR/SSIM/LPIPS，复用原入口，不重跑baseline。Tool Room是ScanNet++开发场景，现有eval=False/test配对为空，不能冒称标准新视角结果或套用DTU/TnT评价。主线每次按AGENTS固定五句话汇报，尚未实施/计算指标/训练。
+
+> **selector 进度（2026-10-21）：** 用户已确认[首版书面规格](../superpowers/specs/2026-10-21-candidate-selector-design.md)，要求严格执行、需修改先请示。[最小实施清单](../superpowers/plans/2026-10-21-candidate-selector.md)为两步：同一公共测试入口先RED→五文件实现/GREEN与一次活动路径检查→尽快30k新方法与既有baseline PSNR/L1比较。不建独立冒烟/安全平台，不重跑baseline，不恢复旧N/五状态或Utility评价；当前未实施，实施清单待用户核对与执行方式确认。
+
+> **二周目 baseline 复用约束（2026-10-19 用户补充）：** 延续已有 baseline 固定 output，不重新训练 baseline，不覆盖/移动其结果；新方法输出与补充评价记录写入独立目录。缺失记录先核对既有配置、日志与 mesh，不默认安排新的 baseline 对照训练。
+
+> **当前入口更新（2026-10-19）：** 用户已认可 10-15 的“候选选择→复用原标签渲染/ALR，传播与 VCR 独立验证”研究方向。当前项目盘点与二周目启动建议见 [2026-10-19-project-audit-and-second-run.md](2026-10-19-project-audit-and-second-run.md)，方法依据见 [2026-10-15-source-faithful-research-route.md](2026-10-15-source-faithful-research-route.md)。新方法尚未实施/训练；下文 10-09 的“当前优先级”“主要贡献目标”属于旧路线历史，不能作为继续五状态/C1–C6 或自动恢复 Utility 的派工指令。原批准设计尚未由新实施合同替代，数据安全、真实接口复用和 GT 后恢复约束继续有效。本更新记录方向和现状，不静默修改生产规格或授权实验。
+
 ## 1. 项目目标
 
 **最新实际结果与复用规则（2026-10-09，取代下方访问前状态）：** 用户在b454b127运行id-recovery1，首次GT访问已发生，mesh ADMITTED，六组seed/iteration计算完成，116.131秒后发布INCONCLUSIVE。发布manifest SHA `c53441b9cff3c351ed2c4ecf5e439679d3f661597964516acbcd5dc2b122e5c0`及其所有文件经用户只读审计通过；原因是聚合器报bootstrap2000合同不匹配，seeds为空、macro为null。只读本地合成诊断复现：原生产函数返回形状(2000,)的ndarray，Utility聚合器错误地要求list；Tool Room原报告函数会先调用既有JSON规范化。不是缺少replicate，也不构成信号否定。修复及GT后同参数恢复尚待明确授权，严禁再用访问前恢复或删除原输出。

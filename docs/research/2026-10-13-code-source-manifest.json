@@ -1,0 +1,1259 @@
+{
+  "audit_date": "2026-10-13",
+  "scope": "Public primary repositories, static method/interface audit, synthetic algebra only; no production implementation or experiment.",
+  "local_integration_target": {
+    "head": "62e9117dfb2e20a06b257d166d8a6636d37845cc",
+    "branch": "codex/soft-sufficiency-calibration",
+    "inspected_source_files": [
+      {
+        "path": "train.py",
+        "local_path": "D:\\research_Space\\noob_AmbiSuR\\train.py",
+        "git_blob": "ea633c2beda0d497695eeb58d23ee1aff548dbb4",
+        "working_copy_sha256": "1fd1b6615bc13b06e43610a7474bc18e41d9ce24cc298f72f88ab55b0a62d4d9",
+        "head_blob_sha256": "012c579b6f6c926e33d09145e26edc5b47dec404d1727680eeab92282aefcc24",
+        "unchanged_vs_HEAD_after_line_end_normalization": true
+      },
+      {
+        "path": "gaussian_renderer/__init__.py",
+        "local_path": "D:\\research_Space\\noob_AmbiSuR\\gaussian_renderer\\__init__.py",
+        "git_blob": "95b27d265f88543bb456f6a7d4e0c1ea75603d2e",
+        "working_copy_sha256": "3f171d6e06db98603029960313a1ba4eadefceecfd4d4d870867ce85b42998fc",
+        "head_blob_sha256": "68e73152391146911b5bb990aeb7edf30a81adf1f34eb4853c2490f04fdcb64e",
+        "unchanged_vs_HEAD_after_line_end_normalization": true
+      },
+      {
+        "path": "scene/gaussian_model.py",
+        "local_path": "D:\\research_Space\\noob_AmbiSuR\\scene\\gaussian_model.py",
+        "git_blob": "4da8d37274b875bac945808a32f87ea1eb8ec732",
+        "working_copy_sha256": "6e66d1d41fd8682a0d431537dcffd97ca98684bd0902234e9178a6804ae9df92",
+        "head_blob_sha256": "90a58cea825237a30ca8baf0850688108374834db7378eb7ac2bc8a9375b50b3",
+        "unchanged_vs_HEAD_after_line_end_normalization": true
+      },
+      {
+        "path": "utils/graphics_utils.py",
+        "local_path": "D:\\research_Space\\noob_AmbiSuR\\utils\\graphics_utils.py",
+        "git_blob": "d740fbeb1003a3cde3c5507d0548ef4ccad15885",
+        "working_copy_sha256": "5ecdfb80b202437c4f7a69c52c302e123293c0b59d90096d659a329dbe0bbeb0",
+        "head_blob_sha256": "a4dfe6e9612c645a99cc40e2ae6416342628244b8ce9ad231a5cbd7bd6502ad3",
+        "unchanged_vs_HEAD_after_line_end_normalization": true
+      },
+      {
+        "path": "submodules/diff-plane-rasterization-ambisur/cuda_rasterizer/forward.cu",
+        "local_path": "D:\\research_Space\\noob_AmbiSuR\\submodules\\diff-plane-rasterization-ambisur\\cuda_rasterizer\\forward.cu",
+        "git_blob": "96d8dc76bb95c9a2b3301b4fda880aa834b4a0d9",
+        "working_copy_sha256": "dce55b7e1b84f66783d739cc1d599506370f4175f0ed042510c7a1e81e122182",
+        "head_blob_sha256": "01b5e0963c28b1ec6ca921674dbfb145310556539b818c2829e8e28b15a8ee06",
+        "unchanged_vs_HEAD_after_line_end_normalization": true
+      },
+      {
+        "path": "submodules/diff-plane-rasterization-ambisur/cuda_rasterizer/backward.cu",
+        "local_path": "D:\\research_Space\\noob_AmbiSuR\\submodules\\diff-plane-rasterization-ambisur\\cuda_rasterizer\\backward.cu",
+        "git_blob": "cbe8d768c0dc00d448cc6e06e3c666991156f740",
+        "working_copy_sha256": "225e3c19e87ad66b44d33657f5cd20b7d70158610f88fe04f96df9335d431953",
+        "head_blob_sha256": "cc55bee009acb2bf499aab9d80c2b7ea7d3c3c5363698d540e6d0e59f93ec701",
+        "unchanged_vs_HEAD_after_line_end_normalization": true
+      }
+    ]
+  },
+  "public_user_fork_main_observed": {
+    "url": "https://github.com/Monkot19/noob_AmbiSuR",
+    "head": "d6f15c8891a53800d5e3100f95817a7dd7f98e2f",
+    "observation": "git ls-remote; not assumed equal to local integration target"
+  },
+  "retrieval": "GitHub API rate-limited403; public shallow no-checkout Git + commit-bound raw files; no setup/code execution or model/data downloads.",
+  "repos": [
+    {
+      "repo": "Fictionarry/AmbiSuR",
+      "commit": "88d64054f53e0eba9ce49198282edf4a67fc8ca8",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "63a4b067212aa691c3c20de23463e19acd0e07b7a8daddc4c1c3cf1c7e76399e",
+          "bytes": 6167,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/LICENSE.md"
+        },
+        {
+          "path": "README.md",
+          "sha256": "5aaada77cd03430ab4403ecd48c08d59344f79829449bc89bb30772ab57c2574",
+          "bytes": 9744,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/README.md"
+        },
+        {
+          "path": "arguments/__init__.py",
+          "sha256": "658de21a893dd39c80ed27078fd08319a3a6a6d32904102faea2905bade9b3f9",
+          "bytes": 5433,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/arguments/__init__.py"
+        },
+        {
+          "path": "environment.yml",
+          "sha256": "ae62382c4680c490cb8803c819af5e4e99f3b2d4dbef5c51e4580e6a1024ec63",
+          "bytes": 833,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/environment.yml"
+        },
+        {
+          "path": "gaussian_renderer/__init__.py",
+          "sha256": "bacf13a7fe13dd313dda54783d9804094ec9d9fc6402bb5f41afba553cba4a38",
+          "bytes": 8860,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/gaussian_renderer/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/network_gui.py",
+          "sha256": "7e392b8122a8e1359b4550769eac06190806a8c2eeb7f5aa7cbd025738dedf89",
+          "bytes": 2716,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/gaussian_renderer/network_gui.py"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "01d7af82dca1c90796fc2dc59ac222bb52f4efe146a6a8ad16e03820ee2a9214",
+          "bytes": 7081,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/scene/__init__.py"
+        },
+        {
+          "path": "scene/app_model.py",
+          "sha256": "e538d1304c09b489b4dddd7d5d57f5dae49fadfc0c0d72bfbaa34ac8dcd7c70b",
+          "bytes": 1315,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/scene/app_model.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "5000f9accf3f94220b5c9eb4ff684b74369ef29831cd2b8737de982248abc5b1",
+          "bytes": 11309,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "074dfe16ab2f377c9493c3372bbbfb5f87adcff61480ec17f8f10b1255ade084",
+          "bytes": 12222,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "5ddd39fad5f5514c6b1fea85b1cdc23c95a49f5ef621f9f091d9a6fdc8dd44d6",
+          "bytes": 12843,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "47aeda084b51fda2b2c05339c321367da5435f08862b0152d296c150da327c85",
+          "bytes": 30033,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "00129e693490d6c31b14b7c2ed278d7aa34e58448d8df006f7ff079eb1fb4c2d",
+          "bytes": 33543,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/train.py"
+        },
+        {
+          "path": "utils/camera_utils.py",
+          "sha256": "16005785a03152d71c3b838de2af8a9e3b693d0e4163eba76ce53046894d5a0a",
+          "bytes": 2948,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/camera_utils.py"
+        },
+        {
+          "path": "utils/general_utils.py",
+          "sha256": "4cc0723e00fc0fef8953afbabac79db70c1ce5aed3b4f02ea7932583cd858f46",
+          "bytes": 4234,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/general_utils.py"
+        },
+        {
+          "path": "utils/graphics_utils.py",
+          "sha256": "a3d7f6d4abab393d5980e0c1f89f02a1f00080fcce50003b6d78a751d0d8537f",
+          "bytes": 7509,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/graphics_utils.py"
+        },
+        {
+          "path": "utils/image_utils.py",
+          "sha256": "d3ccc88405010e5bdafaaf0dfd9caf7ecb7f0345fe9d69e5f640e04732ad887c",
+          "bytes": 1747,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/image_utils.py"
+        },
+        {
+          "path": "utils/io_utils.py",
+          "sha256": "c2766dfad55fc0f88208096e527f4fd80def95add5674d7be8ce50612a769252",
+          "bytes": 2520,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/io_utils.py"
+        },
+        {
+          "path": "utils/loss_utils.py",
+          "sha256": "2c39b02c334968fcb91873243b112b863352f73c923fb947bce22aab99735711",
+          "bytes": 10570,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/loss_utils.py"
+        },
+        {
+          "path": "utils/mono_utils.py",
+          "sha256": "4274a81b03c43649a2f8eb88106e1a4ba826a59c4fae92f147b80463c3fa90f8",
+          "bytes": 3634,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/mono_utils.py"
+        },
+        {
+          "path": "utils/render_utils.py",
+          "sha256": "6a4df26eb89f2425dcb00d963f7537d5baeb6e62fda9b85af29b13f2f11b3558",
+          "bytes": 10546,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/render_utils.py"
+        },
+        {
+          "path": "utils/sh_utils.py",
+          "sha256": "7d1ff267546390635e6d1f68c4f88c4a8b052482d5c9be1d32f06bc69e9a96e7",
+          "bytes": 4371,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/sh_utils.py"
+        },
+        {
+          "path": "utils/system_utils.py",
+          "sha256": "be01c02d3118c5d53808bc04efccd00c35a705a43a87c3583ea2f4752bc48553",
+          "bytes": 785,
+          "source_url": "https://github.com/Fictionarry/AmbiSuR/blob/88d64054f53e0eba9ce49198282edf4a67fc8ca8/utils/system_utils.py"
+        }
+      ],
+      "tree_paths": 1678,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\AmbiSuR",
+      "inspected_method_paths": [
+        "gaussian_renderer/__init__.py",
+        "train.py",
+        "scene/gaussian_model.py",
+        "utils/graphics_utils.py"
+      ],
+      "retrieved_file_count": 23,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "HLinChen/VCR-GauS",
+      "commit": "aa715d19bfacfa9d491f477c572eab1839dcee3e",
+      "files": [
+        {
+          "path": ".gitmodules",
+          "sha256": "ecefab825f3333b517ba731c28e47ca5e0bce974a33a746fb76c9608d0ed3748",
+          "bytes": 482,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/.gitmodules"
+        },
+        {
+          "path": "LICENSE.md",
+          "sha256": "cd5c95b3cfff3acc1bd412420c770f88809331c3db6872df11a970147aa8e81f",
+          "bytes": 4275,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/LICENSE.md"
+        },
+        {
+          "path": "README.md",
+          "sha256": "6a201a31107be5cf81b4b0cb106945d6499108813b536ea4bfb93c16503cdf26",
+          "bytes": 10888,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/README.md"
+        },
+        {
+          "path": "arguments/__init__.py",
+          "sha256": "657b3a799166329281347a40002384b8c6952db1c9c0f908444c505a9fa9df83",
+          "bytes": 3821,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/arguments/__init__.py"
+        },
+        {
+          "path": "environment.yml",
+          "sha256": "f2586a19802dc502f63e81d602acdda799308aacafdb41322dc023a735565c67",
+          "bytes": 548,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/environment.yml"
+        },
+        {
+          "path": "gaussian_renderer/__init__.py",
+          "sha256": "724d36a629db229962741edc50784396c4c6416130f753e46bf25d9e639066b4",
+          "bytes": 20508,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/gaussian_renderer/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/network_gui.py",
+          "sha256": "7e392b8122a8e1359b4550769eac06190806a8c2eeb7f5aa7cbd025738dedf89",
+          "bytes": 2716,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/gaussian_renderer/network_gui.py"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "20d12b19d0722b473b58279ecb2166e28aa6a7173e531c1de4dedb1933b4f3c5",
+          "bytes": 122,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/requirements.txt"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "dd59ec9a4aaa9d237263296fbad60291deb4bf117311b8475c4a2c74f1cae649",
+          "bytes": 6943,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/scene/__init__.py"
+        },
+        {
+          "path": "scene/appearance_network.py",
+          "sha256": "d5edc578bdab97105af3c3cd8cd48c7858fa8033d01c88cfe216b59aaac49fdd",
+          "bytes": 1868,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/scene/appearance_network.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "cf7ef91ab3f2fad05c834d84dd0252970f7856424575ea66d2bb43ab6175fb91",
+          "bytes": 5198,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "6948ce06366e1f727ddffc39a445bf4b6873824f02abc39df63eb0c8f0fb3f36",
+          "bytes": 11859,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "393bb143e700c40312de28c594d32bd88069aa7656c596a566eacdb20ff64512",
+          "bytes": 15203,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "10e73e185f51cb70cbe226b30c38a13bfc0528dd0e838446511f13e574d36f79",
+          "bytes": 34578,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "e39cba9a608d17e29007cce87a633ed3e9a327af755c34c096c9d2032a086b64",
+          "bytes": 1157,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/train.py"
+        },
+        {
+          "path": "tools/loss_utils.py",
+          "sha256": "fe8d3ec2c417efd55f1ee1e80be5b52110fcf5b3c82d185c363cf70ef287747f",
+          "bytes": 10704,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/tools/loss_utils.py"
+        },
+        {
+          "path": "tools/normal_utils.py",
+          "sha256": "1cc9b0e6c19aeb9c0445c756633f34bca07ea7e4ce2002a5e61b0fdb3728f9d1",
+          "bytes": 2307,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/tools/normal_utils.py"
+        },
+        {
+          "path": "trainer.py",
+          "sha256": "4c63892e1d245d8ab6f50cd4f4f8defdc334baf4013d43284391b6bc438a7027",
+          "bytes": 35316,
+          "source_url": "https://github.com/HLinChen/VCR-GauS/blob/aa715d19bfacfa9d491f477c572eab1839dcee3e/trainer.py"
+        }
+      ],
+      "tree_paths": 107,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\VCR-GauS",
+      "inspected_method_paths": [
+        "trainer.py",
+        "tools/loss_utils.py",
+        "tools/normal_utils.py",
+        "gaussian_renderer/__init__.py"
+      ],
+      "retrieved_file_count": 18,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "HLinChen/diff-gaussian-rasterization",
+      "commit": "9ee293dcae4fe112b5300ed690203f90fe2e026a",
+      "files": [
+        {
+          "path": "cuda_rasterizer/forward.cu",
+          "sha256": "4c23c191587b428a80af3f6dd60a6e65f8531a9236bedd23f5f99f175dc8685c",
+          "source_url": "https://github.com/HLinChen/diff-gaussian-rasterization/blob/9ee293dcae4fe112b5300ed690203f90fe2e026a/cuda_rasterizer/forward.cu",
+          "bytes": 31328,
+          "byte_count_provenance": "Observed from SHA256-verified local raw source during archival; original submodule manifest omitted size."
+        },
+        {
+          "path": "cuda_rasterizer/backward.cu",
+          "sha256": "6e7f994de1b7b429ff08065fa94a0fd99bf4e1f22bf9269b23b22a75d1bb40a5",
+          "source_url": "https://github.com/HLinChen/diff-gaussian-rasterization/blob/9ee293dcae4fe112b5300ed690203f90fe2e026a/cuda_rasterizer/backward.cu",
+          "bytes": 34750,
+          "byte_count_provenance": "Observed from SHA256-verified local raw source during archival; original submodule manifest omitted size."
+        },
+        {
+          "path": "cuda_rasterizer/auxiliary.h",
+          "sha256": "5724455680fb30da357dac80f3da6d9703b0ee29ffa3035d9ade792c5da44130",
+          "source_url": "https://github.com/HLinChen/diff-gaussian-rasterization/blob/9ee293dcae4fe112b5300ed690203f90fe2e026a/cuda_rasterizer/auxiliary.h",
+          "bytes": 8254,
+          "byte_count_provenance": "Observed from SHA256-verified local raw source during archival; original submodule manifest omitted size."
+        }
+      ],
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\VCR-rasterizer",
+      "inspected_method_paths": [
+        "cuda_rasterizer/forward.cu",
+        "cuda_rasterizer/backward.cu",
+        "cuda_rasterizer/auxiliary.h"
+      ],
+      "retrieved_file_count": 3,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "Wuuu3511/Sparse2DGS",
+      "commit": "af15587eb186ca7ab12a2cf795775fa0f473f25d",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "ae64fdf205d8a63810d7f767c0215ccd80276eee7cc935b32c2ecc6aed0d69b0",
+          "bytes": 3528,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/README.md"
+        },
+        {
+          "path": "arguments/__init__.py",
+          "sha256": "77c9655b2728ef2bcd6bb35212b914f4bc97ac4f4fd8bea5c2f8451fc5a7d618",
+          "bytes": 4051,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/arguments/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/__init__.py",
+          "sha256": "e8e73ec10e4a52b3d785e087876ca5a669328f08ad74f70e98f3f6a43d8cc5bd",
+          "bytes": 6292,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/gaussian_renderer/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/network_gui.py",
+          "sha256": "579f920d2a38d3ab832e25c3a2334711470c11cadee5714030475c3eff6839e4",
+          "bytes": 3126,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/gaussian_renderer/network_gui.py"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "90ee6447bd7cc50a09fa3af36db85b7ebb48b5f27983486ecd6ff1560876b0f9",
+          "bytes": 287,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/requirements.txt"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "a2bd420bfa8fcffde53b0c928397597a41bd5de7658fef37901a4367d82bb797",
+          "bytes": 4143,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/scene/__init__.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "91539fc5b8689256891d20ef5c3a21010530d1eeccd6b0127d6bb4dbdb8ddb42",
+          "bytes": 3118,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "6948ce06366e1f727ddffc39a445bf4b6873824f02abc39df63eb0c8f0fb3f36",
+          "bytes": 11859,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "ae78091c6864c3c8bd66764546b41083052128f9cc7a33c6c3acc1104fb0ab87",
+          "bytes": 9957,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "c5ab6a89fc43db44161a4bbe39c0099f82a760830a0cd5dbfd9a93ccb96c44b3",
+          "bytes": 24911,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "a43e72a019e3fb4b95f1fec2f7c8322514c61d692fbb1ac87da11228d0cdb210",
+          "bytes": 18387,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/train.py"
+        },
+        {
+          "path": "utils/camera_utils.py",
+          "sha256": "e4d10477c939deaa3caebecf981f80d7b73ddbb3681ca5e12e006c1a6fac41eb",
+          "bytes": 2969,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/camera_utils.py"
+        },
+        {
+          "path": "utils/general_utils.py",
+          "sha256": "7823e66a944496e4f06971888a8a4277adde41ecdb557fc3d8717db139a5d59b",
+          "bytes": 5944,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/general_utils.py"
+        },
+        {
+          "path": "utils/graphics_utils.py",
+          "sha256": "be5164b6fabfc9cb22531c0dd5098a52553a898e372210bd53be195734dce9bb",
+          "bytes": 2202,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/graphics_utils.py"
+        },
+        {
+          "path": "utils/image_utils.py",
+          "sha256": "9f7e4fd3c3eae0dcf1894e3f329ec7304eedf825a1e40e0c765e295465a9805d",
+          "bytes": 2223,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/image_utils.py"
+        },
+        {
+          "path": "utils/loss_utils.py",
+          "sha256": "9581947052505f37b169b8a1ca2f11b65a1f591a1929ebe4f0c34f229c81e2ea",
+          "bytes": 6759,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/loss_utils.py"
+        },
+        {
+          "path": "utils/mcube_utils.py",
+          "sha256": "2b0c3c5e65afc4b022e62c23aa6a98f8dfa35ddfc789dc5e85082538afe80d76",
+          "bytes": 3497,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/mcube_utils.py"
+        },
+        {
+          "path": "utils/mesh_utils.py",
+          "sha256": "a8fb01a84c2172451a20843ca74a15db262abd75a0de30824957becf1aac58ff",
+          "bytes": 13493,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/mesh_utils.py"
+        },
+        {
+          "path": "utils/point_utils.py",
+          "sha256": "840baa892663bdf819136cce9955c2f4b362885a63c57026d6e6578af2150831",
+          "bytes": 12153,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/point_utils.py"
+        },
+        {
+          "path": "utils/render_utils.py",
+          "sha256": "a482b3d72945103e85e3fe3d858cf9bbc7001c5726ae1e229835f6d7533adf16",
+          "bytes": 10570,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/render_utils.py"
+        },
+        {
+          "path": "utils/sh_utils.py",
+          "sha256": "7d1ff267546390635e6d1f68c4f88c4a8b052482d5c9be1d32f06bc69e9a96e7",
+          "bytes": 4371,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/sh_utils.py"
+        },
+        {
+          "path": "utils/system_utils.py",
+          "sha256": "be01c02d3118c5d53808bc04efccd00c35a705a43a87c3583ea2f4752bc48553",
+          "bytes": 785,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/system_utils.py"
+        },
+        {
+          "path": "utils/vis_utils.py",
+          "sha256": "86814d311525e1565b092d242b8d9e45ae5a7ad5f18024b775954e8898020bec",
+          "bytes": 2461,
+          "source_url": "https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/utils/vis_utils.py"
+        }
+      ],
+      "tree_paths": 1669,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\Sparse2DGS",
+      "inspected_method_paths": [
+        "train.py",
+        "scene/gaussian_model.py",
+        "utils/point_utils.py"
+      ],
+      "retrieved_file_count": 23,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "yulunwu0108/FatesGS",
+      "commit": "a721d3181ace57f79e3e65db4a45b7501a21798e",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "cd5c95b3cfff3acc1bd412420c770f88809331c3db6872df11a970147aa8e81f",
+          "bytes": 4275,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/LICENSE.md"
+        },
+        {
+          "path": "README.md",
+          "sha256": "5237c1798e9f2cffbf1bdcb1a9318c092eafadcfecb35f2391052d3a58587f14",
+          "bytes": 3593,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/README.md"
+        },
+        {
+          "path": "arguments/__init__.py",
+          "sha256": "f5ce2a4dc47e2ae0a8d3cedfe30405f3d655f12ea81c89b010e4d5145b30d075",
+          "bytes": 4006,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/arguments/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/__init__.py",
+          "sha256": "a637815473992d4e13817d75145bc75b7afeb1acec257ae25076c14f4b65b18e",
+          "bytes": 5422,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/gaussian_renderer/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/network_gui.py",
+          "sha256": "7e392b8122a8e1359b4550769eac06190806a8c2eeb7f5aa7cbd025738dedf89",
+          "bytes": 2716,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/gaussian_renderer/network_gui.py"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "674974b9d574d16f74963f23eacc0db187a18dc0c008653dfd92e8988112540f",
+          "bytes": 342,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/requirements.txt"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "2aa3f15143aa581d9695a13261064c231ca8cd481728ea18b8026cb1e10b33d3",
+          "bytes": 4440,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/scene/__init__.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "9af81e97d1b26b211441974d2e3c8ca78abbaffb979d50ae4f8668cc0d28fb05",
+          "bytes": 3477,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "f3b3f6ba7cf4a17e387a1f7914468fb3e44804d09a58a6595dcc79b16e207c1a",
+          "bytes": 11858,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "30508071f7fbed1264dfb2b17ff141ba0e742fb7e669bba11f01dbe2d38ea1ae",
+          "bytes": 14143,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "48593a8068964ead665d437a3c7a49507c28f902725ec585274c9d3418b68881",
+          "bytes": 19647,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "5346ad38804e2d0b364be9e6ba30310f76c112d615c37f6a62f80f3ce1ab9e6c",
+          "bytes": 13348,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/train.py"
+        },
+        {
+          "path": "utils/camera_utils.py",
+          "sha256": "0c99c744fce05d60d186171aa403c161adbfa4dcc74a8d375d178cfa6e9211a9",
+          "bytes": 4422,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/camera_utils.py"
+        },
+        {
+          "path": "utils/feat_utils.py",
+          "sha256": "b2c22c8a375c39ac90992c14c86ccca06c084e1d1c2ec423aeb62395789e3f14",
+          "bytes": 14677,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/feat_utils.py"
+        },
+        {
+          "path": "utils/general_utils.py",
+          "sha256": "d811e326a57ed35c21762e22e605f98357aa10f152171aa7b439a07345aa75fa",
+          "bytes": 7912,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/general_utils.py"
+        },
+        {
+          "path": "utils/graphics_utils.py",
+          "sha256": "9f78cfbe456fd2d81d31b41662a0a7ae13ede825b5e76e60757a2353b212b2a5",
+          "bytes": 2051,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/graphics_utils.py"
+        },
+        {
+          "path": "utils/image_utils.py",
+          "sha256": "173f65312dee3cc11f1516cefecfd8a45cac4436ca49eec16b6eab1b6223337e",
+          "bytes": 553,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/image_utils.py"
+        },
+        {
+          "path": "utils/loss_utils.py",
+          "sha256": "80a57be89f4eefe49f9a04c21f4e6c493ceef33d001ae90fbb04e036d8c03c3a",
+          "bytes": 5506,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/loss_utils.py"
+        },
+        {
+          "path": "utils/mcube_utils.py",
+          "sha256": "e1c824df1af0a07a67b5350f3ad39e2788936c9741ba112756c6443ada619cb9",
+          "bytes": 3440,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/mcube_utils.py"
+        },
+        {
+          "path": "utils/mesh_utils.py",
+          "sha256": "c27f44e066f335884c459bb7d292acb8140a0e03e5f3218871be247b8116c2e5",
+          "bytes": 13230,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/mesh_utils.py"
+        },
+        {
+          "path": "utils/point_utils.py",
+          "sha256": "cbb8ec5ba622f69a887e61dbab7458d5d24f9d8b435894b4d9c46f2c4b03cda2",
+          "bytes": 1045,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/point_utils.py"
+        },
+        {
+          "path": "utils/render_utils.py",
+          "sha256": "2c1f90cbab640bb075af118745fbdb682dc684d2b8b03d307f0adf492ce49e17",
+          "bytes": 11340,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/render_utils.py"
+        },
+        {
+          "path": "utils/sh_utils.py",
+          "sha256": "5fc2ddee83af27793dac151471819baa2693982f102d4cd383116c6862725815",
+          "bytes": 4368,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/sh_utils.py"
+        },
+        {
+          "path": "utils/system_utils.py",
+          "sha256": "5a7d6ad4bdbc4d8df799fa0bd30b78ddb187c24dbb6b3c798cb1bfb8abb7dbce",
+          "bytes": 784,
+          "source_url": "https://github.com/yulunwu0108/FatesGS/blob/a721d3181ace57f79e3e65db4a45b7501a21798e/utils/system_utils.py"
+        }
+      ],
+      "tree_paths": 67,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\FatesGS",
+      "inspected_method_paths": [
+        "train.py",
+        "utils/feat_utils.py"
+      ],
+      "retrieved_file_count": 24,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "LeoQLi/VA-GS",
+      "commit": "171125583c30bb7a6748784c49abc3431e27f6d0",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "70d74657ab891dd86a62038f17dc982cefd0de8f4407afdb662a056706808fd8",
+          "bytes": 5515,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/README.md"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "d08e82b47e075f3f52b5e2d7150ab9f072d667944a30b58dc6baef822ee2fd1b",
+          "bytes": 52,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/requirements.txt"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "78c3245c2fb9d3e782bcd8b46e67ed5160f8ffee6efc43cb15efb174a1f261b4",
+          "bytes": 6742,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/scene/__init__.py"
+        },
+        {
+          "path": "scene/app_model.py",
+          "sha256": "8b968265f1a56adfb46cf602e4cc6274e570991b1ff9ae8f161915fd6c58e592",
+          "bytes": 4480,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/scene/app_model.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "a30bc1c121fc53eff6cfbbc243fc039b301bc4854cd6315476af7ce602e489da",
+          "bytes": 9605,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "69050f6a1c7213065a2d3597d2b014e67936a40938894122b2a8c4c84a5be7c0",
+          "bytes": 12420,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "73ae4f30900b8edde3a5a7498341a298136656243a7c825ed289b5ad18cf7507",
+          "bytes": 23739,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "7b106225da58f704fa06069e3690f2f42c8823a5bbd342906f24ee91a1d5578c",
+          "bytes": 33557,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "8e774c50334a5027e280da9a769be88ee561e3302d8e947e6ae2a5fceac46847",
+          "bytes": 26230,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/train.py"
+        },
+        {
+          "path": "utils/camera_utils.py",
+          "sha256": "6f4d67516554cfa4e04955fc6327d1679e4f4db0125bbb66dade544560aab527",
+          "bytes": 3178,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/camera_utils.py"
+        },
+        {
+          "path": "utils/feat_utils.py",
+          "sha256": "04e6df8c7743d529ced9e14413d9ca00d4dc2ee02e7f9e55e83cb8eeb11d356a",
+          "bytes": 18192,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/feat_utils.py"
+        },
+        {
+          "path": "utils/general_utils.py",
+          "sha256": "ec8f74128bb675f0bf3713888329d406648bb42451aefdcd8a96b008cb2e919b",
+          "bytes": 5372,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/general_utils.py"
+        },
+        {
+          "path": "utils/graphics_utils.py",
+          "sha256": "cdf6ccaccedcaee0947209e66cf64881c0aad8d7b651c8215c236b1774a80e3e",
+          "bytes": 16042,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/graphics_utils.py"
+        },
+        {
+          "path": "utils/image_utils.py",
+          "sha256": "3f0cd188919e5dc7fe4f1303437dcb02057699102bfcd3867b9fb27d921b2921",
+          "bytes": 888,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/image_utils.py"
+        },
+        {
+          "path": "utils/loss_utils.py",
+          "sha256": "7b40e50867e594e505a1c87f6b65207f096d1feada33e091068ca03172ac7563",
+          "bytes": 14650,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/loss_utils.py"
+        },
+        {
+          "path": "utils/sh_utils.py",
+          "sha256": "7d1ff267546390635e6d1f68c4f88c4a8b052482d5c9be1d32f06bc69e9a96e7",
+          "bytes": 4371,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/sh_utils.py"
+        },
+        {
+          "path": "utils/system_utils.py",
+          "sha256": "fa3401b64a98826576169f889fd8ff8cfb17e6e765f4400285f3f8df8cab31aa",
+          "bytes": 1780,
+          "source_url": "https://github.com/LeoQLi/VA-GS/blob/171125583c30bb7a6748784c49abc3431e27f6d0/utils/system_utils.py"
+        }
+      ],
+      "tree_paths": 1599,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\VA-GS",
+      "inspected_method_paths": [
+        "train.py",
+        "utils/feat_utils.py",
+        "utils/graphics_utils.py"
+      ],
+      "retrieved_file_count": 17,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "hanl2010/DP-GS",
+      "commit": "dc1ce835ea3c6bb7887333c50df7a13497a45c09",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "6bfd5cc489ddf42345c9f11fe88ae1eb9e56ac05f9fa1cc16f64845d52c6f3e2",
+          "bytes": 575,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/LICENSE.md"
+        },
+        {
+          "path": "README.md",
+          "sha256": "43d38e871cb4402b1a2062b86597217c45388c9a60079793b69a39d235a517db",
+          "bytes": 4126,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/README.md"
+        },
+        {
+          "path": "arguments/__init__.py",
+          "sha256": "b6617b6af001762297f9dc66eab3267c8346a260a84e606cef60424e189f0625",
+          "bytes": 4909,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/arguments/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/__init__.py",
+          "sha256": "972c1ea6eec31033e907f3f3bc38b47732d838efecc3187d5268ce2d8c1633eb",
+          "bytes": 7759,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/gaussian_renderer/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/network_gui.py",
+          "sha256": "7e392b8122a8e1359b4550769eac06190806a8c2eeb7f5aa7cbd025738dedf89",
+          "bytes": 2716,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/gaussian_renderer/network_gui.py"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "36c06f20fc404e33eaa548cd1b5e2267e1f42228b3f6e1d8fd87d023d98cef3e",
+          "bytes": 336,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/requirements.txt"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "65dc14670f2150e30147223d42a4b6c8277d762f6c56e2d52deb0f2f458e804a",
+          "bytes": 9751,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/scene/__init__.py"
+        },
+        {
+          "path": "scene/app_model.py",
+          "sha256": "e538d1304c09b489b4dddd7d5d57f5dae49fadfc0c0d72bfbaa34ac8dcd7c70b",
+          "bytes": 1315,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/scene/app_model.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "221f3dcefff90c29b5e7da698603fef87c534c79df46b38480a330d0211b80e9",
+          "bytes": 7068,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "be7b74a00ce5c45b787193d28b893a8012a225ca664f93c97fff545cba0aae61",
+          "bytes": 12421,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "b307d6ab9b4c64b7316c35742bd034f57c7c527b4bf2ad415491581beb11673d",
+          "bytes": 13874,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "1fe6da761bedeb7a16f409a838a7692195891b2f617b532a21c7044f817f88a6",
+          "bytes": 28495,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "473bc983627b67783febeb0114dc1b5d9591abfd82c6c8eabfadf8e9b0a6e298",
+          "bytes": 31060,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/train.py"
+        },
+        {
+          "path": "utils/camera_utils.py",
+          "sha256": "799eb52e393ca8eca594a5569ac5317d1bc0ab4153704589b7417cb9e06cfb7d",
+          "bytes": 3639,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/camera_utils.py"
+        },
+        {
+          "path": "utils/depth_utils.py",
+          "sha256": "1ea6b8d1c2b2473d63a3d0f95a24c6ba48c9ae09120cf1e75bd76ce2d8bfebbb",
+          "bytes": 4016,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/depth_utils.py"
+        },
+        {
+          "path": "utils/general_utils.py",
+          "sha256": "6bf010659a0118efb2248870a9f50114e0752571a9b9941be67a09e3e34d89c5",
+          "bytes": 4942,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/general_utils.py"
+        },
+        {
+          "path": "utils/graphics_utils.py",
+          "sha256": "7f652b2ec7671ade450bf3100dfe056fbc9b5f3d50d7444fc01937709e77bc54",
+          "bytes": 11262,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/graphics_utils.py"
+        },
+        {
+          "path": "utils/image_utils.py",
+          "sha256": "3f0cd188919e5dc7fe4f1303437dcb02057699102bfcd3867b9fb27d921b2921",
+          "bytes": 888,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/image_utils.py"
+        },
+        {
+          "path": "utils/loss_utils.py",
+          "sha256": "8eb0add042de7072ac4dd09de87ae3d388d4ab5a616797db42ee910dca355ffc",
+          "bytes": 6949,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/loss_utils.py"
+        },
+        {
+          "path": "utils/mcube_utils.py",
+          "sha256": "f71741d8d812ec93a09efcb2d737103e275aab3b89d85c7560ef8eb2435d7ba1",
+          "bytes": 3461,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/mcube_utils.py"
+        },
+        {
+          "path": "utils/mesh_utils.py",
+          "sha256": "8fbf9e7b372cf10328f7b40ca63dd757084a424fe50335e6ee7b63adea82f0fe",
+          "bytes": 15059,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/mesh_utils.py"
+        },
+        {
+          "path": "utils/point_utils.py",
+          "sha256": "d15a0734ca9193e312291ac2d3dde5a9d80ea6d480a473873c2e6f855446f905",
+          "bytes": 2883,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/point_utils.py"
+        },
+        {
+          "path": "utils/render_utils.py",
+          "sha256": "ce017544a1d79f583adf6559f952b4846efe6e781e0f097e1715a514173118fe",
+          "bytes": 10659,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/render_utils.py"
+        },
+        {
+          "path": "utils/sh_utils.py",
+          "sha256": "7d1ff267546390635e6d1f68c4f88c4a8b052482d5c9be1d32f06bc69e9a96e7",
+          "bytes": 4371,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/sh_utils.py"
+        },
+        {
+          "path": "utils/system_utils.py",
+          "sha256": "be01c02d3118c5d53808bc04efccd00c35a705a43a87c3583ea2f4752bc48553",
+          "bytes": 785,
+          "source_url": "https://github.com/hanl2010/DP-GS/blob/dc1ce835ea3c6bb7887333c50df7a13497a45c09/utils/system_utils.py"
+        }
+      ],
+      "tree_paths": 2068,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\DP-GS",
+      "inspected_method_paths": [
+        "train.py",
+        "utils/graphics_utils.py",
+        "scene/cameras.py"
+      ],
+      "retrieved_file_count": 25,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    },
+    {
+      "repo": "cogniboticslab/triags",
+      "commit": "179d146bacb5c30fd50ff190d55c0a0e6d5c770f",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "3113c231dddc7c8b406d67441cbf8b219b50d907de86954d9da764713c3e4185",
+          "bytes": 7742,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/README.md"
+        },
+        {
+          "path": "arguments/__init__.py",
+          "sha256": "e8fc7d500fa007ec384893266185bd74b59f7b5fe2c3fb0aa6f0b922a7ffae02",
+          "bytes": 4420,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/arguments/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/__init__.py",
+          "sha256": "b5f4914243be66de837fdad0aafe17394aa60d31ee44e9f0a95486dea0a6902d",
+          "bytes": 7638,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/gaussian_renderer/__init__.py"
+        },
+        {
+          "path": "gaussian_renderer/network_gui.py",
+          "sha256": "7a35d9a51a76985a78d7f1f5408bc0c64e3d4321d395e4393f047f45aec698c4",
+          "bytes": 2418,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/gaussian_renderer/network_gui.py"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "337b7efecd89e2689c8db89f1af9763bccd3d2c5c91bf202466eb757b4ffca45",
+          "bytes": 54,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/requirements.txt"
+        },
+        {
+          "path": "scene/__init__.py",
+          "sha256": "b18863d387ca781adabded3c86861c8c513f0a42c4dc4677482e961acb23e0c2",
+          "bytes": 7046,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/__init__.py"
+        },
+        {
+          "path": "scene/app_model.py",
+          "sha256": "3339696ee8368a80318b73d6b3b185e526ea7d84caebc1825feb2069546e78b2",
+          "bytes": 1298,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/app_model.py"
+        },
+        {
+          "path": "scene/appearance_network.py",
+          "sha256": "74159912a1cc971ea074e1011fb0a427822d29417d1a760ba6ee306122677d20",
+          "bytes": 1871,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/appearance_network.py"
+        },
+        {
+          "path": "scene/cameras.py",
+          "sha256": "9b7a34af7e742c3a32071dea6141b25eca0ae4260e6d2768066ae0c1bf9b0e04",
+          "bytes": 6817,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/cameras.py"
+        },
+        {
+          "path": "scene/colmap_loader.py",
+          "sha256": "db8fc94bf2dfe8e7456663cb1635a06834dafffe5c87d1bb7da844b51c8cd624",
+          "bytes": 11707,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/colmap_loader.py"
+        },
+        {
+          "path": "scene/dataset_readers.py",
+          "sha256": "ce6861eef52019223f2fd53b210d69fee2966243db9ec262f948bb279a3934b9",
+          "bytes": 12095,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/dataset_readers.py"
+        },
+        {
+          "path": "scene/gaussian_model.py",
+          "sha256": "fd99384280079c0e1b4c58b9259930d9c42fc592f64ebd7b96a201281fe9677a",
+          "bytes": 37763,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/scene/gaussian_model.py"
+        },
+        {
+          "path": "train.py",
+          "sha256": "bcb9beba45f2ad51483c652df3f7a54aa2592f35030c7cdb2d3e167bf355cdbe",
+          "bytes": 20017,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/train.py"
+        },
+        {
+          "path": "utils/camera_utils.py",
+          "sha256": "83bb5da50545275aa0b578afc32abd27a0cbce9134b08d5cd0b723f6ccaf22dc",
+          "bytes": 2962,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/camera_utils.py"
+        },
+        {
+          "path": "utils/colmap_read_model.py",
+          "sha256": "dffad0f77e7b454a7e5b7fd11c561596da272bf8b0ef487146249e4964708b59",
+          "bytes": 11610,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/colmap_read_model.py"
+        },
+        {
+          "path": "utils/colmap_wrapper.py",
+          "sha256": "3631634ec72da6b9e9baaac3cc610aed2c1a29bc56d18d3786d5619de8b21ddc",
+          "bytes": 2633,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/colmap_wrapper.py"
+        },
+        {
+          "path": "utils/depth_utils.py",
+          "sha256": "23d88561b7967abafc614ae386d3e0bf32dcca3468c8f28beb6b81ba48ee91d1",
+          "bytes": 1364,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/depth_utils.py"
+        },
+        {
+          "path": "utils/general_utils.py",
+          "sha256": "5289af4419af85b15d07f6d07421101c9449c40d2fd0f2f2d304d6cd6d409cde",
+          "bytes": 6859,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/general_utils.py"
+        },
+        {
+          "path": "utils/graphics_utils.py",
+          "sha256": "baea4e8daa328c47672229ebd107301dd976a49321b545bc82530d2d105d188c",
+          "bytes": 7416,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/graphics_utils.py"
+        },
+        {
+          "path": "utils/image_utils.py",
+          "sha256": "9b7c9c2603cb256b0519499dda42ff0eb32f1103e0b2c671e4646935dc038322",
+          "bytes": 268,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/image_utils.py"
+        },
+        {
+          "path": "utils/loss_utils.py",
+          "sha256": "faea1cf3820bf6c59d38bd613debb34bf70e790ff07e160cc4ec13fb788a819e",
+          "bytes": 5210,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/loss_utils.py"
+        },
+        {
+          "path": "utils/mcube_utils.py",
+          "sha256": "f0862c2b497c19535fcccce97686b6ab92b2fcfb348b00d08151f649fb7ffb5f",
+          "bytes": 3156,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/mcube_utils.py"
+        },
+        {
+          "path": "utils/mesh_utils.py",
+          "sha256": "44a71715b4313fe7567a5de7529e288c16a2a8f0d42faed155efb452a4dae69b",
+          "bytes": 13010,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/mesh_utils.py"
+        },
+        {
+          "path": "utils/multiple_view_loss.py",
+          "sha256": "fb4a275f98d5fb67002e434cd61644ac8e5ee37de7c89237d8557daa1fd82cb0",
+          "bytes": 13020,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/multiple_view_loss.py"
+        },
+        {
+          "path": "utils/pose_utils.py",
+          "sha256": "c1026ee7a7036e1878ee2313a6294694a39a65d2db3cacc00cf0f8741b1a6dd1",
+          "bytes": 9640,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/pose_utils.py"
+        },
+        {
+          "path": "utils/render_utils.py",
+          "sha256": "2f149a9c4cc78a836384e166cd642171d82c97ec88bf64ef73cd6030541b867c",
+          "bytes": 9923,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/render_utils.py"
+        },
+        {
+          "path": "utils/sh_utils.py",
+          "sha256": "a41cc07a8e28e88ac0cbd78f7ea47cbd67b508521607b04d393ab8dc228b2eed",
+          "bytes": 3018,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/sh_utils.py"
+        },
+        {
+          "path": "utils/system_utils.py",
+          "sha256": "09d3ea37da0ce553828069bdc1dc33653dcaeebf99ebf8920b3879ff42ec9c8b",
+          "bytes": 499,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/system_utils.py"
+        },
+        {
+          "path": "utils/tetmesh.py",
+          "sha256": "85adb0b07491fd61f6130add9f2cdddce8f8345b04b92422196da727ca19667e",
+          "bytes": 7636,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/tetmesh.py"
+        },
+        {
+          "path": "utils/vis_utils.py",
+          "sha256": "47fdba3d764e266aa8119fbff0732e16ea1d121f65fdbb1461e8faed035844bb",
+          "bytes": 2801,
+          "source_url": "https://github.com/cogniboticslab/triags/blob/179d146bacb5c30fd50ff190d55c0a0e6d5c770f/utils/vis_utils.py"
+        }
+      ],
+      "tree_paths": 1630,
+      "retrieval": "public Git transport + SHA-bound raw source; API rate limited; no checkout/setup/run",
+      "local_source_root": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\triags",
+      "inspected_method_paths": [
+        "train.py",
+        "utils/multiple_view_loss.py"
+      ],
+      "retrieved_file_count": 30,
+      "reading_scope": "Specific method paths inspected; retrieval is not full reading or execution of every file.",
+      "all_retrieved_hashes_verified": true
+    }
+  ],
+  "code_not_verified": [
+    {
+      "title": "HarmoGS",
+      "paper": "https://arxiv.org/html/2605.13073v1",
+      "status": "No verifiable official implementation located in targeted search; primary checklist says release upon publication."
+    },
+    {
+      "title": "CLEAR",
+      "paper": "https://arxiv.org/html/2608.02206v1",
+      "author_page": "https://qz1-boy.github.io/",
+      "status": "No verifiable official implementation located; author entry provides PDF without code link."
+    }
+  ],
+  "additional_primary_method_screens": [
+    {
+      "title": "DOC-GS",
+      "url": "https://arxiv.org/html/2604.06739v1",
+      "checked": "Methods3.3-3.5; view-level anomaly accumulation Eq15 and NVS evaluation scope; no code audit."
+    },
+    {
+      "title": "PairDropGS",
+      "url": "https://arxiv.org/html/2605.12072v1",
+      "checked": "MethodsIV.A-D; low-frequency stop-gradient consistency Eq7 and progressive schedule; no code audit."
+    },
+    {
+      "title": "AbsGS",
+      "url": "https://arxiv.org/html/2404.10484v1",
+      "checked": "Section3.2 gradient collision; not a prior-update correctness theorem."
+    },
+    {
+      "title": "A-GEM",
+      "url": "https://arxiv.org/html/1812.00420v2",
+      "checked": "Section4 projection and AppendixC; proxy loss constraint, not certified correct parameter protection."
+    }
+  ],
+  "algebra_check": {
+    "scope": "synthetic algebra only; no Torch/CUDA/training/GT evidence",
+    "projection_counterexample": {
+      "old": [
+        1.0,
+        0.0
+      ],
+      "new": [
+        0.1,
+        0.0
+      ]
+    },
+    "projection_KKT_max_error_1000": 6.300653218411714e-16,
+    "parallel_plane_normal_difference": 1.4468217777440615e-15,
+    "feature_cost_chain_fd_max_error": 1.5841964242160889e-10,
+    "per_view_affinities": [
+      3.0,
+      -1.0
+    ],
+    "nonconvex_example": {
+      "current_cost": 1,
+      "candidate_cost": 0,
+      "small_descent_step_cost": 0.9979980060049998
+    },
+    "self_projection_retriangulation_error": 4.526797389797801e-16,
+    "blend_order_example": {
+      "PGSR": 3.0,
+      "VCR": 2.5
+    }
+  },
+  "research_report": {
+    "path": "D:\\research_Space\\noob_AmbiSuR\\docs\\research\\2026-10-13-code-feasibility-and-bounded-increments.md",
+    "sha256": "5083212f8ac831654f7b3b56e0b57e7b9929ffe610185e8eef0e691bc558ac31",
+    "scope": "Research recommendation, not implementation specification; display math/code fences and trailing whitespace checked."
+  },
+  "verification": {
+    "repositories": 8,
+    "retrieved_files_sha256_verified": 163,
+    "method_paths": 24,
+    "Torch_or_CUDA_gradient_test": false,
+    "training_or_geometry_evaluation": false,
+    "third_party_code_executed": false
+  }
+}

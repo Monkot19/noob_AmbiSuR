@@ -1,0 +1,171 @@
+{
+  "audit_date": "2026-10-12",
+  "scope": "22 screenshot papers plus DA3; read-only local PDF inventory; no extraction of unrelated attachments",
+  "records": [
+    {
+      "key": "ConfidenceMatters",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\AA6UVAVV\\Zhou和Lähner - 2026 - Confidence matters Leveraging Multi-view Geometric Priors for GS-based Reconstruction.pdf",
+      "pages": 20,
+      "sha256": "b237c99cac9455077995ba9f0e6bf6e22aadf2ccc4dc584b9b9da17c907001d6",
+      "duplicate_paths": []
+    },
+    {
+      "key": "Sparse2DGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\U4GXY32F\\Wu 等 - 2025 - Sparse2DGS Geometry-Prioritized Gaussian Splatting for Surface Reconstruction from Sparse Views.pdf",
+      "pages": 10,
+      "sha256": "1b6ccbb5df5d2fd60777e39fc69c2c43be1a26960696e08b01fc9adbf7c610ea",
+      "duplicate_paths": []
+    },
+    {
+      "key": "DualSplat",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\CT2BUEAP\\Wang 等 - DualSplat Robust 3D Gaussian Splatting via Pseudo-Mask Bootstrapping from Reconstruction Failures.pdf",
+      "pages": 10,
+      "sha256": "99818e57d149ce261b3221b98f1f4949217ab51ec46534d5bc08f3c1127f242f",
+      "duplicate_paths": []
+    },
+    {
+      "key": "ConFixGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\JWJGXFR7\\Song 等 - 2026 - ConFixGS Learning to Fix Feedforward 3D Gaussian Splatting with Confidence-Aware Diffusion Priors i.pdf",
+      "pages": 28,
+      "sha256": "fc22d796a2d9ebb5b97a21742ed374f19e5694cbc0fcbd01d9e65170c486c6ec",
+      "duplicate_paths": []
+    },
+    {
+      "key": "IndoorGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\AZGMPWY6\\Ruan 等 - IndoorGS Geometric Cues Guided Gaussian Splatting for Indoor Scene Reconstruction.pdf",
+      "pages": 10,
+      "sha256": "1519bccdcd805b9c0936562ca5bcddce7b82d30cba9dbcc5c009cb17ee5d712b",
+      "duplicate_paths": []
+    },
+    {
+      "key": "CoMe",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\VJ9BX4DX\\Radl 等 - 2026 - Confidence-Based Mesh Extraction from 3D Gaussians.pdf",
+      "pages": 34,
+      "sha256": "613c30459c6bf112e46887c22b62671f207eda79126edcbfed628f6d59f59fde",
+      "duplicate_paths": []
+    },
+    {
+      "key": "GSPrior",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\ICNANX97\\Noda 等 - 2026 - 3D Gaussian Splatting with Self-Constrained Priors for High Fidelity Surface Reconstruction.pdf",
+      "pages": 17,
+      "sha256": "be3f667651c4be8b5a4fcb62f89b627b2a32339e3b63e1c7543df563b0d1b6fb",
+      "duplicate_paths": []
+    },
+    {
+      "key": "AmbiSuR",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\2GSV59QS\\Li 等 - 2026 - Revisiting Photometric Ambiguity for Accurate Gaussian-Splatting Surface Reconstruction.pdf",
+      "pages": 23,
+      "sha256": "3df6d7cb877c5987682d9bd27df000f6cfbb7b7f76db5eaf193ac77ef8e8e645",
+      "duplicate_paths": []
+    },
+    {
+      "key": "CLEAR",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\EXHS4QWR\\Li 等 - 2026 - CLEAR Conflict-aware Learning via Evidence-guided Adaptive Routing for Unified Sparse-View 3D Gauss.pdf",
+      "pages": 9,
+      "sha256": "6741dc92996aba43d45b272359df99bec58f0887b2fdc3962c3cec9b21dd8a50",
+      "duplicate_paths": []
+    },
+    {
+      "key": "HarmoGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\FK76JNNB\\Kang 等 - 2026 - HarmoGS Robust 3D Gaussian Splatting in the Wild via Conflict-Aware Gradient Harmonization.pdf",
+      "pages": 24,
+      "sha256": "abccf101254cf3e4c97de7a6bf1e3ac1631aa96a5c67a77f8330da306e62f2eb",
+      "duplicate_paths": []
+    },
+    {
+      "key": "RobustSplat",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\VWMVEQ8H\\Fu 等 - RobustSplat Decoupling Densification and Dynamics for Transient-Free 3DGS.pdf",
+      "pages": 11,
+      "sha256": "1a74d4b706754b6da4b9389d45fa172fbff6cbfa4aad5c145827591baa7fcb4a",
+      "duplicate_paths": []
+    },
+    {
+      "key": "VCRGaUS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\MPPLZDRW\\Chen 等 - VCR-GauS View Consistent Depth-Normal Regularizer for Gaussian Surface Reconstruction.pdf",
+      "pages": 26,
+      "sha256": "ae8a2505af7860f195c43eb4e8e0058ac51284d17e0ec586c449baa9281bcb7f",
+      "duplicate_paths": []
+    },
+    {
+      "key": "QGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\JN9EN34Z\\Zhang 等 - 2024 - Quadratic Gaussian Splatting High Quality Surface Reconstruction with Second-order Geometric Primit.pdf",
+      "pages": 16,
+      "sha256": "c43fcb0871c1de07bd174783878a7affe3a4fe83cc2ae266772616da7f993814",
+      "duplicate_paths": []
+    },
+    {
+      "key": "SurfaceSplat",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\HGXV59PF\\Gao 等 - 2025 - SurfaceSplat Connecting Surface Reconstruction and Gaussian Splatting.pdf",
+      "pages": 16,
+      "sha256": "4658e3127885912247e8d9ae51e95c92cb1f546d8f3c8cd6f7a38cfbdf2bbe8f",
+      "duplicate_paths": []
+    },
+    {
+      "key": "PGSR",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\FJ3EB3TL\\Chen 等 - 2025 - PGSR Planar-based Gaussian Splatting for Efficient and High-Fidelity Surface Reconstruction.pdf",
+      "pages": 20,
+      "sha256": "c4374bfbff4c55700ef81595bdb9d58a13bd3d0e57788e5d5bea382aea0aafe8",
+      "duplicate_paths": []
+    },
+    {
+      "key": "RefGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\92IWM8D4\\Zhang 等 - 2025 - Ref-GS Directional Factorization for 2D Gaussian Splatting.pdf",
+      "pages": 15,
+      "sha256": "3448469ba42da95c6222880b1d3dd6df3fdc32f6970b327b1e26f4e6abf62350",
+      "duplicate_paths": []
+    },
+    {
+      "key": "DeferredReflection",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\X8Q6CBIG\\Ye 等 - 2024 - 3D Gaussian Splatting with Deferred Reflection.pdf",
+      "pages": 10,
+      "sha256": "19cbede913a65170788d1ee411bf2f8f10e691bd9c15b16046f2fb94bd8dac43",
+      "duplicate_paths": []
+    },
+    {
+      "key": "GS2DGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\CQ9ML5ZW\\Tong 等 - GS-2DGS Geometrically Supervised 2DGS for Reflective Object Reconstruction.pdf",
+      "pages": 11,
+      "sha256": "dee99d8fa580c3dbd34f0b9ca87183cbcd5a38ebc5928e23684e6f5055180c8b",
+      "duplicate_paths": [
+        "C:\\Users\\DELL\\Zotero\\storage\\ZEDERKFJ\\Tong 等 - GS-2DGS Geometrically Supervised 2DGS for Reflective Object Reconstruction.pdf"
+      ]
+    },
+    {
+      "key": "SpecTReGS",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\79YGJ7JP\\Tang 等 - SpecTRe-GS Modeling Highly Specular Surfaces with Reflected Nearby Objects by Tracing Rays in 3D Ga.pdf",
+      "pages": 10,
+      "sha256": "ce770b92a12c804836fe069791b6381eb34a2c94c18bf8e291cc3702edeeb450",
+      "duplicate_paths": []
+    },
+    {
+      "key": "DNSplatter",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\9SW55VJH\\Turkulainen 等 - DN-Splatter Depth and Normal Priors for Gaussian Splatting and Meshing.pdf",
+      "pages": 11,
+      "sha256": "a8bc194db4c65d28bd42be2bf7f3ef9b121db2edd2fd0db02ff6d77c3bd6542a",
+      "duplicate_paths": []
+    },
+    {
+      "key": "2DSuGaR",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\JPJEJSR6\\R 等 - 2026 - 2D-SuGaR Surface-Aware Gaussian Splatting for Geometrically Accurate Mesh Reconstruction.pdf",
+      "pages": 4,
+      "sha256": "7e021d4f16a9a8931a3b9c1d86e5b1a6055792fb8add1563aa8f73f4f578853b",
+      "duplicate_paths": []
+    },
+    {
+      "key": "GSSDF",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\2YEPRW6F\\Liu 等 - 2025 - GS-SDF LiDAR-Augmented Gaussian Splatting and Neural SDF for Geometrically Consistent Rendering and.pdf",
+      "pages": 8,
+      "sha256": "4bb19f4bbe5649d57ab025dff49e3799f510745878c1013bcbe82f74274b43b0",
+      "duplicate_paths": [
+        "C:\\Users\\DELL\\Zotero\\storage\\LSFMM4PZ\\Liu 等 - 2025 - GS-SDF LiDAR-Augmented Gaussian Splatting and Neural SDF for Geometrically Consistent Rendering and.pdf"
+      ]
+    },
+    {
+      "key": "DA3",
+      "source_path": "C:\\Users\\DELL\\Zotero\\storage\\MPU2WY2T\\Lin 等 - 2025 - Depth anything 3 recovering the visual space from any views.pdf",
+      "pages": 32,
+      "sha256": "afa74735e20b667b91183f604224abbcd61d4f927c23a3c635015d0c9d83d083",
+      "duplicate_paths": []
+    }
+  ]
+}

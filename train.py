@@ -19,6 +19,9 @@ import numpy as np
 from random import randint
 from utils.loss_utils import l1_loss, ssim, lncc, get_img_grad_weight, DepthAnythingv2Loss
 from utils.graphics_utils import patch_offsets, patch_warp
+from utils.candidate_selector import (
+    candidate_selector_active, compute_sh_ambiguity_labels, select_candidate_labels,
+)
 from gaussian_renderer import render, network_gui, render_normal
 import sys, time
 from scene import Scene, GaussianModel
@@ -110,12 +113,63 @@ def gen_virtul_cam(cam, trans_noise=1.0, deg_noise=15.0):
                         preload_img=False, data_device = "cuda")
     return virtul_cam
 
+def _render_training_reference(viewpoint_cam, gaussians, pipe, bg, app_model,
+                               opt, *, iteration, seed):
+    selector_data = None
+    if candidate_selector_active(iteration, opt):
+        if not isinstance(viewpoint_cam.depth_dict, dict) or "depth" not in viewpoint_cam.depth_dict:
+            raise ValueError("candidate selector requires reference DA3 depth")
+        with torch.no_grad():
+            prior_depth = viewpoint_cam.depth_dict["depth"].detach().squeeze()
+            prior_depth = F.interpolate(prior_depth[None, None],
+                size=(viewpoint_cam.image_height, viewpoint_cam.image_width),
+                mode="bilinear", align_corners=True).squeeze()
+            prior_normal = render_normal(viewpoint_cam, prior_depth)
+            _, reference_gray = viewpoint_cam.get_image()
+
+            def source_depth(camera):
+                return render(camera, gaussians, pipe, bg, app_model=app_model,
+                    return_plane=True, return_depth_normal=False,
+                    ray_reg=False)["plane_depth"]
+
+            labels, extra, stats = select_candidate_labels(gaussians, viewpoint_cam,
+                reference_gray, prior_depth, prior_normal,
+                viewpoint_cam._candidate_support_cameras, opt, seed=seed,
+                iteration=iteration, support_depth_fn=source_depth)
+            selector_data = dict(labels=labels, extra=extra, prior_depth=prior_depth,
+                                 prior_normal=prior_normal, stats=stats)
+    render_kwargs = {}
+    if selector_data is not None:
+        render_kwargs["ambiguity_labels"] = selector_data["labels"]
+    result = render(viewpoint_cam, gaussians, pipe, bg, app_model=app_model,
+        return_plane=iteration > 0, return_depth_normal=True,
+        ray_reg=(-1 if iteration > opt.densify_until_iter else opt.ray_color_lambda)
+            if iteration > 5000 else -1,
+        opt=opt, **render_kwargs)
+    return result, selector_data
+
+
+def _compute_alr_loss(viewpoint_cam, render_pkg, metric_depth, metric_depth_conf,
+                      conf_thresh, iteration, opt, normal_from_metric_depth=None):
+    # Same baseline residual, confidence, normalization and schedule.
+    ratio = (iteration - opt.multi_view_weight_from_iter) / (opt.iterations - opt.multi_view_weight_from_iter)
+    mult = opt.unc_decay ** ratio
+    if normal_from_metric_depth is None:
+        normal_from_metric_depth = render_normal(viewpoint_cam, metric_depth)
+    unc_diff = 1 - (normal_from_metric_depth * render_pkg["depth_normal"]).sum(0)
+    return opt.unc_weight * mult * (unc_diff * render_pkg["rendered_unc"].detach() * (metric_depth_conf >= conf_thresh)).mean()
+
+
 def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from, core_config=None):
     if core_config is None:
         core_config = CoreConfig()
     training_path = select_training_path(core_config)
     if training_path != "legacy" and not core_config.core_shadow_mode:
         raise NotImplementedError("Core training path is not implemented in E0")
+    if getattr(opt, "enable_candidate_selector", False):
+        candidate_selector_active(0, opt)
+        if core_config.uses_core_path():
+            raise ValueError("candidate selector requires all old Core flags off")
 
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset, opt, pipe, core_config)
@@ -226,10 +280,15 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # 它不形成 Python 可见的 Loss，而在每次 rasterizer backward 中惩罚同一 ray 上“单个 Gaussian 颜色与最终像素颜色的差异”。
         # 额外项先直接加到 dL_dcolors；默认 SH 路径会继续更新 SH，并可能经视角方向更新 means3D，但不直接写 densification 的屏幕梯度。
         # 耦合风险：7001..densify_until_iter 还会执行 ALR 的独立 backward，因而同一 Ray-Color 项可能先后累计两次。
-        render_pkg = render(viewpoint_cam, gaussians, pipe, bg, app_model=app_model,
-                            return_plane=iteration>0, return_depth_normal=True, 
-                            ray_reg=(-1 if iteration > opt.densify_until_iter else opt.ray_color_lambda) if iteration > 5000 else -1,
-                            opt=opt)
+        if candidate_selector_active(iteration, opt):
+            # Temporary input bridge for the exact helper signature; no model,
+            # checkpoint, cross-view label or cache state is introduced.
+            viewpoint_cam._candidate_support_cameras = [
+                scene.getTrainCameras()[index] for index in viewpoint_cam.nearest_id[:2]]
+        render_pkg, selector_data = _render_training_reference(viewpoint_cam, gaussians,
+            pipe, bg, app_model, opt, iteration=iteration, seed=core_config.seed)
+        if selector_data is not None:
+            del viewpoint_cam._candidate_support_cameras
         image, viewspace_point_tensor, visibility_filter, radii = \
             render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
         
@@ -432,8 +491,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # Depth loss
         if iteration > 1000:
             if not opt.use_mono:
-                metric_depth = viewpoint_cam.depth_dict["depth"].detach().squeeze()
-                metric_depth = torch.nn.functional.interpolate(metric_depth[None, None], size=render_pkg["plane_depth"].shape[-2:], mode='bilinear', align_corners=True).squeeze()
+                if selector_data is None:
+                    metric_depth = viewpoint_cam.depth_dict["depth"].detach().squeeze()
+                    metric_depth = torch.nn.functional.interpolate(metric_depth[None, None], size=render_pkg["plane_depth"].shape[-2:], mode='bilinear', align_corners=True).squeeze()
+                else:
+                    metric_depth = selector_data["prior_depth"]
                 if "conf" in viewpoint_cam.depth_dict:
                     metric_depth_conf = torch.nn.functional.interpolate(viewpoint_cam.depth_dict["conf"][None, None].cuda(), size=render_pkg["plane_depth"].shape[-2:], mode='bilinear', align_corners=True).squeeze()
                     conf_thresh = torch.quantile(metric_depth_conf.flatten(), opt.unc_conf_thresh_ratio)
@@ -455,24 +517,15 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             # 它用 SH 双端歧义区域的软 Mask，加权“深度先验法线”和“渲染深度法线”的方向差异。
             # rendered_unc.detach() 表示该 Mask 在此处只决定惩罚位置，不通过本 Loss 反向更新 Mask 的生成路径。
             if iteration > opt.unc_from_iter:
-                # renderer 已计算像素级 Mask；这里重新计算 Gaussian 级 Mask，供后面的参数级选择使用。
-                sh_uncertainty = gaussians.compute_weighted_sh_norm("equal")
-                unc_thresh = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_upper_ratio)
-                unc_thresh_min = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_lower_ratio)
-                unc_thresh_min = min(opt.sh_unc_lower_max, unc_thresh_min)
-                unc_mask = (sh_uncertainty > unc_thresh) | (sh_uncertainty < unc_thresh_min)
+                unc_mask = (compute_sh_ambiguity_labels(gaussians, opt)
+                            if selector_data is None else selector_data["labels"])
 
-                # 配置耦合风险：ALR 衰减进度以 multi_view_weight_from_iter 为起点，而不是 unc_from_iter；默认二者恰好同为 7000。
-                ratio = (iteration - opt.multi_view_weight_from_iter) / (opt.iterations - opt.multi_view_weight_from_iter)
-                # 当 0<unc_decay<1 时，mult 让 ALR 在后期逐渐减弱、避免过度约束；默认 unc_decay=1.0 时 mult 始终为 1。
-                mult = opt.unc_decay ** ratio
-
-                normal_from_metric_depth = render_normal(viewpoint_cam, metric_depth)
                 # 深度先验法线、置信度条件和 detach 后的像素 Mask 都只充当固定权重；梯度来自渲染 depth_normal 一侧。
                 # depth_normal 由 plane_depth 的邻域点叉积得到；CUDA 再把深度梯度分到 normal/distance 特征及 alpha 混合权重。
                 # 因而 ALR 可到 xyz/rotation，若参数分离失效还可经 alpha 路径到 opacity/scale；其屏幕代理梯度会在下方单独清零。
-                unc_diff = 1 - (normal_from_metric_depth * render_pkg["depth_normal"]).sum(0)
-                loss_unc = opt.unc_weight * mult * (unc_diff * render_pkg["rendered_unc"].detach() * (metric_depth_conf >= conf_thresh)).mean()
+                loss_unc = _compute_alr_loss(viewpoint_cam, render_pkg, metric_depth,
+                    metric_depth_conf, conf_thresh, iteration, opt,
+                    None if selector_data is None else selector_data["prior_normal"])
 
                 # 代码风险（服务器待验证）：requires_grad_ 是方法，下面却给方法名赋值，没有调用 PyTorch 的冻结接口，可能直接报只读属性错误。
                 # 即使改成 requires_grad_(False)，布尔索引得到的临时张量也不能实现“按 Gaussian 元素冻结”，且前向计算图已经建立。
@@ -506,6 +559,14 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
         # no_grad 禁止下面的管理操作建立新计算图，但仍可读取刚才 backward 已写好的 .grad。
         with torch.no_grad():
+            if selector_data is not None and iteration % 200 == 0:
+                stats = selector_data["stats"]
+                total_alr_weight = (render_pkg["rendered_unc"].detach()
+                                    * (metric_depth_conf >= conf_thresh)).sum()
+                tqdm.write(f"[selector {iteration}] sampled={stats['sampled']} "
+                    f"comparable={int(stats['comparable'])} added={int(stats['added'])} "
+                    f"total_alr_weight={float(total_alr_weight):.6f} "
+                    f"iteration_ms={iter_start.elapsed_time(iter_end):.3f}")
             # Progress bar
             ema_loss_for_log = 0.4 * image_loss.item() if image_loss is not None else 0.0 + 0.6 * ema_loss_for_log
             ema_single_view_for_log = 0.4 * normal_loss.item() if normal_loss is not None else 0.0 + 0.6 * ema_single_view_for_log
