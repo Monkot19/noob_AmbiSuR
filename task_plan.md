@@ -84,5 +84,5 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 ### 2026-10-23 Approved version handoff
 - User confirms next batch and reports GPU server rented. Finish local commit/push of reviewed selector-only migration and provide exact server commit/extension/unified-test commands; no method changes or baseline rerun.
 - Fresh precommit validation:23 tests,18CPU pass/5native skips;8 code files compile; diff whitespace and unchanged baseline source boundary pass. Prior whole-migration review remains applicable; only server receipt documentation changed since review.
-- [ ] Commit/push exact migration; verify remote ref and clean local tree.
+- [x] Commit/push exact migration; feature commit d979c070925a9dc9a5f5ce3a5563de56614fa192 verified against origin ref with a clean local tree. Documentation follow-up records this receipt.
 - [ ] User-operated AutoDL native test run with all23 tests executing and zero skips; remains pending.
