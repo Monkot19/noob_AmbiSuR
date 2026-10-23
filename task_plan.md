@@ -1,6 +1,6 @@
 # AmbiSuR Core 实施计划状态
 
-> **当前（2026-10-23）：** D 盘 `D:\research_Space\noob_AmbiSuR` 已接管 `codex/second-run-selector`；旧 Core 计划为历史。GPU23项验证已通过；用户回传 Tool Room30K已到23760，最终结果待回执。目录接管见文末和 `docs/research/second-run-workspace-and-recovery.md`。
+> **当前（2026-10-23）：** D 盘 `D:\research_Space\noob_AmbiSuR` 已接管 `codex/second-run-selector`；旧 Core 计划为历史。30K退出码0、点云和app权重非空已确认，train PSNR基本持平。用户已同意同参数提取新mesh并比较几何；提取结果和几何收益仍待验证。
 
 ## Goal
 
@@ -100,4 +100,7 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - [x] Update primary-directory rules and recovery/handoff documents; old Core preserved on archival branch.
 - [x] One scoped review passed with no Critical/Important/required Minor; production diff empty.
 - [x] Documentation published as3d27ba2 with matching remote refs; D clean on second-run,C detached3775135/clean,1699tracked files,8core hashes and192ignored files verified; Git connectivity and24-file original backup rechecked. No production change.
-- [ ] Receive final training exitcode/log/artifacts; discuss existing mesh extraction and matching baseline evaluation. C cleanup remains unapproved.
+- [x] Receive final30000/30000 log with Gaussian/app save and Training complete; compute exact training-log deltas against fixed baseline.
+- [x] User returns exitcode0,30K PLY307M and app.pth15K; approves new-model mesh extraction and comparison. Training completion confirmed.
+- [ ] User-operated existing extract_general.py atiteration30000 with frozen baseline5.0/0.005/4.0/2; output only inside new method run. Receive extract exitcode/log and raw/post meshes.
+- [ ] Define matching ScanNet++GT coordinate/observable domain and use applicable existing distance/metric primitives for geometry comparison; no DTU/TnT domain substitution or old detector-label metric. C cleanup remains unapproved.

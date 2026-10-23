@@ -9,22 +9,22 @@
 - 方法提交 `d979c07`；服务器验证／训练固定 `3d85faf95951b4806eee18498841e66551b93320`。本地接管起点 `3775135690b2ea4edfdc50e3b19fba467d02d117` 与它仅有文档差异；本次也只更新规则和文档，实际当前 HEAD 用 `git rev-parse HEAD` 读取。
 - 旧 D 未提交内容保存为归档 `7b3154b7daa7e03ca7dad5b0e5cf1260f4e1099d`，不是当前二周目实现；不将旧 Core、五状态、梯度路由或 Utility 恢复自动合并／恢复。
 
-## 已验证与正在运行
+## 已验证与首轮30K完成日志
 
 - AutoDL RTX4090／`3d85faf` 统一23项测试全部通过、零跳过，包含真实 renderer／ALR backward／optimizer step。
 - D 接管后同一入口23项中18项通过、5项原生集成因本地缺少 AmbiSuR 扩展而跳过；8个代码文件语法检查通过。1697个已跟踪文件齐全，192个忽略文件未改变。
 - Tool Room 首轮30K已由用户实际启动：406张训练图像、r2、seed0、`eval=False`、DA3、预算4096，保留原调度，候选／ALR从7001轮启用。
-- 用户最近回传为23760/30000，多条 sampled4096／added非零。仅证明新增分支在活动，尚无最终重建收益结论；零抽样记录不单凭这段日志推断原因。
+- 用户最新回传为30000/30000、保存Gaussian及app_model并打印 `Training complete`；日志总时长1:14:56，train PSNR31.102751541137696／L1 0.0163764713332057，点数1295772。末轮sampled4096／comparable3143／added1463，只证明补选分支活动，尚无几何收益结论。
 - 服务器输出：`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_30k_v1`。
 - 输入工作视图：`/root/autodl-tmp/ambisur_work/data_views/second_run_selector/toolroom_r2_seed0_30k_v1/colmap_undistorted`。
 - 独立基线扩展：`/root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python`，通过进程级 `PYTHONPATH` 选择；旧一周目扩展保留。
 - 已确认服务器环境为Python3.10／Torch2.7.1+cu128／CUDA toolkit12.8／GCC11.4／RTX4090，Python入口 `/root/miniconda3/envs/ambisur/bin/python`。下方旧环境字段不是当前环境。
-- 本次目录整理不连接、停止、重启或更新服务器训练；完成需等待 `train.exitcode`、最终日志和30K产物回执。
+- 本地主目录整理没有干预服务器作业。用户已回传 `train.exitcode=0`、30K点云307M和app.pth15K，训练完成及非空模型产物已确认；不重训或恢复checkpoint。
 
 ## 接手后的下一步
 
 1. 在 D 盘检查分支、HEAD、clean状态，阅读当前候选规格与根目录三个进展记录。
-2. 接收本次训练最终产物，再与用户讨论复用原 mesh 提取及适用的评价入口，与已有固定 baseline 比较。
+2. 用户已同意提取新模型mesh并与基线比较。先沿用baseline的 `max_depth=5.0, voxel_size=0.005, sdf_trunc_scale=4.0, num_cluster=2`，以服务器原3d85faf和独立扩展提取iteration30000；已有baseline mesh保持只读。接收mesh产物后核对ScanNet++的GT坐标与评价域，再进行同口径几何比较，不能把两份mesh之间的差异直接解释为谁更准确。
 3. baseline `D:\research_Space\output\AmbiSuR_original` 与数据集保持只读；不重训、不覆盖、不移动。GT只用于获准离线评价。
 4. DTU沿用CD及双向距离，TnT沿用Precision／Recall／F1，Mip360沿用PSNR／SSIM／LPIPS；当前Tool Room属于ScanNet++，不能套用DTU/TnT专用评价域。`eval=False` 的训练视角PSNR不冒称新视角指标。
 5. C 清理、旧 Utility 恢复及新方法扩展均另行讨论；当前优先获得实际重建比较结果。
