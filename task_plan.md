@@ -114,3 +114,8 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 - [ ] Server native acceptance and first formal Tool Room metrics using existing meshes; no baseline rerun.
 
 - Evaluator published:4010fd01e4b5bbe651ac4e221e00532bf99f4ff9, origin branch hash matched; D clean after push. Server native tests and formal GT metrics pending, no training changes. Closing receipt is documentation-only; server can pin4010fd0.
+
+## 2026-10-23 First formal geometry receipt
+- [x] Server8/8 tests/zero skips; formal paired mesh evaluation completed, full CSV received.
+- [x] Preserve mixed outcome: F1@5cm+0.1151pp,CD+13.0463%,Accuracy/Completeness worse; no overall benefit claim.
+- [ ] User self-downloads full run/evaluation; original files retained. Next focused analysis discussed before any code/training change.

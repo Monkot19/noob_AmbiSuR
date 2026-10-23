@@ -108,3 +108,6 @@ Observed initial RED import failure before implementation; three pure numeric te
 Final verification:8tests pass/zero skips in6.490s with Open3D0.19.0/NumPy2.5.2/Matplotlib3.11.2. Real old TnT producer imported after isolated matplotlib install; no baseline code changes. Python3.10 grammar and git diff whitespace pass. Spec/plan/user guide/handoff updated; preparing one scoped feat commit/push then pinned server handoff. No remote or realGT execution.
 
 - Evaluator published:4010fd01e4b5bbe651ac4e221e00532bf99f4ff9, origin branch hash matched; D clean after push. Server native tests and formal GT metrics pending, no training changes. Closing receipt is documentation-only; server can pin4010fd0.
+
+## 2026-10-23 Server acceptance and formal evaluation complete
+User receipt:8/8 native tests pass/zero skips in10.591s at4010fd0; nohupPID12484,initial RSS4074600KiB/173%CPU,then PID gone. Latest full log confirms normal Completed with JSON/CSV; no failure/retry. Recomputed all deltas from pasted CSV, recorded full result report and updated handoff. No realGT access,new evaluation,test repetition,method/threshold changes or server action. User explicitly chooses self-download; agent will not request connection credentials or start transfers. Full original artifact/hash verification still pending.

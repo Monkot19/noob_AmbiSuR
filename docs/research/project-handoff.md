@@ -26,12 +26,19 @@
 - 用户回传406视角渲染/TSDF/后处理结束，新mesh raw12962510、post11470565顶点；已找到服务器C0/new/GT三个路径。提取退出码仍待回传，顶点数量不代表几何收益。
 - 用户授权可复用正式评价，并确认PRF阈值1/2/5cm、5cm主列。评价固定提交 `4010fd01e4b5bbe651ac4e221e00532bf99f4ff9`（已推送），统一入口 `scripts/evaluate_mesh_geometry.py`，协议 `experiments/mesh_geometry/scannetpp_surface_v1.json`，完整用法/既有资产命令见 [正式mesh评价指南](mesh-geometry-evaluation.md)。
 - Accuracy/Completeness/Surface Chamfer + Precision/Recall/F1；1M面积样本、seed0、共同GT、点到三角面、毫米/0–1，不ICP/裁剪/截断。训练代码和DTU/TnT原脚本未修改。ScanNet++适配协议不冒称官方排行榜或DTU/TnT完全同口径。
-- 外部独立本地环境Open3D0.19.0真实8项测试全过/零跳过，含原TnT函数数值对照、真实PLY/CLI/metadata/JSON/CSV和输入只读；审查seed偏差已RED→GREEN修复。Python3.10语法检查通过。服务器Python3.10原生测试和真实mesh正式指标仍待用户执行；未读取真实GT、无几何收益结论。
+- 外部独立本地环境Open3D0.19.0真实8项测试全过/零跳过，含原TnT函数数值对照、真实PLY/CLI/metadata/JSON/CSV和输入只读；审查seed偏差已RED→GREEN修复。Python3.10语法检查通过。后续用户回传服务器8项测试全过/零跳过（10.591s）及正式评价Completed/完整CSV；详见下条结果。Agent未直接读取真实GT或下载服务器原件。
+
+## 首次正式几何结果（2026-10-23）
+
+- [完整结果与解释](2026-10-23-toolroom-selector-v1-results.md)：baseline→selector的Accuracy35.1244→37.2194mm，Completeness46.3068→54.8356mm，Surface Chamfer40.7156→46.0275mm（+13.0463%，变差）。
+- F1@1/2/5cm均略升，5cm为0.77933825→0.78048925（+0.1151个百分点）；5cm Recall下降0.2820个百分点。结论为混合结果、尚无整体几何收益，不隐去正负任一方向。
+- PID12484消失由正式Completed日志解释为正常结束；不重启评价。日志/CSV已回传，完整results.json/配置/身份文件和大模型尚待用户自行下载；用户明确不由agent SSH连接。
+- 训练、mesh与评价原件保全；阈值、评价域与方法不变。先归档，下一批定位/改动须讨论，不自动叠加模块或新训练。
 
 ## 接手后的下一步
 
 1. 在 D 盘检查分支、HEAD、clean状态，阅读当前候选规格与根目录三个进展记录。
-2. 用户已同意提取新模型mesh并与基线比较。先沿用baseline的 `max_depth=5.0, voxel_size=0.005, sdf_trunc_scale=4.0, num_cluster=2`，以服务器原3d85faf和独立扩展提取iteration30000；已有baseline mesh保持只读。已收到提取后处理日志及三个mesh路径；使用上方固定适配协议先做服务器8项真实CPU测试，再同时评价已有C0与新模型，不重训或重提取baseline。
+2. 用户已同意提取新模型mesh并与基线比较。先沿用baseline的 `max_depth=5.0, voxel_size=0.005, sdf_trunc_scale=4.0, num_cluster=2`，以服务器原3d85faf和独立扩展提取iteration30000；已有baseline mesh保持只读。已收到提取后处理日志及三个mesh路径；固定适配协议的服务器8项真实CPU测试和首轮正式评价均已完成；当前转向原产物归档及待讨论的退化定位，不重训或重提取baseline。
 3. baseline `D:\research_Space\output\AmbiSuR_original` 与数据集保持只读；不重训、不覆盖、不移动。GT只用于获准离线评价。
 4. DTU沿用CD及双向距离，TnT沿用Precision／Recall／F1，Mip360沿用PSNR／SSIM／LPIPS；当前Tool Room属于ScanNet++，不能套用DTU/TnT专用评价域。`eval=False` 的训练视角PSNR不冒称新视角指标。
 5. C 清理、旧 Utility 恢复及新方法扩展均另行讨论；当前优先获得实际重建比较结果。
