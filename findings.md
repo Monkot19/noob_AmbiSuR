@@ -34,3 +34,21 @@
 | Date | Decision | Evidence | Consequence |
 |---|---|---|---|
 
+
+
+## 2026-10-22 Clean second-run migration
+User approves c0-baseline branch plus selector-only port and necessary seed/metadata reuse. Old records above are historical. The original dirty checkout stays unchanged. No baseline/GT/storage operation.
+- Server disk evidence supplied by user: overlay30G used25G/free5.3G, persistent50G used36G/free15G; no inode issue. pip cache nearly empty, conda tarballs106.7MB. Three environments (base,ambisur,da3-v1) and VSCode CLI3.8G explain major visible use; da3-v1 is an environment, not proof of duplicate DA3 weights. Overlay du43G versus df25G means visible directory totals cannot be treated as reclaimable writable-layer bytes.
+- Do not relocate/delete Conda or DA3 envs, model weights or old results. Next no-GPU inventory can focus on VSCode versions/active executable paths and installed rasterizer provenance. No remote cleanup executed.
+
+## 2026-10-23 Server cache and installed extension evidence
+- User-supplied no-GPU receipt shows six Stable VSCode Server versions under /root/.vscode-server/cli/servers totaling3.8G; no matching executable links were printed. This alone does not prove no other client references a version.
+- Fresh read-only local code --version returns1.131.0, commit e4c7e7b1d6d060162f4aa7f8225271b67ce1df75, matching the server671M Stable directory; retain that version and propose only the five explicitly listed older directories, after closing all remote VSCode clients and using the web terminal. Approximate candidate directory total3.1GiB, actual recovery requires df.
+- User's active ambisur imports rasterizer wrapper and binary from /root/miniconda3/envs/ambisur/lib/python3.10/site-packages and exposes rasterize_gaussians_with_evidence=True. Thus branch/source migration alone has not selected a baseline-only installed extension; API presence alone does not prove numerical interference.
+- c0-baseline ext.cpp exports only rasterize_gaussians/rasterize_gaussians_backward/mark_visible (corrected after server receipt: markVisible is the C++ symbol and Python wrapper method, not the extension export); setup.py uses CUDAExtension/BuildExtension. Propose building pinned baseline extension into a separate small data-disk target and using per-process PYTHONPATH for the second run, preserving the first-run package/environment. Before no-GPU build, verify nvcc/toolkit and target architecture; explicit TORCH_CUDA_ARCH_LIST is needed without visible GPUs. No installation, code changes, deletion or remote execution this step.
+
+### 2026-10-23 Build receipt and assertion correction
+- User successfully removed the five explicitly named old VSCode versions: system df now22G used/8.3G available/73%; CLI672M. Actual recovery is approximately3G, no Conda/model/results cleanup needed now.
+- Pinned c0 wheel built and independently installed at /root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python; wheel SHA256 56a2e694c96145e81081d15486679e8bb3fb2eb3b95d2d3ba6e1538a0de37346. Import and wrapper/binary target assertions passed before the erroneous markVisible assertion; absence of old evidence export was not yet checked because execution stopped first.
+- Root cause verified with git show c0-baseline:.../ext.cpp: m.def("mark_visible", &markVisible). Baseline wrapper markVisible calls _C.mark_visible. Agent's handoff command used the wrong extension name; no evidence of a build failure. Correct only the one-shot validation command and reuse the same target; native GPU tests/training remain pending.
+- Subsequent user receipt confirms corrected check passed with wrapper/binary in the independent target, all baseline exports callable and old evidence export absent. This establishes import/export selection only; it does not establish GPU rendering, selector integration or reconstruction benefit.

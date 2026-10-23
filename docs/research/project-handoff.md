@@ -1,5 +1,7 @@
 # AmbiSuR 可靠性路由项目交接说明
 
+> **2026-10-22 当前入口：** 用户批准从c0-baseline建立干净二周目分支codex/second-run-selector；旧内容为历史，不继续旧Core/五状态路线。见docs/superpowers/plans/2026-10-22-clean-selector-migration.md及已批准selector规格。仅本地移植完成，AutoDL原生验证/30k未运行；固定baseline结果不重训不改写，旧工作目录保留。
+
 ## 1. 项目目标
 
 以 AmbiSuR 官方实现为 baseline，在 ScanNet++ 紧凑、高反射室内场景上研究：观测校准的歧义需求、外部先验与内部几何双可靠性、拒绝式仲裁、参数级梯度路由和可靠性驱动的 Gaussian 生命周期。

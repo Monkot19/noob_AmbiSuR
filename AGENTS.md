@@ -48,3 +48,7 @@
 - 服务器实验开始时记录 `git rev-parse HEAD` 和 `git diff --exit-code`。
 - 不因单场景正结果跳过 Utility Room 或多 seed 确认。
 
+
+
+## 2026-10-22 User-approved clean second run: supersedes old Core stage rules
+Use c0-baseline plus approved candidate selector only, no reliability/Core/five-state/evidence/topology port. Preserve original worktree and fixed baseline output. See docs/superpowers/specs/2026-10-21-candidate-selector-design.md and docs/superpowers/plans/2026-10-22-clean-selector-migration.md. Lightweight seed/metadata reuse is authorized. Use one test entry, then AutoDL native validation, no new diagnostic platform. Progress updates follow the user five-item format. No server cleanup, push or training in this local batch.

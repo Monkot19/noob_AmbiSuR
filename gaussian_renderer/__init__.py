@@ -19,6 +19,7 @@ from scene.gaussian_model import GaussianModel
 from scene.app_model import AppModel
 from utils.sh_utils import eval_sh
 from utils.graphics_utils import normal_from_depth_image
+from utils.candidate_selector import compute_sh_ambiguity_labels
 
 def render_normal(viewpoint_cam, depth, offset=None, normal=None, scale=1):
     # depth: (H, W), bg_color: (3), alpha: (H, W)
@@ -36,12 +37,19 @@ def render_normal(viewpoint_cam, depth, offset=None, normal=None, scale=1):
     return normal_ref
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, 
-           app_model: AppModel=None, return_plane = True, return_depth_normal = True, ray_reg = False, opt = None):
+           app_model: AppModel=None, return_plane = True, return_depth_normal = True, ray_reg = False, opt = None, ambiguity_labels = None):
     """
     Render the scene. 
     
     Background tensor (bg_color) must be on GPU!
     """
+    if ambiguity_labels is not None:
+        if (not isinstance(ambiguity_labels, torch.Tensor)
+                or ambiguity_labels.shape != (pc.get_xyz.shape[0],)
+                or ambiguity_labels.dtype != torch.bool
+                or ambiguity_labels.device != pc.get_xyz.device
+                or ambiguity_labels.requires_grad):
+            raise ValueError("ambiguity_labels must be detached [N] bool on the model device")
     # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means
     # 这两个全零张量不是实际二维坐标，而是给自定义光栅化 backward 承接屏幕空间梯度的“桥”。
     # 前向渲染使用它们，反向后训练循环读取其 .grad，判断哪些 Gaussian 需要 densification。
@@ -156,13 +164,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # scaling_rate = min_scale / mid_scale * sorted_scale[...,1] * sorted_scale[...,2]
     # input_all_map[:, 5] = pc._features_rest.view(means3D.shape[0], -1).norm(p=2, dim=1)
     
-    # Indicator 从第一次 render 就计算；ALR 到 7001 轮才消费，且之后 train.py 还会再算一次 Gaussian 级 Mask。
-    sh_uncertainty = pc.compute_weighted_sh_norm("equal")
-    if opt is not None:
-        unc_thresh = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_upper_ratio)
-        unc_thresh_min = torch.quantile(sh_uncertainty.flatten(), opt.sh_ambi_lower_ratio)
-        unc_thresh_min = min(opt.sh_unc_lower_max, unc_thresh_min)
-        input_all_map[:, 5] = (sh_uncertainty > unc_thresh) + (sh_uncertainty < unc_thresh_min) # 普通 Gaussian 标 0，双端命中 Gaussian 标 1
+    input_all_map[:, 5] = (compute_sh_ambiguity_labels(pc, opt)
+                           if ambiguity_labels is None else ambiguity_labels)
     input_all_map[:, 6] = depth_z
 
     # 此处进行光栅化渲染，返回 RGB、深度、法线、alpha 等训练所需结果。

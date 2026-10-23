@@ -70,3 +70,19 @@ Phase 0：新项目接管与 baseline 锁定。
 - C0–C6 每阶段必须对应独立 commit 和验证 tag。
 - 服务器不修改代码。
 
+
+
+## 2026-10-22 Clean second-run migration
+User approves c0-baseline branch plus selector-only port and necessary seed/metadata reuse. Old records above are historical. The original dirty checkout stays unchanged. No baseline/GT/storage operation.
+- [x] Adapt tests and observe clean-base RED.
+- [x] Minimal selector/metadata port with no old scientific dependencies.
+- [x] Local validation, baseline-boundary check and one review; AutoDL pending.
+- [x] Clean-base RED and minimal selector/metadata port.
+- [x] Local scoped tests, compile/whitespace, baseline source boundary and one review.
+- [ ] AutoDL native validation and then separately discussed30k; not completed by local checks.
+
+### 2026-10-23 Approved version handoff
+- User confirms next batch and reports GPU server rented. Finish local commit/push of reviewed selector-only migration and provide exact server commit/extension/unified-test commands; no method changes or baseline rerun.
+- Fresh precommit validation:23 tests,18CPU pass/5native skips;8 code files compile; diff whitespace and unchanged baseline source boundary pass. Prior whole-migration review remains applicable; only server receipt documentation changed since review.
+- [ ] Commit/push exact migration; verify remote ref and clean local tree.
+- [ ] User-operated AutoDL native test run with all23 tests executing and zero skips; remains pending.

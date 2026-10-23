@@ -83,6 +83,7 @@ class PipelineParams(ParamGroup):
 class OptimizationParams(ParamGroup):
     def __init__(self, parser):
         self.iterations = 30_000
+        self.seed = 0
         self.position_lr_init = 0.00016
         self.position_lr_final = 0.0000016
         self.position_lr_delay_mult = 0.01
@@ -141,6 +142,9 @@ class OptimizationParams(ParamGroup):
         self.unc_weight = 0.1
         self.unc_from_iter = 7000
         self.unc_conf_thresh_ratio = 0.0
+
+        self.enable_candidate_selector = False
+        self.candidate_selector_budget = 4096
 
         # Ray-Color 权重：传进 renderer/CUDA 后改名为 ray_reg；约束同一 ray 上单个 Gaussian 颜色与最终像素颜色的差异。
         # 代码注入 lambda*w_i*(c_i-C)，相同名义权重下等价于论文平方范数 Loss 的一半（严格导数还应有系数 2）。

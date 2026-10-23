@@ -1,0 +1,351 @@
+{
+  "audit_date": "2026-10-15",
+  "local_head": "62e9117dfb2e20a06b257d166d8a6636d37845cc",
+  "scope": "Research report and static source checks. User authorizes temporary local GitHub download/modification/runs when needed; no production method implementation, training, GT or old-result access.",
+  "new_gradient_repositories": [
+    {
+      "repo": "tianheyu927/PCGrad",
+      "commit": "c5fbd7c856526373828074f06875230f7f3ee79e",
+      "files": [
+        {
+          "path": "PCGrad_tf.py",
+          "sha256": "1bd41ed5b6ed0cb745f2b2d7892336acb318323f057c29f077be4c6ce6a4d179",
+          "bytes": 3782,
+          "source_url": "https://github.com/tianheyu927/PCGrad/blob/c5fbd7c856526373828074f06875230f7f3ee79e/PCGrad_tf.py"
+        }
+      ],
+      "retrieval": "No-checkout public Git and SHA-bound raw source; no third-party execution.",
+      "inspected_method_paths": [
+        "PCGrad_tf.py"
+      ],
+      "scope": "Actual listed function/class bodies and call sites read; other retrieved files not claimed fully read. No dependency or donor-code execution."
+    },
+    {
+      "repo": "WeiChengTseng/Pytorch-PCGrad",
+      "commit": "e987ac603fa1accd386820a985a6dc2fd92dec5b",
+      "files": [
+        {
+          "path": "README.md",
+          "sha256": "87f7292d46b4554bc04d296f9791107ea68c94293a58d11f937d10c2f2f2122a",
+          "bytes": 1695,
+          "source_url": "https://github.com/WeiChengTseng/Pytorch-PCGrad/blob/e987ac603fa1accd386820a985a6dc2fd92dec5b/README.md"
+        },
+        {
+          "path": "pcgrad.py",
+          "sha256": "4cd6e8eb2bb4bc416b901a903ec86a211f41d1f56c40b85878264f9ffe6b51e6",
+          "bytes": 6040,
+          "source_url": "https://github.com/WeiChengTseng/Pytorch-PCGrad/blob/e987ac603fa1accd386820a985a6dc2fd92dec5b/pcgrad.py"
+        }
+      ],
+      "retrieval": "No-checkout public Git and SHA-bound raw source; no third-party execution.",
+      "inspected_method_paths": [
+        "pcgrad.py"
+      ],
+      "scope": "Actual listed function/class bodies and call sites read; other retrieved files not claimed fully read. No dependency or donor-code execution."
+    },
+    {
+      "repo": "tum-pbs/ConFIG",
+      "commit": "94862437f451f175673bce9c85f3e14bd9182c21",
+      "files": [
+        {
+          "path": "conflictfree/__init__.py",
+          "sha256": "eef7d46663f5ae6ceada6749a9239a19851a60cbb099308008d2c7ab47b3368a",
+          "bytes": 42,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/__init__.py"
+        },
+        {
+          "path": "conflictfree/grad_operator.py",
+          "sha256": "9fe0c7f2230fe7e351276290450b7448e94f5597322d371e6e84e4eed2f58608",
+          "bytes": 16124,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/grad_operator.py"
+        },
+        {
+          "path": "conflictfree/length_model.py",
+          "sha256": "c36100400e5c2a6b4026a901edfb3f4089f02be03b971d15239688019c08af83",
+          "bytes": 11078,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/length_model.py"
+        },
+        {
+          "path": "conflictfree/loss_recorder.py",
+          "sha256": "178d73b3a02a6c05ddf37ea46ca841c090ce0a252bc6d3b340119880e15aef72",
+          "bytes": 4442,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/loss_recorder.py"
+        },
+        {
+          "path": "conflictfree/momentum_operator.py",
+          "sha256": "de0e07f3ad7b0cb86655ad9c86ddcb8b97e291c6fca5339d95f0a0f78d3ef3e3",
+          "bytes": 17232,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/momentum_operator.py"
+        },
+        {
+          "path": "conflictfree/utils.py",
+          "sha256": "73f09245497f18f99afc1a7b00d922b1f30c143bdfc38727d50cfa85627b6729",
+          "bytes": 12848,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/utils.py"
+        },
+        {
+          "path": "conflictfree/weight_model.py",
+          "sha256": "0ebaa19c70d70631638457b4deaf17d67c6c5c84cad846f2de6881039e0727e9",
+          "bytes": 1801,
+          "source_url": "https://github.com/tum-pbs/ConFIG/blob/94862437f451f175673bce9c85f3e14bd9182c21/conflictfree/weight_model.py"
+        }
+      ],
+      "retrieval": "No-checkout public Git and SHA-bound raw source; no third-party execution.",
+      "inspected_method_paths": [
+        "conflictfree/grad_operator.py",
+        "conflictfree/length_model.py",
+        "conflictfree/utils.py"
+      ],
+      "scope": "Actual listed function/class bodies and call sites read; other retrieved files not claimed fully read. No dependency or donor-code execution."
+    },
+    {
+      "repo": "Cranial-XIX/CAGrad",
+      "commit": "dc3d48152b6196945cfd56144879b9d42353b095",
+      "files": [
+        {
+          "path": "cityscapes/utils.py",
+          "sha256": "bd4fcf3f754bc5468361a7f7668d565d5f9a4423b266cfa6dd39b79558232320",
+          "bytes": 23047,
+          "source_url": "https://github.com/Cranial-XIX/CAGrad/blob/dc3d48152b6196945cfd56144879b9d42353b095/cityscapes/utils.py"
+        },
+        {
+          "path": "mtrl/mtrl_files/cagrad.py",
+          "sha256": "0f76f28ee72b7ddd06b8497af1abf8233444c2a4fc2fd254146e407e96604db0",
+          "bytes": 11019,
+          "source_url": "https://github.com/Cranial-XIX/CAGrad/blob/dc3d48152b6196945cfd56144879b9d42353b095/mtrl/mtrl_files/cagrad.py"
+        },
+        {
+          "path": "nyuv2/utils.py",
+          "sha256": "caa8832ed145ce4c3f2e7b18fe711158e6ebe6f7ba093a058201262ff36a0293",
+          "bytes": 27041,
+          "source_url": "https://github.com/Cranial-XIX/CAGrad/blob/dc3d48152b6196945cfd56144879b9d42353b095/nyuv2/utils.py"
+        },
+        {
+          "path": "toy.py",
+          "sha256": "bf6e2332c589a6e4334e2e9008736ed8deed5f57c550e85d0e49cc5a532be6a9",
+          "bytes": 11596,
+          "source_url": "https://github.com/Cranial-XIX/CAGrad/blob/dc3d48152b6196945cfd56144879b9d42353b095/toy.py"
+        }
+      ],
+      "retrieval": "No-checkout public Git and SHA-bound raw source; no third-party execution.",
+      "inspected_method_paths": [
+        "toy.py",
+        "nyuv2/utils.py"
+      ],
+      "scope": "Actual listed function/class bodies and call sites read; other retrieved files not claimed fully read. No dependency or donor-code execution."
+    },
+    {
+      "repo": "adrianjav/rotograd",
+      "commit": "f92498563f2ac47e736b20b1d86be860e993dcdd",
+      "files": [
+        {
+          "path": "rotograd/__init__.py",
+          "sha256": "9011bee1b7b1fd35ee921dff88619cab704f3a29b1f1ecf1e8b66271eef08a39",
+          "bytes": 180,
+          "source_url": "https://github.com/adrianjav/rotograd/blob/f92498563f2ac47e736b20b1d86be860e993dcdd/rotograd/__init__.py"
+        },
+        {
+          "path": "rotograd/rotograd.py",
+          "sha256": "e9efcb881a0f970a74805dbae3bbb9cc6ed8c64420b6e904fd3109ef018bc173",
+          "bytes": 20811,
+          "source_url": "https://github.com/adrianjav/rotograd/blob/f92498563f2ac47e736b20b1d86be860e993dcdd/rotograd/rotograd.py"
+        }
+      ],
+      "retrieval": "No-checkout public Git and SHA-bound raw source; no third-party execution.",
+      "inspected_method_paths": [
+        "rotograd/rotograd.py"
+      ],
+      "scope": "Actual listed function/class bodies and call sites read; other retrieved files not claimed fully read. No dependency or donor-code execution."
+    }
+  ],
+  "reused_pinned_source": [
+    {
+      "repo": "Wuuu3511/Sparse2DGS",
+      "commit": "af15587eb186ca7ab12a2cf795775fa0f473f25d",
+      "rechecked_paths": [
+        "train.py",
+        "utils/point_utils.py",
+        "scene/gaussian_model.py"
+      ],
+      "all_previous_retrieved_files_hash_verified": true,
+      "source_manifest": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\Sparse2DGS\\source_manifest.json"
+    },
+    {
+      "repo": "hanl2010/DP-GS",
+      "commit": "dc1ce835ea3c6bb7887333c50df7a13497a45c09",
+      "rechecked_paths": [
+        "train.py",
+        "scene/cameras.py",
+        "utils/graphics_utils.py"
+      ],
+      "all_previous_retrieved_files_hash_verified": true,
+      "source_manifest": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\DP-GS\\source_manifest.json"
+    },
+    {
+      "repo": "HLinChen/VCR-GauS",
+      "commit": "aa715d19bfacfa9d491f477c572eab1839dcee3e",
+      "rechecked_paths": [
+        "trainer.py",
+        "tools/loss_utils.py"
+      ],
+      "all_previous_retrieved_files_hash_verified": true,
+      "source_manifest": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\VCR-GauS\\source_manifest.json"
+    },
+    {
+      "repo": "yulunwu0108/FatesGS",
+      "commit": "a721d3181ace57f79e3e65db4a45b7501a21798e",
+      "rechecked_paths": [
+        "utils/feat_utils.py",
+        "train.py"
+      ],
+      "all_previous_retrieved_files_hash_verified": true,
+      "source_manifest": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\FatesGS\\source_manifest.json"
+    },
+    {
+      "repo": "LeoQLi/VA-GS",
+      "commit": "171125583c30bb7a6748784c49abc3431e27f6d0",
+      "rechecked_paths": [
+        "utils/graphics_utils.py",
+        "utils/feat_utils.py",
+        "train.py"
+      ],
+      "all_previous_retrieved_files_hash_verified": true,
+      "source_manifest": "C:\\Users\\DELL\\AppData\\Local\\Temp\\ambisur_code_audit_20261013\\VA-GS\\source_manifest.json"
+    }
+  ],
+  "local_sources": [
+    {
+      "path": "train.py",
+      "raw_sha256": "1fd1b6615bc13b06e43610a7474bc18e41d9ce24cc298f72f88ab55b0a62d4d9",
+      "git_blob": "ea633c2beda0d497695eeb58d23ee1aff548dbb4"
+    },
+    {
+      "path": "gaussian_renderer/__init__.py",
+      "raw_sha256": "3f171d6e06db98603029960313a1ba4eadefceecfd4d4d870867ce85b42998fc",
+      "git_blob": "95b27d265f88543bb456f6a7d4e0c1ea75603d2e"
+    },
+    {
+      "path": "scene/gaussian_model.py",
+      "raw_sha256": "6e66d1d41fd8682a0d431537dcffd97ca98684bd0902234e9178a6804ae9df92",
+      "git_blob": "4da8d37274b875bac945808a32f87ea1eb8ec732"
+    },
+    {
+      "path": "utils/loss_utils.py",
+      "raw_sha256": "dad286c924a1ee8a8a6aa59d47a3cdf0f9817b3e4d1644c7ebe782dbf1576aa3",
+      "git_blob": "275bf9d8477921f2641598fe787d728e6777c9cd"
+    },
+    {
+      "path": "utils/graphics_utils.py",
+      "raw_sha256": "5ecdfb80b202437c4f7a69c52c302e123293c0b59d90096d659a329dbe0bbeb0",
+      "git_blob": "d740fbeb1003a3cde3c5507d0548ef4ccad15885"
+    }
+  ],
+  "counts": {
+    "new_repositories": 5,
+    "new_retrieved_files_sha256_verified": 16,
+    "new_inspected_source_paths": 8
+  },
+  "source_execution": {
+    "donor_framework_executed": false,
+    "runtime_missing": [
+      "torch",
+      "tensorflow",
+      "scipy"
+    ],
+    "executed": "NumPy synthetic identities only",
+    "probe_script": "C:\\Users\\DELL\\AppData\\Local\\Temp\\probe_ambisur_rationale_20261015.py",
+    "probe_script_sha256": "0b07bdde41e21c8ed2c05fc30368c053b5c16ae5429dad783194c2178dcd3c5f"
+  },
+  "algebra_probe": {
+    "scope": "NumPy synthetic identities/counterexamples only; no actual donor-framework execution, Torch/CUDA training or real geometry evaluation",
+    "conditional_SH_energy": {
+      "well_conditioned": {
+        "predicted_E_norm2": 0.17500000000000004,
+        "Monte_Carlo_E_norm2": 0.17491267820106846,
+        "views": 2
+      },
+      "poorly_conditioned": {
+        "predicted_E_norm2": 0.6725,
+        "Monte_Carlo_E_norm2": 0.6708649849208188,
+        "views": 2
+      }
+    },
+    "rank_deficient_min_norm_fit": [
+      0.0,
+      0.0
+    ],
+    "squared_NCC": {
+      "positive_affine": 1.3818257649234056e-10,
+      "negative_affine": 1.3818257649234056e-10,
+      "constant_patch": 1.0
+    },
+    "label_mask": {
+      "old": 0.3,
+      "union": 0.7,
+      "unselected_depth_gradient": 0.12734693877551037
+    },
+    "propagation": {
+      "prior_scale": 1.3,
+      "metric_anchor_max_error": 4.440892098500626e-16,
+      "prior_anchor_redundancy_max_error": 8.881784197001252e-16
+    },
+    "CLEAR_PCGrad": {
+      "full_correction_equivalent": true,
+      "actual_severity_at_q0_tau0": 0.5000000000000001,
+      "full_projection_dot": 0.0,
+      "severity_weighted_dot": -0.24999999999999994
+    }
+  },
+  "report": {
+    "path": "D:\\research_Space\\noob_AmbiSuR\\docs\\research\\2026-10-15-source-faithful-research-route.md",
+    "sha256": "fc61985508e55d3c3c0ed710ce9ece95124cc3b08f49727e2bdf71aa9f9ff630",
+    "math_fences_and_whitespace_checked": true
+  },
+  "verified_primary_evidence": [
+    {
+      "paper": "Sparse2DGS",
+      "url": "https://arxiv.org/html/2504.20378v1",
+      "location": "Section3.4,Table5",
+      "claim": "Primitive/rendered geometry NCC comparison and selective position update; baseline1.201,SGU1.152,ADC1.234; label-output transfer is ours."
+    },
+    {
+      "paper": "FatesGS",
+      "url": "https://arxiv.org/html/2501.04628v1",
+      "location": "Table4",
+      "claim": "Rank+smooth2.56,full1.37 CD; not an equal-budget feature-vs-NCC comparison."
+    },
+    {
+      "paper": "VA-GS",
+      "url": "https://arxiv.org/html/2510.11473v2",
+      "location": "Table4,Table8",
+      "claim": "w/o featureF1.53,time15.9min;fullF1.54,time20.9min; photometric term remains."
+    },
+    {
+      "paper": "DP-GS",
+      "url": "https://arxiv.org/html/2607.03765v1",
+      "location": "Section3.1Eq6,Table4",
+      "claim": "Anchor+normal propagation; same normal/opacity-decay without propagation1.55,with1.13; no AmbiSuR DA3 depth comparator."
+    },
+    {
+      "paper": "CLEAR",
+      "url": "https://arxiv.org/html/2608.02206v1",
+      "location": "Eq7,11",
+      "claim": "One-sided projection reduction needs explicit full omega=1,tau=0,eps ignored; actual omega generally less than1."
+    },
+    {
+      "paper": "CS229 author lecture notes",
+      "url": "https://cs229.stanford.edu/summer2023/cs229-notes1.pdf",
+      "location": "Linear least-squares normal equation",
+      "claim": "OLS basis; conditional energy/covariance identity derived in report, not a GS geometry-correctness result."
+    }
+  ],
+  "not_claimed": [
+    "Effectiveness on AmbiSuR",
+    "Calibrated geometry error from S",
+    "Exclusive selected-Gaussian updates",
+    "Full Sparse2DGS reproduction",
+    "CUDA gradient correctness",
+    "GPU cost budget",
+    "Publication novelty"
+  ]
+}
