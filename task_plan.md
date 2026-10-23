@@ -99,5 +99,5 @@ User approves c0-baseline branch plus selector-only port and necessary seed/meta
 - [x] Verify1697tracked files,8code/syntax files,192ignored hashes; unified local tests18pass/5native skips. No data/baseline/server modification.
 - [x] Update primary-directory rules and recovery/handoff documents; old Core preserved on archival branch.
 - [x] One scoped review passed with no Critical/Important/required Minor; production diff empty.
-- [ ] Documentation commit/push and remote/clean-tree checks; no production change.
+- [x] Documentation published as3d27ba2 with matching remote refs; D clean on second-run,C detached3775135/clean,1699tracked files,8core hashes and192ignored files verified; Git connectivity and24-file original backup rechecked. No production change.
 - [ ] Receive final training exitcode/log/artifacts; discuss existing mesh extraction and matching baseline evaluation. C cleanup remains unapproved.

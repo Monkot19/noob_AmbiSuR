@@ -25,6 +25,6 @@
 - [x] D原统一入口18通过／5原生依赖跳过，无新脚本／安装／服务器复测。
 - [x] 更新AGENTS、当前交接入口、换机恢复指南和根目录三个记录。
 - [x] 一次范围限定审查通过，无Critical／Important／必须修复Minor；生产代码diff为空。
-- [ ] 文档提交／推送及最终远端与两边clean状态核对。
+- [x] 文档已以3d27ba2提交／推送，远端引用一致；D主分支clean、C固定3775135且clean，1699个已跟踪文件齐全，Git连接性／备份及保全哈希复核通过。后续文档收据不改变生产代码。
 
 备份和恢复详情见 `docs/research/second-run-workspace-and-recovery.md`。
