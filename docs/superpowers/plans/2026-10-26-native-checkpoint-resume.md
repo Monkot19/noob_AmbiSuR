@@ -27,6 +27,7 @@
 - [x] Change only AppModel.load_weights source/iteration in train.py checkpointbranch.
 - [x] FocusedGREEN thenexistingunifiedsuite;24run/19CPU pass/5native skipped in2.293s,no standaloneGPUtest/newdependencies.
 - [x] One scopedreview foundnoactionableissues;reviewer independently passed focusedCPUcase andverifiedC0tree.
-- [ ] Commit/push and exactversionhandoff after userreturns realcheckpoint/exitcode receipt.
+- [x] Commit fixed implementation f41dac0b;confirm user checkpoint/exitcode receipt and prepare exact-version handoff.
+- [ ] Receive server launch/completion of paired4096/16384 continuation;no new local implementation planned.
 
 Currentbaseline receipt:full30K log/Trainingcomplete,50:21,PSNR31.072280120849612,L10.016401121392846107,N1291587;exitcode0/nativecheckpoint1074511797B/7Kapp14349B/30KPLY320315108B confirmed. No finalgeometrybenefitclaim.

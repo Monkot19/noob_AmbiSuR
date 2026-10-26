@@ -12,6 +12,8 @@
 
 **后续产物回执已确认：** exitcode0；chkpnt7000.pth=1074511797字节，7Kapp.pth=14349字节，30KPLY=320315108字节。原生基线训练及关键产物完成，尚无新baseline几何成绩。现可交付二周目固定修复版本的4096/16384原生checkpoint续训命令。
 
+二周目恢复修复固定`f41dac0b47f5d00397e346ff6cedad0c107471ff`，顺序运行4096/16384各7001..30000命令见[配对续训指南](native-7k-selector-pair-launch.md)。新output父目录`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/f41dac0b_seed0_30k_pair_v1`，各有b4096/b16384。只是在本地准备/发布启动命令，尚无服务器候选续训启动回执；不把完成的baseline和未启动的候选混写。
+
 > **2026-10-26当前派工：** 用户已批准候选预算16384、其余不变、直接30K，不增加smoke/安全框架。训练仍固定3d85faf；新输出`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_b16384_30k_v1`，新private data view含`toolroom_r2_seed0_b16384_30k_v1`。CLI参数实验无生产代码变化；尚待用户启动回执，详见首轮结果报告末节。输入1219/0/0与源码审计已完成，不重复派工。
 
 > **启动前最新转向：** 用户提出共同7K起点及4096可比性问题，尚未发出启动命令。现有两run只有7K PLY，没有完整7K checkpoint；不能单独将16384从PLY续训当公平预算对照。当前待讨论单次探索性30K或共享7K前缀/两个23K分支（总53K步），不自动实现恢复或启动训练。
