@@ -161,6 +161,12 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 ## 2026-10-26 Approved native-C0 baseline execution
 - [x] User approves nativeC0/no baseline changes and existingcheckpoint limitations;supersedecomplete-state/stopdraft.
 - [x] Preserve currentdocs;create baselinebranch directly atd6f15c8 and prove whole-tree equality.
-- [ ] Commit/push docs-onlyresearchupdates and baselinebranch;no newworktree,forcepush or C0tagchange.
-- [ ] Handoff directnative30K launch withcheckpoint7000/privateinput/newoutput/logexitcode;no test reruns or CUDA rebuild.
+- [x] Commit/push docs-onlyresearchupdates and baselinebranch;944f676 research/d6f15c8baseline verified,no newworktree,forcepush or C0tagchange.
+- [x] Handoff directnative30K launch withcheckpoint7000/privateinput/newoutput/logexitcode;no test reruns or CUDA rebuild.
 - [ ] Receive user-operated baseline launch/completion and7Kcheckpoint assets;candidate restoration work stays onsecond-runbranch.
+
+## 2026-10-26 Native baseline completion / minimal resume consumption
+- [x] User returns exactd6f15c8checkout,launchPID11962 andfull30K Trainingcomplete log(50:21,PSNR31.07228012,N1291587).
+- [x] Receive train.exitcode0 and7Kcheckpoint1074511797B/App14349B/30KPLY320315108B listing.
+- [x] Fix onlysecond-run Appweights parent/exactiteration via existingcheckpointAPI;follow scopedplan2026-10-26-native-checkpoint-resume.md.
+- [x] ExistingCPU serialization/Adam integration case,unifiedsuite24run19pass/5native skips andscopedreviewpassed;no separateGPUsmoke,baselineedits orselectorchanges.

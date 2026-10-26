@@ -8,6 +8,10 @@
 
 直接运行命令见[原生C0启动指南](native-c0-30k-launch.md)。基线branch已在本地创建并验证整树相同；不在其上添加文档commit。D盘规则/规格/命令记录只提交到二周目分支。不要在基线进程运行期间切换服务器代码版本。
 
+> **原生baseline完成日志已收到：** d6f15c8/PID11962，30000/30000、50:21、Trainingcomplete，trainPSNR31.072280120849612、L10.016401121392846107、N1291587。尚待exitcode及7Kcheckpoint/App/30KPLY列表，不冒称产物已核验。二周目已作唯一生产行修复：从checkpoint所属run、按first_iter加载Appweights，而非新output或latest30K；Gaussian/Adam原恢复逻辑不变。真实方法CPU集成用例RED→GREEN，24项19pass/5native跳过，独立review通过。未改baseline、未新开GPU测试/训练。
+
+**后续产物回执已确认：** exitcode0；chkpnt7000.pth=1074511797字节，7Kapp.pth=14349字节，30KPLY=320315108字节。原生基线训练及关键产物完成，尚无新baseline几何成绩。现可交付二周目固定修复版本的4096/16384原生checkpoint续训命令。
+
 > **2026-10-26当前派工：** 用户已批准候选预算16384、其余不变、直接30K，不增加smoke/安全框架。训练仍固定3d85faf；新输出`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_b16384_30k_v1`，新private data view含`toolroom_r2_seed0_b16384_30k_v1`。CLI参数实验无生产代码变化；尚待用户启动回执，详见首轮结果报告末节。输入1219/0/0与源码审计已完成，不重复派工。
 
 > **启动前最新转向：** 用户提出共同7K起点及4096可比性问题，尚未发出启动命令。现有两run只有7K PLY，没有完整7K checkpoint；不能单独将16384从PLY续训当公平预算对照。当前待讨论单次探索性30K或共享7K前缀/两个23K分支（总53K步），不自动实现恢复或启动训练。

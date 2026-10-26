@@ -1,5 +1,9 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-26 Native baseline completion and resume consumer fix
+
+Returnednativebaselinefull30Klog:50:21,PSNR31.072280120849612,L10.016401121392846107,N1291587. Exitcode/checkpointfilelisting pending. FoundoriginalresumeAppweights reads newdestination/latest;second-run fix isoneline selectingcheckpointparentandexactfirst_iter. ActualGaussian.capture/restore+Appsave/load+actualtrainingASTbranch serializedCPUintegration demonstratedRED(wrongApp8vs.2)→GREEN,nonzeroAdamstep/momentsandnextupdatepreserved. Suite24run19pass/5native skipped;independentscopedreviewnoissues. Nativebaselinebranch whole-tree unchanged;RNG/cameraqueue/Appoptimizer omissions remainaccepted.
+
 ## 2026-10-26 Native baseline zero-change protocol approved
 
 User approves pureC0 nativecheckpoint route. C0train already exposescheckpoint_iterations andsavescapture+iteration plus7KAppweights afteroptimizerstep;safe_state hardcodesseed0,no --seedCLI. No baselinefile/module/hook added. NativeRNG/cameraqueue/Appoptimizer omissions remain disclosed;latercandidate branches sharemodel/Adam startingstate and restartprocedure,not guaranteedcontinuousbaseline randomtrajectory. Baseline runs full30K;newbranch reference atd6f15c8 andnewoutput only. Old53K/full-state-stop proposals superseded.

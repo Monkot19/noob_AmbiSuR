@@ -496,6 +496,88 @@ class CandidateIntegrationTests(unittest.TestCase):
             self.assertEqual([uid for uid, grad, kw in calls], [0])
 
 
+class NativeCheckpointTests(unittest.TestCase):
+    def test_native_capture_to_training_restore_keeps_adam_and_exact_app_iteration(self):
+        root = Path(__file__).resolve().parents[1]
+        tree = ast.parse((root / "scene/gaussian_model.py").read_text(encoding="utf-8"))
+        model = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "GaussianModel")
+        methods = [n for n in model.body if isinstance(n, ast.FunctionDef)
+                   and n.name in ("capture", "restore")]
+        namespace = {"torch": torch}
+        exec(compile(ast.Module(body=methods, type_ignores=[]), "<native Gaussian methods>", "exec"), namespace)
+        parameter_names = ("_xyz", "_knn_f", "_features_dc", "_features_rest",
+                           "_scaling", "_rotation", "_opacity")
+
+        def setup(instance, opts):
+            instance.optimizer = torch.optim.Adam(
+                [getattr(instance, name) for name in parameter_names], lr=opts.position_lr_init)
+
+        cpu_model = type("CpuNativeGaussians", (), {
+            "capture": namespace["capture"], "restore": namespace["restore"], "training_setup": setup})
+
+        def make_model(value):
+            instance = cpu_model()
+            for name in parameter_names:
+                setattr(instance, name, torch.nn.Parameter(torch.full((2, 3), value)))
+            for name in ("max_radii2D", "max_weight", "xyz_gradient_accum", "xyz_gradient_accum_abs",
+                         "denom", "denom_abs"):
+                setattr(instance, name, torch.full((2, 1), value))
+            instance.active_sh_degree, instance.spatial_lr_scale = 3, 2.5
+            instance.training_setup(SimpleNamespace(position_lr_init=.004))
+            return instance
+
+        def step(instance):
+            sum(getattr(instance, name).square().sum() for name in parameter_names).backward()
+            instance.optimizer.step()
+            instance.optimizer.zero_grad(set_to_none=True)
+
+        # Execute the real AppModel producers/consumer, bypassing only its CUDA constructor.
+        app_namespace = {}
+        exec(compile((root / "scene/app_model.py").read_text(encoding="utf-8"),
+                     "<native AppModel>", "exec"), app_namespace)
+        app_class = app_namespace["AppModel"]
+
+        def make_app(value):
+            app = app_class.__new__(app_class)
+            torch.nn.Module.__init__(app)
+            app.appear_ab = torch.nn.Parameter(torch.full((2, 2), value))
+            return app
+
+        original, restored = make_model(1.), make_model(8.)
+        step(original)
+        train_tree = ast.parse((root / "train.py").read_text(encoding="utf-8"))
+        training = next(n for n in train_tree.body if isinstance(n, ast.FunctionDef) and n.name == "training")
+        restore_block = next(n for n in training.body if isinstance(n, ast.If) and ast.unparse(n.test) == "checkpoint")
+        with tempfile.TemporaryDirectory() as temporary:
+            prefix, destination = Path(temporary) / "prefix", Path(temporary) / "new_candidate"
+            prefix.mkdir()
+            checkpoint = prefix / "chkpnt7000.pth"
+            torch.save((original.capture(), 7000), checkpoint)
+            make_app(.2).save_weights(str(prefix), 7000)
+            make_app(9.).save_weights(str(prefix), 30000)
+            make_app(8.).save_weights(str(destination), 30000)
+            app = make_app(0.)
+            context = dict(torch=torch, os=__import__("os"), checkpoint=str(checkpoint),
+                           gaussians=restored, app_model=app, scene=SimpleNamespace(model_path=str(destination)),
+                           opt=SimpleNamespace(position_lr_init=.123, iterations=30000), first_iter=0)
+            exec(compile(ast.Module(body=[restore_block], type_ignores=[]), "<real training restore>", "exec"), context)
+            self.assertEqual(context["first_iter"], 7000)
+            self.assertEqual(context["opt"].iterations, 30000)
+            torch.testing.assert_close(app.appear_ab, torch.full((2, 2), .2))
+            self.assertEqual(restored.optimizer.param_groups[0]["lr"], .004)
+            torch.testing.assert_close(restored.xyz_gradient_accum, original.xyz_gradient_accum)
+            torch.testing.assert_close(restored.denom_abs, original.denom_abs)
+            for name in parameter_names:
+                first, second = getattr(original, name), getattr(restored, name)
+                torch.testing.assert_close(first, second)
+                for key in ("step", "exp_avg", "exp_avg_sq"):
+                    torch.testing.assert_close(original.optimizer.state[first][key], restored.optimizer.state[second][key])
+            step(original)
+            step(restored)
+            for name in parameter_names:
+                torch.testing.assert_close(getattr(original, name), getattr(restored, name), rtol=0, atol=0)
+
+
 class RunMetadataTests(unittest.TestCase):
     def test_resolved_config_keeps_baseline_arguments_without_core(self):
         dataset = SimpleNamespace(source_path=Path("data/scene"), sh_degree=3)
