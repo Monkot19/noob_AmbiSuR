@@ -7,6 +7,7 @@
 - C 盘 `C:\Users\DELL\.codex\worktrees\second-run-selector\noob_AmbiSuR` 保留在 detached `3775135`；清理由用户另行决定。
 - 当前方法为干净 `c0-baseline` 加已批准候选选择模块，复用原标签渲染和 ALR；旧 Core、五状态、可靠性路由和 Utility 恢复仅属历史，不自动继续。
 - 数据集与已有 baseline 输出只读，复用固定 baseline，不重新训练、覆盖或移动。AutoDL 当前训练固定 `3d85faf`，本地主目录整理不触碰服务器作业或版本。
+- **2026-10-26用户最新授权例外：** 新增一次原生C0的Tool Room/r2/seed0/30K训练，原有参数保存7Kcheckpoint；新baseline分支整树必须与d6f15c8完全一致，不补保存模块/钩子或修改基线。仅写独立新output，旧baseline/4096继续只读保留。二周目恢复适配独立，不声称原生checkpoint保存RNG/相机队列。当前规格见`docs/superpowers/specs/2026-10-26-shared-7000-prefix.md`。
 - 归档和换机入口见 `docs/research/second-run-workspace-and-recovery.md`；不复制覆盖 `.git` 或强制回退来迁移目录。
 
 ## 必读顺序

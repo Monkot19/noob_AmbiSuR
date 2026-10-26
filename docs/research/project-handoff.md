@@ -4,6 +4,10 @@
 
 ## 当前方法与代码
 
+> **2026-10-26最新已批准派工：** 用户要求baseline零源码改动并同意原生checkpoint限制。新建`codex/baseline-30k-checkpoint`仅指向C0/d6f15c8；运行原train.py、r2、30000轮、内置seed0、`--checkpoint_iterations 7000`，不加保存模块/钩子，不做smoke。新output为`/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1`；独立privateview位于`data_views/native_c0_ckpt7k/toolroom_r2_seed0_30k_v1/colmap_undistorted`。后续4096/16384读取相同原生7K模型/Adam状态；不承诺RNG/相机队列恢复。下方53K/单次16384/完整状态早停提议均被本次[批准规格](../superpowers/specs/2026-10-26-shared-7000-prefix.md)取代。先交付原生baseline启动命令，尚待服务器回执。
+
+直接运行命令见[原生C0启动指南](native-c0-30k-launch.md)。基线branch已在本地创建并验证整树相同；不在其上添加文档commit。D盘规则/规格/命令记录只提交到二周目分支。不要在基线进程运行期间切换服务器代码版本。
+
 > **2026-10-26当前派工：** 用户已批准候选预算16384、其余不变、直接30K，不增加smoke/安全框架。训练仍固定3d85faf；新输出`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_b16384_30k_v1`，新private data view含`toolroom_r2_seed0_b16384_30k_v1`。CLI参数实验无生产代码变化；尚待用户启动回执，详见首轮结果报告末节。输入1219/0/0与源码审计已完成，不重复派工。
 
 > **启动前最新转向：** 用户提出共同7K起点及4096可比性问题，尚未发出启动命令。现有两run只有7K PLY，没有完整7K checkpoint；不能单独将16384从PLY续训当公平预算对照。当前待讨论单次探索性30K或共享7K前缀/两个23K分支（总53K步），不自动实现恢复或启动训练。

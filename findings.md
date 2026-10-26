@@ -1,5 +1,13 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-26 Native baseline zero-change protocol approved
+
+User approves pureC0 nativecheckpoint route. C0train already exposescheckpoint_iterations andsavescapture+iteration plus7KAppweights afteroptimizerstep;safe_state hardcodesseed0,no --seedCLI. No baselinefile/module/hook added. NativeRNG/cameraqueue/Appoptimizer omissions remain disclosed;latercandidate branches sharemodel/Adam startingstate and restartprocedure,not guaranteedcontinuousbaseline randomtrajectory. Baseline runs full30K;newbranch reference atd6f15c8 andnewoutput only. Old53K/full-state-stop proposals superseded.
+
+## 2026-10-26 Shared prefix boundary
+
+User selects preserving selector-free7Kprefix. Actual train saves ordinaryPLY before densification/trim/optimizerstep,while checkpoint is after. Usingiterations7000 wouldskipstep7000 viaiteration<opt.iterations;keep total30000andstopseparately aftercompleted7000. ExistingPLY alone andlegacycheckpoint lackingRNG/cameraqueue cannot establish exactcontinuation. Shortspec ready for review;no production edits or newGPUjob.
+
 ## 2026-10-26 Baseline lineage audit (current)
 
 Before budget launch user questions early-trajectory confounding. Both actual downloaded runs have7KPLY/30KPLY/30Kapp.pth but no7Kchkpnt. Original capture savesGaussian/Adam/densification stats,notRNG orcamera queue. A16384-onlyPLYrestart is not a fair comparison withcontinuousold4096. Recommend discussing one new shared7Kprefix plus two matched23Ksuffixes(53Ksteps) for budget attribution,or explicitly exploratory single30K. No launch/checkpoint implementation yet;fixedbaseline unchanged.

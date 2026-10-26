@@ -1,6 +1,6 @@
 # AmbiSuR Core 实施计划状态
 
-> **当前（2026-10-26）：** D盘为主目录；旧Core计划为历史。二周目首轮30K/提取/正式评价完成，CD变差13.05%、F1略升。1219输入文件已全部匹配；源码逐行审计确认从C0直接接入候选，无旧Core继承。7001前分叉原因仍待讨论；不改方法/预算，不重训baseline。
+> **当前（2026-10-26）：** 用户已批准原生C0零源码改动的新30K/seed0baseline，内置选项保存7Kcheckpoint，旧output保留。先交付启动命令；后续二周目4096/16384共享该模型/Adam起点，承认原生RNG/相机队列缺失。不追加基线模块或cloudsmoke。
 
 ## Goal
 
@@ -151,3 +151,16 @@ Audit completed:directC0parent,no old62e9117ancestor;officialmain88d64054 verifi
 - [ ] Complete30K,then reuse same extraction and formal geometry evaluator against frozenC0/4096 outputs.
 
 User steering before launch:questions uncontrolled pre7K divergence and fairness of7K resume. Verified both downloaded runs have7K PLY but no7Koptimizer checkpoint. Hold launch handoff;discuss exploratory single30K versus shared7Kprefix/two23Ksuffixes(total53K). No checkpoint implementation,training or reset approved yet;existingbaseline remains read-only.
+
+## 2026-10-26 Shared selector-free prefix selected
+- [x] User agrees a selector-free7000prefix must be saved;write short concrete state/iteration contract.
+- [ ] Review minimal save/restore/stop scope in docs/superpowers/specs/2026-10-26-shared-7000-prefix.md before production edits.
+- [ ] Implement only approved boundaries,reuse existing tests;no separatecloudsmoke.
+- [ ] Produce actual7Kprefix onAutoDL with total30K schedules andselectoroff;no existingbaseline output replacement.
+
+## 2026-10-26 Approved native-C0 baseline execution
+- [x] User approves nativeC0/no baseline changes and existingcheckpoint limitations;supersedecomplete-state/stopdraft.
+- [x] Preserve currentdocs;create baselinebranch directly atd6f15c8 and prove whole-tree equality.
+- [ ] Commit/push docs-onlyresearchupdates and baselinebranch;no newworktree,forcepush or C0tagchange.
+- [ ] Handoff directnative30K launch withcheckpoint7000/privateinput/newoutput/logexitcode;no test reruns or CUDA rebuild.
+- [ ] Receive user-operated baseline launch/completion and7Kcheckpoint assets;candidate restoration work stays onsecond-runbranch.
