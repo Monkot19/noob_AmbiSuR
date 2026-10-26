@@ -4,6 +4,8 @@
 
 ## 当前方法与代码
 
+**当前可执行修复版本：`c3510b029247e783d3163b2c8e7ce5d1f182039d`。** 最新[配对续训指南](native-7k-selector-pair-launch.md)使用`c3510b02_seed0_30k_pair_v2`，4096和16384各7001—30000轮；参数、checkpoint、基线输入不变。启动前确认旧pair已以非零退出码结束；不删除旧目录。代码/指南发布不等于服务器已经重启，尚待用户执行。
+
 > **最新服务器状态（2026-10-26）：** 用户已启动f41配对任务PID14168，但4096在读取原生7K checkpoint时失败，尚未进入续训。原因是原生NumPy标量不被PyTorch默认weights_only加载器接受；不是checkpoint丢失或候选算法负结果。用户授权自行修复。仅二周目读取处显式weights_only=False，原有测试改用真实归一化函数的NumPy返回值，RED→GREEN，19CPU通过/5native跳过，独立审查通过。基线分支整树不变。f41启动指南已失效；待下方固定修复版本的v2新目录命令，不重用或删除失败目录。
 
 > **2026-10-26最新已批准派工：** 用户要求baseline零源码改动并同意原生checkpoint限制。新建`codex/baseline-30k-checkpoint`仅指向C0/d6f15c8；运行原train.py、r2、30000轮、内置seed0、`--checkpoint_iterations 7000`，不加保存模块/钩子，不做smoke。新output为`/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1`；独立privateview位于`data_views/native_c0_ckpt7k/toolroom_r2_seed0_30k_v1/colmap_undistorted`。后续4096/16384读取相同原生7K模型/Adam状态；不承诺RNG/相机队列恢复。下方53K/单次16384/完整状态早停提议均被本次[批准规格](../superpowers/specs/2026-10-26-shared-7000-prefix.md)取代。先交付原生baseline启动命令，尚待服务器回执。

@@ -42,5 +42,5 @@ Scope: onlytrain.py nativecheckpointread gets explicitweights_only=False for thi
 - [x] Replace inaccuratefixture using actualnormalization producer;RED reproduces NumPy-scalar UnpicklingError in actualstartup.
 - [x] One-line loadcompatibilityfix;GREEN24run19CPU pass/5native skips2.269s;Python3.10 syntax/C0whole-tree check passed.
 - [x] Freshscopedreview: no actionable findings;independent24run19pass/5skips2.247s.
-- [ ] Commit/pushfixedversion andfresh-directorysameprotocolrestartguide;preservefailedf41andbaselineassets.
+- [x] Fixedimplementationc3510b029247e783d3163b2c8e7ce5d1f182039d;freshv2guide passesBashsyntax/actualCLI andpreservesfailedf41/baseline. Publishcode+guide together;serverexecutionpending.
 - [ ] User-operatedserverrestart;agenthasnoSSHconnectionandcannotlaunchremotetraining.

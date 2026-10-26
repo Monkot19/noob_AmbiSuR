@@ -1,6 +1,8 @@
 # 原生7K checkpoint：4096与16384配对续训
 
-2026-10-26。用户回执确认新原生基线退出码为0，7K checkpoint为1074511797字节，7K外观权重为14349字节，30K点云为320315108字节。候选固定版本为 `f41dac0b47f5d00397e346ff6cedad0c107471ff`；恢复修复只调整外观权重的来源目录与迭代号，基线分支仍完整指向C0。
+2026-10-26。用户回执确认新原生基线退出码为0，7K checkpoint为1074511797字节，7K外观权重为14349字节，30K点云为320315108字节。候选固定版本为 `c3510b029247e783d3163b2c8e7ce5d1f182039d`；恢复修复包含指定7K外观权重，以及显式weights_only=False读取自行生成、含NumPy标量的原生checkpoint；基线分支仍完整指向C0。
+
+此前f41任务PID14168在首次checkpoint读取处失败，未进入续训；本次使用独立v2目录，保留原失败记录。
 
 两组按顺序运行，分别从完成7000轮后的同一checkpoint续训7001—30000轮，各23000步。两组使用相同Gaussian/Adam状态、7K外观权重、重启seed0、30K调度及r2/DA3输入；唯一方法参数差别为候选预算4096与16384。原生checkpoint未保存RNG、相机队列及外观优化器状态，因此不能声称逐步复现基线连续训练轨迹。
 
@@ -12,7 +14,7 @@
   cd /root/autodl-tmp/noob_AmbiSuR
   test -z "$(git status --porcelain)"
   git fetch origin codex/second-run-selector
-  git switch --detach f41dac0b47f5d00397e346ff6cedad0c107471ff
+  git switch --detach c3510b029247e783d3163b2c8e7ce5d1f182039d
   git rev-parse HEAD
   git diff --exit-code
 
@@ -20,8 +22,12 @@
   pair_ext=/root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python
   pair_prefix=/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1
   pair_source=/root/autodl-tmp/ambisur_work/data_views/native_c0_ckpt7k/toolroom_r2_seed0_30k_v1/colmap_undistorted
-  pair_views=/root/autodl-tmp/ambisur_work/data_views/selector_from_native7k/f41dac0b_seed0_30k_pair_v1
-  pair_out=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/f41dac0b_seed0_30k_pair_v1
+  pair_views=/root/autodl-tmp/ambisur_work/data_views/selector_from_native7k/c3510b02_seed0_30k_pair_v2
+  pair_out=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/c3510b02_seed0_30k_pair_v2
+  pair_failed=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/f41dac0b_seed0_30k_pair_v1
+
+  test -s "$pair_failed/pair.exitcode"
+  test "$(cat "$pair_failed/pair.exitcode")" != 0
 
   test "$(cat "$pair_prefix/train.exitcode")" = 0
   test -s "$pair_prefix/chkpnt7000.pth"

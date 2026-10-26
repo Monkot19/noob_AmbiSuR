@@ -177,5 +177,5 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 ## 2026-10-26 Server checkpoint loading compatibility failure
 - [x] Receivef41pairPID14168/firstarmloadfailure;userauthorizesautonomousfix.
 - [x] TraceactualNumPyradiusproducer,correctexistingfixture,observeRED→GREEN;onlynativeconsumerweights_only=False;19pass/5native skips/reviewpassed.
-- [ ] Publishfixedcommitandfresh-directorypairedrestartguide;preservefailedf41/baseline.
+- [x] Fixedcommitc3510b0andfreshv2pairedrestartguideprepared/validated;publishonsecond-runbranch,preservefailedf41/baseline.
 - [ ] Receiveuser-operatedserverrestart/completion;noSSHaccess.
