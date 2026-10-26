@@ -31,3 +31,16 @@
 - [ ] Receive server launch/completion of paired4096/16384 continuation;no new local implementation planned.
 
 Currentbaseline receipt:full30K log/Trainingcomplete,50:21,PSNR31.072280120849612,L10.016401121392846107,N1291587;exitcode0/nativecheckpoint1074511797B/7Kapp14349B/30KPLY320315108B confirmed. No finalgeometrybenefitclaim.
+
+
+## NumPy-scalar checkpoint failure follow-up (user authorized autonomous fix)
+
+Root cause: C0 getNerfppNorm returns a NumPy scalar radius;Scene passes it to spatial_lr_scale and native capture serializes it. Torch>=2.6 restricted default load rejects this type. Prior CPU fixture used Python2.5,omitting that production type. Serverf41 failed at first load before any continued step;pairPID14168,second arm not started per queue logic.
+
+Scope: onlytrain.py nativecheckpointread gets explicitweights_only=False for this self-producedtrustedcheckpoint. No baselinebranch/producer/format/scientificparameters change. Reuse existingtestfile/case with actualgetNerfppNorm producer and verify scalar type/value survives;no newtestsuite/framework/GPUsmoke.
+
+- [x] Replace inaccuratefixture using actualnormalization producer;RED reproduces NumPy-scalar UnpicklingError in actualstartup.
+- [x] One-line loadcompatibilityfix;GREEN24run19CPU pass/5native skips2.269s;Python3.10 syntax/C0whole-tree check passed.
+- [x] Freshscopedreview: no actionable findings;independent24run19pass/5skips2.247s.
+- [ ] Commit/pushfixedversion andfresh-directorysameprotocolrestartguide;preservefailedf41andbaselineassets.
+- [ ] User-operatedserverrestart;agenthasnoSSHconnectionandcannotlaunchremotetraining.

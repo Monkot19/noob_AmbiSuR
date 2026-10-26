@@ -507,6 +507,19 @@ class NativeCheckpointTests(unittest.TestCase):
         exec(compile(ast.Module(body=methods, type_ignores=[]), "<native Gaussian methods>", "exec"), namespace)
         parameter_names = ("_xyz", "_knn_f", "_features_dc", "_features_rest",
                            "_scaling", "_rotation", "_opacity")
+        # Match Scene -> create_from_pcd -> capture: radius is a NumPy scalar,
+        # which torch.load's restricted default does not accept.
+        reader_tree = ast.parse((root / "scene/dataset_readers.py").read_text(encoding="utf-8"))
+        normalize = next(n for n in reader_tree.body
+                         if isinstance(n, ast.FunctionDef) and n.name == "getNerfppNorm")
+        from utils.graphics_utils import getWorld2View2
+        normalization_namespace = dict(np=np, getWorld2View2=getWorld2View2)
+        exec(compile(ast.Module(body=[normalize], type_ignores=[]),
+                     "<native normalization>", "exec"), normalization_namespace)
+        cameras = [SimpleNamespace(R=np.eye(3), T=np.array(t))
+                   for t in ([0., 0., 0.], [1., 0., 0.])]
+        radius = normalization_namespace["getNerfppNorm"](cameras)["radius"]
+        self.assertIsInstance(radius, np.generic)
 
         def setup(instance, opts):
             instance.optimizer = torch.optim.Adam(
@@ -522,7 +535,7 @@ class NativeCheckpointTests(unittest.TestCase):
             for name in ("max_radii2D", "max_weight", "xyz_gradient_accum", "xyz_gradient_accum_abs",
                          "denom", "denom_abs"):
                 setattr(instance, name, torch.full((2, 1), value))
-            instance.active_sh_degree, instance.spatial_lr_scale = 3, 2.5
+            instance.active_sh_degree, instance.spatial_lr_scale = 3, radius
             instance.training_setup(SimpleNamespace(position_lr_init=.004))
             return instance
 
@@ -563,6 +576,8 @@ class NativeCheckpointTests(unittest.TestCase):
             exec(compile(ast.Module(body=[restore_block], type_ignores=[]), "<real training restore>", "exec"), context)
             self.assertEqual(context["first_iter"], 7000)
             self.assertEqual(context["opt"].iterations, 30000)
+            self.assertIs(type(restored.spatial_lr_scale), type(radius))
+            self.assertEqual(restored.spatial_lr_scale, radius)
             torch.testing.assert_close(app.appear_ab, torch.full((2, 2), .2))
             self.assertEqual(restored.optimizer.param_groups[0]["lr"], .004)
             torch.testing.assert_close(restored.xyz_gradient_accum, original.xyz_gradient_accum)

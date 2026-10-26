@@ -173,3 +173,9 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 
 - [x] Fixedcandidatef41dac0b and sequentialpairedlaunch guide:actualCLI andBash-n verified;no newGPUtest.
 - [ ] User-operated4096/16384 shared7K continuation;each23000steps,thenreusemeshcomparison.
+
+## 2026-10-26 Server checkpoint loading compatibility failure
+- [x] Receivef41pairPID14168/firstarmloadfailure;userauthorizesautonomousfix.
+- [x] TraceactualNumPyradiusproducer,correctexistingfixture,observeRED→GREEN;onlynativeconsumerweights_only=False;19pass/5native skips/reviewpassed.
+- [ ] Publishfixedcommitandfresh-directorypairedrestartguide;preservefailedf41/baseline.
+- [ ] Receiveuser-operatedserverrestart/completion;noSSHaccess.
