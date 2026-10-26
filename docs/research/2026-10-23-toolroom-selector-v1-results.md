@@ -221,3 +221,24 @@ PY
 全部匹配也只证明当前工作视图与C0记录一致；若软链接目标曾在训练后变化，不能追溯证明开训时逐字节相同。发现差异先查身份；全部相同再调查7001前轨迹，并讨论预算单变量实验。现有剂量推导支持预算假设，但不支持“4096就是主因”或“扩大必然修复上部”。不自动叠加梯度/VCR/DP模块。
 
 诊断数值见独立分析目录的`diagnosis.json`、`raw_post_diagnosis.json`、`primitive_7000_30000_counts.json`、`early_training_log_comparison.json`、`worst_region_gt_visibility.json`、`analysis_receipt.json`。高度贡献与raw/post分解闭合误差小于1e-9mm；跨场景继续复用现有正式评价核心。
+
+## 2026-10-26 用户批准：16384预算直接30K
+
+用户明确要求直接30K、不增加smoke或安全框架，并选择16384。沿用已验证训练commit `3d85faf95951b4806eee18498841e66551b93320`、Tool Room/r2/seed0/DA3/全部原调度；唯一科学参数变化为candidate_selector_budget4096→16384。没有生产代码修改、依赖安装、编译或新增测试。
+
+- 原输入视图已经1219文件全部匹配C0。新输入目录为`/root/autodl-tmp/ambisur_work/data_views/second_run_selector/toolroom_r2_seed0_b16384_30k_v1/colmap_undistorted`；图像/相机/深度/置信链接到上一轮相同输入，独立复制aligned目录，因为原loader会写points3D.ply。必要的split.json原样复制，不重新生成先验。
+- 新输出为`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_b16384_30k_v1`；已有C0和4096run只读保留。独立扩展继续使用`/root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python`。
+- 不恢复7K PLY作为checkpoint，因为它没有完整优化器/RNG状态；从原输入按30K原调度完整训练。不是重训baseline。
+- 已检查的最终三视角池中，16384抽样比例约12.660%/2.209%/9.948%，是4096的4倍；这是固定快照的比例，不保证新增高斯数、运行时间或几何收益4倍。最多源patch比较由16384增至65536，额外源深度渲染仍至多两个。提高预算同时提高潜在额外ALR剂量，不能把本轮解释为只改变覆盖且强度不变的实验。
+- 训练后沿用相同mesh提取5.0/0.005/4.0/2及现有正式评价入口，报告Accuracy/Completeness/CD和1/2/5cm PRF，不只看PSNR。对照已有C0与4096产物；单seed仍不足以把差异完全归因预算。
+- 首轮实际训练74:56；新预算耗时/显存未实测，不按4倍预算推断4倍训练时间。复用已通过的测试，不再跑启动smoke；只记录Git身份、日志/exitcode并拒绝覆盖新目录。
+
+当前状态为本地准备用户操作命令，尚无服务器16384训练启动或收益回执。
+
+### 启动前新增问题：是否需要共同7K起点
+
+用户随后指出：从头重跑16384仍可能产生不同7K起点，而只让16384从7K续训又不能与原连续4096公平对照。因此暂不交付启动命令，等待讨论实验形式；先前选定16384不等于新恢复协议已获批准。
+
+只读核对实际C0和4096下载目录：双方只有7K/30K Gaussian PLY及30K app.pth，没有chkpnt7000.pth。原train默认checkpoint_iterations=[]；GaussianModel.capture包含Adam/增密统计，但PLY不包含。原checkpoint还未保存Python/NumPy/Torch RNG与未消费相机队列。不能把7K PLY称为可等价恢复的checkpoint，不能只重置16384优化器后与旧4096比较预算因果效应。
+
+待讨论的两种范围：①单独16384完整30K作为快速探索，承认起点/随机轨迹混杂；②新共享0–7K前缀，再让4096/16384两分支以相同模型/Adam/调度及相同规定的随机状态/相机队列从7001到30000，合计约53K训练步。后者不重训原baseline，不改原4096记录；两个新分支构成新配对实验。若实现恢复，需要最小状态保存/恢复边界，不扩建诊断或可靠性框架；尚未实施。数值非确定性仍可能造成后续差异，配对不等于逐位确定性。

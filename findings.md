@@ -2,6 +2,8 @@
 
 ## 2026-10-26 Baseline lineage audit (current)
 
+Before budget launch user questions early-trajectory confounding. Both actual downloaded runs have7KPLY/30KPLY/30Kapp.pth but no7Kchkpnt. Original capture savesGaussian/Adam/densification stats,notRNG orcamera queue. A16384-onlyPLYrestart is not a fair comparison withcontinuousold4096. Recommend discussing one new shared7Kprefix plus two matched23Ksuffixes(53Ksteps) for budget attribution,or explicitly exploratory single30K. No launch/checkpoint implementation yet;fixedbaseline unchanged.
+
 User receipt confirms1219 current training inputs match C0 manifest,0missing/0mismatched. d979c07 parent is exactly d6f15c8;62e9117 is not ancestor of trained3d85faf. Official remote main verified at88d64054;C0's8different Python sources have identical AST and4native sources identical noncomment tokens. All1689baseline files remain,1680byte-identical;only4existing production files changed for selector/seed integration. Protected1630files matchC0;old24reliability sources absent. Current training/test blobs match trained commit. Existing ignored138code files are allpyc;no ignored .py/.so/.pyd/native source;old runtime/config/arbitration source-less resolution returnsNone. Fresh suite23run/18pass/5native skipped;no fresh GPU acceptance. Full audit report follows;do not reinterpret as full7K trajectory equivalence or an identified cause of early divergence.
 
 ## 当前增补：实际C0配对诊断（2026-10-23）

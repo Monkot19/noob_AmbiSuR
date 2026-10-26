@@ -4,6 +4,10 @@
 
 ## 当前方法与代码
 
+> **2026-10-26当前派工：** 用户已批准候选预算16384、其余不变、直接30K，不增加smoke/安全框架。训练仍固定3d85faf；新输出`/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_b16384_30k_v1`，新private data view含`toolroom_r2_seed0_b16384_30k_v1`。CLI参数实验无生产代码变化；尚待用户启动回执，详见首轮结果报告末节。输入1219/0/0与源码审计已完成，不重复派工。
+
+> **启动前最新转向：** 用户提出共同7K起点及4096可比性问题，尚未发出启动命令。现有两run只有7K PLY，没有完整7K checkpoint；不能单独将16384从PLY续训当公平预算对照。当前待讨论单次探索性30K或共享7K前缀/两个23K分支（总53K步），不自动实现恢复或启动训练。
+
 - 从 `c0-baseline`（`d6f15c8891a53800d5e3100f95817a7dd7f98e2f`）仅移植已批准候选模块：保留原 SH 双端标签，从未命中池抽样4096，比较当前平面与 DA3 平面的跨视角 NCC，补选后复用原标签渲染与 ALR。
 - 当前规格：`docs/superpowers/specs/2026-10-21-candidate-selector-design.md`；移植记录：`docs/superpowers/plans/2026-10-22-clean-selector-migration.md`。
 - 方法提交 `d979c07`；服务器验证／训练固定 `3d85faf95951b4806eee18498841e66551b93320`。本地接管起点 `3775135690b2ea4edfdc50e3b19fba467d02d117` 与它仅有文档差异；本次也只更新规则和文档，实际当前 HEAD 用 `git rev-parse HEAD` 读取。

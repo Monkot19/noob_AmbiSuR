@@ -143,3 +143,11 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 - [x] Record concrete evidence and limitations;no method changes/new experiments.
 
 Audit completed:directC0parent,no old62e9117ancestor;officialmain88d64054 verified,8Python AST/4native token equivalence;all changed production lines reviewed,protected1630files exact. Source audit/JSON saved;fresh18CPU passed/5native skipped. Oldpyc retained,no source/native residue loaded. No next experiment authorized by this audit;early trajectory cause remains open.
+
+## 2026-10-26 Approved budget16384 direct30K
+- [x] User explicitly selects16384 and requests direct30K,no new smoke/safety framework.
+- [x] Reuse fixed3d85faf training,Tool Room/r2/seed0/same inputs and schedules;prepare separate writable aligned view and output without production edits.
+- [ ] User launches16384 run and returns train PID/log;no baseline rerun.
+- [ ] Complete30K,then reuse same extraction and formal geometry evaluator against frozenC0/4096 outputs.
+
+User steering before launch:questions uncontrolled pre7K divergence and fairness of7K resume. Verified both downloaded runs have7K PLY but no7Koptimizer checkpoint. Hold launch handoff;discuss exploratory single30K versus shared7Kprefix/two23Ksuffixes(total53K). No checkpoint implementation,training or reset approved yet;existingbaseline remains read-only.
