@@ -1,5 +1,9 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-26 Baseline lineage audit (current)
+
+User receipt confirms1219 current training inputs match C0 manifest,0missing/0mismatched. d979c07 parent is exactly d6f15c8;62e9117 is not ancestor of trained3d85faf. Official remote main verified at88d64054;C0's8different Python sources have identical AST and4native sources identical noncomment tokens. All1689baseline files remain,1680byte-identical;only4existing production files changed for selector/seed integration. Protected1630files matchC0;old24reliability sources absent. Current training/test blobs match trained commit. Existing ignored138code files are allpyc;no ignored .py/.so/.pyd/native source;old runtime/config/arbitration source-less resolution returnsNone. Fresh suite23run/18pass/5native skipped;no fresh GPU acceptance. Full audit report follows;do not reinterpret as full7K trajectory equivalence or an identified cause of early divergence.
+
 ## 当前增补：实际C0配对诊断（2026-10-23）
 
 C0下载mesh SHA与正式报告相同；C0/new input、cameras、neighbors相同。正确PSNR31.07406044→31.10275154，仅5个训练视角。复用原核心与GT样本，均值复算最大差4.62e-13mm。z<4m平均Completeness31.7489→29.9042mm，上部84.1396→119.6272mm；最坏1%点贡献整体增量4.5284mm。完整性差距88.03%已在raw中；最坏点84.67%满足至少一相机GT first-hit 1cm可见容差。不能主要解释为后处理或完全没拍到。

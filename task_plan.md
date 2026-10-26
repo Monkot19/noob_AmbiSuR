@@ -1,6 +1,6 @@
 # AmbiSuR Core 实施计划状态
 
-> **当前（2026-10-23）：** D盘为主目录；旧Core计划为历史。二周目30K、提取、正式评价均完成，实际C0/new已下载核验；CD变差13.05%，F1略升。退化集中上部，区域分布差异早于7001模块启动。下一批待讨论1219输入文件哈希核对；不改方法/预算，不重训baseline。
+> **当前（2026-10-26）：** D盘为主目录；旧Core计划为历史。二周目首轮30K/提取/正式评价完成，CD变差13.05%、F1略升。1219输入文件已全部匹配；源码逐行审计确认从C0直接接入候选，无旧Core继承。7001前分叉原因仍待讨论；不改方法/预算，不重训baseline。
 
 ## Goal
 
@@ -134,3 +134,12 @@ User authorizes shared surface evaluator plus AmbiSuR PRF; confirms1/2/5cm, main
 - [x] Record artifacts/handoff; no method, training or baseline edits.
 - [ ] Discuss user-operated read-only1219-file input hash check against C0 manifest; noGPU/GT/baseline rerun.
 - [ ] Decide next single-variable experiment after input/early-trajectory investigation;4096 remains a hypothesis.
+
+## 2026-10-26 Requested baseline-lineage and line-by-line source audit
+- [x] User receipt:1219 input files,0missing/0mismatched;current view matches C0 manifest.
+- [x] Verify C0/feature/current parent graph and compare all changed production lines.
+- [x] Compare C0 to locally recorded official upstream;separate baseline adaptations from first-run additions.
+- [x] Trace imports/config defaults/native source,metadata and feature-off path;report any residual or unintended behavior without fixing it.
+- [x] Record concrete evidence and limitations;no method changes/new experiments.
+
+Audit completed:directC0parent,no old62e9117ancestor;officialmain88d64054 verified,8Python AST/4native token equivalence;all changed production lines reviewed,protected1630files exact. Source audit/JSON saved;fresh18CPU passed/5native skipped. Oldpyc retained,no source/native residue loaded. No next experiment authorized by this audit;early trajectory cause remains open.
