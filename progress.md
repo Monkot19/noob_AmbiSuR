@@ -185,6 +185,10 @@ Readuserattachment401c09fa:threepostmeshesremovedwithoutreportederror,df50G/41Gu
 
 ## 2026-10-27 Stage3 complete; failure analysis authorized
 
+### Source-based V2 adaptation review requested
+User basically accepts intent but requires actual code adaptation report first. Read pinned donor train158..211, model creation/view_indexs/world unprojection/update_points/optimizer, and actual host selector155..259/train89..122 plus forward/backward/topology/step, Adam/stat methods, metadata and unified tests. Old manifest path absent; direct in-memory retrieval of pinned official raw train/model confirms byte equality and records hashes. Write 2026-10-27-selector-v2-code-adaptation.md with five-file plan, same-core V1/V2 wrappers, same-order accepted IDs/points, local index_copy/index_fill Adam/stat handling, exact pre-main-render insertion and event log. Update short spec with donor ADC replacement versus retained ADC and metadata reuse. No production changes, tests, installs, branch switches, GT/model reads or training; await user review of actual code changes.
+
+
 ### selector_V2 route and name confirmed
 User approves V2=V1+relocation. Prepare docs/superpowers/specs/2026-10-27-selector-v2-relocation-design.md, grounded in actual current render/optimizer/densification interfaces. Separate approved method/name from proposed100-step full-active schedule, pre-render mutation and local optimizer/stat handling. Preserve V1 default4096 and use explicit16384 for V2 experiment. No production code, dependencies, training or server action; next is short-spec confirmation, then V2 branch/minimal implementation.
 

@@ -223,3 +223,10 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] User selects V2 = V1 + relocation; retain original ALR and V1 comparison, defer resumed-off control.
 - [x] Write short V2 spec with explicit proposed schedule, pre-render execution and selected-row state handling; no production edits.
 - [ ] Obtain confirmation of short spec's execution details, then create V2 branch and minimal implementation plan.
+
+## 2026-10-27 V2 source-to-code adaptation requested
+- [x] User basically accepts V2 intent, asks for donor-source-based concrete code changes before implementation.
+- [x] Re-read pinned Sparse2DGS train/update_points/world-unprojection/optimizer code and current selector/render/training/densification/metadata/test interfaces.
+- [x] Fetch two pinned official raw files in memory and confirm byte equality with read source cache; no dependency installation or donor execution.
+- [x] Deliver concrete function signatures, tensor contracts, insertion order and donor-to-host differences in code-adaptation report; no production code edits.
+- [ ] User reviews concrete five-file changes; only then create V2 branch and implement.

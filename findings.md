@@ -125,6 +125,9 @@ ExistingformalCPUevaluatorcompleted75.441s/exit0/cleancode28e/1000000samplesseed
 
 ## 2026-10-27 Current negative/mixed result interpretation
 
+V2 source-to-code audit: official af15587 train.py18387B SHAa43e72a019e3fb4b95f1fec2f7c8322514c61d692fbb1ac87da11228d0cdb210 and scene/gaussian_model.py24911B SHAc5ab6a89fc43db44161a4bbe39c0099f82a760830a0cd5dbfd9a93ccb96c44b3 match local cache byte-for-byte. Referenced old per-repo source_manifest.json path is absent, so verify raw bytes directly rather than assuming manifest survives. Donor train has no densify_and_prune call: SGU substitutes for its ADC, while V2 explicitly retains inherited ADC. Host selector final ids/points_p/accepted remain aligned after validity slicing at231/233/255; use these exact rows, not extra.nonzero paired with differently ordered points. Host helper89..122 has insertion slot before line117 main render and before any this-step backward; avoid writing afterforward or after topology. Host replace_tensor resets whole moments; use a new selected-row in-place method instead. Existing metadata already serializes all option fields, so no schema/writer changes required.
+
+
 User subsequently approves the joint-plane comparison plus relocation route and names it selector_V2 (V2=V1+relocation). Short spec records preserved V1 semantics/ALR and proposes full active-phase 100-step events7100..29900, same evaluated DA3 target, execution before fresh main render, selected xyz row moments/stat resets with nonselected state/Adam step retained. Full-phase timing is an explicit adaptation beyond donor's densification branch. These execution details await short-spec confirmation; production code remains c351 and no training started.
 
 
