@@ -195,6 +195,12 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 - [x] Locateuserprovidedbaseline/pairwrappers;alltrain/extract/queueexitcodes0andcriticalfilespresent.
 - [x] Read-onlyverifyPLYpayloads/PTHzipCRC+CPUload/rendercoverage;4749filehashesandsharedprefixSHA match.
 - [x] Archiveverification.json/twofullmanifestsoutsidesourceoutputs;write2026-10-27-shared7k-download-verification.md;serverfullcomparisonpending.
-- [ ] Presentconcretecleanupscope;no deletionuntiluserconfirmsandserver/localhashesmatch.
+- [x] Userwaivesfullserverhashcomparisonandauthorizesfastcleanup;deliverexact3.13GBstage1scope/script,retainmodels/postmesh;serverexecutionreceiptpending.
 
 Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Nextserverreadonlymanifestcomparisonandconcretecleanupconfirmationareseparatefromresearchanalysis.
+
+## 2026-10-27 Direct geometry analysis after hash waiver
+- [x] Reuseunchangedevaluator/protocol/verifiedinputs forbaseline4096/16384;exit0,clean28eidentity,JSON/CSV/inputSHAverified.
+- [x] Recordmixedresults:4096CD+0.998663%,16384CD-0.122301%vsbaseline;no clearoverallbenefit.
+- [ ] Receiveservercleanupstage1df/output;no agentSSHaccess.
+- [ ] Discussnextboundedanalysis/methodscope;no automaticnewtrainingorarchitecture.
