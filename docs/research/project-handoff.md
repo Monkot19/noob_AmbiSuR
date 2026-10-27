@@ -1,8 +1,10 @@
 # AmbiSuR 二周目交接入口
 
-> **当前入口（2026-10-23）：** 主工作目录已改为 `D:\research_Space\noob_AmbiSuR`，分支 `codex/second-run-selector`。C 盘临时 worktree 保留 detached `3775135`，后续开发不再以 C 为入口。完整归档与换机步骤见 [主目录与恢复指南](second-run-workspace-and-recovery.md)。下方一周目记录仅供查阅，不作为当前派工。
+> **当前入口（2026-10-27）：** 主工作目录为 `D:\research_Space\noob_AmbiSuR`，当前分支 `codex/second-run-selector-v2`。原V1分支 `codex/second-run-selector`保留在ef333bb；C盘临时worktree保留detached3775135。完整归档与换机步骤见[主目录与恢复指南](second-run-workspace-and-recovery.md)。下方一周目记录仅供查阅，不作为当前派工。
 
 ## 当前方法与代码
+
+> **V2本地实现与审查完成（2026-10-27）：** 用户明确授权开始实现、离开期间自行解决常规问题并事后报告。代码固定`a114ed5b5ee1c265eea5ececc98268934eca6b2e`：同一V1选择核心额外输出乱序ID配对的世界目标；每100轮7100..29900在主render前只移动E行并清理局部xyz动量/stat，原ALR/LR/loss/拓扑继续。统一30项24CPU通过、6native因本地缺扩展跳过；Python3.10语法与原核心AST核对通过，独立整体审查无需修复问题。唯一中间问题是测试夹具缺实际标定接口，接入真实Camera方法解决，未改算法。AutoDL直接7K→30K命令见[V2启动指南](selector-v2-native7k-launch.md)，bash与真实CLI组检查通过；尚无服务器启动/GPU/几何收益回执。baseline分支仍原生d6f15c8，所有旧输出保留；不追加selector-off/GPU smoke作为前置任务。
 
 > **V2实际改法待审阅（2026-10-27）：** 用户基本同意最小规格，但要求从供体源码出发汇报具体函数改法。新增[源码到代码适配清单](2026-10-27-selector-v2-code-adaptation.md)：重新取固定官方train/model，字节匹配；逐项映射选择目标输出、当前主render前插槽、局部Adam/stat原地更新及原测试入口。明确供体SGU替代ADC而V2保留ADC，不能宣称整模块照搬；五个文件预计修改，renderer/CUDA/ALR/metadata/evaluator复用。生产代码未改，尚未创建V2分支或启动训练。
 

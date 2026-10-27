@@ -185,6 +185,9 @@ Readuserattachment401c09fa:threepostmeshesremovedwithoutreportederror,df50G/41Gu
 
 ## 2026-10-27 Stage3 complete; failure analysis authorized
 
+### selector_V2 independent review and direct30K handoff
+Fixed codea114ed5, five code files only, fresh reviewer30tests24pass/6native skipped/no Critical/Important/Minor findings. No fix pass. Main agent checked launcher outer/inner/progress bash syntax and real Model/Pipeline/Optimization CLI parsing. Update D/C recovery instructions, approved scope, spec/plan/source receipt and native7K launch guide. Preserve V1ef333bb and baselined6f15c8. Review boundaries explicitly retained: actual gain/time/nativeGPU unjudged; approved DA3/ADC/window and inherited baseline quirks unchanged; launch checked statically only. New branch publication pending; no remote training/GT/output changes.
+
 ### selector_V2 implementation: first local verification
 User explicitly approves source-based five-file implementation and autonomous routine fixes while away. Branch codex/second-run-selector-v2 created at ef333bb, V1/C/baseline preserved. Baseline unified24 tests19CPU pass/5native skips. Add5 CPU test methods plus1 conditional native V2 render/ALR test; observe RED on absent method/defaults. Implement shared V1/V2 selector core and same-order world targets, local xyz/Adam/stat mutation, pre-render integration, two CLI options/event count. Actual render_normal in CPU helper fixture requires get_calib_matrix_nerf; fix fixture by loading real Camera method, not production behavior. Unified30 tests24CPU pass/6native skips2.450s. Static Python3.10 compatibility five files; original selector math/NCC/sampling/SH AST and all old GaussianModel methods/ALR unchanged; renderer/CUDA/metadata/evaluator/extractor untouched. No dataset/GT/output reads or GPU/server operations. Code commit/review/publish pending.
 

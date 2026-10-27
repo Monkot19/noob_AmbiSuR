@@ -1,6 +1,6 @@
 # selector_V2：V1 + 重定位
 
-日期：2026-10-27。状态：**用户已批准路线、名称及源码适配清单，并授权立即实施、离开期间自行解决常规问题并事后报告。实施分支codex/second-run-selector-v2；训练尚未启动。** [源码适配清单](../../research/2026-10-27-selector-v2-code-adaptation.md)、[实施计划](../plans/2026-10-27-selector-v2-implementation.md)。
+日期：2026-10-27。状态：**已按用户授权在codex/second-run-selector-v2实现，固定代码a114ed5；统一30项24CPU通过/6原生跳过，独立审查无待修问题。服务器训练尚未启动。** [源码适配与收据](../../research/2026-10-27-selector-v2-code-adaptation.md)、[实施计划](../plans/2026-10-27-selector-v2-implementation.md)、[AutoDL直接30K指南](../../research/selector-v2-native7k-launch.md)。
 
 ## 1. 意图与范围
 
@@ -48,4 +48,4 @@ ALR本身可通过深度法线影响位置；新增价值是显式中心重定�
 
 具体函数、行位置、张量接口及供体差异见[源码适配清单](../../research/2026-10-27-selector-v2-code-adaptation.md)。其中明确：供体用SGU替代ADC，而本轮保留V1的ADC；不能拷贝三视图repeat分组；必须成对返回ids[accepted]/points_p[accepted]，不以extra.nonzero重排；位置/动量/stat使用原地索引写入，保留当前Parameter。主渲染前接入无需新增渲染。日志细化为事件轮加一行moved计数，以记录原200轮日志未覆盖的7100/7300等事件；既有metadata自动记录新字段，无需修改serializer。
 
-本轮仅交付本文、源码适配清单、交接与根记录。具体改法获确认后，再进入最小实施计划与代码修改。
+本规格及源码改法已获用户确认并实施；当前收据见顶部链接，不重复请求已给出的实施授权。

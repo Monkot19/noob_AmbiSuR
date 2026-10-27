@@ -6,7 +6,7 @@
 
 | 位置 | 用途 |
 | --- | --- |
-| `D:\research_Space\noob_AmbiSuR` | 主仓库，真实 `.git` 目录；使用 `codex/second-run-selector`，后续修改／测试／提交均在此完成 |
+| `D:\research_Space\noob_AmbiSuR` | 主仓库，真实 `.git` 目录；2026-10-27起使用 `codex/second-run-selector-v2`，原V1分支 `codex/second-run-selector`保留在ef333bb；后续修改／测试／提交均在D完成 |
 | `C:\Users\DELL\.codex\worktrees\second-run-selector\noob_AmbiSuR` | 保留的 linked worktree，固定 detached `3775135`；其 `.git` 文件指向 D，不能单独复制后当独立仓库使用 |
 | `D:\research_Space\noob_AmbiSuR_workspace_backup_20261023T040116Z` | 原样文件、历史日志及 Git bundle 备份；不是数据或 baseline 输出目录 |
 

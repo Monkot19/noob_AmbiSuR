@@ -14,7 +14,7 @@
 
 1. `docs/research/project-handoff.md`
 2. `docs/research/baseline-audit.md`
-3. `docs/superpowers/specs/2026-10-21-candidate-selector-design.md`（当前规格；旧 `ambisur-reliability-routing-design.md` 为历史参考）
+3. `docs/superpowers/specs/2026-10-27-selector-v2-relocation-design.md`（当前V2规格，继承V1；旧 `ambisur-reliability-routing-design.md` 为历史参考）
 4. 当前代码、配置、Git 状态与最近提交
 5. `task_plan.md`、`findings.md`、`progress.md`
 
@@ -64,6 +64,8 @@
 Use c0-baseline plus approved candidate selector only, no reliability/Core/five-state/evidence/topology port. Preserve historical work and fixed baseline output. See docs/superpowers/specs/2026-10-21-candidate-selector-design.md and docs/superpowers/plans/2026-10-22-clean-selector-migration.md. Lightweight seed/metadata reuse is authorized. Use one test entry, then AutoDL native validation, no new diagnostic platform. Progress updates follow the user five-item format. Each new implementation or experiment batch is discussed first; later explicit approval supersedes the original migration batch's no-push/no-training restriction.
 
 ## 持续有效的复用约束
+
+- 2026-10-27用户已批准selector_V2=V1+重定位及源码适配，授权立即实施和常规问题自主处理、事后报告。主目录仍D，当前分支codex/second-run-selector-v2，V1分支/历史及baseline不动。固定a114ed5；24CPU通过/6native跳过，不能称GPU或收益通过。当前下一步为按已批准预算16384/原LR/loss/间隔100/现有7K直接至30K，不另加smoke、恢复对照或诊断框架作前置任务；新的方法范围仍须讨论。
 
 - 同一科学问题只维护一套公共统计与审计核心；新场景主要增加数据身份、路径、seed、单位和协议配置，格式差异通过薄适配层处理。
 - 不按场景复制 evaluator、solver、空间分折、bootstrap 或状态审计；不为通用框架阻塞已批准的最小实验。

@@ -1,6 +1,6 @@
 # selector_V2：供体源码到现有代码的适配清单
 
-日期：2026-10-27。状态：用户基本同意V2主旨，要求先汇报实际代码改法；**本文为修改前的源码适配说明，未实现V2。** 主仓库HEAD核对点06589b2，实际生产逻辑仍为c3510b02。短规格见[selector_V2](../superpowers/specs/2026-10-27-selector-v2-relocation-design.md)。
+日期：2026-10-27。**下文为用户批准的修改前适配说明；后续已按此实现V2，固定代码a114ed5，收据见文末。** 修改前HEAD核对点06589b2、V1生产逻辑c3510b02。短规格见[selector_V2](../superpowers/specs/2026-10-27-selector-v2-relocation-design.md)。
 
 ## 1. 本次真正读了哪些供体代码
 
@@ -107,3 +107,14 @@ gaussian_renderer/__init__.py的ambiguity_labels接口、CUDA、_compute_alr_los
 本轮证据是固定官方源码字节核对及当前函数/张量/调用顺序的静态核对，确认有明确接入点；**未修改训练代码、未运行V2测试或训练，不能宣称已可运行或有收益。**
 
 确认这份具体改法后：在D盘从当前二周目分支建立codex/second-run-selector-v2，保留V1分支和baseline；先在原测试入口补新增边界，再按上述五文件接线、跑相关CPU检查、提交推送固定commit；交付AutoDL从现有7K直接训练到全局30K的新输出命令。现有baseline及V1结果只读复用，不补恢复对照或短GPU实验作为前置任务。
+
+## 6. 实施收据
+
+用户随后明确同意实施、离开期间自行解决问题。五代码文件已按上文修改，固定a114ed5；新增测试先RED后GREEN，统一30项24CPU通过/6原生跳过。实际normal生产者暴露测试相机缺标定接口，接入真实Camera.get_calib_matrix_nerf解决；无生产绕过。静态Python3.10兼容，旧模型方法与ALR AST不变、原选择核心剥离可选目标输出后AST相同；renderer/CUDA/metadata/evaluator/extractor未改。独立整体审查复跑30项同结果，未发现需修复问题。默认229次重定位事件；尚无GPU/训练收益结论。[直接30K命令](selector-v2-native7k-launch.md)。
+
+审查边界与本次处置：
+- 收益/实际耗时待训练，不把本地通过当效果证据；代价是新路线可能仍无益，须看同口径30K评价。
+- DA3目标、保留ADC及全启用窗口遵照已批准适配，未擅改供体机制或新加筛选；该选择是否合适由实际结果判断。
+- 原ALR冻结/Ray-Color/增密替换Parameter行为按合同保留，避免基线漂移；可能继承其优化限制，不冒称已修复。
+- GPU边界明确6项跳过，不伪装native通过；在获准直接30K任务观察原生行为，若接口失败须另固定修复commit。
+- 启动文档不在固定代码审查范围，由主代理检查外层/内层bash和真实CLI组；服务器实际路径/网络状态仍待用户执行回执。

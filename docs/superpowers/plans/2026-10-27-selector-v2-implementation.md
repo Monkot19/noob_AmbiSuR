@@ -35,12 +35,12 @@
 - [x] Move original selection body into private shared core; add thin V1/V2 wrappers and same-row world targets. Add local no_grad update using index_copy_/index_fill_ with all validation before mutation.
 - [x] Add two CLI fields, early config validation and pre-render event insertion; add one moved-count log per event. Preserve all old loss/topology/restore paths.
 - [x] Run unified test entry (GREEN), syntax compatibility/static diff checks; original protected producers/evaluator stay byte-identical.
-- [ ] Commit one feat for V2, record exact tests/skips and deviations.
+- [x] Commit one feat for V2, record exact tests/skips and deviations.
 
 ## Task2: Publish reviewed version and 30K handoff
-- [ ] One fresh independent whole-branch review against spec/plan/donor-adaptation. Fix material findings locally with RED→GREEN; user authorized routine decisions, report any rulings.
-- [ ] Update existing handoff/docs and provide bash-heredoc AutoDL launch command with fresh private view/output, existing C0 extension and native7K/App, budget16384; no server training execution assumed.
-- [ ] Syntax-check shell handoff, final scoped tests if fixes changed code, git diff --check and clean status; confirm baseline/V1 branches unchanged.
+- [x] One fresh independent whole-branch review against spec/plan/donor-adaptation. Fix material findings locally with RED→GREEN; user authorized routine decisions, report any rulings.
+- [x] Update existing handoff/docs and provide bash-heredoc AutoDL launch command with fresh private view/output, existing C0 extension and native7K/App, budget16384; no server training execution assumed.
+- [x] Syntax-check shell handoff, final scoped tests if fixes changed code, git diff --check and clean status; confirm baseline/V1 branches unchanged.
 - [ ] Push new V2 branch and verify remote SHA, record fixed production commit separately from docs commit. No PR/merge or baseline training.
 
 ## Execution ledger
@@ -48,3 +48,10 @@
 - Ruling: Execute approved plan immediately without another review prompt — explicit latest user authorization while away; no additional algorithm scope.
 - Task1 evidence: original24 tests19CPU pass/5native skips. New5 CPU test methods first fail on absent relocation method/defaults. After implementation, real render_normal exposed a missing calibration method in the analytic camera; load actual Camera.get_calib_matrix_nerf into fixture, no production workaround. Unified30 tests24CPU pass/6native skips (2.450s); no GPU validation claimed.
 - Task1 static: Python3.10 syntax all five files; normalized original selector core AST identical except optional target return; all existing GaussianModel methods and ALR AST identical. Renderer/CUDA/metadata/evaluator/extractor untouched.
+- Task1 complete: commits ef333bb..a114ed5; unified30run/24CPU pass/6native skipped, original selector and baseline methods retained. Whole-branch independent review dispatched under requesting-code-review; no implementation delegation.
+- Task2 review: fresh reviewer reran30 tests24pass/6native skips, no Critical/Important/Minor findings; no fix pass needed. Bash outer/inner/progress syntax and actual CLI parsing passed. V1 branch staysef333bb, baseline branchd6f15c8.
+- Final: Ruling: efficacy/time not judged by local tests — await same-protocol30K, cost if wrong is an ineffective trial.
+- Final: Ruling: keep approved DA3/ADC/full-active adaptation — this is not complete donor reproduction, cost if wrong is negative reconstruction gain.
+- Final: Ruling: leave inherited ALR/Ray-Color/topology behaviors unchanged — preserve baseline contract, cost is retaining their limitations.
+- Final: Ruling: native GPU not judged with missing extension — no native success claim; observe authorized30K, cost is possible runtime failure/relaunch.
+- Final: Ruling: launch doc outside code review checked by main agent with bash-n/real CLI — actual server state awaits execution, cost is possible path/network startup failure.

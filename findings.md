@@ -125,6 +125,9 @@ ExistingformalCPUevaluatorcompleted75.441s/exit0/cleancode28e/1000000samplesseed
 
 ## 2026-10-27 Current negative/mixed result interpretation
 
+Latest implementation: user authorized V2 and routine autonomous fixes; D branch codex/second-run-selector-v2 codea114ed5. Unified30 tests24CPU pass/6native skips; fresh independent review same results/no material or minor findings. Original selector core AST unchanged after optional target-return normalization, old GaussianModel methods/ALR unchanged, renderer/CUDA/metadata/evaluator/extractor byte-preserved. Actual Camera calibration method added to test fixture after real normal producer exposed missing interface; no production workaround/algorithm change. Handoff bash/CLI checks pass; no server launch or geometry benefit yet. Approved adaptation keeps DA3/ADC/full-active scheduling and inherited baseline behaviors; efficacy/GPU await actual30K.
+
+
 V2 source-to-code audit: official af15587 train.py18387B SHAa43e72a019e3fb4b95f1fec2f7c8322514c61d692fbb1ac87da11228d0cdb210 and scene/gaussian_model.py24911B SHAc5ab6a89fc43db44161a4bbe39c0099f82a760830a0cd5dbfd9a93ccb96c44b3 match local cache byte-for-byte. Referenced old per-repo source_manifest.json path is absent, so verify raw bytes directly rather than assuming manifest survives. Donor train has no densify_and_prune call: SGU substitutes for its ADC, while V2 explicitly retains inherited ADC. Host selector final ids/points_p/accepted remain aligned after validity slicing at231/233/255; use these exact rows, not extra.nonzero paired with differently ordered points. Host helper89..122 has insertion slot before line117 main render and before any this-step backward; avoid writing afterforward or after topology. Host replace_tensor resets whole moments; use a new selected-row in-place method instead. Existing metadata already serializes all option fields, so no schema/writer changes required.
 
 
