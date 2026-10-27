@@ -94,8 +94,44 @@ Sparse2DGS的对应动作是更新胜出位置：固定源码update_points中new
 
 ## 6. 待讨论的最小下一步，不是已批准实施规格
 
+**后续用户已调整优先级：** 本节第1项对照暂缓，不作为寻找更有效模块的前置任务；第2项只保留为备选。最新源码核对和讨论边界见第7节，尚未批准实施。
+
 1. 优先补同一7K checkpoint、相同恢复流程、selector关闭的23K对照；直接复用现有CLI，不改原baseline、不重新跑前7K、不新增功能模块。它检验当前变化究竟有多少来自补选，而不是单纯恢复路径。
 2. 若下一批测试方法，建议只讨论“固定Gaussian中心，仅替换先验法线”的候选：G=(X_G,n_G)，N=(X_G,n_P)，新平面距离必须重算d_N=-n_P^T X_G，不能沿用旧平面距离。这样比较更接近ALR真正增加的法线动作；仍有primitive-normal与depth-normal的耦合差异，不能保证收益。
 3. 第二项是从Sparse2DGS平面比较与AmbiSuR法线目标推导的适配假设，不声称原论文已提出或验证。若获批，预算16K、支持视角、阈值、ALR/depthloss/其他优化与共同前缀全部固定，只改变候选几何定义，与现成full-plane16K比较；当前不写方法代码或自动启动训练。
 
 保持正式post评价不变，先不叠加VCR/DP/梯度投影以免同时改变多个变量。是否先做恢复对照、或连同一个动作对齐候选实验一起安排，由用户讨论后决定。
+
+## 7. 用户转向动作改进后的只读核对
+
+用户要求先寻找明显几何收益，暂缓同恢复selector-off对照。此次继续设计讨论，不修改训练代码、不新开训练、不增加GT分类器。以下是源码事实及候选思路，不是已批准设计。
+
+### 固定中心比较法线可直接沿用平面NCC
+
+在参考相机坐标中保持X_G，比较(X_G,n_G)和(X_G,n_P)，各自使用d=-n^T X_G。对邻域射线r(p)，候选深度为z(p)=z_0[n^T r(p_0)]/[n^T r(p)]；中心深度同为z_0，邻域深度及patch形变不同。因此不需要由法线单独恢复绝对深度。依据是PGSR Eq.8的平面单应性；固定中心替换法线是本项目的适配推导，尚无本项目收益数据。纯旋转t=0时单应性与平面无关，此时该证据不能区分法线。
+
+### 直接位置更新的供体证据与适配差别
+
+- Sparse2DGS论文§3.4以原始primitive平面和渲染平面构造NCC，渲染候选胜出后每100步直接替换位置，后续继续梯度优化。Table5的baseline CD=1.201，SGU=1.152（约-4.08%）；这是其稀疏DTU设置，不是AmbiSuR/406视图/DA3移植的预期收益保证。
+- 固定源码af15587的train.py163–202在densification阶段、每100步调用update_points。gaussian_model.py476–503只实际替换xyz，rotation/scaling替换被注释。目标位置来自渲染深度，而现有selector_v1的目标来自DA3；保留后者属于有依据的适配假设，不应称原样复现。
+- 供体replace_tensor_to_optimizer的324–338行替换整块xyz Parameter。仔细核对发现336行又无条件创建一次Parameter，最终优化器活跃参数不继承前一次绑定的state/grad；用真实方法及4×3 CPU Adam参数核对，active_has_state=False、active_has_gradient=False、存在一个未绑定到活跃参数的state项。不把这一事实称为供体结果错误，也不照搬后宣称只影响补选行。
+- 若讨论对补选E直接重定位，建议只改E的位置及其必要优化器/增密统计，保持非E行的状态。应在新可导渲染前使用当前索引执行，不持有穿过densify/prune的旧索引。这是工程适配建议，须先确认，不静默改供体或基线。
+- 联合平面NCC胜出并不保证位置/法线分别正确；位置重定位与ALR组合补齐了动作维度，但不能宣称已证明最终GT误差下降。ALR由深度法线反传，本身也可影响位置；新动作提供的是显式metric位置目标。
+- 原DA3深度L1约束的是混合后的plane_depth；PGSR Eq.2–4显示距离、法线先分别alpha混合再求深度。因此渲染深度约束不等于逐高斯中心约束。相同法线、固定混合权重的局部例子中，深度退化为加权中心深度，多个中心配置可给出同一渲染深度；显式重定位可能减少这种逐primitive自由度。这是解释互补性的局部推导，不是本项目已测得的收益或全局几何保证。
+
+### 原SH选择计数和实际学习率
+
+在既有独立CPU环境执行原compute_weighted_sh_norm及compute_sh_ambiguity_labels函数，读取原生checkpoint与最终Gaussian PLY；未读取GT。汇总保存在输出树analysis/shared_native7k_failure_analysis_20261027_v1/sh_counts_and_lr.json。
+
+| 快照 | 总高斯 | SH高端 | SH低端 | SH合计 | 未命中 |
+|---|---:|---:|---:|---:|---:|
+| 原生7K checkpoint（拓扑后） | 1421298 | 71065 | 142130 | 213195 | 1208103 |
+| 原生30K PLY | 1291587 | 64578 | 129159 | 193737 | 1097850 |
+
+严格上下分位数选择均约15%；低端1.0上限在这两个快照均未激活。SH标签是风险指示，不是GT几何错误；单视角projectable未命中池与全局未命中数也不是同一分母，不能用193737直接确定预算。已有4倍预算结果削弱了“仅预算小”作为首要解释，但没有证明预算永远无效。
+
+用实际get_expon_lr_func和checkpoint spatial_lr_scale=3.394348192214966计算xyz组学习率：7K=1.8544268475402772e-4，15K=5.4309571075439404e-5，30K=5.430957107543944e-6；rotation_lr=1e-3。selector无独立可学习参数。调小xyz/rotation LR会影响所有来源的相应参数梯度；调unc_weight改变目标间相对梯度，Adam下不等同于调LR。直接xyz←target不经过梯度步，所以该跳转本身不由LR控制。
+
+讨论建议：比较“固定中心的法线候选＋原ALR”和“保留联合平面候选＋E位置更新＋原ALR”，优先讨论后者；首轮保持16K预算和原损失/LR，避免同时改变动作、预算、LR。事件间隔可参考供体100步，启停窗口、更新顺序及局部状态处理仍待规格确认。暂缓对照不等于消除已有恢复流程混杂；若新模块明显改善，再补必要对照作因果确认。
+
+来源：[PGSR Eq.8](https://arxiv.org/html/2406.06521v2)、[Sparse2DGS §3.4/Table5](https://arxiv.org/html/2504.20378v1)、[SGU固定源码](https://github.com/Wuuu3511/Sparse2DGS/blob/af15587eb186ca7ab12a2cf795775fa0f473f25d/scene/gaussian_model.py#L476)、[Adam实际算法](https://docs.pytorch.org/docs/2.7/generated/torch.optim.Adam.html)。

@@ -212,3 +212,9 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 ## 2026-10-27 Result mechanism analysis
 - [x] Actualsource/donorread,115logpairs,6reusedkernelpost/rawqueries/sameGTsample,parallelplanecounterexample;factsandcausalboundariesrecorded.
 - [ ] Discussresumed-off23Kcontrolandpotentialnormal-onlycandidate;no newmethodcode/trainingscopeapprovedyet.
+
+## 2026-10-27 User prioritizes a stronger correction action
+- [x] Accept explicit deferral of resumed-off control; do not make it a prerequisite for method exploration.
+- [x] Re-read actual SGU position update, training schedule and optimizer replacement; verify fixed-center normal homography mathematically.
+- [x] Execute existing SH selectors on native 7K/30K artifacts and existing LR function; save aggregate evidence without GT access.
+- [ ] Discuss two alternatives and choose next method with user; no implementation or new training authorized yet.
