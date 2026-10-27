@@ -184,3 +184,9 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 - [x] Receive4096full23Kcontinuationlog/global30Kcompletionandsaves;checkpointloadcompatibilityfailureovercome.
 - [ ] Confirm4096exitcode/nonemptymodels and16384automaticqueueprogress/completion.
 - [ ] Afterpaircompletion,reusemesh extraction/settings andformalpairedgeometryevaluationfornativeC0/4096/16384;no newmethod/diagnosticframework.
+
+## 2026-10-27 Three-model mesh comparison handoff
+- [x] Receive4096exitcode/artifacts/16384automaticstartandfinal23Kcompletionlog.
+- [x] Userauthorizesnewbaseline/4096/16384mesh extraction;reuseexistingextractorandparameters,actualCLI/Bashsyntaxchecked.
+- [ ] User-operatedqueuechecks16384exitcode/artifactsandextractsthreeserially;receivequeue0/nonemptymeshes.
+- [ ] Userdownloadsfullnewbaselineandpairoutputs;localformalgeometrycomparisonviaexistingevaluator.

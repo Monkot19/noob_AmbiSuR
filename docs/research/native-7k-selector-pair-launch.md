@@ -93,3 +93,78 @@ SH
 查看总日志pair.log确定当前预算，再查看对应train.log。Scene构造可能先打印原始点云初始化信息，恢复后的实际循环从7001开始，进度条总步数为23000。运行期间不要切换服务器代码或并行启动另一项GPU训练。
 
 本命令不自动提取mesh或访问GT；训练结束后复用已经确认的提取设置与正式评价程序，对新基线和两组候选进行比较。未收到服务器启动回执前，项目状态只记录为命令已准备。
+
+## 三组30K模型顺序提取（2026-10-27）
+
+16384组最新日志已完成23K续训，PSNR30.840198135375978，L10.01708100289106369，N1275897，耗时58:42。4096已确认exitcode0/30KPLY302MB/App15KB；16384的最终退出码与文件由下方命令在启动前检查。三份都取这次新原生baseline及共享7K候选，不使用旧C0mesh作为本次替代。
+
+保持原提取参数5m/0.005m/4/2；不启用深度过滤、不访问GT。baseline使用原始C0代码提取，两组候选使用c351；实际extract_general.py在两个commit逐字节相同。真实CLI和Bash语法核对通过，不增加GPU测试。所有版本已在服务器本地，无需fetch。队列仅在训练全部成功、模型非空、目标mesh/日志尚不存在时启动；一次顺序提取，失败保留文件并停止，不覆盖旧产物。
+
+```bash
+bash <<'SH' || printf '\n提取未启动，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "提取准备停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+cd /root/autodl-tmp/noob_AmbiSuR
+test -z "$(git status --porcelain)"
+git cat-file -e d6f15c8891a53800d5e3100f95817a7dd7f98e2f^{commit}
+git cat-file -e c3510b029247e783d3163b2c8e7ce5d1f182039d^{commit}
+
+mesh_python=/root/miniconda3/envs/ambisur/bin/python
+mesh_ext=/root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python
+mesh_base=/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1
+mesh_pair=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/c3510b02_seed0_30k_pair_v2
+mesh_queue="$mesh_pair/mesh_extraction_v1"
+
+test "$(cat "$mesh_pair/pair.exitcode")" = 0
+for out in "$mesh_base" "$mesh_pair/b4096" "$mesh_pair/b16384"; do
+  test "$(cat "$out/train.exitcode")" = 0
+  test -s "$out/point_cloud/iteration_30000/point_cloud.ply"
+  test -s "$out/app_model/iteration_30000/app.pth"
+  test ! -e "$out/mesh"
+  test ! -e "$out/extract_general.log"
+  test ! -e "$out/extract.exitcode"
+done
+test ! -e "$mesh_queue"
+mkdir -p "$mesh_queue"
+export PYTHONPATH="$mesh_ext${PYTHONPATH:+:$PYTHONPATH}"
+
+nohup bash -c '
+  set -u
+  trap '\''rc=$?; printf "%s\n" "$rc" > "$4/queue.exitcode"'\'' EXIT
+  for label in baseline b4096 b16384; do
+    if [ "$label" = baseline ]; then
+      out="$2"
+      commit=d6f15c8891a53800d5e3100f95817a7dd7f98e2f
+    else
+      out="$3/$label"
+      commit=c3510b029247e783d3163b2c8e7ce5d1f182039d
+    fi
+    git switch --detach "$commit" || exit "$?"
+    git diff --exit-code || exit "$?"
+    printf "commit=%s\niteration=30000\nresolution=2\nmax_depth=5.0\nvoxel_size=0.005\nsdf_trunc_scale=4.0\nnum_cluster=2\nuse_depth_filter=false\n" "$commit" > "$out/extract.launch.txt" || exit "$?"
+    printf "%s start\n" "$label"
+    "$1" -u -B mesh_extract/extract_general.py \
+      -m "$out" -r 2 --iteration 30000 --skip_test \
+      --max_depth 5.0 --voxel_size 0.005 \
+      --sdf_trunc_scale 4.0 --num_cluster 2 \
+      > "$out/extract_general.log" 2>&1 < /dev/null
+    rc=$?
+    if [ "$rc" -eq 0 ] && { [ ! -s "$out/mesh/tsdf_fusion.ply" ] || [ ! -s "$out/mesh/tsdf_fusion_post.ply" ]; }; then
+      rc=1
+    fi
+    printf "%s\n" "$rc" > "$out/extract.exitcode"
+    printf "%s exitcode=%s\n" "$label" "$rc"
+    if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+  done
+' _ "$mesh_python" "$mesh_base" "$mesh_pair" "$mesh_queue" \
+  > "$mesh_queue/queue.log" 2>&1 < /dev/null &
+
+mesh_pid=$!
+printf '%s\n' "$mesh_pid" > "$mesh_queue/queue.pid"
+printf '提取队列PID：%s\n总日志：%s/queue.log\n' "$mesh_pid" "$mesh_queue"
+SH
+```
+
+总日志为pair目录下mesh_extraction_v1/queue.log，完成退出码为queue.exitcode；逐模型extract_general.log、extract.exitcode、extract.launch.txt和mesh/tsdf_fusion{,_post}.ply均位于各自output。提取期间不要切换服务器代码。baseline原训练checkpoint/模型不改，loader只写其获准private输入视图。
+
+全部成功后下载新native_c0_ckpt7k/d6f15c88_seed0_30k_v1与selector_from_native7k/c3510b02_seed0_30k_pair_v2两个完整目录（后者含两预算），保存point_cloud、app_model、7Kcheckpoint、mesh、渲染、cfg、日志/退出码与身份记录。用户下载后在D盘复用现有正式mesh evaluator比较三个模型；不要只下载mesh而丢弃复现材料。
