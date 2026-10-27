@@ -205,4 +205,6 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Receiveservercleanupstage1df/output:50G/42Gused/8.3Gavailable84%;noagentSSHaccess.
 - [ ] Discussnextboundedanalysis/methodscope;no automaticnewtrainingorarchitecture.
 
-- [ ] Stage2userauthorized:deleteonly3archivedpostmeshes;receivenewdfandreadonlyolderoutputduinventorybeforenextscope.
+- [x] Stage2completeuserreceipt:50G/41Gused/10Gavail81%;duinventoryreceived.
+
+- [ ] Stage3handoff:oldarchivedC0/selectoronlymesh+images3.27GB;awaituserreceipt. D0/G0/Utilitymodels/auditrecordsretainpendingbackup/dispositiondecision.

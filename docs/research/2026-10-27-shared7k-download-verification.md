@@ -111,3 +111,32 @@ if [ -d /root/autodl-tmp/ambisur_diagnostics ]; then
 fi
 SH
 ```
+
+## 第二批已执行；第三批旧Tool Room产物
+
+用户返回第二批成功打印，df50G/用41G/余10G/81%。剩余主要占用为旧D0约7.7G、G0约5.4G、Utility约3.5G；以上为不重叠根目录粗略占用，不累加du父子重复行。其完整模型备份尚未确认，先不删除；d0-g1一次性访问/审计记录也不整目录删除。
+
+只读确认旧正式C0归档位于baseline/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z（1593文件2338214740B）；上一轮selector现位于selector_v1/selector_v1_4096_without_baseline_checkpoint_2026_10_23/3d85faf_seed0_30k_v1（1577文件2324851119B），不再使用旧selector_v1_2026_10_23路径。旧C0退出码字段为exit_code.txt/mesh_exit_code.txt，均0；selector的train.exitcode/extract.exitcode均0。两组mesh、渲染/debug/pg_view及30K模型/App均在本地，未重复哈希或修改原件。
+
+第三批只清服务器这两个已归档run的两份mesh和图片，逻辑总长度3272634138B（约3.27GB），保留7K/30K Gaussian、App、配置日志、评价/审计及数据环境。命令语法通过，服务器实际回执待返回。
+
+```bash
+bash <<'SH' || printf '\n清理中止，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "清理停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+runs=(
+  /root/autodl-tmp/ambisur_runs/Tool_Room/c0-candidate-r2-30k/d6f15c88/seed_0/attempt_20260902T082615Z
+  /root/autodl-tmp/ambisur_runs/Tool_Room/selector_v1/3d85faf_seed0_30k_v1
+)
+for run in "${runs[@]}"; do
+  test -s "$run/point_cloud/iteration_30000/point_cloud.ply"
+  test -s "$run/app_model/iteration_30000/app.pth"
+done
+for run in "${runs[@]}"; do
+  rm -f -- "$run/mesh/tsdf_fusion.ply" "$run/mesh/tsdf_fusion_post.ply"
+  rm -rf -- "$run/train/ours_30000" "$run/debug" "$run/pg_view"
+  printf '已清理旧实验的已归档mesh和图片：%s\n' "$run"
+done
+df -h /root/autodl-tmp
+SH
+```

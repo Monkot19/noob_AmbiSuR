@@ -4,6 +4,8 @@
 
 ## 当前方法与代码
 
+> **第二批清理完成（2026-10-27）：** 三份postmesh已由用户清除，df余10G/81%。下一批仅清理已确认本地归档的旧C0与旧3d85selector的mesh/渲染/debug/pg_view，约3.27GB，保留所有模型、App、元数据、旧正式评价和D0-GT审计记录。旧selector本地目录现为selector_v1/selector_v1_4096_without_baseline_checkpoint_2026_10_23。D0/G0/Utility大模型备份尚未确认，不按旧目录名批量删。
+
 > **存储清理回执（2026-10-27）：** 第一批三组rawmesh/render/debug/pg_view清理已由用户执行，df为50G/用42G/余8.3G/84%。用户要求继续，已核对本地三份postmesh及正式评价仍在；第二批只删对应三份服务器postmesh（约1.82GB），保留模型/shared7K/App/元数据/数据环境，附只读du用于识别下一批旧output。尚未收到第二批执行回执，不自动批量清理旧一周目目录。
 
 > **当前结果（2026-10-27）：** 用户撤销服务器全量哈希对照要求，授权尽快清理并分析。已交付仅rawmesh/render/debug/pg_view的第一批约3.13GB清理脚本，保留模型/shared7K/postmesh/数据环境，尚待用户执行回执。本地原正式evaluator已完成三组比较（clean28e/exit0）：CD基线40.698198mm、4096为41.104636、16384为40.648423；16384相对基线仅-0.1223%，完整性仍差，尚无明确整体收益。完整数值与限制见[共享前缀预算结果](2026-10-27-shared7k-budget-results.md)。不继续等待服务器摘要，不自动追加训练/诊断体系。
