@@ -202,5 +202,7 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 ## 2026-10-27 Direct geometry analysis after hash waiver
 - [x] Reuseunchangedevaluator/protocol/verifiedinputs forbaseline4096/16384;exit0,clean28eidentity,JSON/CSV/inputSHAverified.
 - [x] Recordmixedresults:4096CD+0.998663%,16384CD-0.122301%vsbaseline;no clearoverallbenefit.
-- [ ] Receiveservercleanupstage1df/output;no agentSSHaccess.
+- [x] Receiveservercleanupstage1df/output:50G/42Gused/8.3Gavailable84%;noagentSSHaccess.
 - [ ] Discussnextboundedanalysis/methodscope;no automaticnewtrainingorarchitecture.
+
+- [ ] Stage2userauthorized:deleteonly3archivedpostmeshes;receivenewdfandreadonlyolderoutputduinventorybeforenextscope.

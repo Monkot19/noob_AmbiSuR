@@ -1,6 +1,6 @@
 # 共享7K实验：下载归档核对与服务器清理范围
 
-> **用户最新决定：** 2026-10-27明确要求跳过服务器全目录逐字节对照，尽快清理并分析。按已完成的本地完整性检查交付第一批约3.13GB清理命令；下文服务器MATCH前置条件已被用户撤销，仅保留为历史。实际服务器清理回执仍待返回。正式三组评价已完成，见[预算结果](2026-10-27-shared7k-budget-results.md)。
+> **用户最新决定：** 2026-10-27明确要求跳过服务器全目录逐字节对照，尽快清理并分析。按已完成的本地完整性检查交付第一批约3.13GB清理命令；下文服务器MATCH前置条件已被用户撤销，仅保留为历史。第一批清理回执已收到（数据盘余8.3G）；第二批用户授权继续清三份postmesh，详见末节。正式三组评价已完成，见[预算结果](2026-10-27-shared7k-budget-results.md)。
 
 日期：2026-10-27。用户授权核对本地下载，提出之后清理服务器已归档产物。本次只读检查原始归档，报告/清单另存独立analysis目录；未修改训练代码、模型、原始日志或数据集，未访问GT、运行几何评价或删除文件。
 
@@ -79,3 +79,35 @@ PY
 服务器先保留共享chkpnt7000.pth、基线7K App、各组30K Gaussian/App、基线7K PLY、cfg/相机/邻居/日志/身份/退出码与小型队列记录；数据集、DA3先验/权重、Conda环境、C0扩展和代码仓库均不碰。这样后续实验可以继续使用共同前缀，必要时可重提取渲染/mesh。
 
 一周目其他服务器输出需要先按当前du清单逐目录识别并核对本地归档，不能仅因名称旧或声称下载过就批量删除。实际删除命令只在摘要匹配并确认具体范围后提供。
+
+## 服务器清理第一批回执与第二批（2026-10-27）
+
+用户已执行第一批命令，三组rawmesh/render/debug/pg_view清理过程无错误，df显示50G盘已用42G、可用8.3G、84%。没有清理前同口径df，不把预估3.13GB称为实测释放量。用户随后授权继续清理。
+
+本地三份postmesh仍分别为608487442/609716114/604944238字节，正式结果文件仍在；第二批仅删除服务器对应三份postmesh，预计1823147794字节。其他旧output只列du，不删除。保留全部checkpoint/模型/App/配置日志/数据环境。以下命令语法通过，实际执行回执待返回。
+
+```bash
+bash <<'SH' || printf '\n清理中止，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "清理停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+runs=(
+  /root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1
+  /root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/c3510b02_seed0_30k_pair_v2/b4096
+  /root/autodl-tmp/ambisur_runs/Tool_Room/selector_from_native7k/c3510b02_seed0_30k_pair_v2/b16384
+)
+for run in "${runs[@]}"; do
+  test -s "$run/point_cloud/iteration_30000/point_cloud.ply"
+done
+for run in "${runs[@]}"; do
+  rm -f -- "$run/mesh/tsdf_fusion_post.ply"
+  printf '已清理服务器post mesh：%s\n' "$run"
+done
+df -h /root/autodl-tmp
+printf '\n=== 其余实验output占用，仅列出不删除 ===\n'
+du -h --max-depth=4 /root/autodl-tmp/ambisur_runs | sort -h | tail -n 30
+if [ -d /root/autodl-tmp/ambisur_diagnostics ]; then
+  printf '\n=== 旧诊断目录占用，仅列出不删除 ===\n'
+  du -h --max-depth=2 /root/autodl-tmp/ambisur_diagnostics | sort -h | tail -n 15
+fi
+SH
+```
