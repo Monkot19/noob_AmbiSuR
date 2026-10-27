@@ -185,6 +185,10 @@ Readuserattachment401c09fa:threepostmeshesremovedwithoutreportederror,df50G/41Gu
 
 ## 2026-10-27 Stage3 complete; failure analysis authorized
 
+### selector_V2 route and name confirmed
+User approves V2=V1+relocation. Prepare docs/superpowers/specs/2026-10-27-selector-v2-relocation-design.md, grounded in actual current render/optimizer/densification interfaces. Separate approved method/name from proposed100-step full-active schedule, pre-render mutation and local optimizer/stat handling. Preserve V1 default4096 and use explicit16384 for V2 experiment. No production code, dependencies, training or server action; next is short-spec confirmation, then V2 branch/minimal implementation.
+
+
 ### Follow-up: user defers control, seeks stronger geometry action
 Read actual Sparse2DGS train/update_points/replace_tensor_to_optimizer and primary PGSR/Sparse2DGS/AmbiSuR/Adam sources. Execute actual baseline SH helpers on native7Kcheckpoint and native30KPLY; selected213195/193737, both15%. Execute actual LR schedule and donor optimizer replacement on tiny CPU data; save aggregate sh_counts_and_lr.json outside immutable inputs. Discuss fixed-center normal candidate versus joint-plane comparison plus E-only position replacement and existing ALR. No GT access, training changes, new testsuite, GPU task or server operation. Document steering and source distinctions; method selection/implementation still awaits discussion.
 

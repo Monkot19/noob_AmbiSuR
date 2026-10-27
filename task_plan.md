@@ -218,3 +218,8 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Re-read actual SGU position update, training schedule and optimizer replacement; verify fixed-center normal homography mathematically.
 - [x] Execute existing SH selectors on native 7K/30K artifacts and existing LR function; save aggregate evidence without GT access.
 - [ ] Discuss two alternatives and choose next method with user; no implementation or new training authorized yet.
+
+## 2026-10-27 selector_V2 route selected
+- [x] User selects V2 = V1 + relocation; retain original ALR and V1 comparison, defer resumed-off control.
+- [x] Write short V2 spec with explicit proposed schedule, pre-render execution and selected-row state handling; no production edits.
+- [ ] Obtain confirmation of short spec's execution details, then create V2 branch and minimal implementation plan.
