@@ -207,4 +207,8 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 
 - [x] Stage2completeuserreceipt:50G/41Gused/10Gavail81%;duinventoryreceived.
 
-- [ ] Stage3handoff:oldarchivedC0/selectoronlymesh+images3.27GB;awaituserreceipt. D0/G0/Utilitymodels/auditrecordsretainpendingbackup/dispositiondecision.
+- [x] Stage3receipt:50G/37Gused/14Gavailable74%;D0/G0/Utilitymodels/auditrecordsretained.
+
+## 2026-10-27 Result mechanism analysis
+- [x] Actualsource/donorread,115logpairs,6reusedkernelpost/rawqueries/sameGTsample,parallelplanecounterexample;factsandcausalboundariesrecorded.
+- [ ] Discussresumed-off23Kcontrolandpotentialnormal-onlycandidate;no newmethodcode/trainingscopeapprovedyet.
