@@ -6,11 +6,12 @@
 
 两组按顺序运行，分别从完成7000轮后的同一checkpoint续训7001—30000轮，各23000步。两组使用相同Gaussian/Adam状态、7K外观权重、重启seed0、30K调度及r2/DA3输入；唯一方法参数差别为候选预算4096与16384。原生checkpoint未保存RNG、相机队列及外观优化器状态，因此不能声称逐步复现基线连续训练轨迹。
 
-直接运行原train.py，不新增测试、编译、安装或训练框架。各组独立复制对齐目录，以承接原loader对points3D.ply的写入；图像和DA3数组仅链接。原基线输入与输出只读。第一组失败后保留产物并停止队列，不自动启动第二组。请完整复制以下代码块执行。
+直接运行原train.py，不新增测试、编译、安装或训练框架。各组独立复制对齐目录，以承接原loader对points3D.ply的写入；图像和DA3数组仅链接。原基线输入与输出只读。第一组失败后保留产物并停止队列，不自动启动第二组。请完整复制以下代码块执行，包括开头的bash行和末尾的SH。独立Bash承接set -e，错误会显示行号，避免退出当前交互终端。
 
 ```bash
-(
+bash <<'SH' || printf '\n启动未成功，请贴回上方错误。\n'
   set -euo pipefail
+  trap 'rc=$?; printf "启动停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
   cd /root/autodl-tmp/noob_AmbiSuR
   test -z "$(git status --porcelain)"
   git fetch origin codex/second-run-selector
@@ -86,7 +87,7 @@
   printf '%s\n' "$pair_pid" > "$pair_out/pair.pid"
   printf '配对训练PID：%s\n总日志：%s/pair.log\n4096日志：%s/b4096/train.log\n16384日志：%s/b16384/train.log\n' \
     "$pair_pid" "$pair_out" "$pair_out" "$pair_out"
-)
+SH
 ```
 
 查看总日志pair.log确定当前预算，再查看对应train.log。Scene构造可能先打印原始点云初始化信息，恢复后的实际循环从7001开始，进度条总步数为23000。运行期间不要切换服务器代码或并行启动另一项GPU训练。
