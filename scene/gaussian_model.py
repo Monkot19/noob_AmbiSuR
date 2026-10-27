@@ -322,6 +322,50 @@ class GaussianModel:
 
         self.active_sh_degree = self.max_sh_degree
 
+    @torch.no_grad()
+    def relocate_selected(self, ids, target_xyz):
+        """Move selected rows before forward; preserve the xyz Parameter/Adam clock."""
+        xyz = self._xyz
+        if (not isinstance(ids, torch.Tensor) or ids.ndim != 1
+                or ids.dtype != torch.long or ids.device != xyz.device):
+            raise ValueError("relocation IDs must be int64:[M] on the model device")
+        if (not isinstance(target_xyz, torch.Tensor) or target_xyz.shape != (ids.numel(), 3)
+                or target_xyz.device != xyz.device or target_xyz.dtype != xyz.dtype
+                or not torch.isfinite(target_xyz).all()):
+            raise ValueError("relocation targets must be finite [M,3] matching xyz device/dtype")
+        if ids.numel() == 0:
+            return 0
+        if (ids.min() < 0 or ids.max() >= xyz.shape[0]
+                or ids.unique().numel() != ids.numel()):
+            raise ValueError("relocation IDs must be unique and in range")
+        groups = [group for group in self.optimizer.param_groups if group.get("name") == "xyz"]
+        if len(groups) != 1 or len(groups[0]["params"]) != 1 or groups[0]["params"][0] is not xyz:
+            raise ValueError("relocation requires the optimizer's current xyz Parameter")
+        state = self.optimizer.state.get(xyz)
+        if state is not None:
+            for name in ("exp_avg", "exp_avg_sq"):
+                value = state.get(name)
+                if (not isinstance(value, torch.Tensor) or value.shape != xyz.shape
+                        or value.device != xyz.device or value.dtype != xyz.dtype):
+                    raise ValueError("relocation requires matching xyz Adam moments")
+        stat_names = ("xyz_gradient_accum", "xyz_gradient_accum_abs", "denom",
+                      "denom_abs", "max_radii2D", "max_weight")
+        for name in stat_names:
+            value = getattr(self, name)
+            shape = (xyz.shape[0],) if name in ("max_radii2D", "max_weight") else (xyz.shape[0], 1)
+            if (not isinstance(value, torch.Tensor) or value.shape != shape
+                    or value.device != xyz.device or value.dtype != xyz.dtype):
+                raise ValueError("relocation requires matching statistics: " + name)
+        # Validate every input/state before the first write. Advanced indexing
+        # followed by .copy_()/.zero_() would operate on a temporary copy.
+        xyz.index_copy_(0, ids, target_xyz)
+        if state is not None:
+            state["exp_avg"].index_fill_(0, ids, 0)
+            state["exp_avg_sq"].index_fill_(0, ids, 0)
+        for name in stat_names:
+            getattr(self, name).index_fill_(0, ids, 0)
+        return ids.numel()
+
     def replace_tensor_to_optimizer(self, tensor, name):
         optimizable_tensors = {}
         for group in self.optimizer.param_groups:

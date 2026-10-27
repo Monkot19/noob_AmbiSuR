@@ -1,6 +1,6 @@
 # selector_V2：V1 + 重定位
 
-日期：2026-10-27。状态：**用户已批准路线与名称、基本同意主旨；要求结合供体与当前源码汇报具体改法。已补[源码适配清单](../../research/2026-10-27-selector-v2-code-adaptation.md)，具体改法待审阅；未修改生产代码、未启动实验。**
+日期：2026-10-27。状态：**用户已批准路线、名称及源码适配清单，并授权立即实施、离开期间自行解决常规问题并事后报告。实施分支codex/second-run-selector-v2；训练尚未启动。** [源码适配清单](../../research/2026-10-27-selector-v2-code-adaptation.md)、[实施计划](../plans/2026-10-27-selector-v2-implementation.md)。
 
 ## 1. 意图与范围
 

@@ -230,3 +230,9 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Fetch two pinned official raw files in memory and confirm byte equality with read source cache; no dependency installation or donor execution.
 - [x] Deliver concrete function signatures, tensor contracts, insertion order and donor-to-host differences in code-adaptation report; no production code edits.
 - [ ] User reviews concrete five-file changes; only then create V2 branch and implement.
+
+## 2026-10-27 selector_V2 implementation authorized
+- [x] User approves source-based concrete changes and authorizes autonomous routine fixes while away.
+- [x] Create D branch codex/second-run-selector-v2 at ef333bb; preserve original V1/C/baseline.
+- [ ] TDD one five-file implementation using existing test entry, local CPU verification, one independent review.
+- [ ] Commit/push fixed V2 code and deliver existing-prefix direct30K AutoDL handoff; no local GPU/server execution claim.

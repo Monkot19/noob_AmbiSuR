@@ -19,7 +19,8 @@ import numpy as np
 from random import randint
 from utils.loss_utils import l1_loss, ssim, lncc, get_img_grad_weight, DepthAnythingv2Loss
 from utils.graphics_utils import patch_offsets, patch_warp
-from utils.candidate_selector import (candidate_selector_active, compute_sh_ambiguity_labels, select_candidate_labels)
+from utils.candidate_selector import (candidate_selector_active, candidate_relocation_active,
+    compute_sh_ambiguity_labels, select_candidate_labels, select_candidate_labels_with_targets)
 from utils.run_metadata import build_resolved_config, collect_run_identity, write_run_metadata
 from gaussian_renderer import render, network_gui, render_normal
 import sys, time
@@ -87,8 +88,9 @@ def gen_virtul_cam(cam, trans_noise=1.0, deg_noise=15.0):
     return virtul_cam
 
 def _render_training_reference(viewpoint_cam, gaussians, pipe, bg, app_model,
-                               opt, *, iteration, seed):
+                                opt, *, iteration, seed):
     selector_data = None
+    relocate_now = candidate_relocation_active(iteration, opt)
     if candidate_selector_active(iteration, opt):
         if not isinstance(viewpoint_cam.depth_dict, dict) or "depth" not in viewpoint_cam.depth_dict:
             raise ValueError("candidate selector requires reference DA3 depth")
@@ -105,10 +107,14 @@ def _render_training_reference(viewpoint_cam, gaussians, pipe, bg, app_model,
                     return_plane=True, return_depth_normal=False,
                     ray_reg=False)["plane_depth"]
 
-            labels, extra, stats = select_candidate_labels(gaussians, viewpoint_cam,
-                reference_gray, prior_depth, prior_normal,
-                viewpoint_cam._candidate_support_cameras, opt, seed=seed,
-                iteration=iteration, support_depth_fn=source_depth)
+            select = select_candidate_labels_with_targets if relocate_now else select_candidate_labels
+            selected = select(gaussians, viewpoint_cam, reference_gray, prior_depth,
+                prior_normal, viewpoint_cam._candidate_support_cameras, opt,
+                seed=seed, iteration=iteration, support_depth_fn=source_depth)
+            labels, extra, stats = selected[:3]
+            if relocate_now:
+                targets = selected[3]
+                stats["relocated"] = 0 if targets is None else gaussians.relocate_selected(*targets)
             selector_data = dict(labels=labels, extra=extra, prior_depth=prior_depth,
                                  prior_normal=prior_normal, stats=stats)
     render_kwargs = {}
@@ -135,6 +141,7 @@ def _compute_alr_loss(viewpoint_cam, render_pkg, metric_depth, metric_depth_conf
 
 def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     candidate_selector_active(0, opt)
+    candidate_relocation_active(0, opt)
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset, opt, pipe)
     # # backup main code
@@ -501,6 +508,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
         # no_grad 禁止下面的管理操作建立新计算图，但仍可读取刚才 backward 已写好的 .grad。
         with torch.no_grad():
+            if selector_data is not None and candidate_relocation_active(iteration, opt):
+                tqdm.write(f"[relocation {iteration}] moved={selector_data['stats']['relocated']}")
             if selector_data is not None and iteration % 200 == 0:
                 stats = selector_data["stats"]
                 total_alr_weight = (render_pkg["rendered_unc"].detach()

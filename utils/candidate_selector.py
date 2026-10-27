@@ -40,6 +40,18 @@ def candidate_selector_active(iteration, opt):
     return iteration > max(1000, opt.unc_from_iter)
 
 
+def candidate_relocation_active(iteration, opt):
+    if not getattr(opt, "enable_candidate_relocation", False):
+        return False
+    if not getattr(opt, "enable_candidate_selector", False):
+        raise ValueError("candidate relocation requires the candidate selector")
+    interval = opt.candidate_relocation_interval
+    if isinstance(interval, bool) or not isinstance(interval, int) or interval <= 0:
+        raise ValueError("candidate_relocation_interval must be a positive integer")
+    active = candidate_selector_active(iteration, opt)
+    return active and iteration % interval == 0 and iteration < opt.iterations
+
+
 def _sample_candidate_ids(pool, budget, *, seed, iteration, camera_uid):
     if pool.numel() <= budget:
         return pool
@@ -152,9 +164,9 @@ def _source_cost(gaussians, reference, source, reference_patch, reference_values
 
 
 @torch.no_grad()
-def select_candidate_labels(gaussians, reference_camera, reference_gray,
-                            prior_depth, prior_normal, support_cameras, opt, *,
-                            seed, iteration, support_depth_fn):
+def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
+                               prior_depth, prior_normal, support_cameras, opt, *,
+                               seed, iteration, support_depth_fn, include_targets=False):
     active = candidate_selector_active(iteration, opt)
     xyz = gaussians.get_xyz
     if xyz.ndim != 2 or xyz.shape[-1] != 3 or not torch.isfinite(xyz).all():
@@ -165,7 +177,7 @@ def select_candidate_labels(gaussians, reference_camera, reference_gray,
     extra = torch.zeros_like(labels)
     stats = {"sampled": 0, "comparable": extra.sum(), "added": extra.sum()}
     if not active:
-        return labels, extra, stats
+        return labels, extra, stats, None
     ref = reference_camera
     height, width = ref.image_height, ref.image_width
     for name, tensor, shape in (("prior_depth", prior_depth, (height, width)),
@@ -177,7 +189,7 @@ def select_candidate_labels(gaussians, reference_camera, reference_gray,
     if reference_gray.ndim != 3 or reference_gray.shape[0] != 1 or reference_gray.device != xyz.device:
         raise ValueError("reference_gray must be [1,Hn,Wn] on the model device")
     if len(support_cameras) < 2 or xyz.shape[0] == 0:
-        return labels, extra, stats
+        return labels, extra, stats, None
 
     transform = ref.world_view_transform
     camera_xyz = xyz @ transform[:3, :3] + transform[3, :3]
@@ -197,7 +209,7 @@ def select_candidate_labels(gaussians, reference_camera, reference_gray,
                                seed=seed, iteration=iteration, camera_uid=ref.uid)
     stats["sampled"] = ids.numel()
     if not ids.numel():
-        return labels, extra, stats
+        return labels, extra, stats, None
     centers = centers[ids]
     reference_patch = centers[:, None] / ref.ncc_scale + offsets
     points_g = camera_xyz[ids]
@@ -227,7 +239,7 @@ def select_candidate_labels(gaussians, reference_camera, reference_gray,
     valid_p &= stencil_support >= 1 - _EPS
     valid = valid_g & valid_p
     if not valid.any():
-        return labels, extra, stats
+        return labels, extra, stats, None
     ids, centers, reference_patch = ids[valid], centers[valid], reference_patch[valid]
     points_g, normal_g, distance_g = points_g[valid], normal_g[valid], distance_g[valid]
     points_p, normal_p, distance_p = points_p[valid], normal_p[valid], distance_p[valid]
@@ -256,4 +268,29 @@ def select_candidate_labels(gaussians, reference_camera, reference_gray,
     extra[ids] = accepted
     stats["comparable"] = common.any(-1).sum()
     stats["added"] = extra.sum()
-    return labels | extra, extra, stats
+    targets = None
+    if include_targets and accepted.any():
+        # Both tensors keep the SAME sampled/filtered order; extra.nonzero()
+        # would sort the IDs and can pair targets with the wrong Gaussians.
+        move_ids = ids[accepted]
+        world_xyz = (points_p[accepted] - transform[3, :3]) @ transform[:3, :3].T
+        targets = (move_ids.detach(), world_xyz.detach())
+    return labels | extra, extra, stats, targets
+
+
+def select_candidate_labels(gaussians, reference_camera, reference_gray,
+                            prior_depth, prior_normal, support_cameras, opt, *,
+                            seed, iteration, support_depth_fn):
+    """Original V1 interface and choices, without producing relocation targets."""
+    return _select_candidate_geometry(gaussians, reference_camera, reference_gray,
+        prior_depth, prior_normal, support_cameras, opt, seed=seed,
+        iteration=iteration, support_depth_fn=support_depth_fn)[:3]
+
+
+def select_candidate_labels_with_targets(gaussians, reference_camera, reference_gray,
+                                         prior_depth, prior_normal, support_cameras, opt, *,
+                                         seed, iteration, support_depth_fn):
+    """V2 uses exactly the V1 decisions and their evaluated DA3 world targets."""
+    return _select_candidate_geometry(gaussians, reference_camera, reference_gray,
+        prior_depth, prior_normal, support_cameras, opt, seed=seed,
+        iteration=iteration, support_depth_fn=support_depth_fn, include_targets=True)

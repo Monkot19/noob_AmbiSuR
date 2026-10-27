@@ -76,17 +76,22 @@ class AnalyticCamera:
         return self.gray.expand(3, -1, -1), self.gray
 
 
-def production_depth_sampler():
+def production_model_method(name):
     # Execute the actual existing method body, without importing unavailable
     # GaussianModel CUDA dependencies; native class integration is tested below.
     path = Path(__file__).resolve().parents[1] / "scene/gaussian_model.py"
     model = next(n for n in ast.parse(path.read_text(encoding="utf-8")).body
                  if isinstance(n, ast.ClassDef) and n.name == "GaussianModel")
-    method = next(n for n in model.body if isinstance(n, ast.FunctionDef)
-                  and n.name == "get_points_depth_in_depth_map")
+    method = next((n for n in model.body if isinstance(n, ast.FunctionDef)
+                   and n.name == name), None)
+    assert method is not None, "missing production method: " + name
     namespace = {"torch": torch}
     exec(compile(ast.Module(body=[method], type_ignores=[]), str(path), "exec"), namespace)
     return namespace[method.name]
+
+
+def production_depth_sampler():
+    return production_model_method("get_points_depth_in_depth_map")
 
 
 class AnalyticGaussians:
@@ -306,6 +311,200 @@ class CandidateMathTests(unittest.TestCase):
             self.run_selector(ref, sources, model, depth, normal)
 
 
+class CandidateRelocationTests(unittest.TestCase):
+    stat_names = ("xyz_gradient_accum", "xyz_gradient_accum_abs", "denom",
+                  "denom_abs", "max_radii2D", "max_weight")
+
+    def fixture(self, count=12):
+        ref, sources, model, depth, normal = analytic_fixture()
+        model = AnalyticGaussians(ref, count)
+        transform = ref.world_view_transform
+        camera_xyz = torch.stack((torch.linspace(-.25, .25, count),
+            torch.linspace(.15, -.15, count), torch.full((count,), 3.)), -1)
+        model._xyz = torch.nn.Parameter((camera_xyz - transform[3, :3]) @ transform[:3, :3].T)
+        model._rotation = torch.nn.Parameter(torch.ones(count, 4))
+        model.relocate_selected = production_model_method("relocate_selected").__get__(model)
+        model.optimizer = torch.optim.Adam([
+            dict(params=[model._xyz], name="xyz", lr=0.),
+            dict(params=[model._rotation], name="rotation", lr=.001)], eps=1e-15)
+        (model._xyz.square().sum() + model._rotation.square().sum()).backward()
+        model.optimizer.step()
+        model.optimizer.zero_grad(set_to_none=True)
+        model.optimizer.param_groups[0]["lr"] = .00016
+        for name in self.stat_names:
+            values = torch.arange(1, count + 1, dtype=model._xyz.dtype)
+            setattr(model, name, values if name in ("max_radii2D", "max_weight") else values[:, None])
+        return ref, sources, model, depth, normal
+
+    def test_relocation_defaults_schedule_and_invalid_configuration(self):
+        parser = ArgumentParser()
+        group = OptimizationParams(parser)
+        opts = group.extract(parser.parse_args([]))
+        self.assertFalse(getattr(opts, "enable_candidate_relocation", True))
+        self.assertEqual(opts.candidate_relocation_interval, 100)
+        opts = group.extract(parser.parse_args(["--enable_candidate_selector",
+            "--enable_candidate_relocation", "--candidate_relocation_interval", "100"]))
+        record = build_resolved_config(SimpleNamespace(), opts, SimpleNamespace())
+        self.assertTrue(record["optimization"]["enable_candidate_relocation"])
+        self.assertEqual(record["optimization"]["candidate_relocation_interval"], 100)
+        for iteration in (0, 7000, 7001, 7101, 30000):
+            self.assertFalse(selector.candidate_relocation_active(iteration, opts))
+        for iteration in (7100, 15000, 29900):
+            self.assertTrue(selector.candidate_relocation_active(iteration, opts))
+        for changes in ({"candidate_relocation_interval": 0},
+                        {"candidate_relocation_interval": True},
+                        {"candidate_relocation_interval": 1.5},
+                        {"enable_candidate_selector": False}, {"use_mono": True}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                selector.candidate_relocation_active(0, options(enable_candidate_relocation=True, **changes))
+
+    def test_real_selector_targets_keep_id_order_and_v1_result(self):
+        ref, sources, model, depth, normal = self.fixture()
+        model.scores[0], model.scores[3] = 0., 4.
+        opts = options(candidate_selector_budget=7, enable_candidate_relocation=True)
+        calls = []
+        def source_depth(camera):
+            calls.append(camera.uid)
+            return depth.new_full((1, camera.image_height, camera.image_width), 2.)
+        kwargs = dict(seed=0, iteration=7100, support_depth_fn=source_depth)
+        rng = torch.get_rng_state().clone()
+        old = selector.select_candidate_labels(model, ref, ref.gray, depth, normal, sources, opts, **kwargs)
+        new = selector.select_candidate_labels_with_targets(model, ref, ref.gray, depth, normal, sources, opts, **kwargs)
+        self.assertEqual(len(old), 3)
+        self.assertEqual(len(new), 4)
+        for i in (0, 1):
+            self.assertTrue(torch.equal(old[i], new[i]))
+        self.assertEqual(old[2], new[2])
+        self.assertEqual(calls, [1, 2, 1, 2])
+        self.assertTrue(torch.equal(rng, torch.get_rng_state()))
+        ids, targets = new[3]
+        self.assertGreater(ids.numel(), 1)
+        self.assertFalse(torch.equal(ids, ids.sort().values), "exercise nonsorted sampled IDs")
+        self.assertEqual(ids.dtype, torch.long)
+        self.assertEqual(set(ids.tolist()), set(new[1].nonzero().flatten().tolist()))
+        original_labels = selector.compute_sh_ambiguity_labels(model, opts)
+        self.assertTrue(original_labels.any())
+        self.assertFalse(original_labels[ids].any())
+        self.assertTrue(new[0][original_labels].all())
+        transform = ref.world_view_transform
+        original = model._xyz.detach()[ids] @ transform[:3, :3] + transform[3, :3]
+        expected_camera = original * (2. / original[:, 2:3])
+        expected = (expected_camera - transform[3, :3]) @ transform[:3, :3].T
+        torch.testing.assert_close(targets, expected)
+        self.assertFalse(targets.requires_grad)
+        parameter = model._xyz
+        state = model.optimizer.state[parameter]
+        before_xyz = parameter.detach().clone()
+        before_moments = {k: v.clone() for k, v in state.items()}
+        before_stats = {k: getattr(model, k).clone() for k in self.stat_names}
+        other_state = {k: v.clone() for k, v in model.optimizer.state[model._rotation].items()}
+        rotation = model._rotation.detach().clone()
+        self.assertEqual(model.relocate_selected(ids, targets), len(ids))
+        self.assertIs(model._xyz, parameter)
+        self.assertIs(model.optimizer.param_groups[0]["params"][0], parameter)
+        keep = torch.ones(len(parameter), dtype=torch.bool); keep[ids] = False
+        torch.testing.assert_close(parameter[ids], expected)
+        self.assertTrue(torch.equal(parameter[keep], before_xyz[keep]))
+        self.assertTrue(torch.equal(state["step"], before_moments["step"]))
+        self.assertEqual(model.optimizer.param_groups[0]["lr"], .00016)
+        for key in ("exp_avg", "exp_avg_sq"):
+            self.assertEqual(int(torch.count_nonzero(state[key][ids])), 0)
+            self.assertTrue(torch.equal(state[key][keep], before_moments[key][keep]))
+        for key in self.stat_names:
+            self.assertEqual(int(torch.count_nonzero(getattr(model, key)[ids])), 0)
+            self.assertTrue(torch.equal(getattr(model, key)[keep], before_stats[key][keep]))
+        self.assertTrue(torch.equal(model._rotation, rotation))
+        for key, value in other_state.items():
+            self.assertTrue(torch.equal(model.optimizer.state[model._rotation][key], value))
+        parameter.square().sum().backward()
+        model.optimizer.step()
+        self.assertTrue(torch.isfinite(parameter).all())
+        empty = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            depth, normal, [], opts, **kwargs)
+        self.assertIsNone(empty[3])
+        self.assertFalse(empty[1].any())
+
+    def test_relocation_invalid_inputs_do_not_partially_write(self):
+        for case in ("dtype", "shape", "range", "duplicate", "nan", "binding", "state", "stats"):
+            with self.subTest(case=case):
+                _, _, model, _, _ = self.fixture(4)
+                ids = torch.tensor([2, 0]); targets = model._xyz.detach()[ids] + .2
+                if case == "dtype": ids = ids.float()
+                if case == "shape": targets = targets[:, :2]
+                if case == "range": ids[0] = 9
+                if case == "duplicate": ids[0] = 0
+                if case == "nan": targets[0, 0] = float("nan")
+                if case == "binding": model.optimizer.param_groups[0]["params"] = [model._rotation]
+                if case == "state": model.optimizer.state[model._xyz]["exp_avg"] = torch.zeros(1, 3)
+                if case == "stats": model.denom = torch.ones(2, 1)
+                xyz = model._xyz.detach().clone()
+                moments = {k: v.clone() for k, v in model.optimizer.state[model._xyz].items()}
+                with self.assertRaises((ValueError, TypeError)):
+                    model.relocate_selected(ids, targets)
+                self.assertTrue(torch.equal(model._xyz, xyz))
+                for key, value in moments.items():
+                    self.assertTrue(torch.equal(model.optimizer.state[model._xyz][key], value))
+
+    def test_relocation_empty_and_uninitialized_adam(self):
+        _, _, model, _, _ = self.fixture(4)
+        before = model._xyz.detach().clone()
+        state = model.optimizer.state[model._xyz]["exp_avg"].clone()
+        self.assertEqual(model.relocate_selected(torch.empty(0, dtype=torch.long), before[:0]), 0)
+        self.assertTrue(torch.equal(model._xyz, before))
+        self.assertTrue(torch.equal(model.optimizer.state[model._xyz]["exp_avg"], state))
+        del model.optimizer.state[model._xyz]
+        model.relocate_selected(torch.tensor([1]), before[1:2] + .1)
+        self.assertNotIn(model._xyz, model.optimizer.state)
+
+    def test_real_training_helper_moves_before_main_render_only_on_event(self):
+        root = Path(__file__).resolve().parents[1]
+        renderer_tree = ast.parse((root / "gaussian_renderer/__init__.py").read_text(encoding="utf-8"))
+        normal_node = next(n for n in renderer_tree.body if isinstance(n, ast.FunctionDef) and n.name == "render_normal")
+        normal_namespace = dict(normal_from_depth_image=normal_from_depth_image)
+        exec(compile(ast.Module(body=[normal_node], type_ignores=[]), "<real render_normal>", "exec"), normal_namespace)
+        camera_tree = ast.parse((root / "scene/cameras.py").read_text(encoding="utf-8"))
+        camera_class = next(n for n in camera_tree.body if isinstance(n, ast.ClassDef) and n.name == "Camera")
+        calibration = next(n for n in camera_class.body if isinstance(n, ast.FunctionDef) and n.name == "get_calib_matrix_nerf")
+        calibration_namespace = dict(torch=torch)
+        exec(compile(ast.Module(body=[calibration], type_ignores=[]), "<real camera calibration>", "exec"), calibration_namespace)
+        tree = ast.parse((root / "train.py").read_text(encoding="utf-8"))
+        helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_render_training_reference")
+        for iteration, enabled, invalid in ((7100, True, False), (7101, True, False),
+                                            (7100, False, False), (7100, True, True)):
+            with self.subTest(iteration=iteration, enabled=enabled, invalid=invalid):
+                ref, sources, model, _, _ = self.fixture(4)
+                ref.get_calib_matrix_nerf = calibration_namespace[calibration.name].__get__(ref)
+                ref._candidate_support_cameras = sources
+                if invalid: ref.depth_dict["depth"].fill_(0)
+                should_move = enabled and not invalid and iteration == 7100
+                calls = []
+                def render_boundary(camera, current, *args, **kwargs):
+                    calls.append(camera.uid)
+                    if camera.uid != ref.uid:
+                        self.assertFalse(torch.is_grad_enabled())
+                        return {"plane_depth": current._xyz.new_full((1, 32, 32), 2.)}
+                    self.assertTrue(torch.is_grad_enabled())
+                    camera_xyz = current._xyz @ ref.world_view_transform[:3, :3] + ref.world_view_transform[3, :3]
+                    torch.testing.assert_close(camera_xyz[:, 2], camera_xyz.new_full((4,), 2. if should_move else 3.))
+                    return {"plane_depth": camera_xyz[:, 2].mean().expand(1, 32, 32)}
+                namespace = dict(torch=torch, F=torch.nn.functional, render=render_boundary,
+                    render_normal=normal_namespace["render_normal"],
+                    candidate_selector_active=selector.candidate_selector_active,
+                    candidate_relocation_active=getattr(selector, "candidate_relocation_active", None),
+                    select_candidate_labels=selector.select_candidate_labels,
+                    select_candidate_labels_with_targets=getattr(selector, "select_candidate_labels_with_targets", None))
+                exec(compile(ast.Module(body=[helper], type_ignores=[]), "<real training helper>", "exec"), namespace)
+                opts = options(enable_candidate_relocation=enabled, ray_color_lambda=-1)
+                rng = torch.get_rng_state().clone()
+                pkg, data = namespace[helper.name](ref, model, None, None, None, opts, iteration=iteration, seed=0)
+                self.assertEqual(calls, [0] if invalid else [1, 2, 0])
+                self.assertTrue(torch.equal(rng, torch.get_rng_state()))
+                self.assertEqual(data["stats"].get("relocated", 0), 4 if should_move else 0)
+                pkg["plane_depth"].sum().backward()
+                model.optimizer.step()
+                self.assertTrue(torch.isfinite(model._xyz).all())
+
+
 def native_unavailable():
     if not torch.cuda.is_available():
         return "CUDA unavailable"
@@ -410,6 +609,28 @@ class CandidateIntegrationTests(unittest.TestCase):
             self.assertGreater(float(grad.abs().sum()), 0)
         optimizer.step()
         self.assertTrue(torch.isfinite(model.get_xyz).all())
+
+    def test_v2_real_render_relocation_alr_backward_and_step(self):
+        ref, sources, model, pipe, bg = self.fixture()
+        opt = options(enable_candidate_relocation=True, ray_color_lambda=-1)
+        model.spatial_lr_scale = 1.
+        model.training_setup(opt)
+        model.max_radii2D = model._xyz.new_zeros(len(model._xyz))
+        model.max_weight = model.max_radii2D.clone()
+        parameter = model._xyz
+        before = parameter.detach().clone()
+        pkg, data = self.reference_render(ref, model, pipe, bg, None, opt, iteration=7100, seed=0)
+        self.assertGreater(data["stats"]["relocated"], 0)
+        self.assertIs(model._xyz, parameter)
+        self.assertTrue(torch.equal(parameter[~data["extra"]], before[~data["extra"]]))
+        camera_xyz = parameter[data["extra"]] @ ref.world_view_transform[:3, :3] + ref.world_view_transform[3, :3]
+        torch.testing.assert_close(camera_xyz[:, 2], torch.full_like(camera_xyz[:, 2], 2.))
+        loss = ((pkg["render"] - .3) ** 2).mean() + self.alr(ref, pkg,
+            data["prior_depth"], 1, -1, 7100, opt, data["prior_normal"])
+        loss.backward()
+        self.assertTrue(torch.isfinite(parameter.grad).all())
+        model.optimizer.step()
+        self.assertTrue(torch.isfinite(parameter).all())
 
     def test_real_training_helper_off_ezero_and_active_path(self):
         ref, sources, model, pipe, bg = self.fixture(invalid_prior=True)
