@@ -190,3 +190,11 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 - [x] Userauthorizesnewbaseline/4096/16384mesh extraction;reuseexistingextractorandparameters,actualCLI/Bashsyntaxchecked.
 - [ ] User-operatedqueuechecks16384exitcode/artifactsandextractsthreeserially;receivequeue0/nonemptymeshes.
 - [ ] Userdownloadsfullnewbaselineandpairoutputs;localformalgeometrycomparisonviaexistingevaluator.
+
+## 2026-10-27 Download verification before storage cleanup
+- [x] Locateuserprovidedbaseline/pairwrappers;alltrain/extract/queueexitcodes0andcriticalfilespresent.
+- [x] Read-onlyverifyPLYpayloads/PTHzipCRC+CPUload/rendercoverage;4749filehashesandsharedprefixSHA match.
+- [x] Archiveverification.json/twofullmanifestsoutsidesourceoutputs;write2026-10-27-shared7k-download-verification.md;serverfullcomparisonpending.
+- [ ] Presentconcretecleanupscope;no deletionuntiluserconfirmsandserver/localhashesmatch.
+
+Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Nextserverreadonlymanifestcomparisonandconcretecleanupconfirmationareseparatefromresearchanalysis.
