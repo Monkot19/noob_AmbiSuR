@@ -179,3 +179,8 @@ User steering before launch:questions uncontrolled pre7K divergence and fairness
 - [x] TraceactualNumPyradiusproducer,correctexistingfixture,observeRED→GREEN;onlynativeconsumerweights_only=False;19pass/5native skips/reviewpassed.
 - [x] Fixedcommitc3510b0andfreshv2pairedrestartguideprepared/validated;publishonsecond-runbranch,preservefailedf41/baseline.
 - [ ] Receiveuser-operatedserverrestart/completion;noSSHaccess.
+
+## 2026-10-27 Shared7K paired training receipts
+- [x] Receive4096full23Kcontinuationlog/global30Kcompletionandsaves;checkpointloadcompatibilityfailureovercome.
+- [ ] Confirm4096exitcode/nonemptymodels and16384automaticqueueprogress/completion.
+- [ ] Afterpaircompletion,reusemesh extraction/settings andformalpairedgeometryevaluationfornativeC0/4096/16384;no newmethod/diagnosticframework.
