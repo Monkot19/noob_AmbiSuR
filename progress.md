@@ -185,6 +185,11 @@ Readuserattachment401c09fa:threepostmeshesremovedwithoutreportederror,df50G/41Gu
 
 ## 2026-10-27 Stage3 complete; failure analysis authorized
 
+### selector_V2 published
+New origin/codex/second-run-selector-v2 pushed; git ls-remote verified initialpublished HEAD0afa978 matches local. Fixed productiona114ed5 remains exact reviewed code; V1ef333bb/baselined6f15c8/peeledc0-baselined6f15c8/Cdetached3775135 verified. Docs-only final receipt updates plan and new-computer clone branch/runtime, no new tests/production changes. Direct30K guide ready; server launch/GPU/results await actual user execution, not assumed complete. One fresh review had no findings, no deferred minors; rulings and limitations recorded in adaptation receipt.
+
+Automatic approval rejected a combined final command containing removal of this plan's ignored temporary review directory (only stated reason: blocked by policy); no shell command from that invocation executed. Cancel optional deletion and retain .superpowers/sdd/2026-10-27-selector-v2-implementation; publish documentation separately. No data/output cleanup or permission request, no code impact.
+
 ### selector_V2 independent review and direct30K handoff
 Fixed codea114ed5, five code files only, fresh reviewer30tests24pass/6native skipped/no Critical/Important/Minor findings. No fix pass. Main agent checked launcher outer/inner/progress bash syntax and real Model/Pipeline/Optimization CLI parsing. Update D/C recovery instructions, approved scope, spec/plan/source receipt and native7K launch guide. Preserve V1ef333bb and baselined6f15c8. Review boundaries explicitly retained: actual gain/time/nativeGPU unjudged; approved DA3/ADC/window and inherited baseline quirks unchanged; launch checked statically only. New branch publication pending; no remote training/GT/output changes.
 

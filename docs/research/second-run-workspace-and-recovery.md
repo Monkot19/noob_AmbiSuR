@@ -16,7 +16,7 @@
 
 - 原 D 分支 `codex/candidate-selector-v1` 仍为 `62e9117dfb2e20a06b257d166d8a6636d37845cc`。
 - 归档分支 `codex/archive-before-second-run-20261023` 为 `7b3154b7daa7e03ca7dad5b0e5cf1260f4e1099d`，已推送 origin，保存8个已跟踪修改和16个未跟踪文件。它是历史快照，不是当前原生验证通过的二周目实现。
-- 二周目接管起点 `3775135690b2ea4edfdc50e3b19fba467d02d117`；本次只改工作规则和文档，生产代码与它一致。
+- 二周目2026-10-23接管起点 `3775135690b2ea4edfdc50e3b19fba467d02d117`，当次迁移只改规则与文档；2026-10-27已在D独立分支新增V2五文件实现，当前固定生产代码a114ed5，见项目交接入口。
 - 原192个忽略文件未清理且经哈希确认不变；其中54个非缓存历史记录另存ZIP。残留旧缓存不作为二周目实现依据。
 
 备份目录包含：
@@ -38,7 +38,7 @@ ZIP保存原始换行字节；Git的 `core.autocrlf=true` 会正常规范化文�
 目标目录尚不存在时执行：
 
 ```powershell
-git clone --branch codex/second-run-selector https://github.com/Monkot19/noob_AmbiSuR.git D:\research_Space\noob_AmbiSuR
+git clone --branch codex/second-run-selector-v2 https://github.com/Monkot19/noob_AmbiSuR.git D:\research_Space\noob_AmbiSuR
 git -C D:\research_Space\noob_AmbiSuR branch --show-current
 git -C D:\research_Space\noob_AmbiSuR rev-parse HEAD
 git -C D:\research_Space\noob_AmbiSuR status --short
@@ -52,10 +52,10 @@ git -C D:\research_Space\noob_AmbiSuR status --short
 
 ```powershell
 Set-Location D:\research_Space\noob_AmbiSuR
-& C:\Users\DELL\miniconda3\envs\pytorch\python.exe -B -m unittest tests.test_candidate_selector -v
+& D:\research_Space\ambisur-eval-runtime\Scripts\python.exe -B -m unittest tests.test_candidate_selector -v
 ```
 
-本机接管后是18项通过、5项原生集成因缺本地扩展而跳过。服务器 `3d85faf` 的23项全通过是另一份回执，不混作新电脑测试结果。实际原生训练继续在AutoDL，环境与扩展路径见当前交接入口。
+2026-10-27本机V2统一30项24CPU通过、6原生集成缺扩展跳过；10-23接管时的18通过/5跳过及服务器3d85faf的23项全通过均为历史回执，不混作V2或新电脑测试结果。实际原生训练继续在AutoDL，环境与扩展路径见当前交接入口。
 
 ## 离线 bundle 恢复与旧文件查看
 
@@ -65,7 +65,7 @@ Set-Location D:\research_Space\noob_AmbiSuR
 git clone --branch codex/second-run-selector D:\research_Space\noob_AmbiSuR_workspace_backup_20261023T040116Z\repository-preserved.bundle D:\research_Space\AmbiSuR_recovery_check
 ```
 
-bundle保存接管前二周目 `3775135` 及归档历史；之后的交接文档提交从GitHub获取。这样clone后的origin初始指向bundle，连接GitHub时须核对并显式更新remote，不能当作已经同步到远端最新。
+bundle保存接管前二周目 `3775135` 及归档历史，不包含后来V2；V2从GitHub新分支或D最新百度云目录恢复。这样clone后的origin初始指向bundle，连接GitHub时须核对并显式更新remote，不能当作已经同步到远端最新。
 
 旧文件可用 `git show codex/archive-before-second-run-20261023:相对路径` 查看；新clone中使用 `origin/codex/archive-before-second-run-20261023:相对路径`。ZIP解包到单独目录，不直接覆盖当前二周目文件。
 

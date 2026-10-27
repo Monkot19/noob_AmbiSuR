@@ -217,22 +217,23 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Accept explicit deferral of resumed-off control; do not make it a prerequisite for method exploration.
 - [x] Re-read actual SGU position update, training schedule and optimizer replacement; verify fixed-center normal homography mathematically.
 - [x] Execute existing SH selectors on native 7K/30K artifacts and existing LR function; save aggregate evidence without GT access.
-- [ ] Discuss two alternatives and choose next method with user; no implementation or new training authorized yet.
+- [x] User chose V2=V1+relocation; subsequent implementation authorization recorded below.
 
 ## 2026-10-27 selector_V2 route selected
 - [x] User selects V2 = V1 + relocation; retain original ALR and V1 comparison, defer resumed-off control.
 - [x] Write short V2 spec with explicit proposed schedule, pre-render execution and selected-row state handling; no production edits.
-- [ ] Obtain confirmation of short spec's execution details, then create V2 branch and minimal implementation plan.
+- [x] User confirmed source-based concrete changes; V2 branch and implementation plan created.
 
 ## 2026-10-27 V2 source-to-code adaptation requested
 - [x] User basically accepts V2 intent, asks for donor-source-based concrete code changes before implementation.
 - [x] Re-read pinned Sparse2DGS train/update_points/world-unprojection/optimizer code and current selector/render/training/densification/metadata/test interfaces.
 - [x] Fetch two pinned official raw files in memory and confirm byte equality with read source cache; no dependency installation or donor execution.
 - [x] Deliver concrete function signatures, tensor contracts, insertion order and donor-to-host differences in code-adaptation report; no production code edits.
-- [ ] User reviews concrete five-file changes; only then create V2 branch and implement.
+- [x] User approved concrete five-file changes; branch created and implementation completed.
 
 ## 2026-10-27 selector_V2 implementation authorized
 - [x] User approves source-based concrete changes and authorizes autonomous routine fixes while away.
 - [x] Create D branch codex/second-run-selector-v2 at ef333bb; preserve original V1/C/baseline.
-- [ ] TDD one five-file implementation using existing test entry, local CPU verification, one independent review.
-- [ ] Commit/push fixed V2 code and deliver existing-prefix direct30K AutoDL handoff; no local GPU/server execution claim.
+- [x] TDD one five-file implementation using existing test entry, local CPU verification, one independent review.
+- [x] Commit/push fixed V2 code and deliver existing-prefix direct30K AutoDL handoff; no local GPU/server execution claim.
+- [ ] User executes AutoDL launch and returns actual native training/results; no further local action required before launch.

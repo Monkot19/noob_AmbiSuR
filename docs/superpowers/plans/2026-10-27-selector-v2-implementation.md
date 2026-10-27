@@ -41,7 +41,7 @@
 - [x] One fresh independent whole-branch review against spec/plan/donor-adaptation. Fix material findings locally with RED→GREEN; user authorized routine decisions, report any rulings.
 - [x] Update existing handoff/docs and provide bash-heredoc AutoDL launch command with fresh private view/output, existing C0 extension and native7K/App, budget16384; no server training execution assumed.
 - [x] Syntax-check shell handoff, final scoped tests if fixes changed code, git diff --check and clean status; confirm baseline/V1 branches unchanged.
-- [ ] Push new V2 branch and verify remote SHA, record fixed production commit separately from docs commit. No PR/merge or baseline training.
+- [x] Push new V2 branch and verify remote SHA, record fixed production commit separately from docs commit. No PR/merge or baseline training.
 
 ## Execution ledger
 - 2026-10-27: User approved implementation and autonomous routine fixes. Created V2 branch at ef333bb, clean; C worktree remains detached3775135.
@@ -55,3 +55,4 @@
 - Final: Ruling: leave inherited ALR/Ray-Color/topology behaviors unchanged — preserve baseline contract, cost is retaining their limitations.
 - Final: Ruling: native GPU not judged with missing extension — no native success claim; observe authorized30K, cost is possible runtime failure/relaunch.
 - Final: Ruling: launch doc outside code review checked by main agent with bash-n/real CLI — actual server state awaits execution, cost is possible path/network startup failure.
+- Task2 publication complete: new origin/codex/second-run-selector-v2 pushed; remote HEAD0afa978 matched local on verification. Fixed production commit a114ed5 is reachable; later publication receipt is docs-only. No PR/merge/server operation.
