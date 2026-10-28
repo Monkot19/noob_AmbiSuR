@@ -255,4 +255,7 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Verify pinnedlaunch CLI/Bash, all existingV2optimizationvalues identical, onefreshreview nofindings/31tests25pass6skip; codea52ab904/handoffdocad8ecc7 ready.
 - [x] Publish isolatedbranch: initialremote78312ce matcheslocal via ls-remote; fixedcodea52ab904/fixedlaunchdocad8ecc7 available. Deliver shortpinned-doc launcher.
 - [x] User returns earlyglobal30K Trainingcomplete log:58:27,PSNR30.850548934936526,N1226364,late selector active.
-- [ ] Confirm trainexitcode/nonemptyartifacts/exact79relocationsequence, extract earlymesh with original settings, then reuse formal evaluation. Noearlygeometryscore yet.
+- [x] Downloaded early:1584files,train/extractexit0,nonemptyGaussian/App/raw/postmesh,exact79events7100..14900 andoriginalextractionsettings verified.
+- [x] Four-model unchanged formal evaluationexit0/132.27s,old3scores/hashes/commonGT reproduce,12CSVrows agreeJSON. earlyCD39.744465mm/F1@5cm.787739,CDgain2.34343%vsC0/.87855%vsfullV2,trainPSNR30.850549.
+- [x] Record prefixtrajectory caveat:79movedcounts differ beforecutoff despite equaloldoptions/cameras/recordedruntime; no causaloverclaim or unapprovedretraining.
+- [ ] Discuss nextscope:earlyregionalgains/harms notyetmapped; do notchange method orstarttraining automatically.

@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **early首次正式评价完成（2026-10-28）：** 下载关键产物及train/extract退出码0、精确79次重定位序列已核对。原evaluator一次四模型评价退出码0/132.27秒，旧3模型指标/hash和共同GT/协议精确复现，JSON/CSV12行一致。early Accuracy34.679897mm、Completeness44.809032mm、CD39.744465mm、F1@5cm0.787739、trainPSNR30.850549；CD相对C0改善2.34343%、相对V1改善2.22385%、相对完整V2改善0.87855%，PSNR恢复到V1附近。本次四组中几何均值最好但增益有限。额外核对发现前79次moved计数与完整V2不逐条相同（323721vs325258合计），尽管实际优化参数/相机/记录环境一致，不能当完全相同前15K轨迹或严格因果证明。详见[early结果报告](2026-10-28-selector-v2-early-results.md)，产物evaluation/selector_v2_early_native7k_seed0_30k_v1。尚未做early区域分解，不能声称旧负区域已修复；下一步范围待讨论，不自动加训练/改算法。
+
 > **v2_early训练完成日志（2026-10-28）：** 用户返回a52ab904对应输出：全局30000、23000/23000、58:27、Training complete12:34:24及Gaussian/App保存；N1226364、train L1=0.017084373719990255、PSNR=30.850548934936526。比完整V2高0.158683dB、比V1-16384高0.010351dB、比连续C0低0.221731dB，均为既有训练视角统计，非新视角/几何结论。末段26800..30000只有selector日志，符合截止后继续V1路径的预期；完整79次重定位序列、退出码/文件非空仍待服务器检查。下一步仅提取此early模型（5m/.005m/trunc4/cluster2），不重提取旧模型、不改方法；尚无earlymesh或几何评价结果。
 
 > **v2_early分支已发布（2026-10-28）：** 新origin/codex/second-run-selector-v2-early首次发布HEAD78312ce4ed8dc38cd31cf3f8958d4046a88316b9，git ls-remote与本地精确一致；之后仅更新文档收据。固定生产a52ab904、固定启动文档ad8ecc7357db21ea595a43971df7e471bd5a886a均已在远端。D主目录保持early分支，工作树清洁。用户可直接执行early指南首个bash块或提取固定文档执行，无需再确认已批准范围；尚未收到early服务器启动/GPU/训练/收益回执。
