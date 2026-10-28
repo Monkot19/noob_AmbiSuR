@@ -236,4 +236,7 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Create D branch codex/second-run-selector-v2 at ef333bb; preserve original V1/C/baseline.
 - [x] TDD one five-file implementation using existing test entry, local CPU verification, one independent review.
 - [x] Commit/push fixed V2 code and deliver existing-prefix direct30K AutoDL handoff; no local GPU/server execution claim.
-- [ ] User executes AutoDL launch and returns actual native training/results; no further local action required before launch.
+- [x] User returns actual V2 Training complete log (2026-10-28): global30K, relocation active, 53:07, train PSNR30.691865921020508.
+- [x] Downloaded V2: train/extract exitcode0, launch settings and nonempty Gaussian/App/raw/post mesh checked;229 relocation log events.
+- [x] Run unchanged formal mesh evaluator on nativeC0/V1-16384/V2 (exit0,76.15s); old-model metrics/input hashes/commonGT/protocol reproduce exactly,9CSV rows agree with JSON.
+- [x] Record V2 CD40.096733mm/F1@5cm.787254: CD -1.47787% vsC0/-1.35722% vsV1, both distances improve; trainPSNR decreases. Limited single-scene/seed result, next scope requires discussion.

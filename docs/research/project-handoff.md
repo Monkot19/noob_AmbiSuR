@@ -1,5 +1,9 @@
 # AmbiSuR 二周目交接入口
 
+> **V2正式几何结果（2026-10-28）：** 本地下载关键文件齐全、train/extract退出码0；229次重定位时序精确、227次非零。复用原正式evaluator三模型评价退出码0/76.15秒，C0/V1旧指标和mesh SHA、共同GT样本/协议精确复现。V2 Accuracy34.813288mm、Completeness45.380178mm、CD40.096733mm、F1@5cm0.787254；相对C0 CD降低1.47787%、F1增加0.729875个百分点，相对V1－16384 CD降低1.35722%。两向距离与各阈值PRF均改善，属于幅度有限的单场景单seed正向结果；trainPSNR30.691866继续低于两对照，不能称整体显著突破。报告[2026-10-28-selector-v2-geometry-results.md](2026-10-28-selector-v2-geometry-results.md)，产物在output的evaluation/selector_v2_native7k_seed0_30k_v1。没有更改算法/评价/训练或清理数据；下一步与用户讨论针对已有输出的分析及后续范围。
+
+> **V2训练完成日志回执（2026-10-28）：** 用户返回a114ed5对应output末段：全局ITER30000、23000/23000、耗时53:07、Training complete（10:11:37），Gaussian/App保存日志；N1225318，train L1=0.017557380348443986、PSNR=30.691865921020508。较V1-16384低0.14833221435547017dB，较原生连续C0低0.3804141998291044dB；均为训练视角统计，不作新视角/几何结论。末段每100轮重定位非零，29000/29200/29400/29600/29800的moved与对应added一致，29900后30000无重定位，符合末轮排除规格；尚未核对全229次事件。退出码与模型非空待服务器检查，尚无V2 mesh或几何指标。下一步仅提取V2，沿用5m/0.005m/trunc4/cluster2及现有正式evaluator；旧baseline/V1本地归档复用，不重训、不重复提取旧模型、不调整算法。
+
 > **当前入口（2026-10-27）：** 主工作目录为 `D:\research_Space\noob_AmbiSuR`，当前分支 `codex/second-run-selector-v2`。原V1分支 `codex/second-run-selector`保留在ef333bb；C盘临时worktree保留detached3775135。完整归档与换机步骤见[主目录与恢复指南](second-run-workspace-and-recovery.md)。下方一周目记录仅供查阅，不作为当前派工。
 
 ## 当前方法与代码
