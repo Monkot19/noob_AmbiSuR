@@ -84,3 +84,41 @@ fi
 进度23000/23000对应全局7001..30000。首个重定位7100、最后14900；15000后仍会有selector日志，但没有relocation日志。moved可以为0，不额外补更新。预计成本参考V2续训53分钟，实际耗时/收益待回执。
 
 完成后沿用5m/0.005m/trunc4/cluster2提取、同一scannetpp_surface_v1评价，对照原生C0/V1-16384/完整V2；不改评价域、筛掉区域或把GT区域用于训练。本实验检验调度适配，不证明15000是最优值。不要自动清理旧实验、补baseline或改变其他变量。
+
+## early训练完成后的单模型提取（2026-10-28）
+
+用户已返回30K完成日志、trainPSNR30.850548934936526。以下先核对退出码、模型非空及精确79次重定位序列，再只提取early模型；原提取配置不变，Bash语法核对通过。尚无实际提取回执。无需fetch或切换版本。
+
+```bash
+bash <<'SH'
+set -euo pipefail
+trap 'printf "提取准备停止：第%s行\n" "$LINENO" >&2' ERR
+cd /root/autodl-tmp/noob_AmbiSuR
+out=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_v2_early/a52ab904_seed0_b16384_until15000_30k_v1
+test "$(git rev-parse HEAD)" = a52ab904aa09f67e98bc392c6e0edddb15f5a391
+test -z "$(git status --porcelain)"
+git rev-parse HEAD
+git diff --exit-code
+test "$(cat "$out/train.exitcode")" = 0
+test -s "$out/point_cloud/iteration_30000/point_cloud.ply"
+test -s "$out/app_model/iteration_30000/app.pth"
+/root/miniconda3/envs/ambisur/bin/python -c 'import re,sys; s=open(sys.argv[1]).read(); a=list(map(int,re.findall(r"\[relocation (\d+)\]",s))); assert a==list(range(7100,15000,100)),a; print("重定位序列核对通过：79次，7100至14900")' "$out/train.log"
+test ! -e "$out/mesh"
+test ! -e "$out/extract_general.log"
+test ! -e "$out/extract.exitcode"
+export PYTHONPATH="/root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python${PYTHONPATH:+:$PYTHONPATH}"
+printf 'commit=%s\niteration=30000\nresolution=2\nmax_depth=5.0\nvoxel_size=0.005\nsdf_trunc_scale=4.0\nnum_cluster=2\nuse_depth_filter=false\n' "$(git rev-parse HEAD)" > "$out/extract.launch.txt"
+nohup bash -c '
+  "$1" -u -B mesh_extract/extract_general.py -m "$2" -r 2 --iteration 30000 --skip_test --max_depth 5.0 --voxel_size 0.005 --sdf_trunc_scale 4.0 --num_cluster 2
+  rc=$?
+  if [ "$rc" -eq 0 ]; then
+    test -s "$2/mesh/tsdf_fusion.ply" && test -s "$2/mesh/tsdf_fusion_post.ply"
+    rc=$?
+  fi
+  printf "%s\n" "$rc" > "$2/extract.exitcode"
+  exit "$rc"
+' _ /root/miniconda3/envs/ambisur/bin/python "$out" > "$out/extract_general.log" 2>&1 < /dev/null &
+printf '%s\n' "$!" > "$out/extract.pid"
+printf '提取PID：%s\n日志：%s/extract_general.log\n' "$(cat "$out/extract.pid")" "$out"
+SH
+```

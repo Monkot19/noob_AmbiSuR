@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **v2_early训练完成日志（2026-10-28）：** 用户返回a52ab904对应输出：全局30000、23000/23000、58:27、Training complete12:34:24及Gaussian/App保存；N1226364、train L1=0.017084373719990255、PSNR=30.850548934936526。比完整V2高0.158683dB、比V1-16384高0.010351dB、比连续C0低0.221731dB，均为既有训练视角统计，非新视角/几何结论。末段26800..30000只有selector日志，符合截止后继续V1路径的预期；完整79次重定位序列、退出码/文件非空仍待服务器检查。下一步仅提取此early模型（5m/.005m/trunc4/cluster2），不重提取旧模型、不改方法；尚无earlymesh或几何评价结果。
+
 > **v2_early分支已发布（2026-10-28）：** 新origin/codex/second-run-selector-v2-early首次发布HEAD78312ce4ed8dc38cd31cf3f8958d4046a88316b9，git ls-remote与本地精确一致；之后仅更新文档收据。固定生产a52ab904、固定启动文档ad8ecc7357db21ea595a43971df7e471bd5a886a均已在远端。D主目录保持early分支，工作树清洁。用户可直接执行early指南首个bash块或提取固定文档执行，无需再确认已批准范围；尚未收到early服务器启动/GPU/训练/收益回执。
 
 > **v2_early实现与终审完成（2026-10-28）：** 用户同意只改重定位窗口。D分支codex/second-run-selector-v2-early，固定生产a52ab904aa09f67e98bc392c6e0edddb15f5a391：可选candidate_relocation_until_iter默认0保持完整V2，显式15000对应7100..14900共79次；截止后仍执行V1/ALR/原优化。仅3个代码文件，真实helper边界/默认与旧配置兼容/元数据测试RED→GREEN，31项25CPU通过、6native缺扩展跳过；原selector其余函数AST及train/optimizer/renderer未改。一次独立终审无Critical/Important/Minor，独立复跑31项25pass/6skip；启动Bash/实际CLI核对通过，逐字段与原V2 cfg_opts相同，仅新增截止值。启动命令见[early指南](selector-v2-early-native7k-launch.md)，可用固定文档ad8ecc7357db21ea595a43971df7e471bd5a886a提取首个bash块执行。尚无early服务器/GPU/收益回执；原生7K/30K及V1/完整V2继续复用，不自动加实验。

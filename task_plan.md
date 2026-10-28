@@ -254,4 +254,5 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] D isolatedbranch and shortspec/plan;3-code-file changea52ab904, real boundarytestsRED→GREEN,31tests25CPU pass/6native skips; all otherselector functionAST unchanged.
 - [x] Verify pinnedlaunch CLI/Bash, all existingV2optimizationvalues identical, onefreshreview nofindings/31tests25pass6skip; codea52ab904/handoffdocad8ecc7 ready.
 - [x] Publish isolatedbranch: initialremote78312ce matcheslocal via ls-remote; fixedcodea52ab904/fixedlaunchdocad8ecc7 available. Deliver shortpinned-doc launcher.
-- [ ] Await actualearlyserverlaunch/training/results receipt; not assumed complete.
+- [x] User returns earlyglobal30K Trainingcomplete log:58:27,PSNR30.850548934936526,N1226364,late selector active.
+- [ ] Confirm trainexitcode/nonemptyartifacts/exact79relocationsequence, extract earlymesh with original settings, then reuse formal evaluation. Noearlygeometryscore yet.
