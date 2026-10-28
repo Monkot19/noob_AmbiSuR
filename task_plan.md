@@ -240,3 +240,10 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Downloaded V2: train/extract exitcode0, launch settings and nonempty Gaussian/App/raw/post mesh checked;229 relocation log events.
 - [x] Run unchanged formal mesh evaluator on nativeC0/V1-16384/V2 (exit0,76.15s); old-model metrics/input hashes/commonGT/protocol reproduce exactly,9CSV rows agree with JSON.
 - [x] Record V2 CD40.096733mm/F1@5cm.787254: CD -1.47787% vsC0/-1.35722% vsV1, both distances improve; trainPSNR decreases. Limited single-scene/seed result, next scope requires discussion.
+
+## 2026-10-28 User authorizes existing-output regional analysis
+- [x] Reuse exact common GT sampler and triangle-distance producer for paired post-mesh regional completeness changes; preserve formal domain and results.
+- [x] Validate existing semantic annotation mapping; keep unknown/mixed/REMOVE in full statistics, avoid inventing labels.
+- [x] Use recorded cameras/GT first-hit visibility to select representative gain/loss views; inspect six existing RGB/normal comparison plates and spatial maps.
+- [x] Add fixed-V1-error strata, spatial bins and production Accuracy partition; reproduce all six formal directional means and exact globalCD difference decomposition.
+- [x] Record quantitative partitions, view-selection rules and limitations; next experiment remains discussion only, no training/method changes.
