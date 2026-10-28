@@ -618,6 +618,20 @@ class CandidateIntegrationTests(unittest.TestCase):
             actual.new_tensor([0., 0., -1.])[:, None, None].expand(3, 12, 12), atol=1e-5, rtol=1e-5)
         self.assertFalse(torch.allclose(actual[:, 16, 16] @ ref.world_view_transform[:3, :3], actual[:, 16, 16]))
 
+    def test_static_audit_uses_real_native_depth_without_moving_model(self):
+        from scripts import evaluate_candidate_actions as audit
+        ref, sources, model, pipe, bg = self.fixture()
+        original = model.get_xyz.detach().clone()
+        depth = ref.depth_dict['depth'].detach()
+        with torch.no_grad():
+            record, stats = audit.observe_selector(model,ref,ref.get_image()[1],depth,
+                self.normal(ref,depth),sources,options(),seed=0,iteration=7100,
+                support_depth_fn=lambda c:self.render(c,model,pipe,bg,
+                    return_plane=True,return_depth_normal=False,ray_reg=False)['plane_depth'])
+        audit.validate_record(record)
+        self.assertGreater(stats['added'],0)
+        self.assertTrue(torch.equal(model.get_xyz,original))
+
     def test_real_selector_to_renderer_to_alr_backward_and_step(self):
         ref, sources, model, pipe, bg = self.fixture()
         opt = options()
@@ -939,6 +953,110 @@ class SeedTests(unittest.TestCase):
             np.random.set_state(numpy_before)
             torch.random.set_rng_state(torch_before)
 
+
+
+class StaticActionAuditTests(unittest.TestCase):
+    def test_observer_mixed_acceptance_exports_exact_production_targets(self):
+        from scripts import evaluate_candidate_actions as audit
+        ref, sources, _, depth, normal = analytic_fixture()
+        model = AnalyticGaussians(ref, count=16)
+        rng = torch.Generator().manual_seed(0)
+        rotation, _ = torch.linalg.qr(torch.randn(3,3,generator=rng))
+        for camera in [ref,*sources]:
+            camera.world_view_transform[:3,:3] = rotation
+            camera.camera_center = camera.world_view_transform.inverse()[3,:3]
+        tr = ref.world_view_transform
+        model.normals = tr.new_tensor([[0.,0.,-1.]]) @ rotation.T
+        points = (torch.rand(16,3,generator=rng)-.5)*.2
+        points[:,2] = torch.tensor([3.,2.]*8)
+        model._xyz = (points-tr[3,:3]) @ rotation.T
+        fn = lambda c: depth.new_full((1,c.image_height,c.image_width),2.)
+        direct = selector.select_candidate_labels_with_targets(model,ref,ref.gray,depth,
+            normal,sources,options(),seed=0,iteration=7100,support_depth_fn=fn)
+        self.assertGreater(int(direct[1].sum()),0)
+        self.assertLess(int(direct[1].sum()),16)
+        record, _ = audit.observe_selector(model,ref,ref.gray,depth,normal,sources,
+            options(),seed=0,iteration=7100,support_depth_fn=fn)
+        np.testing.assert_array_equal(record['ids'][record['accepted']],direct[3][0].numpy())
+        np.testing.assert_array_equal(record['prior_world'][record['accepted']],direct[3][1].numpy())
+
+    def test_observer_calls_real_selector_and_preserves_results_state_and_rng(self):
+        from scripts import evaluate_candidate_actions as audit
+        ref, sources, model, depth, normal = analytic_fixture()
+        opts = options()
+        fn = lambda c: depth.new_full((1, c.image_height, c.image_width), 2.)
+        before, rng = model.get_xyz.clone(), torch.random.get_rng_state().clone()
+        direct = selector.select_candidate_labels_with_targets(model, ref, ref.gray, depth,
+            normal, sources, opts, seed=0, iteration=7100, support_depth_fn=fn)
+        record, stats = audit.observe_selector(model, ref, ref.gray, depth, normal,
+            sources, opts, seed=0, iteration=7100, support_depth_fn=fn)
+        np.testing.assert_array_equal(record['ids'][record['accepted']], direct[3][0].numpy())
+        np.testing.assert_allclose(record['prior_world'][record['accepted']], direct[3][1].numpy())
+        self.assertEqual(stats['added'], int(direct[1].sum()))
+        self.assertTrue(torch.equal(before, model.get_xyz))
+        self.assertTrue(torch.equal(rng, torch.random.get_rng_state()))
+        self.assertIsNone(__import__('sys').getprofile())
+
+    def test_observer_empty_path_and_restores_profiler_on_failure(self):
+        from scripts import evaluate_candidate_actions as audit
+        ref, sources, model, depth, normal = analytic_fixture()
+        bad = lambda c: (_ for _ in ()).throw(RuntimeError('source failure'))
+        with self.assertRaisesRegex(RuntimeError, 'source failure'):
+            audit.observe_selector(model, ref, ref.gray, depth, normal, sources,
+                options(), seed=0, iteration=7100, support_depth_fn=bad)
+        self.assertIsNone(__import__('sys').getprofile())
+        depth.fill_(float('nan'))
+        record, stats = audit.observe_selector(model, ref, ref.gray, depth, normal,
+            sources, options(), seed=0, iteration=7100, support_depth_fn=bad)
+        self.assertEqual(len(record['ids']), 0)
+        self.assertEqual(stats['sampled'], 4)
+
+    def test_view_extension_and_literal_options(self):
+        from scripts import evaluate_candidate_actions as audit
+        names = ['v%02d' % i for i in range(20)]
+        plan = audit.choose_views(names, ['v02', 'v17'], 5)
+        self.assertEqual(plan['coverage'], ['v00','v05','v10','v14','v19'])
+        self.assertEqual(plan['illustrative'], ['v02','v17'])
+        self.assertEqual(len(set(plan['all'])), len(plan['all']))
+        self.assertEqual(audit.literal_namespace('Namespace(seed=0, use_mono=False)'),
+                         dict(seed=0, use_mono=False))
+        with self.assertRaises(ValueError): audit.literal_namespace("Namespace(seed=__import__('os'))")
+
+    @unittest.skipIf(importlib.util.find_spec('open3d') is None, 'Open3D unavailable')
+    def test_real_selector_npz_to_gt_score_and_publication(self):
+        from scripts import evaluate_candidate_actions as audit
+        import open3d as o3d
+        ref, sources, model, depth, normal = analytic_fixture()
+        record, stats = audit.observe_selector(model, ref, ref.gray, depth, normal,
+            sources, options(), seed=0, iteration=7100,
+            support_depth_fn=lambda c: depth.new_full((1, c.image_height, c.image_width), 2.))
+        camera_points = np.array([[-100.,-100.,2.], [100.,-100.,2.],
+                                  [100.,100.,2.], [-100.,100.,2.]])
+        tr = ref.world_view_transform.numpy()
+        world = (camera_points-tr[3,:3]) @ tr[:3,:3].T
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d)
+            gt = o3d.geometry.TriangleMesh(o3d.utility.Vector3dVector(world),
+                o3d.utility.Vector3iVector([[0,1,2],[0,2,3]]))
+            (p/'gt').mkdir()
+            gt_path = p/'gt/mesh.ply'
+            o3d.io.write_triangle_mesh(str(gt_path), gt)
+            capture = p/'capture'; capture.mkdir()
+            audit.write_capture_record(capture/'one.npz', record)
+            manifest = dict(schema_version=1, records=[dict(file='one.npz',snapshot='clean7k',
+                snapshot_iteration=7000,probe_iteration=7100,camera='analytic',
+                groups=['illustrative','coverage'],stats=stats)])
+            (capture/'capture_manifest.json').write_text(json.dumps(manifest), encoding='utf-8')
+            result = audit.score_capture(capture, gt_path, p/'score')
+            row = next(x for x in result['rows'] if x['subset']=='accepted' and x['region']=='ALL')
+            self.assertEqual(row['count'], 4)
+            self.assertGreater(row['nearest_mean_gain_mm'], 999.)
+            self.assertGreater(row['visible_z_mean_gain_mm'], 999.)
+            self.assertEqual(row['nearest_improved_fraction'], 1.)
+            self.assertLess(row['prior_normal_median_deg'], .1)
+            self.assertTrue((p/'score/results.json').is_file())
+            self.assertTrue((p/'score/metrics.csv').is_file())
+            with self.assertRaises(FileExistsError): audit.score_capture(capture,gt_path,p/'score')
 
 
 if __name__ == "__main__":
