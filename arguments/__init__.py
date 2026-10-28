@@ -147,6 +147,7 @@ class OptimizationParams(ParamGroup):
         self.candidate_selector_budget = 4096
         self.enable_candidate_relocation = False
         self.candidate_relocation_interval = 100
+        self.candidate_relocation_until_iter = 0
 
         # Ray-Color 权重：传进 renderer/CUDA 后改名为 ray_reg；约束同一 ray 上单个 Gaussian 颜色与最终像素颜色的差异。
         # 代码注入 lambda*w_i*(c_i-C)，相同名义权重下等价于论文平方范数 Loss 的一半（严格导数还应有系数 2）。

@@ -358,6 +358,35 @@ class CandidateRelocationTests(unittest.TestCase):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 selector.candidate_relocation_active(0, options(enable_candidate_relocation=True, **changes))
 
+    def test_relocation_cutoff_preserves_full_v2_and_early_schedule(self):
+        parser = ArgumentParser()
+        group = OptimizationParams(parser)
+        default = group.extract(parser.parse_args([]))
+        self.assertEqual(getattr(default, "candidate_relocation_until_iter", None), 0)
+        early = group.extract(parser.parse_args(["--enable_candidate_selector",
+            "--enable_candidate_relocation", "--candidate_relocation_until_iter", "15000"]))
+        record = build_resolved_config(SimpleNamespace(), early, SimpleNamespace())
+        self.assertEqual(record["optimization"]["candidate_relocation_until_iter"], 15000)
+        actual = [i for i in range(30001) if selector.candidate_relocation_active(i, early)]
+        self.assertEqual(actual, list(range(7100, 15000, 100)))
+        self.assertEqual(len(actual), 79)
+        full = options(enable_candidate_relocation=True)
+        legacy = options(enable_candidate_relocation=True)
+        del legacy.candidate_relocation_until_iter
+        for opts in (full, legacy):
+            actual = [i for i in range(30001) if selector.candidate_relocation_active(i, opts)]
+            self.assertEqual(actual, list(range(7100, 30000, 100)))
+            self.assertEqual(len(actual), 229)
+        for iteration in (15000, 20000, 29900, 30000):
+            self.assertFalse(selector.candidate_relocation_active(iteration, early))
+            self.assertTrue(selector.candidate_selector_active(iteration, early))
+        for invalid in (-1, True, 1.5, "15000"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                selector.candidate_relocation_active(0, options(enable_candidate_relocation=True,
+                    candidate_relocation_until_iter=invalid))
+        self.assertFalse(selector.candidate_relocation_active(7100, options(
+            enable_candidate_relocation=False, candidate_relocation_until_iter=-1)))
+
     def test_real_selector_targets_keep_id_order_and_v1_result(self):
         ref, sources, model, depth, normal = self.fixture()
         model.scores[0], model.scores[3] = 0., 4.
@@ -469,14 +498,16 @@ class CandidateRelocationTests(unittest.TestCase):
         exec(compile(ast.Module(body=[calibration], type_ignores=[]), "<real camera calibration>", "exec"), calibration_namespace)
         tree = ast.parse((root / "train.py").read_text(encoding="utf-8"))
         helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_render_training_reference")
-        for iteration, enabled, invalid in ((7100, True, False), (7101, True, False),
-                                            (7100, False, False), (7100, True, True)):
-            with self.subTest(iteration=iteration, enabled=enabled, invalid=invalid):
+        for iteration, enabled, invalid, until, should_move in (
+                (7100, True, False, 0, True), (7101, True, False, 0, False),
+                (7100, False, False, 0, False), (7100, True, True, 0, False),
+                (14900, True, False, 15000, True), (15000, True, False, 15000, False),
+                (20000, True, False, 15000, False), (30000, True, False, 15000, False)):
+            with self.subTest(iteration=iteration, enabled=enabled, invalid=invalid, until=until):
                 ref, sources, model, _, _ = self.fixture(4)
                 ref.get_calib_matrix_nerf = calibration_namespace[calibration.name].__get__(ref)
                 ref._candidate_support_cameras = sources
                 if invalid: ref.depth_dict["depth"].fill_(0)
-                should_move = enabled and not invalid and iteration == 7100
                 calls = []
                 def render_boundary(camera, current, *args, **kwargs):
                     calls.append(camera.uid)
@@ -494,12 +525,15 @@ class CandidateRelocationTests(unittest.TestCase):
                     select_candidate_labels=selector.select_candidate_labels,
                     select_candidate_labels_with_targets=getattr(selector, "select_candidate_labels_with_targets", None))
                 exec(compile(ast.Module(body=[helper], type_ignores=[]), "<real training helper>", "exec"), namespace)
-                opts = options(enable_candidate_relocation=enabled, ray_color_lambda=-1)
+                opts = options(enable_candidate_relocation=enabled, ray_color_lambda=-1,
+                               candidate_relocation_until_iter=until)
                 rng = torch.get_rng_state().clone()
                 pkg, data = namespace[helper.name](ref, model, None, None, None, opts, iteration=iteration, seed=0)
                 self.assertEqual(calls, [0] if invalid else [1, 2, 0])
                 self.assertTrue(torch.equal(rng, torch.get_rng_state()))
                 self.assertEqual(data["stats"].get("relocated", 0), 4 if should_move else 0)
+                if not invalid:
+                    self.assertEqual(int(data["extra"].sum()), 4)
                 pkg["plane_depth"].sum().backward()
                 model.optimizer.step()
                 self.assertTrue(torch.isfinite(model._xyz).all())

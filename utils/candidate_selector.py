@@ -48,8 +48,12 @@ def candidate_relocation_active(iteration, opt):
     interval = opt.candidate_relocation_interval
     if isinstance(interval, bool) or not isinstance(interval, int) or interval <= 0:
         raise ValueError("candidate_relocation_interval must be a positive integer")
+    until = getattr(opt, "candidate_relocation_until_iter", 0)
+    if isinstance(until, bool) or not isinstance(until, int) or until < 0:
+        raise ValueError("candidate_relocation_until_iter must be a nonnegative integer")
     active = candidate_selector_active(iteration, opt)
-    return active and iteration % interval == 0 and iteration < opt.iterations
+    return (active and iteration % interval == 0 and iteration < opt.iterations
+            and (until == 0 or iteration < until))
 
 
 def _sample_candidate_ids(pool, budget, *, seed, iteration, camera_uid):
