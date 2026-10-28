@@ -253,4 +253,5 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] User approves v2_early: only relocation7100..14900; ordinary V1/ALR optimization continues to30K, same native7K/budget16384/seed0/LR/interval.
 - [x] D isolatedbranch and shortspec/plan;3-code-file changea52ab904, real boundarytestsRED→GREEN,31tests25CPU pass/6native skips; all otherselector functionAST unchanged.
 - [x] Verify pinnedlaunch CLI/Bash, all existingV2optimizationvalues identical, onefreshreview nofindings/31tests25pass6skip; codea52ab904/handoffdocad8ecc7 ready.
-- [ ] Publish isolatedbranch and returnshortpinned-doc launcher; await actualserverreceipt, not assumed complete.
+- [x] Publish isolatedbranch: initialremote78312ce matcheslocal via ls-remote; fixedcodea52ab904/fixedlaunchdocad8ecc7 available. Deliver shortpinned-doc launcher.
+- [ ] Await actualearlyserverlaunch/training/results receipt; not assumed complete.
