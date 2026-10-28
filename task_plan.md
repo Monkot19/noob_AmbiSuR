@@ -259,3 +259,15 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Four-model unchanged formal evaluationexit0/132.27s,old3scores/hashes/commonGT reproduce,12CSVrows agreeJSON. earlyCD39.744465mm/F1@5cm.787739,CDgain2.34343%vsC0/.87855%vsfullV2,trainPSNR30.850549.
 - [x] Record prefixtrajectory caveat:79movedcounts differ beforecutoff despite equaloldoptions/cameras/recordedruntime; no causaloverclaim or unapprovedretraining.
 - [ ] Discuss nextscope:earlyregionalgains/harms notyetmapped; do notchange method orstarttraining automatically.
+
+## 2026-10-28 Early regional interpretation and publication scope
+- [x] Reuse offline regional program with explicit reference/candidate roles; verify role selection on real formal report and preserve prior outputs.
+- [x] Reproduce formal directional means, map early gains/harms, and quantify descriptive output complementarity (not a theoretical bound).
+- [x] Verify closest primary literature/source overlap and record defensible method/paper claim boundaries.
+- [x] Deliver findings and next decision for discussion; no training or method changes.
+
+## 2026-10-28 User requests failure-region/DA3/ALR linkage analysis
+- [x] Read actual A/E/relocation/ALR interfaces; distinguish stage completion from established gain.
+- [x] Check local prior identity and compare existing DA3 depth/derived normals with visible GT surface on a small fixed view set, using production geometry functions, no training output.
+- [x] Read primary dataset/method sources and available actual source for relevant borrowing; map conditional interventions to measured cause.
+- [x] Discuss whether to freeze/transfer or first change method; no training/method change without user decision.
