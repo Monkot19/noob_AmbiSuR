@@ -1,12 +1,12 @@
 # 二周目主目录、归档与换机恢复
 
-2026-10-23 用户确认 D 盘作为二周目长期主目录。本次只整理本地工作区与文档，训练代码不变。
+2026-10-23 用户确认 D 盘作为二周目长期主目录。2026-10-28当前开发分支为`codex/second-run-selector-v2-early`；最新批准实验与启动入口见`selector-v2-early-native7k-launch.md`。原V2/V1/baseline及C临时worktree保留。
 
 ## 目录与分支
 
 | 位置 | 用途 |
 | --- | --- |
-| `D:\research_Space\noob_AmbiSuR` | 主仓库，真实 `.git` 目录；2026-10-27起使用 `codex/second-run-selector-v2`，原V1分支 `codex/second-run-selector`保留在ef333bb；后续修改／测试／提交均在D完成 |
+| `D:\research_Space\noob_AmbiSuR` | 主仓库，真实 `.git` 目录；2026-10-28使用 `codex/second-run-selector-v2-early`，原完整V2分支及V1分支保留；后续修改／测试／提交均在D完成 |
 | `C:\Users\DELL\.codex\worktrees\second-run-selector\noob_AmbiSuR` | 保留的 linked worktree，固定 detached `3775135`；其 `.git` 文件指向 D，不能单独复制后当独立仓库使用 |
 | `D:\research_Space\noob_AmbiSuR_workspace_backup_20261023T040116Z` | 原样文件、历史日志及 Git bundle 备份；不是数据或 baseline 输出目录 |
 
@@ -38,7 +38,7 @@ ZIP保存原始换行字节；Git的 `core.autocrlf=true` 会正常规范化文�
 目标目录尚不存在时执行：
 
 ```powershell
-git clone --branch codex/second-run-selector-v2 https://github.com/Monkot19/noob_AmbiSuR.git D:\research_Space\noob_AmbiSuR
+git clone --branch codex/second-run-selector-v2-early https://github.com/Monkot19/noob_AmbiSuR.git D:\research_Space\noob_AmbiSuR
 git -C D:\research_Space\noob_AmbiSuR branch --show-current
 git -C D:\research_Space\noob_AmbiSuR rev-parse HEAD
 git -C D:\research_Space\noob_AmbiSuR status --short

@@ -1,5 +1,7 @@
 # AmbiSuR 二周目项目规则
 
+> 2026-10-28最新批准范围：v2_early仅将重定位截止于15000（7100..14900共79次），其余V1/ALR/原优化继续至30K。D主目录分支codex/second-run-selector-v2-early，原V2/V1/baseline保留。规格docs/superpowers/specs/2026-10-28-selector-v2-early-design.md；不额外加smoke、baseline或诊断框架作前置。此前默认全程V2行为保留，禁止把本实验截止值静默变成原V2默认。
+
 ## 主工作目录与当前范围（2026-10-23 用户确认，优先于旧规则）
 
 - 二周目始终以 `D:\research_Space\noob_AmbiSuR` 为主工作目录，使用 `codex/second-run-selector`；后续修改、测试和提交均在这里完成。

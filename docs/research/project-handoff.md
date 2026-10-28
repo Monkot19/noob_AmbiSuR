@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **v2_early获批并本地实现（2026-10-28）：** 用户同意只改重定位窗口。D分支codex/second-run-selector-v2-early，固定生产a52ab904aa09f67e98bc392c6e0edddb15f5a391：可选candidate_relocation_until_iter默认0保持完整V2，显式15000对应7100..14900共79次；截止后仍执行V1/ALR/原优化。仅3个代码文件，真实helper边界/默认与旧配置兼容/元数据测试RED→GREEN，31项25CPU通过、6native缺扩展跳过；原selector其余函数AST及train/optimizer/renderer未改。启动命令见[early指南](selector-v2-early-native7k-launch.md)。尚无early服务器/GPU/收益回执，最终审查与发布仍待收据；原生7K/30K及V1/完整V2继续复用，不自动加实验。
+
 > **V2区域定位完成（2026-10-28）：** 用户批准利用现有输出定位收益/损失。真实GT分割与顶点坐标顺序核对后，复用正式采样/距离生产函数，完整性和准确性六个均值复现。69号墙贡献全局CD变化-0.609137mm，超过整场景V2-V1的-0.551690mm，其余区域合计+0.057447mm；不是其他区域全部变差。原V1最好/最差10% GT点在V2中完整性分别均值退化1.693mm/改善7.177mm，属描述性分层，非因果证明。门旁墙71、门68及部分管道为负贡献；天花板/储物架虽完整性略差，双向贡献净改善，不能笼统称其整体退化。详见[区域分析](2026-10-28-selector-v2-regional-analysis.md)，图片及CSV在analysis/selector_v2_regions_20261028_detail。当前资料不能区分候选误选/重定位力度/随后优化拓扑后处理；下一轮仅讨论最小变量，不自动增加训练或可靠性框架。
 
 > **V2正式几何结果（2026-10-28）：** 本地下载关键文件齐全、train/extract退出码0；229次重定位时序精确、227次非零。复用原正式evaluator三模型评价退出码0/76.15秒，C0/V1旧指标和mesh SHA、共同GT样本/协议精确复现。V2 Accuracy34.813288mm、Completeness45.380178mm、CD40.096733mm、F1@5cm0.787254；相对C0 CD降低1.47787%、F1增加0.729875个百分点，相对V1－16384 CD降低1.35722%。两向距离与各阈值PRF均改善，属于幅度有限的单场景单seed正向结果；trainPSNR30.691866继续低于两对照，不能称整体显著突破。报告[2026-10-28-selector-v2-geometry-results.md](2026-10-28-selector-v2-geometry-results.md)，产物在output的evaluation/selector_v2_native7k_seed0_30k_v1。没有更改算法/评价/训练或清理数据；下一步与用户讨论针对已有输出的分析及后续范围。

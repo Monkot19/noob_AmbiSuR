@@ -251,3 +251,5 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 ## 2026-10-28 Follow-up research decision discussion
 - [x] Recheck donor actualSGU gate and missing pinnedarguments:7000training/5000cutoff; compare host15000topology andV2through29900.
 - [x] User approves v2_early: only relocation7100..14900; ordinary V1/ALR optimization continues to30K, same native7K/budget16384/seed0/LR/interval.
+- [x] D isolatedbranch and shortspec/plan;3-code-file changea52ab904, real boundarytestsRED→GREEN,31tests25CPU pass/6native skips; all otherselector functionAST unchanged.
+- [ ] Verify pinnedlaunch CLI/Bash, one freshreview, publish isolatedbranch and handoff. Noearlyserver execution/result yet.
