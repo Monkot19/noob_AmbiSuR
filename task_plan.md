@@ -277,4 +277,5 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Scope existing native7K plus C0/fullV2/early30K,5 illustrative+12 systematic views, budget16384/seed0; no15K rerun or historical replay claim.
 - [x] One actual-selector capture/CPU score entry, existing test entry, production metadata/geometry reuse; training/selector/renderer unchanged.
 - [x] Real selector→NPZ→GT/BVH/normal→CSV/JSON tested.37 tests:30CPU pass/7native skips; Python3.10 syntax and CLI verified. Review FP32 false mismatch reproduced RED→GREEN, literal production targets exported, re-review no blocker.
-- [ ] Publish pinned capture/score handoff. Real CUDA capture/scoring pending user's next server session; never start server automatically.
+- [x] Publish pinned capture/score handoff; first remote13e12874ee5e92e671a5db31933d05cf8170f328 matches local via ls-remote.
+- [ ] Real CUDA capture/scoring pending user's next server session; never start server automatically.
