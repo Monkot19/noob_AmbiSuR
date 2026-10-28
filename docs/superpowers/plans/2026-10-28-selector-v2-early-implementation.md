@@ -32,6 +32,6 @@
   Expected:31tests/25CPU pass/6native skips, zero failures; no GPU claim.
 - [x] Check Python3.10 syntax/whitelistedcode diff, commit module `feat: add optional cutoff for candidate relocation` (a52ab904).
 - [x] Create pinnedcommit direct30K launch doc with uniqueview/output, sameparentcheckpoint/extension, explicitcutoff15000; verify Bash syntax/actualCLI parse.
-- [ ] Complete whole-task test via task-done; one fresh finalreview; fix only material issues; publish isolatedbranch for serverfetch and give short pinned-doc execution command.
+- [x] Complete whole-task test via task-done; one fresh finalreview no findings,31tests25CPU pass/6native skips; nofixpass needed. Isolatedbranch handoff ready for publication, no new server run assumed.
 
 No methods/loss changes outside the spec. No automatic cloud execution without connection; returnlogs required to establish launch/completion.

@@ -1,6 +1,6 @@
 # v2_early：15K后停止重定位，继续至30K
 
-2026-10-28用户已批准。固定代码`a52ab904aa09f67e98bc392c6e0edddb15f5a391`，分支`codex/second-run-selector-v2-early`。只增加可选截止值；本实验显式15000，原V2默认0行为保留。原生7K→30K/r2/seed0/预算16384/间隔100/原LR与loss，重定位7100..14900共79次，15000及以后仍执行V1候选、ALR及原优化。本地31项25CPU通过/6native缺扩展跳过，不能视为GPU或收益验证；无新baseline/smoke/重编译。
+2026-10-28用户已批准。固定代码`a52ab904aa09f67e98bc392c6e0edddb15f5a391`，分支`codex/second-run-selector-v2-early`。只增加可选截止值；本实验显式15000，原V2默认0行为保留。原生7K→30K/r2/seed0/预算16384/间隔100/原LR与loss，重定位7100..14900共79次，15000及以后仍执行V1候选、ALR及原优化。本地及独立终审复跑均31项25CPU通过/6native缺扩展跳过；终审无Critical/Important/Minor。外层/内层Bash语法及实际train.py CLI解析通过，与已完成V2 cfg_opts逐字段相同，仅新增截止值。不能视为GPU或收益验证；无新baseline/smoke/重编译。固定文档提交ad8ecc7357db21ea595a43971df7e471bd5a886a中的启动块相同，可用于短命令提取。
 
 ## 启动
 
