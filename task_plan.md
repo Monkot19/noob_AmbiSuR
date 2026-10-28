@@ -247,3 +247,7 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Use recorded cameras/GT first-hit visibility to select representative gain/loss views; inspect six existing RGB/normal comparison plates and spatial maps.
 - [x] Add fixed-V1-error strata, spatial bins and production Accuracy partition; reproduce all six formal directional means and exact globalCD difference decomposition.
 - [x] Record quantitative partitions, view-selection rules and limitations; next experiment remains discussion only, no training/method changes.
+
+## 2026-10-28 Follow-up research decision discussion
+- [x] Recheck donor actualSGU gate and missing pinnedarguments:7000training/5000cutoff; compare host15000topology andV2through29900.
+- [x] User approves v2_early: only relocation7100..14900; ordinary V1/ALR optimization continues to30K, same native7K/budget16384/seed0/LR/interval.
