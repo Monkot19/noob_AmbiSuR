@@ -18,7 +18,7 @@ User approved a static real-selector check, including assessment of additional s
 - [x] TDD in existing selector test entry: real CPU selector capture equals direct output, profiler restoration, real BVH/normal scorer, input/schema/selection contracts.
 - [x] Implement single capture/score script and small versioned config; real small producer→NPZ→score→JSON/CSV integration. No new test framework.
 - [x] Run relevant existing tests, Python3.10 syntax, CLI/config/local snapshot checks; native test skips explicit. One fresh review plus narrow fix re-review:37 tests,30 pass/7 native skips. FP32 batch rounding issue reproduced RED then fixed; exact production targets exported.
-- [ ] Commit clean branch; provide pinned server capture and local score commands, update handoff. Server execution pending OFF state, no output benefits claimed.
+- [x] Commit clean code c5e6243; provide pinned server capture and local score commands, update handoff. Server execution pending OFF state, no output benefits claimed.
 
 ## Expected deliverables
 

@@ -271,3 +271,10 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Check local prior identity and compare existing DA3 depth/derived normals with visible GT surface on a small fixed view set, using production geometry functions, no training output.
 - [x] Read primary dataset/method sources and available actual source for relevant borrowing; map conditional interventions to measured cause.
 - [x] Discuss whether to freeze/transfer or first change method; no training/method change without user decision.
+
+## 2026-10-28 Approved static candidate check; server OFF
+- [x] Preserve prior analysis documents in2c2fb1f; create D isolated branch codex/selector-static-audit, keep all training branches/output.
+- [x] Scope existing native7K plus C0/fullV2/early30K,5 illustrative+12 systematic views, budget16384/seed0; no15K rerun or historical replay claim.
+- [x] One actual-selector capture/CPU score entry, existing test entry, production metadata/geometry reuse; training/selector/renderer unchanged.
+- [x] Real selector→NPZ→GT/BVH/normal→CSV/JSON tested.37 tests:30CPU pass/7native skips; Python3.10 syntax and CLI verified. Review FP32 false mismatch reproduced RED→GREEN, literal production targets exported, re-review no blocker.
+- [ ] Publish pinned capture/score handoff. Real CUDA capture/scoring pending user's next server session; never start server automatically.
