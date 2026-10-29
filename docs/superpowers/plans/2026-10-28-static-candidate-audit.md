@@ -30,4 +30,4 @@ Server c5e6243 failed before camera loading/candidate execution: images.bin miss
 - [x] Existing test entry: real colmap_loader with tiny text/binary files, preserve insertion order/values, binary priority and original three-directory lookup. RED first.
 - [x] Thin audit-only pose reader delegates to unchanged production readers with original binary→text fallback. No Scene/source writes, data conversion, UID sorting or selection changes.
 - [x] Full existing two-entry suite46 tests:39 pass/7native skips; real local406-camera text poses/intrinsics match saved C0, Python3.10 parse pass; independent narrow review no blocker.
-- [ ] Commit/push fixed audit, pin new non-overwriting static_v2 launch directory, preserve static_v1 failure, return command promptly. No server code patch or new training.
+- [x] Commit fixed audit9603ef6 and pin new non-overwriting static_v2 launch directory, preserve static_v1 failure. Publish handoff next; no server code patch or new training.

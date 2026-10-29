@@ -279,3 +279,8 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Real selector→NPZ→GT/BVH/normal→CSV/JSON tested.37 tests:30CPU pass/7native skips; Python3.10 syntax and CLI verified. Review FP32 false mismatch reproduced RED→GREEN, literal production targets exported, re-review no blocker.
 - [x] Publish pinned capture/score handoff; first remote13e12874ee5e92e671a5db31933d05cf8170f328 matches local via ls-remote.
 - [ ] Real CUDA capture/scoring pending user's next server session; never start server automatically.
+
+## 2026-10-29 COLMAP text compatibility
+- [x] Reproduce source-format omission; real reader regression RED→GREEN, binary priority/order/layout preserved. Audit-only fix9603ef6.
+- [x] Actual local406 poses/intrinsics match C0;46 existing tests39pass7native skip, Python3.10 parse, independent narrow review no blocker.
+- [ ] Server fixed capture static_v2 and local score pending; preserve failedstatic_v1, no training/data conversion.

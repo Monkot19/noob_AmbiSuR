@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **静态检查格式修复（2026-10-29）：** 用户已租服务器，c5e6243正式capture在读取sparse/0/images.bin时失败，未进入候选计算。审计入口遗漏了基线已有binary→text回退；本地实际source只有text，完整406相机用真实reader读取后位姿/内参与C0归档吻合。固定修复代码`9603ef679fc3253c49fbeb73e9c9c38ec3fe09f7`仅改审计输入薄适配，原训练/selector/COLMAP reader不变，相机顺序保留；记录pose_source/pose_format。真实text/binary回退测试RED→GREEN，两既有测试入口共46项39CPU通过/7native跳过，窄终审无阻断。保留失败static_v1，按[更新指南](static-candidate-audit-launch.md)在新static_v2采集，不修改服务器源码或重训。新原生执行/候选收益仍待回执。
+
 > **静态候选检查已批准、本地实现（2026-10-28）：** 用户授权离开期间自行解决常规问题，随后明确服务器已关闭；不得自动开机/租卡。D目录新隔离分支`codex/selector-static-audit`已发布（首次13e1287远端与本地一致），保留既有训练分支；先前未提交分析文档已保存为2c2fb1f。固定代码`c5e624307de97f91898e461e5e789a4d8ee0eae3`，新增单入口`evaluate_candidate_actions.py capture/score`，调用实际selector并观察返回数据，不改训练/选择/重定位/渲染器。范围为原生7K、C0/完整V2/early30K，原五视角加12个名称等间隔覆盖视角，分组报告；无15K快照，不补训，终态探针不是历史决策重放。真实CPU selector→NPZ→GT/BVH/法线→CSV/JSON链路通过；37项统一测试30CPU通过/7native缺扩展跳过。独立终审发现FP32批量舍入误触发坐标逐位核对，已RED→GREEN修复并导出真实返回目标；修复复审无进一步阻断问题，独立复跑37项结果一致。真实capture未执行，尚无接受候选的几何收益比例。操作见[统一静态检查指南](static-candidate-audit-launch.md)；下次用户已开启服务器后仅运行这一次前向检查，不训练、不自动选择新方法。
 
 > **DA3与动作关系核对（2026-10-28）：** 用户要求先理解差区域、数据集与位置/法线先验关系。本地11份先验/变换文件SHA匹配训练manifest；五个固定视角151832可见网格点离线GT对照发现metric位置偏差可大而法线相对可用，最高置信也常不优于C0。不是历史已接受候选的因果精度，不能据此断言损伤均由DA3造成。实际ALR已覆盖A∪E、重定位事件移动E，E限定~A；“重定位选中也加ALR”已存在，独立R需要明确与A交集及选择/移动频率。ScanNet++可继续作压力测试，不替代官方DTU/TnT可比性。下一步建议仅讨论一次真实接受候选离线核查，再决定目标修正/ALR质量；没有批准新训练/方法修改。详见[DA3误差与动作选择](2026-10-28-da3-failure-regions-and-action-selection.md)。
