@@ -278,9 +278,15 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] One actual-selector capture/CPU score entry, existing test entry, production metadata/geometry reuse; training/selector/renderer unchanged.
 - [x] Real selector→NPZ→GT/BVH/normal→CSV/JSON tested.37 tests:30CPU pass/7native skips; Python3.10 syntax and CLI verified. Review FP32 false mismatch reproduced RED→GREEN, literal production targets exported, re-review no blocker.
 - [x] Publish pinned capture/score handoff; first remote13e12874ee5e92e671a5db31933d05cf8170f328 matches local via ls-remote.
-- [ ] Real CUDA capture/scoring pending user's next server session; never start server automatically.
+- [x] User-opened server real CUDA capture and subsequent local scoring completed2026-10-29; never start server automatically.
 
 ## 2026-10-29 COLMAP text compatibility
 - [x] Reproduce source-format omission; real reader regression RED→GREEN, binary priority/order/layout preserved. Audit-only fix9603ef6.
 - [x] Actual local406 poses/intrinsics match C0;46 existing tests39pass7native skip, Python3.10 parse, independent narrow review no blocker.
-- [ ] Server fixed capture static_v2 and local score pending; preserve failedstatic_v1, no training/data conversion.
+- [x] Server fixed capture static_v2 exit0/68arrays decoded, local score exit0/2815rows; preserve failedstatic_v1, no training/data conversion.
+
+## 2026-10-29 Real candidate outcomes
+- [x] Read downloaded capture identity/68NPZ/counts without changing inputs; actual4snapshots/17views/clean9603ef6/exit0.
+- [x] Execute unchanged score on localGT, clean cacb570/exit0;2815JSON/CSV rows agree, GTsha matches formal geometry evaluation.
+- [x] Summarize view-group/accepted-rejected/object evidence, proper denominators and nearest/ray-z/normal boundaries; preserve real outputs.
+- [x] Independent claim/numerical review noCritical/Important; actual68NPZ/2815rows and denominators corroborated, no repeatGT or significance claims. Handoff complete; next method/training remains discussion-only.
