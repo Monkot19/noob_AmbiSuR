@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **候选模块文献调研（2026-10-29，讨论稿）：** 围绕真实静态结果筛选24项2025—2026工作，实际核查12官方仓库18个非README源文件；固定commit/行段/SHA在本地output的`analysis/candidate_literature_20261029_v1/source_read_manifest.json`。建议优先讨论DP-GS/MP-SfM支持的“观测位置锚点＋先验法线生成位置候选”；固定法线比较位置、APDe-MVS代价曲线列为单独判别改进，不同时堆叠。DP-GS原作用是传播深度loss，不是硬替换Gaussian中心；生产代码arctan/+0.5坐标、RGB置信通道、非严格锚点保持与本项目接口差异已列明。联合NCC下降可由法线改善抵消位置代价上升，精确分解不等于GT收益保证；实际ALR D-normal仍与位置耦合。详见[目标与动作文献调研](2026-10-29-candidate-redesign-literature.md)。本轮未改算法、训练、评价或访问GT；下一单一变动需用户讨论批准，不自动实施/开卡。
+
 > **真实静态候选评分完成（2026-10-29）：** 用户下载目录含static_v2子目录/log/exitcode；服务器9603ef6 clean/退出0/68 NPZ已解码核对，4模型各17视角。现有score在本地clean cacb570运行退出0，2815 JSON/CSV行全部数值一致，GT SHA与正式mesh评价一致。12扩展视角接受目标最近表面改善比例7K37.70%、C031.64%、V240.35%、early32.54%，相应候选位置误差均值增加7.963/20.861/12.104/20.178mm；原五视角方向同样负向。NCC接受比拒绝可比较组富集约6.52—10.11个百分点，不能称完全无用；early有效GT法线域相对改善58.74%，仅法线改善36.22%、法线和z均改善22.53%。第一命中归属未认证，候选轴法线不是ALR D-normal，这不是历史轨迹或最终损伤因果证明。本次预算固定，不断言预算影响已排除；建议下一步讨论目标/动作匹配，不自动新增训练/算法。详见[真实候选检查报告](2026-10-29-static-candidate-results.md)，产物analysis/static_candidate_score_v2。训练/评价源码未改；独立报告审查无Critical/Important，数值与分母核对一致，未重跑GT/训练。
 
 > **静态检查格式修复（2026-10-29）：** 用户已租服务器，c5e6243正式capture在读取sparse/0/images.bin时失败，未进入候选计算。审计入口遗漏了基线已有binary→text回退；本地实际source只有text，完整406相机用真实reader读取后位姿/内参与C0归档吻合。固定修复代码`9603ef679fc3253c49fbeb73e9c9c38ec3fe09f7`仅改审计输入薄适配，原训练/selector/COLMAP reader不变，相机顺序保留；记录pose_source/pose_format。真实text/binary回退测试RED→GREEN，两既有测试入口共46项39CPU通过/7native跳过，窄终审无阻断。保留失败static_v1，按[更新指南](static-candidate-audit-launch.md)在新static_v2采集，不修改服务器源码或重训。新原生执行/候选收益仍待回执。

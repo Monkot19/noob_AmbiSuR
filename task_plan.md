@@ -290,3 +290,10 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Execute unchanged score on localGT, clean cacb570/exit0;2815JSON/CSV rows agree, GTsha matches formal geometry evaluation.
 - [x] Summarize view-group/accepted-rejected/object evidence, proper denominators and nearest/ray-z/normal boundaries; preserve real outputs.
 - [x] Independent claim/numerical review noCritical/Important; actual68NPZ/2815rows and denominators corroborated, no repeatGT or significance claims. Handoff complete; next method/training remains discussion-only.
+
+## 2026-10-29 Literature-grounded candidate redesign research
+- [x] Screen24 named2025–2026 works using primary venues/arXiv/author/publisher sources; explicitly separate main/workshop/preprint/author-page venue evidence, no exhaustive-coverage claim.
+- [x] Inspect12 actual official source repositories/18 source files; preserve commits/line ranges/fileSHA in output candidate_literature_20261029_v1/source_read_manifest.json. Fifteen localPDF texts extracted; not all full-read, external trainers not run.
+- [x] Map target-source/conditional-NCC/position action to real train.py and candidate_selector interfaces; preserve A/ALR/ray/renderer contracts. No algorithm implementation.
+- [x] Rank anchored normal-guided candidate targets first, conditional position comparison/ambiguity curves second, relative-structure backup; distinguish DP-GS depthloss from host hardrelocation and code/paper coordinate differences.
+- [x] Independent narrow evidence/source review: noCritical/Important;12repo/18fileSHA and DP-GS/APDe/MP-SfM/host action boundaries checked, no GT/training rerun. Deliver research for discussion; next route notyetapproved.
