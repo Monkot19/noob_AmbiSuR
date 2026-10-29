@@ -956,6 +956,40 @@ class SeedTests(unittest.TestCase):
 
 
 class StaticActionAuditTests(unittest.TestCase):
+    def test_pose_reader_matches_baseline_text_fallback_order_and_binary_priority(self):
+        from scripts import evaluate_candidate_actions as audit
+        import struct
+        spec = importlib.util.spec_from_file_location('actual_colmap_reader',
+            Path(__file__).resolve().parents[1]/'scene/colmap_loader.py')
+        loader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(loader)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for index, location in enumerate(('sparse/0','colmap/sparse/0','sparse')):
+                source = root/str(index)
+                pose = source/location; pose.mkdir(parents=True)
+                (pose/'images.txt').write_text('9 1 0 0 0 .1 .2 .3 4 B.JPG\n\n2 1 0 0 0 .4 .5 .6 4 A.JPG\n\n')
+                (pose/'cameras.txt').write_text('4 PINHOLE 32 24 40 41 16 12\n')
+                selected, extrinsics, intrinsics, kind = audit.read_pose_files(source,loader)
+                self.assertEqual(selected,pose)
+                self.assertEqual(kind,'text')
+                self.assertEqual(list(extrinsics),[9,2])
+                self.assertEqual(extrinsics[9].name,'B.JPG')
+                np.testing.assert_allclose(extrinsics[2].tvec,[.4,.5,.6])
+                np.testing.assert_array_equal(intrinsics[4].params,[40,41,16,12])
+                (pose/'images.bin').write_bytes(b'bad')
+                self.assertEqual(audit.read_pose_files(source,loader)[3],'text')
+                with (pose/'images.bin').open('wb') as f:
+                    f.write(struct.pack('<Q',2))
+                    for image_id,name in ((7,'D.JPG'),(3,'C.JPG')):
+                        f.write(struct.pack('<idddddddi',image_id,1.,0.,0.,0.,.7,.8,.9,4))
+                        f.write(name.encode()+b'\0'+struct.pack('<Q',0))
+                (pose/'cameras.bin').write_bytes(struct.pack('<QiiQQdddd',1,4,1,32,24,45.,46.,16.,12.))
+                _, extrinsics, intrinsics, kind = audit.read_pose_files(source,loader)
+                self.assertEqual(kind,'binary')
+                self.assertEqual(list(extrinsics),[7,3])
+                np.testing.assert_array_equal(intrinsics[4].params,[45,46,16,12])
+
     def test_observer_mixed_acceptance_exports_exact_production_targets(self):
         from scripts import evaluate_candidate_actions as audit
         ref, sources, _, depth, normal = analytic_fixture()

@@ -23,3 +23,11 @@ User approved a static real-selector check, including assessment of additional s
 ## Expected deliverables
 
 One production audit script, same test entry extensions, one config and one launch guide. Existing analysis docs preserved. Local CPU evidence and explicit unexecuted-native receipt. No new reconstruction run.
+
+## 2026-10-29 COLMAP input compatibility repair
+
+Server c5e6243 failed before camera loading/candidate execution: images.bin missing. Local actual source has images.txt/cameras.txt; original readColmapSceneInfo already falls back from binary to text. Audit omitted that input contract.
+- [x] Existing test entry: real colmap_loader with tiny text/binary files, preserve insertion order/values, binary priority and original three-directory lookup. RED first.
+- [x] Thin audit-only pose reader delegates to unchanged production readers with original binary→text fallback. No Scene/source writes, data conversion, UID sorting or selection changes.
+- [x] Full existing two-entry suite46 tests:39 pass/7native skips; real local406-camera text poses/intrinsics match saved C0, Python3.10 parse pass; independent narrow review no blocker.
+- [ ] Commit/push fixed audit, pin new non-overwriting static_v2 launch directory, preserve static_v1 failure, return command promptly. No server code patch or new training.

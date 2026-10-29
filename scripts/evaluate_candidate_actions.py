@@ -145,9 +145,26 @@ def _default_options():
     return m.extract(args), o.extract(args), pipeline.extract(args)
 
 
+def read_pose_files(source, loader):
+    """Match readColmapSceneInfo's lookup/format fallback, without Scene writes."""
+    poses = next((p for p in (source/'sparse/0',source/'colmap/sparse/0',source/'sparse')
+                  if p.exists()),None)
+    if poses is None:
+        raise FileNotFoundError('Can not find COLMAP outcome: '+str(source))
+    try:
+        extrinsics = loader.read_extrinsics_binary(str(poses/'images.bin'))
+        intrinsics = loader.read_intrinsics_binary(str(poses/'cameras.bin'))
+        kind = 'binary'
+    except Exception:
+        extrinsics = loader.read_extrinsics_text(str(poses/'images.txt'))
+        intrinsics = loader.read_intrinsics_text(str(poses/'cameras.txt'))
+        kind = 'text'
+    return poses, extrinsics, intrinsics, kind
+
+
 def capture(config, source, snapshots, output):
     import torch
-    from scene.colmap_loader import read_extrinsics_binary, read_intrinsics_binary
+    from scene import colmap_loader
     from scene.dataset_readers import readColmapCameras
     from scene.gaussian_model import GaussianModel
     from utils.camera_utils import loadCam
@@ -162,9 +179,9 @@ def capture(config, source, snapshots, output):
             raise ValueError('capture output must be outside model input directories')
     output.mkdir(parents=True, exist_ok=False)
     # Read production cameras directly: Scene initialization would write source PLY.
-    poses, priors = source/'sparse/0', source/'sparse_da3_aligned/0'
-    infos = readColmapCameras(read_extrinsics_binary(str(poses/'images.bin')),
-        read_intrinsics_binary(str(poses/'cameras.bin')), str(source/'images'),str(source),str(priors),True)
+    poses, extrinsics, intrinsics, pose_format = read_pose_files(source,colmap_loader)
+    priors = source/'sparse_da3_aligned/0'
+    infos = readColmapCameras(extrinsics,intrinsics,str(source/'images'),str(source),str(priors),True)
     infos = {c.image_name: c for c in infos}
     views = choose_views(list(infos), config['illustrative_views'],config['coverage_count'])
     identity = collect_run_identity(REPOSITORY)
@@ -237,7 +254,7 @@ def capture(config, source, snapshots, output):
         del native
         gc.collect();torch.cuda.empty_cache()
     manifest = dict(schema_version=1,records=records,views=views,config=config,snapshot_inputs=snapshot_inputs,
-        capture_identity=identity,source=str(source),
+        capture_identity=identity,source=str(source),pose_source=str(poses),pose_format=pose_format,
         scope='Static counterfactual selector observations; no GT, optimization or relocation. Late probes are not historical decisions.')
     with (output/'capture_manifest.json').open('x',encoding='utf-8') as f:
         json.dump(manifest,f,indent=2,allow_nan=False)
