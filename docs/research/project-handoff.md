@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **selector_v3_spread适配提议（2026-10-29，待批准）：** 用户选定先做深度传播候选，要求修改代码前口头汇报，固定法线NCC继续后置。已逐项核对DP-GS真实RGB置信、法线edge producer及传播循环；当前生产六文件与early/a52ab904完全相同。拟新增一个公共depth_spread模块，修改原selector/train/arguments/capture/统一测试入口；原ALR与直接depthloss继续用原DA3，传播作为独立proposal。锚点须来自移动前的混合渲染平面，复用几何/NCC；第一支持/102400像素、5×5/10/.6/.99/.01、宿主Kinv射线、无传播只保留A、early79次移动均为待确认具体提议。详见[源码适配清单](2026-10-29-selector-v3-spread-code-adaptation.md)。独立窄审无阻断；未写算法/测试、开分支、上卡、访问GT或启动训练。用户确认具体适配后才执行。
+
 > **候选模块文献调研（2026-10-29，讨论稿）：** 围绕真实静态结果筛选24项2025—2026工作，实际核查12官方仓库18个非README源文件；固定commit/行段/SHA在本地output的`analysis/candidate_literature_20261029_v1/source_read_manifest.json`。建议优先讨论DP-GS/MP-SfM支持的“观测位置锚点＋先验法线生成位置候选”；固定法线比较位置、APDe-MVS代价曲线列为单独判别改进，不同时堆叠。DP-GS原作用是传播深度loss，不是硬替换Gaussian中心；生产代码arctan/+0.5坐标、RGB置信通道、非严格锚点保持与本项目接口差异已列明。联合NCC下降可由法线改善抵消位置代价上升，精确分解不等于GT收益保证；实际ALR D-normal仍与位置耦合。详见[目标与动作文献调研](2026-10-29-candidate-redesign-literature.md)。本轮未改算法、训练、评价或访问GT；下一单一变动需用户讨论批准，不自动实施/开卡。
 
 > **真实静态候选评分完成（2026-10-29）：** 用户下载目录含static_v2子目录/log/exitcode；服务器9603ef6 clean/退出0/68 NPZ已解码核对，4模型各17视角。现有score在本地clean cacb570运行退出0，2815 JSON/CSV行全部数值一致，GT SHA与正式mesh评价一致。12扩展视角接受目标最近表面改善比例7K37.70%、C031.64%、V240.35%、early32.54%，相应候选位置误差均值增加7.963/20.861/12.104/20.178mm；原五视角方向同样负向。NCC接受比拒绝可比较组富集约6.52—10.11个百分点，不能称完全无用；early有效GT法线域相对改善58.74%，仅法线改善36.22%、法线和z均改善22.53%。第一命中归属未认证，候选轴法线不是ALR D-normal，这不是历史轨迹或最终损伤因果证明。本次预算固定，不断言预算影响已排除；建议下一步讨论目标/动作匹配，不自动新增训练/算法。详见[真实候选检查报告](2026-10-29-static-candidate-results.md)，产物analysis/static_candidate_score_v2。训练/评价源码未改；独立报告审查无Critical/Important，数值与分母核对一致，未重跑GT/训练。

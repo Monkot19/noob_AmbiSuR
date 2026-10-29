@@ -297,3 +297,11 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Map target-source/conditional-NCC/position action to real train.py and candidate_selector interfaces; preserve A/ALR/ray/renderer contracts. No algorithm implementation.
 - [x] Rank anchored normal-guided candidate targets first, conditional position comparison/ambiguity curves second, relative-structure backup; distinguish DP-GS depthloss from host hardrelocation and code/paper coordinate differences.
 - [x] Independent narrow evidence/source review: noCritical/Important;12repo/18fileSHA and DP-GS/APDe/MP-SfM/host action boundaries checked, no GT/training rerun. Deliver research for discussion; next route notyetapproved.
+
+## 2026-10-29 selector_v3_spread: source-to-interface proposal only
+- [x] User chooses depth propagation candidate generation first, names selector_v3_spread; conditional fixed-normal NCC is deferred. Must report proposed code/interfaces before implementation.
+- [x] Re-read pinned DP-GS propagation, RGB confidence and5x5 normal-edge producer; host candidate/training/ALR/capture interfaces. Current production files identical to approved early a52ab904; later audit adds tests/entry only.
+- [x] Draft specific donor-to-host proposal: rendered-surface RGB/roundtrip anchors, firstsupport/102400pixel cap;5x5/10step/.6/.99/.01; explicit Kinv and invalid-transfer adaptation, proposal/prior separation, baselineA fallback; one shared module/fiveexistingfiles.
+- [x] Independent narrow feasibility review noCritical/Important; hostALR/depthconsumers, mixedrenderplane anchors, donor differences, callback/cache andcapture passthrough checked. Oral proposal ready; no product code/branch switch/GPU/GT/training. Specific defaults await user approval.
+
+Research-only read correction: initially looked for Codex reference under brainstorming/references (missing); actual using-superpowers/references/codex-tools.md read. No dependency/source modification.
