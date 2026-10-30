@@ -10,6 +10,7 @@
 - Fixed implementation8b1def920b2d4722e9ff238ed2116a477cd4846c. Full two existing entries56run/48pass/8native skips/11.074s; actual parser3.10/CLI, frozen gray matcher and ALR/score AST verified. All original default paths retained; actual CPU producer/consumer/serializer boundary checked.
 - Independent read-only whole-feature review of fixedcommit, donor and host source found no Critical/Important; independent new9CPU tests9pass/11.415s, no edits or GT/server operations. No runtime/benefit claim follows from this review.
 - New static launch guide reuses original native7k, same17views, existing capture/score entry and oldrawDA3 reference; no baseline retraining, endpoint recapture or automatic server run. Handoff syntax/publication check follows; serverGPU memory/time and geometric effect remain pending.
+- Publication verified: neworigin/codex/selector-v3-spread HEAD0b6b255fa5288ddaf065c56678d2f35844ee11dc equals local via ls-remote; worktree/index clean. Both handoffBash blocks parse with actualGitBash; configspread/native7k/17views checked. This following receipt changes only documentation. No training/capture/GT/rental/cleanup performed.
 
 ### Project bootstrap
 - **Status:** not_started

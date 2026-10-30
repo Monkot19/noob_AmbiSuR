@@ -38,5 +38,5 @@
 
 ## Task4: review and handoff
 - [x] Independent wholefeature review against fixed8b1def9/donor source: noCritical/Important; independent9newCPU pass11.415s, no edits or GT/server execution.
-- [ ] Verify diff against frozen losses/renderer/Gaussianexecutor and cleancommits; publish fixedcode/handoff if ready, no remoteexperiment execution.
-- [ ] Update projectledgers and concise final five-part report, including annotations1/2/3; provide next staticcapture reuse instructions, not automatic30K.
+- [x] Frozenloss/score AST and renderer/Gaussianexecutor/kernel/metadata diff verified; cleanfeature8b1def9 plus handoff0b6b255 published to newbranch, ls-remote exactly0b6b255fa5288ddaf065c56678d2f35844ee11dc. No remoteexperiment executed.
+- [x] Projectledgers and fixedhandoff updated; both Bashblocks parse, native7k17view config checked. Final report states annotations1/2/3 and runtime/benefit boundary; next staticcapture only, not automatic30K.
