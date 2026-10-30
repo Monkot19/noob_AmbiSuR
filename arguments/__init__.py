@@ -145,6 +145,7 @@ class OptimizationParams(ParamGroup):
 
         self.enable_candidate_selector = False
         self.candidate_selector_budget = 4096
+        self.candidate_depth_source = "da3"
         self.enable_candidate_relocation = False
         self.candidate_relocation_interval = 100
         self.candidate_relocation_until_iter = 0

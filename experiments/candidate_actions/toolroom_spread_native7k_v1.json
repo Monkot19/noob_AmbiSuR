@@ -1,0 +1,11 @@
+{
+  "protocol_name": "static_candidate_actions_spread_native7k_v1",
+  "candidate_depth_source": "spread",
+  "seed": 0,
+  "budget": 16384,
+  "illustrative_views": ["DSC06672", "DSC06528", "DSC06289", "DSC06669", "DSC06427"],
+  "coverage_count": 12,
+  "snapshots": [
+    {"name": "native7k", "iteration": 7000, "probe_iteration": 7100, "model_commit": "d6f15c8891a53800d5e3100f95817a7dd7f98e2f"}
+  ]
+}

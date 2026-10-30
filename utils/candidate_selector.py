@@ -37,6 +37,8 @@ def candidate_selector_active(iteration, opt):
         raise ValueError("candidate_selector_budget must be a positive integer")
     if opt.use_mono or any(getattr(opt, key, False) for key in _CORE_FLAGS):
         raise ValueError("candidate selector requires DA3 and all old Core flags off")
+    if getattr(opt, "candidate_depth_source", "da3") not in ("da3", "spread"):
+        raise ValueError("candidate_depth_source must be da3 or spread")
     return iteration > max(1000, opt.unc_from_iter)
 
 
@@ -56,10 +58,11 @@ def candidate_relocation_active(iteration, opt):
             and (until == 0 or iteration < until))
 
 
-def _sample_candidate_ids(pool, budget, *, seed, iteration, camera_uid):
+def _sample_candidate_ids(pool, budget, *, seed, iteration, camera_uid,
+                          stream="ambisur-selector-v1"):
     if pool.numel() <= budget:
         return pool
-    identity = f"ambisur-selector-v1|{seed}|{iteration}|{camera_uid}".encode("utf-8")
+    identity = f"{stream}|{seed}|{iteration}|{camera_uid}".encode("utf-8")
     local_seed = int.from_bytes(hashlib.sha256(identity).digest()[:8], "little") & ((1 << 63) - 1)
     generator = torch.Generator(device=pool.device).manual_seed(local_seed)
     return pool[torch.randperm(pool.numel(), device=pool.device, generator=generator)[:budget]]
@@ -112,31 +115,13 @@ def _oriented_plane(points, normals):
     return normals, distances, valid
 
 
-def _source_cost(gaussians, reference, source, reference_patch, reference_values,
-                 centers, points, normals, distances, source_depth, source_gray, opt):
-    """One hypothesis, one source: geometry first, raw NCC without its loss mask."""
-    h = _plane_homography(reference, source, normals, distances)
-    ones = torch.ones_like(reference_patch[..., :1])
-    homogeneous = torch.cat((reference_patch, ones), -1)
-    projected_h = homogeneous @ h.transpose(1, 2)
-    projected = patch_warp(h, reference_patch)
-    height, width = source_gray.shape[-2:]
-    valid = _inside_patch(projected, height, width)
-    valid &= torch.isfinite(projected_h).all(dim=(-1, -2)) & (projected_h[..., 2].abs() > _EPS).all(-1)
-
-    rays = homogeneous @ reference.get_inv_k(reference.ncc_scale).T
-    denominator = (rays * normals[:, None]).sum(-1)
-    intersection_depth = -distances[:, None] / denominator
+def _roundtrip_geometry(gaussians, reference, source, centers, points, source_depth):
+    """Shared point/depth correspondence; caller applies its geometric threshold."""
     rotation, translation = _relative_pose(reference, source)
-    source_patch_points = (rays * intersection_depth[..., None]) @ rotation.T + translation
-    valid &= ((denominator.abs() > _EPS) & torch.isfinite(intersection_depth)
-              & (intersection_depth > reference.znear)).all(-1)
-    valid &= torch.isfinite(source_patch_points).all(dim=(-1, -2)) & (source_patch_points[..., 2] > source.znear).all(-1)
-
     source_points = points @ rotation.T + translation
     sampled_depth, depth_valid = gaussians.get_points_depth_in_depth_map(source, source_depth, source_points)
     sampled_depth = sampled_depth.reshape(-1)
-    valid &= depth_valid.reshape(-1) & torch.isfinite(sampled_depth) & (sampled_depth > 0)
+    valid = depth_valid.reshape(-1) & torch.isfinite(sampled_depth) & (sampled_depth > 0)
     reconstructed_source = source_points / source_points[:, 2:3] * sampled_depth[:, None]
     source_transform = source.world_view_transform
     world = (reconstructed_source - source_transform[3, :3]) @ source_transform[:3, :3].T
@@ -147,6 +132,39 @@ def _source_cost(gaussians, reference, source, reference_patch, reference_values
     returned_pixels = returned_pixels[:, :2] / returned_pixels[:, 2:3]
     pixel_error = (returned_pixels - centers).norm(dim=-1)
     valid &= torch.isfinite(pixel_error)
+    return valid, pixel_error
+
+
+def _depth_stencil_valid(depth, znear):
+    usable = torch.isfinite(depth) & (depth > znear)
+    result = torch.zeros_like(usable)
+    result[1:-1, 1:-1] = (usable[1:-1, 1:-1] & usable[:-2, 1:-1]
+        & usable[2:, 1:-1] & usable[1:-1, :-2] & usable[1:-1, 2:])
+    return result
+
+
+def _source_cost(gaussians, reference, source, reference_patch, reference_values,
+                 centers, points, normals, distances, source_depth, source_gray, opt):
+    """Shared plane warp/raw NCC. Gray:[N,P]; RGB:[N,P,3] averages channel costs."""
+    h = _plane_homography(reference, source, normals, distances)
+    ones = torch.ones_like(reference_patch[..., :1])
+    homogeneous = torch.cat((reference_patch, ones), -1)
+    projected_h = homogeneous @ h.transpose(1, 2)
+    projected = patch_warp(h, reference_patch)
+    height, width = source_gray.shape[-2:]
+    valid = _inside_patch(projected, height, width)
+    valid &= torch.isfinite(projected_h).all(dim=(-1, -2)) & (projected_h[..., 2].abs() > _EPS).all(-1)
+    rays = homogeneous @ reference.get_inv_k(reference.ncc_scale).T
+    denominator = (rays * normals[:, None]).sum(-1)
+    intersection_depth = -distances[:, None] / denominator
+    rotation, translation = _relative_pose(reference, source)
+    source_patch_points = (rays * intersection_depth[..., None]) @ rotation.T + translation
+    valid &= ((denominator.abs() > _EPS) & torch.isfinite(intersection_depth)
+              & (intersection_depth > reference.znear)).all(-1)
+    valid &= torch.isfinite(source_patch_points).all(dim=(-1, -2)) & (source_patch_points[..., 2] > source.znear).all(-1)
+    geometry_valid, pixel_error = _roundtrip_geometry(gaussians, reference, source,
+        centers, points, source_depth)
+    valid &= geometry_valid
     if not opt.wo_use_geo_occ_aware:
         valid &= pixel_error < opt.multi_view_pixel_noise_th
 
@@ -155,11 +173,18 @@ def _source_cost(gaussians, reference, source, reference_patch, reference_values
     if rows.numel():
         sampled_values = _sample_map(source_gray, projected[rows]).squeeze(-1)
         ref_values = reference_values[rows]
-        finite_values = torch.isfinite(sampled_values).all(-1) & torch.isfinite(ref_values).all(-1)
+        color = reference_values.ndim == 3
+        dimensions = (-1, -2) if color else -1
+        finite_values = torch.isfinite(sampled_values).all(dimensions) & torch.isfinite(ref_values).all(dimensions)
         rows = rows[finite_values]
         if rows.numel():
-            raw_cost, _ = lncc(ref_values[finite_values], sampled_values[finite_values])
-            raw_cost = raw_cost.reshape(-1)
+            a, b = ref_values[finite_values], sampled_values[finite_values]
+            if color:
+                channels = a.shape[-1]
+                a = a.permute(0, 2, 1).reshape(-1, a.shape[1])
+                b = b.permute(0, 2, 1).reshape(-1, b.shape[1])
+            raw_cost, _ = lncc(a, b)
+            raw_cost = raw_cost.reshape(-1, channels).mean(-1) if color else raw_cost.reshape(-1)
             if not torch.isfinite(raw_cost).all():
                 raise FloatingPointError("non-finite NCC for finite selector patches")
             costs[rows] = raw_cost
@@ -170,7 +195,8 @@ def _source_cost(gaussians, reference, source, reference_patch, reference_values
 @torch.no_grad()
 def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
                                prior_depth, prior_normal, support_cameras, opt, *,
-                               seed, iteration, support_depth_fn, include_targets=False):
+                               seed, iteration, support_depth_fn, include_targets=False,
+                               proposal_depth=None, proposal_valid=None):
     active = candidate_selector_active(iteration, opt)
     xyz = gaussians.get_xyz
     if xyz.ndim != 2 or xyz.shape[-1] != 3 or not torch.isfinite(xyz).all():
@@ -192,6 +218,17 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
             raise ValueError(f"{name} must match Gaussian device/dtype")
     if reference_gray.ndim != 3 or reference_gray.shape[0] != 1 or reference_gray.device != xyz.device:
         raise ValueError("reference_gray must be [1,Hn,Wn] on the model device")
+    if (proposal_depth is None) != (proposal_valid is None):
+        raise ValueError("proposal_depth and proposal_valid must be supplied together")
+    if proposal_depth is None and getattr(opt, "candidate_depth_source", "da3") == "spread":
+        raise ValueError("spread source requires an explicit proposal, including an empty mask")
+    if proposal_depth is not None:
+        if (proposal_depth.shape != (height, width) or proposal_valid.shape != (height, width)
+                or proposal_depth.device != xyz.device or proposal_valid.device != xyz.device
+                or proposal_depth.dtype != xyz.dtype or proposal_valid.dtype != torch.bool
+                or not torch.isfinite(proposal_depth).all()):
+            raise ValueError("proposal must be finite [H,W] depth and boolean mask on model device/dtype")
+        stats["proposal_usable"] = extra.sum()
     if len(support_cameras) < 2 or xyz.shape[0] == 0:
         return labels, extra, stats, None
 
@@ -222,7 +259,8 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
         raise ValueError("selector requires finite model normals:[N,3]")
     normal_g, distance_g, valid_g = _oriented_plane(points_g, normal_world[ids] @ transform[:3, :3])
 
-    depth_p = _sample_map(prior_depth[None], centers[:, None])[:, 0, 0]
+    position_depth = prior_depth if proposal_depth is None else proposal_depth
+    depth_p = _sample_map(position_depth[None], centers[:, None])[:, 0, 0]
     normal_p = _sample_map(prior_normal, centers[:, None])[:, 0]
     rays = torch.cat((centers, torch.ones_like(centers[:, :1])), -1) @ ref.get_inv_k().T
     points_p = rays * depth_p[:, None]
@@ -233,15 +271,15 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
     # render_normal uses the four adjacent depth points, then bilinear sampling
     # blends up to four such normals; a finite normal alone does not certify
     # that its depth stencil was usable.
-    depth_valid = torch.isfinite(prior_depth) & (prior_depth > ref.znear)
-    normal_stencil_valid = torch.zeros_like(depth_valid)
-    normal_stencil_valid[1:-1, 1:-1] = (
-        depth_valid[1:-1, 1:-1] & depth_valid[:-2, 1:-1]
-        & depth_valid[2:, 1:-1] & depth_valid[1:-1, :-2]
-        & depth_valid[1:-1, 2:])
+    normal_stencil_valid = _depth_stencil_valid(prior_depth, ref.znear)
     stencil_support = _sample_map(normal_stencil_valid[None].to(xyz.dtype), centers[:, None])[:, 0, 0]
     valid_p &= stencil_support >= 1 - _EPS
+    if proposal_valid is not None:
+        support = _sample_map(proposal_valid[None].to(xyz.dtype), centers[:, None])[:, 0, 0]
+        valid_p &= support >= 1 - _EPS
     valid = valid_g & valid_p
+    if proposal_valid is not None:
+        stats["proposal_usable"] = valid.sum()
     if not valid.any():
         return labels, extra, stats, None
     ids, centers, reference_patch = ids[valid], centers[valid], reference_patch[valid]
@@ -284,17 +322,20 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
 
 def select_candidate_labels(gaussians, reference_camera, reference_gray,
                             prior_depth, prior_normal, support_cameras, opt, *,
-                            seed, iteration, support_depth_fn):
+                            seed, iteration, support_depth_fn, proposal_depth=None, proposal_valid=None):
     """Original V1 interface and choices, without producing relocation targets."""
     return _select_candidate_geometry(gaussians, reference_camera, reference_gray,
         prior_depth, prior_normal, support_cameras, opt, seed=seed,
-        iteration=iteration, support_depth_fn=support_depth_fn)[:3]
+        iteration=iteration, support_depth_fn=support_depth_fn,
+        proposal_depth=proposal_depth, proposal_valid=proposal_valid)[:3]
 
 
 def select_candidate_labels_with_targets(gaussians, reference_camera, reference_gray,
                                          prior_depth, prior_normal, support_cameras, opt, *,
-                                         seed, iteration, support_depth_fn):
-    """V2 uses exactly the V1 decisions and their evaluated DA3 world targets."""
+                                         seed, iteration, support_depth_fn,
+                                         proposal_depth=None, proposal_valid=None):
+    """Same decisions as label-only entry; return evaluated position targets."""
     return _select_candidate_geometry(gaussians, reference_camera, reference_gray,
         prior_depth, prior_normal, support_cameras, opt, seed=seed,
-        iteration=iteration, support_depth_fn=support_depth_fn, include_targets=True)
+        iteration=iteration, support_depth_fn=support_depth_fn, include_targets=True,
+        proposal_depth=proposal_depth, proposal_valid=proposal_valid)

@@ -680,6 +680,23 @@ class CandidateIntegrationTests(unittest.TestCase):
         model.optimizer.step()
         self.assertTrue(torch.isfinite(parameter).all())
 
+    def test_spread_real_render_to_alr_backward_and_step(self):
+        ref,sources,model,pipe,bg = self.fixture()
+        opt = options(candidate_depth_source='spread',enable_candidate_relocation=True,
+                      candidate_relocation_until_iter=15000,ray_color_lambda=-1)
+        model.spatial_lr_scale=1.;model.training_setup(opt)
+        model.max_radii2D=model._xyz.new_zeros(len(model._xyz));model.max_weight=model.max_radii2D.clone()
+        raw=ref.depth_dict['depth'].clone()
+        pkg,data=self.reference_render(ref,model,pipe,bg,None,opt,iteration=7100,seed=0)
+        torch.testing.assert_close(data['prior_depth'],raw)
+        self.assertIn('anchors',data['stats']);self.assertIn('spread_pixels',data['stats'])
+        self.assertTrue(torch.isfinite(pkg['plane_depth']).all())
+        loss=pkg['render'].mean()+self.alr(ref,pkg,data['prior_depth'],1,-1,7100,opt,data['prior_normal'])
+        loss.backward()
+        self.assertTrue(torch.isfinite(model._xyz.grad).all())
+        model.optimizer.step()
+        self.assertTrue(torch.isfinite(model.get_xyz).all())
+
     def test_real_training_helper_off_ezero_and_active_path(self):
         ref, sources, model, pipe, bg = self.fixture(invalid_prior=True)
         from train import prepare_output_and_logger
@@ -1091,6 +1108,255 @@ class StaticActionAuditTests(unittest.TestCase):
             self.assertTrue((p/'score/results.json').is_file())
             self.assertTrue((p/'score/metrics.csv').is_file())
             with self.assertRaises(FileExistsError): audit.score_capture(capture,gt_path,p/'score')
+
+
+class SpreadIntegrationTests(unittest.TestCase):
+    def test_real_training_helper_preview_cache_relocation_and_raw_prior(self):
+        from utils.depth_spread import build_spread_proposal
+        ref,sources,model,depth,normal = CandidateRelocationTests().fixture(4)
+        ref.depth_dict['depth'] = depth * 2
+        ref._candidate_support_cameras = sources
+        ref.get_calib_matrix_nerf = lambda scale=1: (ref.get_k(scale),ref.world_view_transform.T)
+        calls=[]
+        def boundary(camera,current,*args,**kwargs):
+            grad = torch.is_grad_enabled()
+            calls.append((camera.uid,grad))
+            if not grad:
+                return dict(plane_depth=depth[None].clone(),rendered_normal=normal.clone(),
+                            rendered_distance=depth[None].clone())
+            z = (current.get_xyz@ref.world_view_transform[:3,:3]+ref.world_view_transform[3,:3])[:,2]
+            return {'plane_depth':z.mean().expand(1,32,32)}
+        root=Path(__file__).resolve().parents[1]
+        n=next(x for x in ast.parse((root/'gaussian_renderer/__init__.py').read_text(encoding='utf-8')).body
+               if isinstance(x,ast.FunctionDef) and x.name=='render_normal')
+        ns=dict(torch=torch,F=torch.nn.functional,render=boundary,
+                normal_from_depth_image=normal_from_depth_image,
+                candidate_selector_active=selector.candidate_selector_active,
+                candidate_relocation_active=selector.candidate_relocation_active,
+                select_candidate_labels=selector.select_candidate_labels,
+                select_candidate_labels_with_targets=selector.select_candidate_labels_with_targets,
+                build_spread_proposal=build_spread_proposal)
+        exec(compile(ast.Module(body=[n],type_ignores=[]),'<production normal>','exec'),ns)
+        f=next(x for x in ast.parse((root/'train.py').read_text(encoding='utf-8')).body
+               if isinstance(x,ast.FunctionDef) and x.name=='_render_training_reference')
+        exec(compile(ast.Module(body=[f],type_ignores=[]),'<production training helper>','exec'),ns)
+        opts=options(candidate_depth_source='spread',enable_candidate_relocation=True,
+                     candidate_relocation_until_iter=15000,multi_view_sample_num=12)
+        pkg,data=ns[f.name](ref,model,None,None,None,opts,iteration=7100,seed=0)
+        self.assertEqual(calls,[(0,False),(1,False),(2,False),(0,True)])
+        self.assertEqual(data['stats']['relocated'],4)
+        torch.testing.assert_close(data['prior_depth'],depth*2)
+        torch.testing.assert_close(data['prior_normal'],normal)
+        torch.testing.assert_close(pkg['plane_depth'],depth.new_full((1,32,32),2.),atol=3e-5,rtol=2e-5)
+        pkg['plane_depth'].sum().backward();model.optimizer.step()
+        self.assertTrue(torch.isfinite(model.get_xyz).all())
+
+    def test_shared_producer_to_real_observer_and_capture_config_override(self):
+        from utils.depth_spread import build_spread_proposal
+        from scripts import evaluate_candidate_actions as audit
+        ref,sources,model,depth,normal=analytic_fixture()
+        opts=options(candidate_depth_source='spread',multi_view_sample_num=12)
+        geometry=dict(plane_depth=depth[None],rendered_normal=normal,rendered_distance=depth[None])
+        source=lambda c: depth[None]
+        proposal,valid,stats=build_spread_proposal(model,ref,sources,depth*2,normal,
+            geometry,opts,seed=0,iteration=7100,support_depth_fn=source)
+        kw=dict(seed=0,iteration=7100,support_depth_fn=source,
+                proposal_depth=proposal,proposal_valid=valid)
+        direct=selector.select_candidate_labels_with_targets(model,ref,ref.gray,depth*2,normal,
+            sources,opts,**kw)
+        record,counts=audit.observe_selector(model,ref,ref.gray,depth*2,normal,sources,opts,**kw)
+        audit.validate_record(record)
+        self.assertEqual(counts['added'],4)
+        np.testing.assert_array_equal(record['prior_world'][record['accepted']],direct[3][1].numpy())
+        # Exercise actual CLI parsing into capture, without invoking native CUDA.
+        config=Path(__file__).resolve().parents[1]/'experiments/candidate_actions/toolroom_static_v1.json'
+        with tempfile.TemporaryDirectory() as temp:
+            source_path=Path(temp)
+            argv=['audit','capture','--config',str(config),'--source',temp,
+                  '--output',str(source_path/'new'),'--candidate-depth-source','spread']
+            for name in ('native7k','c0_30k','v2_30k','early_30k'):
+                argv.extend(['--snapshot',name+'='+temp])
+            with patch('sys.argv',argv),patch.object(audit,'capture') as capture:
+                audit.main()
+            self.assertEqual(capture.call_args.args[0]['candidate_depth_source'],'spread')
+
+
+class DepthSpreadTests(unittest.TestCase):
+    def test_tilted_plane_from_single_anchor_and_normal_boundary(self):
+        from utils.depth_spread import propagate_depth
+        y,x = torch.meshgrid(torch.arange(13),torch.arange(13),indexing='ij')
+        rays = torch.stack(((x-6)/40, (y-6)/40, torch.ones_like(x)), -1).float()
+        n = torch.tensor([.1,.05,-1.]); n = n/n.norm()
+        normals = n[:,None,None].expand(3,13,13).clone()
+        truth = -2/(rays*n).sum(-1)
+        start = torch.full_like(truth, 90.); start[6,6] = truth[6,6]
+        anchors = torch.zeros_like(truth,dtype=torch.bool); anchors[6,6] = True
+        usable = torch.ones_like(anchors)
+        output, mask = propagate_depth(start,normals,rays,anchors,usable)
+        self.assertTrue(mask.all())
+        torch.testing.assert_close(output,truth,rtol=2e-5,atol=2e-5)
+        empty, empty_mask = propagate_depth(start,normals,rays,anchors & False,usable)
+        self.assertFalse(empty_mask.any()); self.assertFalse(empty.any())
+        anchors.zero_(); anchors[6,2] = True; start[6,2] = truth[6,2]
+        normals[:,:,6:] = torch.tensor([0.,.8,-.6])[:,None,None]
+        bounded, reached = propagate_depth(start,normals,rays,anchors,usable)
+        self.assertTrue(reached[:,:4].any()); self.assertFalse(reached[:,6:].any())
+        normals[:,6,2] = float('nan')
+        invalid, valid = propagate_depth(start,normals,rays,anchors,usable)
+        self.assertTrue(torch.isfinite(invalid).all()); self.assertFalse(valid.any())
+        grazing=torch.zeros_like(normals);grazing[0]=1.
+        anchors.zero_();anchors[6,6]=True
+        invalid,valid=propagate_depth(start,grazing,rays,anchors,usable)
+        self.assertTrue(torch.isfinite(invalid).all());self.assertFalse(valid.any())
+
+    def test_anchor_rgb_full_images_respect_ncc_scale_and_source_dimensions(self):
+        from utils.depth_spread import build_spread_proposal
+        ref=AnalyticCamera(ncc_scale=2)
+        sources=[AnalyticCamera(1,.1,width=40,height=28,ncc_scale=2),
+                 AnalyticCamera(2,-.1,ncc_scale=2)]
+        for camera in [ref,*sources]:
+            shift=camera.world_view_transform[3,0].item()-.2
+            full=AnalyticCamera(camera.uid,shift,width=camera.image_width,height=camera.image_height)
+            rgb=full.gray.expand(3,-1,-1).clone();gray=camera.gray
+            camera.get_image=lambda rgb=rgb,gray=gray:(rgb,gray)
+        model=AnalyticGaussians(ref)
+        depth=ref.depth_dict['depth']
+        normal=normal_from_depth_image(depth,ref.get_k(),ref.world_view_transform.T).permute(2,0,1)
+        geometry=dict(plane_depth=depth[None],rendered_normal=normal,rendered_distance=depth[None])
+        proposal,valid,stats=build_spread_proposal(model,ref,sources,depth,normal,
+            geometry,options(),seed=0,iteration=7100,
+            support_depth_fn=lambda c:depth.new_full((1,c.image_height,c.image_width),2.))
+        self.assertGreater(int(stats['anchors']),0)
+        self.assertTrue(valid[15:17,15:17].all())
+        torch.testing.assert_close(proposal[valid],torch.full_like(proposal[valid],2.),atol=3e-5,rtol=2e-5)
+
+    def test_real_rgb_anchor_producer_to_selector_targets_and_rng(self):
+        from utils.depth_spread import build_spread_proposal
+        ref,sources,model,depth,normal = analytic_fixture()
+        opts = options(candidate_depth_source='spread',multi_view_sample_num=12)
+        geometry = dict(plane_depth=depth[None],rendered_normal=normal,
+                        rendered_distance=depth[None])
+        rng = torch.get_rng_state().clone()
+        source_calls=[]
+        def source_depth(camera):
+            source_calls.append(camera.uid)
+            return depth[None]
+        with patch.object(model,'get_normal',side_effect=AssertionError('anchor is a rendered plane')):
+            proposal,valid,stats = build_spread_proposal(model,ref,sources,depth*2,normal,
+                geometry,opts,seed=0,iteration=7100,support_depth_fn=source_depth)
+        self.assertEqual(source_calls,[1])
+        self.assertGreater(int(stats['anchors']),0)
+        self.assertLessEqual(int(stats['anchors']),12)
+        self.assertTrue(valid[15:17,15:17].all())
+        torch.testing.assert_close(proposal[valid],torch.full_like(proposal[valid],2.),atol=3e-5,rtol=2e-5)
+        self.assertTrue(torch.equal(torch.get_rng_state(),rng))
+        result = selector.select_candidate_labels_with_targets(model,ref,ref.gray,
+            depth*2,normal,sources,opts,seed=0,iteration=7100,support_depth_fn=source_depth,
+            proposal_depth=proposal,proposal_valid=valid)
+        self.assertEqual(int(result[1].sum()),4)
+        camera_target = result[3][1]@ref.world_view_transform[:3,:3]+ref.world_view_transform[3,:3]
+        torch.testing.assert_close(camera_target[:,2],torch.full((4,),2.),atol=3e-5,rtol=2e-5)
+        missing = dict(geometry,plane_depth=torch.zeros_like(depth[None]))
+        no_depth,no_mask,no_stats = build_spread_proposal(model,ref,sources,depth*2,normal,
+            missing,opts,seed=0,iteration=7100,support_depth_fn=source_depth)
+        self.assertFalse(no_mask.any()); self.assertFalse(no_depth.any())
+        self.assertEqual(int(no_stats['anchors']),0)
+
+
+class SpreadContractTests(unittest.TestCase):
+    def test_gray_source_matches_frozen_pre_spread_implementation(self):
+        frozen=subprocess.check_output(['git','show','43e2ea0:utils/candidate_selector.py'],text=True)
+        old=next(x for x in ast.parse(frozen).body if isinstance(x,ast.FunctionDef) and x.name=='_source_cost')
+        ns=dict(vars(selector))
+        exec(compile(ast.Module(body=[old],type_ignores=[]),'<frozen source matcher>','exec'),ns)
+        ref,sources,model,depth,_=analytic_fixture()
+        centers=torch.tensor([[2.,2.],[12.,15.],[16.,16.],[30.,30.]])
+        patches=centers[:,None]+selector.patch_offsets(3,'cpu')
+        points=(torch.cat((centers,torch.ones(4,1)),-1)@ref.get_inv_k().T)*3
+        normal=torch.tensor([[0.,0.,-1.]]).expand(4,-1)
+        args=(model,ref,sources[0],patches,selector._sample_map(ref.gray,patches).squeeze(-1),
+              centers,points,normal,torch.full((4,),3.),depth[None],sources[0].gray,options())
+        old_cost,old_valid=ns['_source_cost'](*args)
+        new_cost,new_valid=selector._source_cost(*args)
+        self.assertTrue(torch.equal(old_cost,new_cost));self.assertTrue(torch.equal(old_valid,new_valid))
+
+    def test_source_option_and_old_sampling_stream(self):
+        parser = ArgumentParser()
+        group = OptimizationParams(parser)
+        default = group.extract(parser.parse_args([]))
+        self.assertEqual(getattr(default, "candidate_depth_source", None), "da3")
+        spread = group.extract(parser.parse_args([
+            "--enable_candidate_selector", "--candidate_depth_source", "spread"]))
+        self.assertEqual(build_resolved_config(SimpleNamespace(), spread,
+            SimpleNamespace())["optimization"]["candidate_depth_source"], "spread")
+        with self.assertRaises(ValueError):
+            selector.candidate_selector_active(7100, options(candidate_depth_source="typo"))
+        pool = torch.arange(100)
+        rng = torch.get_rng_state().clone()
+        old = selector._sample_candidate_ids(pool, 12, seed=0, iteration=7100, camera_uid=2)
+        same = selector._sample_candidate_ids(pool, 12, seed=0, iteration=7100,
+            camera_uid=2, stream="ambisur-selector-v1")
+        other = selector._sample_candidate_ids(pool, 12, seed=0, iteration=7100,
+            camera_uid=2, stream="selector-v3-spread-anchors")
+        self.assertTrue(torch.equal(old, same))
+        self.assertFalse(torch.equal(old, other))
+        self.assertTrue(torch.equal(rng, torch.get_rng_state()))
+
+    def test_proposal_targets_and_uncovered_rows_keep_a_without_matching(self):
+        ref, sources, model, depth, normal = analytic_fixture()
+        model.scores[0] = 100.
+        raw_prior = depth * 2
+        source_depth = lambda c: depth[None]
+        kw = dict(seed=0, iteration=7100, support_depth_fn=source_depth,
+                  proposal_depth=depth, proposal_valid=torch.ones_like(depth, dtype=torch.bool))
+        result = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            raw_prior, normal, sources, options(candidate_depth_source="spread"), **kw)
+        self.assertEqual(int(result[1].sum()), 3)
+        target_camera = result[3][1] @ ref.world_view_transform[:3,:3] + ref.world_view_transform[3,:3]
+        torch.testing.assert_close(target_camera[:,2], depth.new_full((3,), 2.))
+        for mask in (torch.zeros_like(depth, dtype=torch.bool), kw['proposal_valid'].clone()):
+            # Gaussian projects to(15.5,15.5); one missing corner forbids bilinear mixing.
+            mask[16,16] = False
+            with patch.object(selector, '_source_cost', wraps=selector._source_cost) as match:
+                missing = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+                    raw_prior, normal, sources, options(candidate_depth_source="spread"),
+                    **dict(kw, proposal_valid=mask))
+            self.assertEqual(match.call_count, 0)
+            self.assertTrue(torch.equal(missing[0], selector.compute_sh_ambiguity_labels(model, options())))
+            self.assertFalse(missing[1].any())
+            self.assertIsNone(missing[3])
+        with self.assertRaises(ValueError):
+            selector.select_candidate_labels_with_targets(model, ref, ref.gray, depth,
+                normal, sources, options(candidate_depth_source="spread"),
+                seed=0, iteration=7100, support_depth_fn=source_depth)
+
+    def test_rgb_cost_is_mean_of_real_channel_ncc_and_geometry(self):
+        ref, sources, model, depth, _ = analytic_fixture()
+        src = sources[0]
+        centers = torch.tensor([[12.,15.], [16.,16.]])
+        patches = centers[:,None] + selector.patch_offsets(3, 'cpu')
+        rays = torch.cat((centers, torch.ones(2,1)), -1) @ ref.get_inv_k().T
+        points = 2 * rays
+        normal = torch.tensor([[0.,0.,-1.]]).expand(2,-1)
+        distance = torch.full((2,), 2.)
+        rgb = torch.cat((ref.gray, ref.gray.square(), 1-ref.gray), 0)
+        src_rgb = torch.cat((src.gray, src.gray.square(), 1-src.gray), 0)
+        args = (model, ref, src, patches)
+        tail = (centers, points, normal, distance, depth[None])
+        colors, valid = selector._source_cost(*args, selector._sample_map(rgb, patches),
+            *tail, src_rgb, options())
+        channels = []
+        for c in range(3):
+            costs, mask = selector._source_cost(*args,
+                selector._sample_map(rgb[c:c+1], patches).squeeze(-1), *tail,
+                src_rgb[c:c+1], options())
+            self.assertTrue(torch.equal(valid, mask))
+            channels.append(costs)
+        torch.testing.assert_close(colors, torch.stack(channels, -1).mean(-1))
+        geometry_valid, error = selector._roundtrip_geometry(model, ref, src,
+            centers, points, depth[None])
+        self.assertTrue(geometry_valid.all())
+        self.assertLess(float(error.max()), 1e-4)
 
 
 if __name__ == "__main__":

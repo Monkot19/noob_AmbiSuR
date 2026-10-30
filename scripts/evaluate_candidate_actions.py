@@ -52,7 +52,7 @@ def _array(tensor):
 
 
 def observe_selector(model, reference, gray, depth, normal, supports, opt, *,
-                     seed, iteration, support_depth_fn):
+                     seed, iteration, support_depth_fn, proposal_depth=None, proposal_valid=None):
     """Observe the actual core once; restore profiling and preserve tensor state."""
     import torch
     from utils import candidate_selector as selector
@@ -68,7 +68,8 @@ def observe_selector(model, reference, gray, depth, normal, supports, opt, *,
     try:
         result = selector.select_candidate_labels_with_targets(model, reference, gray,
             depth, normal, supports, opt, seed=seed, iteration=iteration,
-            support_depth_fn=support_depth_fn)
+            support_depth_fn=support_depth_fn, proposal_depth=proposal_depth,
+            proposal_valid=proposal_valid)
     finally:
         sys.setprofile(None)
     if before != (id(model.get_xyz), model.get_xyz._version):
@@ -169,6 +170,7 @@ def capture(config, source, snapshots, output):
     from scene.gaussian_model import GaussianModel
     from utils.camera_utils import loadCam
     from gaussian_renderer import render, render_normal
+    from utils.depth_spread import build_spread_proposal
     if not torch.cuda.is_available():
         raise RuntimeError('native CUDA capture required')
     if output.resolve() == source.resolve() or source.resolve() in output.resolve().parents:
@@ -198,6 +200,8 @@ def capture(config, source, snapshots, output):
         ds.__dict__.update(literal_namespace((run/'cfg_args').read_text(encoding='utf-8')))
         opt.__dict__.update(literal_namespace((run/'cfg_opts').read_text(encoding='utf-8')))
         opt.enable_candidate_selector, opt.candidate_selector_budget = True, config['budget']
+        if 'candidate_depth_source' in config:
+            opt.candidate_depth_source = config['candidate_depth_source']
         opt.enable_candidate_relocation = False
         ds.source_path, ds.preload_img = str(source), False
         native = GaussianModel(ds.sh_degree)
@@ -239,10 +243,27 @@ def capture(config, source, snapshots, output):
                 depth = torch.nn.functional.interpolate(ref.depth_dict['depth'].detach()[None,None],
                     size=(ref.image_height,ref.image_width),mode='bilinear',align_corners=True).squeeze()
                 normal = render_normal(ref,depth)
+                spread = getattr(opt,'candidate_depth_source','da3') == 'spread'
+                source_cache = {} if spread else None
                 def source_depth(camera):
-                    return render(camera,native,pipe,bg,return_plane=True,return_depth_normal=False,ray_reg=False)['plane_depth']
+                    if source_cache is not None and camera.uid in source_cache:
+                        return source_cache[camera.uid]
+                    value=render(camera,native,pipe,bg,return_plane=True,return_depth_normal=False,ray_reg=False)['plane_depth']
+                    if source_cache is not None:
+                        source_cache[camera.uid]=value
+                    return value
+                proposal_args, spread_stats = {}, {}
+                if spread:
+                    preview=render(ref,native,pipe,bg,return_plane=True,return_depth_normal=False,ray_reg=False)
+                    proposal,usable,spread_stats=build_spread_proposal(native,ref,cams[1:],depth,normal,
+                        preview,opt,seed=config['seed'],iteration=snapshot['probe_iteration'],support_depth_fn=source_depth)
+                    proposal_args=dict(proposal_depth=proposal,proposal_valid=usable)
+                    del preview
                 record, stats = observe_selector(native,ref,ref.get_image()[1],depth,normal,cams[1:],opt,
-                    seed=config['seed'],iteration=snapshot['probe_iteration'],support_depth_fn=source_depth)
+                    seed=config['seed'],iteration=snapshot['probe_iteration'],support_depth_fn=source_depth,**proposal_args)
+                stats.update({k:int(v) for k,v in spread_stats.items()})
+                if source_cache is not None:
+                    source_cache.clear()
             filename = name+'_'+view+'.npz'
             write_capture_record(output/filename,record)
             records.append(dict(file=filename,snapshot=name,snapshot_iteration=snapshot['iteration'],
@@ -439,6 +460,7 @@ def main():
     c = sub.add_parser('capture');c.add_argument('--config',type=Path,required=True)
     c.add_argument('--source',type=Path,required=True);c.add_argument('--snapshot',action='append',required=True)
     c.add_argument('--output',type=Path,required=True)
+    c.add_argument('--candidate-depth-source',choices=('da3','spread'))
     s = sub.add_parser('score');s.add_argument('--capture',type=Path,required=True)
     s.add_argument('--gt',type=Path,required=True);s.add_argument('--output',type=Path,required=True)
     s.add_argument('--segments',type=Path);s.add_argument('--annotations',type=Path)
@@ -452,6 +474,8 @@ def main():
             if not sep or not name or name in snapshots: raise ValueError('unique NAME=PATH snapshots required')
             snapshots[name] = Path(path).resolve(strict=True)
         config=json.loads(args.config.read_text(encoding='utf-8'))
+        if args.candidate_depth_source is not None:
+            config['candidate_depth_source']=args.candidate_depth_source
         if set(snapshots) != {s['name'] for s in config['snapshots']}:
             raise ValueError('snapshot names must match config')
         capture(config,args.source.resolve(strict=True),snapshots,args.output)

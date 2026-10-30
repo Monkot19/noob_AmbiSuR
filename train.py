@@ -22,6 +22,7 @@ from utils.graphics_utils import patch_offsets, patch_warp
 from utils.candidate_selector import (candidate_selector_active, candidate_relocation_active,
     compute_sh_ambiguity_labels, select_candidate_labels, select_candidate_labels_with_targets)
 from utils.run_metadata import build_resolved_config, collect_run_identity, write_run_metadata
+from utils.depth_spread import build_spread_proposal
 from gaussian_renderer import render, network_gui, render_normal
 import sys, time
 from scene import Scene, GaussianModel
@@ -101,17 +102,35 @@ def _render_training_reference(viewpoint_cam, gaussians, pipe, bg, app_model,
                 mode="bilinear", align_corners=True).squeeze()
             prior_normal = render_normal(viewpoint_cam, prior_depth)
             _, reference_gray = viewpoint_cam.get_image()
-
+            spread = getattr(opt, "candidate_depth_source", "da3") == "spread"
+            source_cache = {} if spread else None
             def source_depth(camera):
-                return render(camera, gaussians, pipe, bg, app_model=app_model,
+                if source_cache is not None and camera.uid in source_cache:
+                    return source_cache[camera.uid]
+                value = render(camera, gaussians, pipe, bg, app_model=app_model,
                     return_plane=True, return_depth_normal=False,
                     ray_reg=False)["plane_depth"]
-
+                if source_cache is not None:
+                    source_cache[camera.uid] = value
+                return value
+            proposal_args, spread_stats = {}, {}
+            if spread:
+                preview = render(viewpoint_cam, gaussians, pipe, bg, app_model=app_model,
+                    return_plane=True, return_depth_normal=False, ray_reg=False)
+                proposal, usable, spread_stats = build_spread_proposal(gaussians,
+                    viewpoint_cam, viewpoint_cam._candidate_support_cameras, prior_depth,
+                    prior_normal, preview, opt, seed=seed, iteration=iteration,
+                    support_depth_fn=source_depth)
+                proposal_args = dict(proposal_depth=proposal, proposal_valid=usable)
+                del preview
             select = select_candidate_labels_with_targets if relocate_now else select_candidate_labels
             selected = select(gaussians, viewpoint_cam, reference_gray, prior_depth,
                 prior_normal, viewpoint_cam._candidate_support_cameras, opt,
-                seed=seed, iteration=iteration, support_depth_fn=source_depth)
+                seed=seed, iteration=iteration, support_depth_fn=source_depth, **proposal_args)
             labels, extra, stats = selected[:3]
+            stats.update(spread_stats)
+            if source_cache is not None:
+                source_cache.clear()
             if relocate_now:
                 targets = selected[3]
                 stats["relocated"] = 0 if targets is None else gaussians.relocate_selected(*targets)
@@ -514,10 +533,14 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 stats = selector_data["stats"]
                 total_alr_weight = (render_pkg["rendered_unc"].detach()
                                     * (metric_depth_conf >= conf_thresh)).sum()
+                spread_log = (f" anchors={int(stats['anchors'])} "
+                    f"spread_pixels={int(stats['spread_pixels'])} "
+                    f"proposal_usable={int(stats.get('proposal_usable', 0))}"
+                    if 'anchors' in stats else "")
                 tqdm.write(f"[selector {iteration}] sampled={stats['sampled']} "
                     f"comparable={int(stats['comparable'])} added={int(stats['added'])} "
                     f"total_alr_weight={float(total_alr_weight):.6f} "
-                    f"iteration_ms={iter_start.elapsed_time(iter_end):.3f}")
+                    f"iteration_ms={iter_start.elapsed_time(iter_end):.3f}{spread_log}")
             # Progress bar
             ema_loss_for_log = 0.4 * image_loss.item() if image_loss is not None else 0.0 + 0.6 * ema_loss_for_log
             ema_single_view_for_log = 0.4 * normal_loss.item() if normal_loss is not None else 0.0 + 0.6 * ema_single_view_for_log

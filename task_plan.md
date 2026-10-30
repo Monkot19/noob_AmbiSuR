@@ -305,3 +305,9 @@ Localverificationcomplete;noformalgeometryevaluationorservercleanupperformed. Ne
 - [x] Independent narrow feasibility review noCritical/Important; hostALR/depthconsumers, mixedrenderplane anchors, donor differences, callback/cache andcapture passthrough checked. Oral proposal ready; no product code/branch switch/GPU/GT/training. Specific defaults await user approval.
 
 Research-only read correction: initially looked for Codex reference under brainstorming/references (missing); actual using-superpowers/references/codex-tools.md read. No dependency/source modification.
+
+## 2026-10-30 Approved selector_v3_spread implementation
+- [x] User approves concreteadaptation; annotation1/3 clarify no proposal skipsnewmatch/E, preservesA; annotation2 propagatedlossfutureonly. D branchcodex/selector-v3-spread from43e2ea0, spec/inlineplan saved.
+- [x] TDD sharedmatcher/source/proposal and commonproducer: missingAPI/module/RGB shape RED->GREEN; tiltedplane/noanchor/boundary/grazing, exactfrozengraymatcher, RGBchannelmean/NCCscale/source sizes/RNG checked.
+- [x] Realtraining/capture integration RED missingproposal->GREEN; producer->selector->literalworldtarget->observer, rawDA3/cache/mainrender order;56tests48pass8native skips,3.10/CLI/frozenAST checks pass.
+- [ ] AppropriateCPU/nativeavailable checks, independentreview, committedcleanhandoff; no automaticservertraining.
