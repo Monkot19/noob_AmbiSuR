@@ -1,8 +1,15 @@
 # AmbiSuR 新项目 Progress
 
-> 当前主工作目录：`D:\research_Space\noob_AmbiSuR`，分支 `codex/second-run-selector`；C 保留 detached3775135。旧记录按时间保留，当前入口为 `docs/research/project-handoff.md`。
+> 当前主工作目录：`D:\research_Space\noob_AmbiSuR`，分支 `codex/selector-v3-spread`；C 保留 detached3775135。旧记录按时间保留，当前入口为 `docs/research/project-handoff.md`。
 
 ## Session Log
+
+### 2026-10-30 Approved selector_v3_spread implementation
+- User annotations1/3 approve A-only fallback before newmatching; annotation2 records future propagateddepthloss only. Concrete source/coordinates/early schedule approved; no further method redesign.
+- D isolated branchcodex/selector-v3-spread from43e2ea0, approved spec and inline plan saved. Shared source/proposal API, actual RGB matcher, normal-guided propagation and real train/capture integration developed RED->GREEN in existing test entry. No new dependencies/renderer/CUDA/optimizer/checkpoint or evaluation framework.
+- Fixed implementation8b1def920b2d4722e9ff238ed2116a477cd4846c. Full two existing entries56run/48pass/8native skips/11.074s; actual parser3.10/CLI, frozen gray matcher and ALR/score AST verified. All original default paths retained; actual CPU producer/consumer/serializer boundary checked.
+- Independent read-only whole-feature review of fixedcommit, donor and host source found no Critical/Important; independent new9CPU tests9pass/11.415s, no edits or GT/server operations. No runtime/benefit claim follows from this review.
+- New static launch guide reuses original native7k, same17views, existing capture/score entry and oldrawDA3 reference; no baseline retraining, endpoint recapture or automatic server run. Handoff syntax/publication check follows; serverGPU memory/time and geometric effect remain pending.
 
 ### Project bootstrap
 - **Status:** not_started

@@ -1,5 +1,11 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-10-30 selector_v3_spread implemented and reviewed
+
+Approved source change is implemented on codex/selector-v3-spread, fixed8b1def920b2d4722e9ff238ed2116a477cd4846c from43e2ea0. One shared DP-GS-derived propagation/anchor producer is used by actual training and capture. Host integerKinv, invalid-transfer exclusion, mixed rendered-plane RGB anchors, original normal stencil and separate proposal/DA3 consumers follow approved contract. No valid proposal means no additional matching/E/move; originalA remains, with no rawDA3 fallback. PureDA3 source is default, frozen original gray matcher is elementwise identical and original candidate RNG stream preserved.
+
+Existing tests56run/48CPU pass/8native skipped (no local rasterizer), Python3.10 parse/actual captureCLI/frozen ALR+score AST checks pass. Real producer->selector->literal world target->observer and training helper cache/pre-move-preview/post-move-main-render verified. Independent reviewer read fixed donor and host sources, found no Critical/Important, independently ran9newCPU tests allpass/11.415s. Renderer/Gaussianexecutor/CUDA/run_metadata unchanged. RealGPU time/memory, native checks, realGT candidate benefits and30K reconstruction remain unverified. Static next config retains native7k only with original5+12views/budget16384; oldrawDA3 capture is reused, no terminal snapshots recaptured. Future propagatedloss substitution/fixednormal gate still deferred.
+
 ## 2026-10-26 Native baseline completion and resume consumer fix
 
 Returnednativebaselinefull30Klog:50:21,PSNR31.072280120849612,L10.016401121392846107,N1291587. Exitcode/checkpointfilelisting pending. FoundoriginalresumeAppweights reads newdestination/latest;second-run fix isoneline selectingcheckpointparentandexactfirst_iter. ActualGaussian.capture/restore+Appsave/load+actualtrainingASTbranch serializedCPUintegration demonstratedRED(wrongApp8vs.2)→GREEN,nonzeroAdamstep/momentsandnextupdatepreserved. Suite24run19pass/5native skipped;independentscopedreviewnoissues. Nativebaselinebranch whole-tree unchanged;RNG/cameraqueue/Appoptimizer omissions remainaccepted.

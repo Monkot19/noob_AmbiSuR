@@ -310,4 +310,4 @@ Research-only read correction: initially looked for Codex reference under brains
 - [x] User approves concreteadaptation; annotation1/3 clarify no proposal skipsnewmatch/E, preservesA; annotation2 propagatedlossfutureonly. D branchcodex/selector-v3-spread from43e2ea0, spec/inlineplan saved.
 - [x] TDD sharedmatcher/source/proposal and commonproducer: missingAPI/module/RGB shape RED->GREEN; tiltedplane/noanchor/boundary/grazing, exactfrozengraymatcher, RGBchannelmean/NCCscale/source sizes/RNG checked.
 - [x] Realtraining/capture integration RED missingproposal->GREEN; producer->selector->literalworldtarget->observer, rawDA3/cache/mainrender order;56tests48pass8native skips,3.10/CLI/frozenAST checks pass.
-- [ ] AppropriateCPU/nativeavailable checks, independentreview, committedcleanhandoff; no automaticservertraining.
+- [x] AppropriateCPU checks and independentreview complete, fixedcode8b1def9; native8unavailable locally, no GPU/benefit claim. Fixedhandoff publication checks pending; no automaticservertraining.
