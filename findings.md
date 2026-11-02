@@ -1,5 +1,9 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-11-02 Spread native7k capture receipt
+
+User-returned log contains17completed views, exitcode0 and48Kcapture_manifest. Summed sampled278477/proposal_usable38005/comparable23706/added11033; proposal_usable13.6474%ofsampled and added46.5410%ofcomparable are descriptive stage counts, not GT precision/uniqueGaussians. ModelN1421298/SH213195 matches recordednative7k. OMPwarning explicitlyreportsinvalid0andfallback1; tracked relevantPython/shell filescontainnoOMPassignment, exactenvironmentoriginunknown. No rerun/algorithmfix justified by warning alone. Downloadedrecords/identity/nativeunittestreceipt and GTbenefit pending; use same17viewprotocol and originalscore, different accepted domains must remain explicit.
+
 ## 2026-10-30 selector_v3_spread implemented and reviewed
 
 Approved source change is implemented on codex/selector-v3-spread, fixed8b1def920b2d4722e9ff238ed2116a477cd4846c from43e2ea0. One shared DP-GS-derived propagation/anchor producer is used by actual training and capture. Host integerKinv, invalid-transfer exclusion, mixed rendered-plane RGB anchors, original normal stencil and separate proposal/DA3 consumers follow approved contract. No valid proposal means no additional matching/E/move; originalA remains, with no rawDA3 fallback. PureDA3 source is default, frozen original gray matcher is elementwise identical and original candidate RNG stream preserved.

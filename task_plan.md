@@ -311,3 +311,4 @@ Research-only read correction: initially looked for Codex reference under brains
 - [x] TDD sharedmatcher/source/proposal and commonproducer: missingAPI/module/RGB shape RED->GREEN; tiltedplane/noanchor/boundary/grazing, exactfrozengraymatcher, RGBchannelmean/NCCscale/source sizes/RNG checked.
 - [x] Realtraining/capture integration RED missingproposal->GREEN; producer->selector->literalworldtarget->observer, rawDA3/cache/mainrender order;56tests48pass8native skips,3.10/CLI/frozenAST checks pass.
 - [x] AppropriateCPU checks and independentreview complete, fixedcode8b1def9; native8unavailable locally, no GPU/benefit claim. Handoff0b6b255/newbranch published, ls-remote matches, clean; Bash/config checked, no automaticservertraining.
+- [x] 2026-11-02 userserverreceipt17viewcapture/exit0/manifest; logcounts summarized, OMP0fallback1 noted without rerun. Nativeunittestreceipt/downloadvalidation/GTquality remain pending, nextsame-score comparison not30K.

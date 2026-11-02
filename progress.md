@@ -4,6 +4,11 @@
 
 ## Session Log
 
+### 2026-11-02 Server spread capture completion receipt
+- Read user log17views, exitcode0 andmanifest48K. Summedcounts278477/38005/23706/11033 for sampled/usable/comparable/added; no uniqueGaussian or geometry-benefit interpretation.
+- Read current source count meanings and investigatedOMPwarning using systematic-debugging: runtime says0invalid/fallback1; no assignment found in tracked relevantPython/shell/config. Didnotchangeenvironment/code orrepeatcapture. Initialrg named missingutils/__init__.py; corrected to existingfiles/repositorysearch, no source change.
+- Onlydocumentreceipt; servernativeunittestoutput notprovided, local17NPZ/manifest notdownloadedverified, no GTscore/training. Nextdownloadexistingcapture+log+exitcode, reuse originalscore/native7k comparison. Preserve rawDA3record andexistingoutputs.
+
 ### 2026-10-30 Approved selector_v3_spread implementation
 - User annotations1/3 approve A-only fallback before newmatching; annotation2 records future propagateddepthloss only. Concrete source/coordinates/early schedule approved; no further method redesign.
 - D isolated branchcodex/selector-v3-spread from43e2ea0, approved spec and inline plan saved. Shared source/proposal API, actual RGB matcher, normal-guided propagation and real train/capture integration developed RED->GREEN in existing test entry. No new dependencies/renderer/CUDA/optimizer/checkpoint or evaluation framework.

@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **V3原生7K采集完成回执（2026-11-02）：** 用户返回static_native7k_v1全部17视角日志、退出码0及48K capture_manifest.json；按日志合计sampled278477、proposal_usable38005、comparable23706、added11033，均为候选—视角观测而非唯一高斯数。N1421298/A213195各视角一致；所有视角有非零anchors/spread_pixels。线程警告显示OMP_NUM_THREADS=0、运行库回退1，未阻断完成；尚未定位环境变量设置来源，不据此改算法或重跑。当前未收到单独GPU集成测试输出，也未下载核验17NPZ/manifest身份或执行GT评分，不能声称候选质量/重建收益改善。下一步仅下载`selector_v3_spread/static_native7k_v1`及同级.log/.exitcode，复用原score与旧native7k对照；无需重训或重复采集。
+
 > **V3分支已发布（2026-10-30）：** `origin/codex/selector-v3-spread`首次发布HEAD`0b6b255fa5288ddaf065c56678d2f35844ee11dc`与本地ls-remote精确一致，推送前后工作树干净；固定代码8b1def9及[静态交接命令](selector-v3-spread-static-launch.md)已包含。随后仅记录此文档收据。服务器尚未执行，不把发布等同GPU通过或收益成立。
 
 > **selector_v3_spread本地实现（2026-10-30）：** 用户批准宿主Kinv射线、无传播A-only回退及early调度；D主目录新分支`codex/selector-v3-spread`从43e2ea0开始，固定生产`8b1def920b2d4722e9ff238ed2116a477cd4846c`。公共depth_spread将模型渲染锚点/RGB几何置信/DA3法线传播接入原selector；原DA3 depthloss/ALR、联合NCC、位置执行器、renderer/CUDA不变。无有效proposal在新增匹配前退出，原A保留、不回退rawDA3候选。56项既有入口测试48CPU通过/8native缺扩展跳过，Python3.10/灰度冻结回归/生产接口检查通过；独立全功能审查无Critical/Important，独立复跑9新CPU全通过。尚无GPU显存/耗时、真实候选或重建收益，也未开始训练/GT评分。下一批仅复用原生7K/17视角前向capture，旧rawDA3记录继续复用；见[固定版本与静态交接](selector-v3-spread-static-launch.md)。传播depthloss替换及固定法线NCC继续后置。下方待批准提议与旧分支状态均为历史记录。
