@@ -683,13 +683,16 @@ class CandidateIntegrationTests(unittest.TestCase):
     def test_spread_real_render_to_alr_backward_and_step(self):
         ref,sources,model,pipe,bg = self.fixture()
         opt = options(candidate_depth_source='spread',enable_candidate_relocation=True,
-                      candidate_relocation_until_iter=15000,ray_color_lambda=-1)
+                      candidate_relocation_until_iter=15000,ray_color_lambda=-1,
+                      candidate_selector_valid_pool=True,candidate_relocation_position_check=True)
         model.spatial_lr_scale=1.;model.training_setup(opt)
         model.max_radii2D=model._xyz.new_zeros(len(model._xyz));model.max_weight=model.max_radii2D.clone()
         raw=ref.depth_dict['depth'].clone()
         pkg,data=self.reference_render(ref,model,pipe,bg,None,opt,iteration=7100,seed=0)
         torch.testing.assert_close(data['prior_depth'],raw)
         self.assertIn('anchors',data['stats']);self.assertIn('spread_pixels',data['stats'])
+        self.assertIn('position_checked',data['stats'])
+        self.assertEqual(int(data['stats']['position_passed']), data['stats']['relocated'])
         self.assertTrue(torch.isfinite(pkg['plane_depth']).all())
         loss=pkg['render'].mean()+self.alr(ref,pkg,data['prior_depth'],1,-1,7100,opt,data['prior_normal'])
         loss.backward()
@@ -1141,15 +1144,22 @@ class SpreadIntegrationTests(unittest.TestCase):
                if isinstance(x,ast.FunctionDef) and x.name=='_render_training_reference')
         exec(compile(ast.Module(body=[f],type_ignores=[]),'<production training helper>','exec'),ns)
         opts=options(candidate_depth_source='spread',enable_candidate_relocation=True,
-                     candidate_relocation_until_iter=15000,multi_view_sample_num=12)
+                     candidate_relocation_until_iter=15000,multi_view_sample_num=12,
+                     candidate_selector_valid_pool=True,candidate_relocation_position_check=True)
         pkg,data=ns[f.name](ref,model,None,None,None,opts,iteration=7100,seed=0)
         self.assertEqual(calls,[(0,False),(1,False),(2,False),(0,True)])
         self.assertEqual(data['stats']['relocated'],4)
+        self.assertEqual(int(data['stats']['position_passed']),4)
         torch.testing.assert_close(data['prior_depth'],depth*2)
         torch.testing.assert_close(data['prior_normal'],normal)
         torch.testing.assert_close(pkg['plane_depth'],depth.new_full((1,32,32),2.),atol=3e-5,rtol=2e-5)
         pkg['plane_depth'].sum().backward();model.optimizer.step()
         self.assertTrue(torch.isfinite(model.get_xyz).all())
+        before = model.get_xyz.detach().clone()
+        _, late = ns[f.name](ref,model,None,None,None,opts,iteration=15000,seed=0)
+        self.assertNotIn('position_checked',late['stats'])
+        self.assertNotIn('relocated',late['stats'])
+        self.assertTrue(torch.equal(model.get_xyz,before))
 
     def test_shared_producer_to_real_observer_and_capture_config_override(self):
         from utils.depth_spread import build_spread_proposal
@@ -1261,6 +1271,186 @@ class DepthSpreadTests(unittest.TestCase):
             missing,opts,seed=0,iteration=7100,support_depth_fn=source_depth)
         self.assertFalse(no_mask.any()); self.assertFalse(no_depth.any())
         self.assertEqual(int(no_stats['anchors']),0)
+
+
+class PositionCheckTests(unittest.TestCase):
+    def fixture(self, count=4, budget=16384):
+        ref, sources, model, depth, normal = CandidateRelocationTests().fixture(count)
+        transform = ref.world_view_transform
+        with torch.no_grad():
+            points = depth.new_tensor([[0., 0., 2.2]]).repeat(count, 1)
+            model._xyz.copy_((points-transform[3, :3]) @ transform[:3, :3].T)
+        # Real reference/source images depict z=2. A tilted old plane at z=2.2
+        # matches better than the SAME tilted plane moved to z=2; front-facing
+        # rows benefit from moving. This uses the actual warp/NCC and sampler.
+        normals = depth.new_tensor([[0., 0., -1.]]).repeat(count, 1)
+        normals[1::2, 0] = -8.
+        model.normals = normals @ transform[:3, :3].T
+        opt = options(candidate_depth_source='spread', candidate_selector_budget=budget,
+            enable_candidate_relocation=True, candidate_relocation_until_iter=15000,
+            candidate_selector_valid_pool=True, candidate_relocation_position_check=True)
+        kw = dict(seed=0, iteration=7100, support_depth_fn=lambda c: depth[None],
+            proposal_depth=depth, proposal_valid=torch.ones_like(depth, dtype=torch.bool))
+        return ref, sources, model, depth, normal, opt, kw
+
+    def test_real_cli_and_metadata_preserve_opt_in_and_early_schedule(self):
+        parser = ArgumentParser()
+        group = OptimizationParams(parser)
+        default = group.extract(parser.parse_args([]))
+        for name in ('candidate_selector_valid_pool', 'candidate_relocation_position_check'):
+            self.assertIs(getattr(default, name, None), False)
+        opt = group.extract(parser.parse_args(['--enable_candidate_selector',
+            '--candidate_depth_source', 'spread', '--candidate_selector_valid_pool',
+            '--candidate_relocation_position_check', '--enable_candidate_relocation',
+            '--candidate_relocation_until_iter', '15000', '--candidate_selector_budget', '16384']))
+        metadata = build_resolved_config(SimpleNamespace(), opt, SimpleNamespace())['optimization']
+        self.assertTrue(metadata['candidate_selector_valid_pool'])
+        self.assertTrue(metadata['candidate_relocation_position_check'])
+        self.assertEqual([i for i in range(30001) if selector.candidate_relocation_active(i, opt)],
+                         list(range(7100, 15000, 100)))
+        for changes in (dict(enable_candidate_selector=False), dict(candidate_depth_source='da3')):
+            ref, sources, model, depth, normal, opt, kw = self.fixture()
+            for key, value in changes.items(): setattr(opt, key, value)
+            with self.assertRaises(ValueError):
+                selector.candidate_selector_active(0, opt)
+
+    def test_valid_proposal_pool_is_filtered_before_budget_without_rng_consumption(self):
+        ref, sources, model, depth, normal = analytic_fixture()
+        model = AnalyticGaussians(ref, count=80)
+        centers = depth.new_full((80, 2), 20.)
+        centers[71:75] = 12.
+        points = torch.cat((centers, torch.ones(80, 1)), -1) @ ref.get_inv_k().T * 3
+        transform = ref.world_view_transform
+        model._xyz = (points-transform[3, :3]) @ transform[:3, :3].T
+        model.scores[0] = 100.
+        mask = torch.zeros_like(depth, dtype=torch.bool)
+        mask[10:15, 10:15] = True
+        opt = options(candidate_depth_source='spread', candidate_selector_budget=4,
+                      candidate_selector_valid_pool=True)
+        rng = torch.get_rng_state().clone()
+        result = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            depth, normal, sources, opt, seed=0, iteration=7100,
+            support_depth_fn=lambda c: depth[None], proposal_depth=depth, proposal_valid=mask)
+        self.assertEqual(result[2]['sampled'], 4)
+        self.assertIsNotNone(result[3], 'valid candidates must fill this budget before matching')
+        self.assertEqual(result[3][0].tolist(), [71, 72, 73, 74])
+        self.assertEqual(result[1].nonzero().flatten().tolist(), [71, 72, 73, 74])
+        self.assertTrue(result[0][0])  # Original A survives the new pool filter.
+        self.assertTrue(torch.equal(torch.get_rng_state(), rng))
+        mask.zero_()
+        with patch.object(selector, '_source_cost', wraps=selector._source_cost) as cost:
+            empty = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+                depth, normal, sources, opt, seed=0, iteration=7100,
+                support_depth_fn=lambda c: depth[None], proposal_depth=depth, proposal_valid=mask)
+        self.assertEqual(cost.call_count, 0)
+        self.assertEqual(empty[2]['sampled'], 0)
+        self.assertEqual(empty[0].nonzero().flatten().tolist(), [0])
+        self.assertIsNone(empty[3])
+
+    def test_joint_win_position_loss_keeps_alr_but_returns_no_move(self):
+        ref, sources, model, depth, normal, opt, kw = self.fixture()
+        model.normals[:] = depth.new_tensor([[-8., 0., -1.]]) @ ref.world_view_transform[:3, :3].T
+        before = model.get_xyz.detach().clone()
+        result = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            depth, normal, sources, opt, **kw)
+        self.assertEqual(int(result[1].sum()), 4)
+        self.assertTrue(result[0].all())
+        self.assertIsNone(result[3])
+        self.assertEqual(int(result[2]['position_checked']), 4)
+        self.assertEqual(int(result[2]['position_passed']), 0)
+        self.assertTrue(torch.equal(model.get_xyz, before))
+
+    def test_position_decision_is_strict_common_support_without_extra_cost_threshold(self):
+        current = torch.tensor([[.8,.9],[.2,.7],[.2,.1],[.5,.8],[.3,.4]])
+        proposed = torch.tensor([[.6,.7],[.9,.1],[.2,.1],[0.,.9],[float('nan'),0.]])
+        valid = torch.tensor([[True,True],[True,False],[True,True],[False,True],[True,False]])
+        self.assertEqual(selector._best_source_decision(current,proposed,valid,max_cost=None).tolist(),
+                         [True,False,False,False,False])
+
+    def test_prior_normal_invalidity_does_not_hide_a_valid_current_move_support(self):
+        # The geometric core is real; only the image-cost boundary is controlled
+        # to exercise a support whose proposal-normal warp is invalid.
+        ref, sources, model, depth, normal, opt, kw = self.fixture()
+        calls = iter(((.8, True), (.3, True), (.1, True), (float('inf'), False),
+                      (.6, True), (.9, True)))
+        def source_cost(*args):
+            value, valid = next(calls)
+            distances = args[8]
+            return torch.full_like(distances, value), torch.full_like(distances, valid, dtype=torch.bool)
+        with patch.object(selector, '_source_cost', side_effect=source_cost):
+            result = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+                depth, normal, sources, opt, **kw)
+        self.assertEqual(int(result[1].sum()), 4)  # Joint .3 < .8, unchanged ALR.
+        self.assertIsNone(result[3])  # Position min(.6,.9) > min(.8,.1).
+        self.assertEqual(int(result[2]['position_passed']), 0)
+
+    def test_partial_movement_preserves_unsorted_target_pairs_and_other_rows(self):
+        ref, sources, model, depth, normal, opt, kw = self.fixture(count=12, budget=7)
+        before = model.get_xyz.detach().clone()
+        old_normal = model.normals.clone()
+        result = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            depth, normal, sources, opt, **kw)
+        joint_ids = set(result[1].nonzero().flatten().tolist())
+        move_ids, targets = result[3]
+        self.assertEqual(set(move_ids.tolist()), {i for i in joint_ids if i % 2 == 0})
+        self.assertGreater(len(joint_ids), move_ids.numel())
+        self.assertGreater(move_ids.numel(), 0)
+        self.assertEqual(int(result[2]['position_passed']), move_ids.numel())
+        with torch.no_grad(): model.relocate_selected(move_ids, targets)
+        keep = torch.ones(12, dtype=torch.bool); keep[move_ids] = False
+        self.assertTrue(torch.equal(model.get_xyz[keep], before[keep]))
+        self.assertTrue(torch.equal(model.normals, old_normal))
+        camera = model.get_xyz[move_ids] @ ref.world_view_transform[:3, :3] + ref.world_view_transform[3, :3]
+        torch.testing.assert_close(camera[:, 2], torch.full((move_ids.numel(),), 2.))
+
+    def test_labels_only_skips_position_cost_and_target_entry_reuses_source_renders(self):
+        ref, sources, model, depth, normal, opt, kw = self.fixture()
+        calls = []
+        def source(camera):
+            calls.append(camera.uid)
+            return depth[None]
+        kw['support_depth_fn'] = source
+        with patch.object(selector, '_source_cost', wraps=selector._source_cost) as cost:
+            labels = selector.select_candidate_labels(model, ref, ref.gray, depth, normal, sources, opt, **kw)
+        self.assertEqual(cost.call_count, 4)
+        self.assertEqual(calls, [1, 2])
+        calls.clear()
+        with patch.object(selector, '_source_cost', wraps=selector._source_cost) as cost:
+            targets = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+                depth, normal, sources, opt, **kw)
+        self.assertEqual(cost.call_count, 6)
+        self.assertEqual(calls, [1, 2])
+        self.assertTrue(torch.equal(labels[0], targets[0]))
+        self.assertTrue(torch.equal(labels[1], targets[1]))
+
+    def test_disabled_options_match_frozen_v3_real_selector(self):
+        frozen = subprocess.check_output(['git', 'show', '8b1def9:utils/candidate_selector.py'], text=True)
+        namespace = {'__name__': 'frozen_v3'}
+        exec(compile(frozen, '<frozen V3>', 'exec'), namespace)
+        ref, sources, model, depth, normal, opt, kw = self.fixture(count=12, budget=7)
+        opt.candidate_selector_valid_pool = False
+        opt.candidate_relocation_position_check = False
+        old = namespace['select_candidate_labels_with_targets'](model, ref, ref.gray,
+            depth, normal, sources, opt, **kw)
+        new = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            depth, normal, sources, opt, **kw)
+        for a, b in zip(old[:2], new[:2]): self.assertTrue(torch.equal(a, b))
+        self.assertEqual(old[2], new[2])
+        for a, b in zip(old[3], new[3]): self.assertTrue(torch.equal(a, b))
+
+    def test_real_observer_acceptance_is_alr_and_targets_can_be_a_subset(self):
+        from scripts import evaluate_candidate_actions as audit
+        ref, sources, model, depth, normal, opt, kw = self.fixture(count=12, budget=7)
+        result = selector.select_candidate_labels_with_targets(model, ref, ref.gray,
+            depth, normal, sources, opt, **kw)
+        record, stats = audit.observe_selector(model, ref, ref.gray, depth, normal, sources, opt, **kw)
+        audit.validate_record(record)
+        self.assertEqual(int(record['accepted'].sum()), stats['added'])
+        self.assertIn('position_passed', stats)
+        self.assertGreater(stats['added'], stats['position_passed'])
+        rows = {int(i): j for j, i in enumerate(record['ids'])}
+        np.testing.assert_array_equal(record['prior_world'][[rows[int(i)] for i in result[3][0]]],
+                                      result[3][1].numpy())
 
 
 class SpreadContractTests(unittest.TestCase):

@@ -528,7 +528,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # no_grad 禁止下面的管理操作建立新计算图，但仍可读取刚才 backward 已写好的 .grad。
         with torch.no_grad():
             if selector_data is not None and candidate_relocation_active(iteration, opt):
-                tqdm.write(f"[relocation {iteration}] moved={selector_data['stats']['relocated']}")
+                move_stats = selector_data['stats']
+                position_log = (f" position_checked={int(move_stats['position_checked'])}"
+                    f" position_passed={int(move_stats['position_passed'])}"
+                    if 'position_checked' in move_stats else "")
+                tqdm.write(f"[relocation {iteration}] moved={move_stats['relocated']}{position_log}")
             if selector_data is not None and iteration % 200 == 0:
                 stats = selector_data["stats"]
                 total_alr_weight = (render_pkg["rendered_unc"].detach()

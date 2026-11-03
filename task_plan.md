@@ -344,6 +344,6 @@ Research-only read correction: initially looked for Codex reference under brains
 
 ## 2026-11-03 Approved valid-pool + position-check implementation
 - [x] User approves summarized hard-relocation repair package; D branchcodex/selector-v3-position-check created normally from6de5c44, old dirty Markdown preserved, no ACL changes. Spec/inlineplan saved; no renewed approval needed.
-- [ ] TDD existing shared selector/CLI/real NCC and effective sampling; default-off regression.
-- [ ] Thin observer/actual training consumer validation, minimal log and native-test reuse.
+- [x] TDD existing shared selector/CLI/real NCC and effective sampling; frozenV3 default-off regression exact. Added8meaningfulCPUcases, original6featurecases RED then GREEN.
+- [x] Thin observer actualsubsettarget validation, minimal eventlog, original native-test reused withbothflags; actualCPUtraining helper checks71/15K cutoff, rawprior and sourcecache. NativeGPU8skipped locally.
 - [ ] Whole-suite/source-scope checks, independent finalreview, commit/push and fixed30K guide; no auto serverrun.

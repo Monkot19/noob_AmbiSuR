@@ -30,6 +30,11 @@ def compute_sh_ambiguity_labels(gaussians, opt):
 
 
 def candidate_selector_active(iteration, opt):
+    refined = (getattr(opt, "candidate_selector_valid_pool", False)
+               or getattr(opt, "candidate_relocation_position_check", False))
+    if refined and (not getattr(opt, "enable_candidate_selector", False)
+                    or getattr(opt, "candidate_depth_source", "da3") != "spread"):
+        raise ValueError("candidate pool/position refinements require the spread selector")
     if not getattr(opt, "enable_candidate_selector", False):
         return False
     budget = opt.candidate_selector_budget
@@ -68,11 +73,12 @@ def _sample_candidate_ids(pool, budget, *, seed, iteration, camera_uid,
     return pool[torch.randperm(pool.numel(), device=pool.device, generator=generator)[:budget]]
 
 
-def _best_source_decision(cost_g, cost_p, common_valid):
+def _best_source_decision(cost_g, cost_p, common_valid, *, max_cost=.5):
     common_valid = common_valid & torch.isfinite(cost_g) & torch.isfinite(cost_p)
     g = cost_g.masked_fill(~common_valid, float("inf")).min(dim=-1).values
     p = cost_p.masked_fill(~common_valid, float("inf")).min(dim=-1).values
-    return common_valid.any(dim=-1) & (p < g) & (p < .5)
+    improved = common_valid.any(dim=-1) & (p < g)
+    return improved if max_cost is None else improved & (p < max_cost)
 
 
 def _relative_pose(reference, source):
@@ -206,6 +212,9 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
     labels = compute_sh_ambiguity_labels(gaussians, opt)
     extra = torch.zeros_like(labels)
     stats = {"sampled": 0, "comparable": extra.sum(), "added": extra.sum()}
+    check_position = include_targets and getattr(opt, "candidate_relocation_position_check", False)
+    if check_position:
+        stats.update(position_checked=extra.sum(), position_passed=extra.sum())
     if not active:
         return labels, extra, stats, None
     ref = reference_camera
@@ -246,6 +255,16 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
                   & (patch_centers[:, 0] <= gray_width - 1 - radius)
                   & (patch_centers[:, 1] >= radius)
                   & (patch_centers[:, 1] <= gray_height - 1 - radius))
+    if getattr(opt, "candidate_selector_valid_pool", False):
+        # Use the same bilinear support condition as the post-sampling check.
+        # Later normal/geometry/NCC rejections still do NOT trigger refills.
+        pool_ids = pool_mask.nonzero(as_tuple=True)[0]
+        if pool_ids.numel():
+            pixels = centers[pool_ids, None]
+            support = _sample_map(proposal_valid[None].to(xyz.dtype), pixels)[:, 0, 0]
+            depth = _sample_map(proposal_depth[None], pixels)[:, 0, 0]
+            pool_mask[pool_ids] &= ((support >= 1 - _EPS)
+                                    & torch.isfinite(depth) & (depth > ref.znear))
     ids = _sample_candidate_ids(pool_mask.nonzero(as_tuple=True)[0], opt.candidate_selector_budget,
                                seed=seed, iteration=iteration, camera_uid=ref.uid)
     stats["sampled"] = ids.numel()
@@ -287,6 +306,7 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
     points_p, normal_p, distance_p = points_p[valid], normal_p[valid], distance_p[valid]
     reference_values = _sample_map(reference_gray, reference_patch).squeeze(-1)
     costs_g, costs_p, common = [], [], []
+    source_inputs = []
     for source in support_cameras[:2]:
         source_depth = support_depth_fn(source)
         if (not isinstance(source_depth, torch.Tensor)
@@ -305,17 +325,39 @@ def _select_candidate_geometry(gaussians, reference_camera, reference_gray,
         costs_g.append(g)
         costs_p.append(p)
         common.append(valid_g & valid_p)
+        if check_position:
+            source_inputs.append((source, source_depth, source_gray, valid_g))
     common = torch.stack(common, -1)
     accepted = _best_source_decision(torch.stack(costs_g, -1), torch.stack(costs_p, -1), common)
     extra[ids] = accepted
     stats["comparable"] = common.any(-1).sum()
     stats["added"] = extra.sum()
+    move_accepted = accepted
+    if check_position and accepted.any():
+        rows = accepted.nonzero(as_tuple=True)[0]
+        # The executor keeps rotation: test the proposal with the CURRENT
+        # normal, and recompute its distance through the proposed position.
+        normal_move, distance_move, plane_valid = _oriented_plane(points_p[rows], normal_g[rows])
+        costs_move, common_move = [], []
+        for source, source_depth, source_gray, valid_current in source_inputs:
+            cost, valid_move = _source_cost(gaussians, ref, source,
+                reference_patch[rows], reference_values[rows], centers[rows],
+                points_p[rows], normal_move, distance_move, source_depth, source_gray, opt)
+            costs_move.append(cost)
+            # The prior-normal warp may fail in a view where BOTH tested
+            # position planes are valid; it must not hide that evidence.
+            common_move.append(valid_current[rows] & valid_move & plane_valid)
+        passed = _best_source_decision(torch.stack(costs_g, -1)[rows],
+            torch.stack(costs_move, -1), torch.stack(common_move, -1), max_cost=None)
+        move_accepted = torch.zeros_like(accepted)
+        move_accepted[rows] = passed
+        stats.update(position_checked=accepted.sum(), position_passed=move_accepted.sum())
     targets = None
-    if include_targets and accepted.any():
+    if include_targets and move_accepted.any():
         # Both tensors keep the SAME sampled/filtered order; extra.nonzero()
         # would sort the IDs and can pair targets with the wrong Gaussians.
-        move_ids = ids[accepted]
-        world_xyz = (points_p[accepted] - transform[3, :3]) @ transform[:3, :3].T
+        move_ids = ids[move_accepted]
+        world_xyz = (points_p[move_accepted] - transform[3, :3]) @ transform[:3, :3].T
         targets = (move_ids.detach(), world_xyz.detach())
     return labels | extra, extra, stats, targets
 
@@ -334,7 +376,7 @@ def select_candidate_labels_with_targets(gaussians, reference_camera, reference_
                                          prior_depth, prior_normal, support_cameras, opt, *,
                                          seed, iteration, support_depth_fn,
                                          proposal_depth=None, proposal_valid=None):
-    """Same decisions as label-only entry; return evaluated position targets."""
+    """Same ALR decisions as label-only; optional gate narrows position targets."""
     return _select_candidate_geometry(gaussians, reference_camera, reference_gray,
         prior_depth, prior_normal, support_cameras, opt, seed=seed,
         iteration=iteration, support_depth_fn=support_depth_fn, include_targets=True,

@@ -25,14 +25,14 @@
 ## Task 1: shared selector behavior and tests
 Files: arguments/__init__.py, utils/candidate_selector.py, tests/test_candidate_selector.py.
 Interfaces: old select labels 3-tuple and with_targets4-tuple unchanged; optional stats position_checked/position_passed only for enabled target requests.
-- [ ] RED real CLI flags; prefilter budget fixture; real NCC joint-win/position-loss; partial move/empty/support cases.
-- [ ] GREEN minimal flags/filter/gate, same common supports, no new position threshold; production executor subset order.
-- [ ] Verify frozenV3 defaults and original tests, CPU real training helper and native test extension.
+- [x] RED real CLI flags; prefilter budget fixture; real NCC joint-win/position-loss; partial move/empty/support cases.
+- [x] GREEN minimal flags/filter/gate, same common supports, no new position threshold; production executor subset order.
+- [x] Verify frozenV3 defaults and original tests, CPU real training helper and native test extension.
 
 ## Task 2: consumers, handoff and final verification
 Files: train.py, scripts/evaluate_candidate_actions.py, same test entry; docs/research launch and project ledgers.
-- [ ] RED observer subset-target invariant using real mixed model.
-- [ ] GREEN observer target-mask adaptation, event log joint checked/pass counts, original record schema preserved.
-- [ ] Run complete unittest discover; document native dependency skips, Python3.10 syntax/frozen source scope checks.
-- [ ] Independent whole-change review through requesting-code-review; repair material issue with regression first.
+- [x] RED observer subset-target invariant using real mixed model.
+- [x] GREEN observer target-mask adaptation, event log joint checked/pass counts, original record schema preserved.
+- [x] Run complete unittest discover64:56PASS/8native skips, Python3.10 syntax/frozen source scope checks.
+- [x] Independent whole-change review found one support-mask issue, regressionRED then fixedG&move; re-review9newCPUcasesPASS/no remaining material issue. Finalfullsuite65:57PASS/8native skips.
 - [ ] Commit preserved prior analysis separately, then feature/docs; push fixed branch after status check, prepare exact direct30K handoff. No server start.

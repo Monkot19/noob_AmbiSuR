@@ -87,12 +87,15 @@ def observe_selector(model, reference, gray, depth, normal, supports, opt, *,
             cost_current=np.empty((0,2)), cost_prior=np.empty((0,2)), confidence=np.empty(0))
         return record, stats
     ids, accepted = captured['ids'], captured['accepted']
+    # Schema1 accepted still describes joint ALR selection. The optional
+    # position gate narrows actual targets without redefining that decision.
+    target_accepted = captured.get('move_accepted', accepted)
     world_p = (captured['points_p']-tr[3,:3]) @ tr[:3,:3].T
     if targets is not None:
         # FP32 matmul may round differently for full vs accepted-only batches.
-        if not torch.equal(ids[accepted], targets[0]) or not torch.allclose(world_p[accepted], targets[1],rtol=1e-5,atol=1e-6):
+        if not torch.equal(ids[target_accepted], targets[0]) or not torch.allclose(world_p[target_accepted], targets[1],rtol=1e-5,atol=1e-6):
             raise RuntimeError('observer target order differs from actual returned targets')
-        world_p[accepted] = targets[1]  # export the literal production action
+        world_p[target_accepted] = targets[1]  # literal targets for the actual moving subset
     record.update(ids=_array(ids), current_world=_array(model.get_xyz[ids]), prior_world=_array(world_p),
         current_normal=_array(captured['normal_g']), prior_normal=_array(captured['normal_p']),
         centers=_array(captured['centers']), accepted=_array(accepted),

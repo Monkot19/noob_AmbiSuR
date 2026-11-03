@@ -8,7 +8,7 @@
 
 1. 预算显式16384，不改全局默认4096；传播mask按原双线性四邻有效要求，在原~A/视野pool中先筛有效传播深度再抽样。后续原几何/法线/遮挡/NCC无效项仍退出，不补抽。
 2. 原联合NCC与best-source/0.5门槛继续产生`E_ALR`，标签仍`A|E_ALR`；抽样域改变后标签数值可能改变，不声称ALR集合逐值冻结。
-3. 只有请求重定位targets的事件轮，对联合接受行补算`C(points_p, normal_g)`。当前位置代价复用；重算经过points_p的平面距离，保留当前法线轴。两种位置仅在共同有效支持上按原best-source汇总，严格`min C_pos < min C_g`通过，不添加新绝对门槛/边际/多视角投票。
+3. 只有请求重定位targets的事件轮，对联合接受行补算`C(points_p, normal_g)`。当前位置代价复用；重算经过points_p的平面距离，保留当前法线轴。两种位置仅在共同有效支持`valid_g & valid_move`上按原best-source汇总；先验法线平面无效不能删除两位置均有效的支持。严格`min C_pos < min C_g`通过，不添加新绝对门槛/边际/多视角投票。
 4. `move_accepted = accepted_joint & position_pass`；ALR extra不变。返回targets仍为(ids,world_xyz)，只含通过行，ID顺序及字面目标不变；空集合返回None。不改位置执行器/Adam处理。
 5. 沿用7100..14900共79事件、interval100/until15000，总30000、原生7K起点/r2/seed0、原DA3 depthloss/ALR/LR/拓扑/renderer/TSDF/评价。15K后继续联合ALR，位置检查不执行。
 
