@@ -312,3 +312,38 @@ Research-only read correction: initially looked for Codex reference under brains
 - [x] Realtraining/capture integration RED missingproposal->GREEN; producer->selector->literalworldtarget->observer, rawDA3/cache/mainrender order;56tests48pass8native skips,3.10/CLI/frozenAST checks pass.
 - [x] AppropriateCPU checks and independentreview complete, fixedcode8b1def9; native8unavailable locally, no GPU/benefit claim. Handoff0b6b255/newbranch published, ls-remote matches, clean; Bash/config checked, no automaticservertraining.
 - [x] 2026-11-02 userserverreceipt17viewcapture/exit0/manifest; logcounts summarized, OMP0fallback1 noted without rerun. Nativeunittestreceipt/downloadvalidation/GTquality remain pending, nextsame-score comparison not30K.
+
+## 2026-11-02 Downloaded spread scoring and comparison
+- [x] Decode17NPZ using productionvalidator, verifyclean8b1def9/exit0 andsame native7k inputs/options/views/supports. All38005rows exactsame currentgeometry/rawnormals on oldIDs; receipts saved outsidecode.
+- [x] Run unchangedscore once, clean6de5c44/exit0/17.298s,462JSONCSVrows agree, GTsha matches oldformal. No repeatedGTscore ortraining.
+- [x] Weighted comparison usingcount/visible_count/normal_count, accepted/rejected and5/12 groups, objects/views/overlapcounts. Positivecandidate signal withselectiondomain/coverage/localharm caveats; report saved.
+- [x] Independent narrowresultreview foundnomaterialissue; actual17pairedNPZ/metadata,462CSVJSONrows, allweightedtables/object/view/coverage/intersection audited withoutGT/rerun. Finalreport/ledgers saved; no newmethod or30K beforediscussion.
+- Gitwriteerror: add/index andCOMMIT_EDITMSG permissiondenied, ACL explicitDeny; no permissionchange/bypass. Pre-score pendingnotespatch preserved outside, source restoredclean beforeGT; finaldocupdates remainuncommitted. Get-Content Raw+TotalCount invalid corrected toTotalCount only. No scorefailure/retry occurred.
+
+## 2026-11-02 Approved spread30K handoff
+- [x] User approves unchangedsource route fromnative7kto30K/seed0/r2/16384/early15000; reusepublished8b1def9, no sourcechanges/baseline/smoke.
+- [x] Adapt originalearlylaunch withonealgorithmsourceflag/newview+output/OMP1; bothouterBashblocks+innerbody parse, actualtrainCLIand alloptimizationoptions matchcompletedearlyexceptsource. Fixedguide saved; no localGitpermissionbypass.
+- [x] Userreturns30Kcomplete/81:17/exit0/PSNR30.8618515/N1279368; trainingreceipt recorded, notgeometryclaim.
+- [x] Downloadextractexit0/model+rawpostmeshnonempty/headers/79moves verified; originalTSDF5m/.005m/4/2, no re-extraction ornewtraining.
+
+## 2026-11-02 Spread finalmesh evaluation
+- [x] Verifydownloadedtrain/extractexit0, models/meshheaders,79events/60273moves, cleangit8b1def9, actualopts onlyspreadsource vs early;406cameras/supports identical, sameextract/protocol/evaluatorsource5fde7cb. Receipt outsidecode; noGTqueryyet.
+- [x] RunexistinggeometryCLI onceC0/early/spread, exit0/evaluator67.553s/wrapper68.666s, frozen1Msamples/seed0/fullsurface/1,2,5cm; no failure/retry/newtraining.
+- [x] C0+earlyoldmetrics/inputSHA andGTsample/protocol/origin exactreproduce;9JSONCSVrowsagree. V3CD41.161527 worseC0by1.13845%/early3.56543%, reportnegativewithoutcausaloverclaim.
+- [x] Independentnarrowreviewno materialissue; exactcontrols/protocol/GTsample/9CSVJSON/percentages/trainlogs andmechanismboundaries corroborated withoutGT/rerun. Report/ledgers+artifactcopy saved, docsremainpendingGitpermission, no methodorparameterchanges.
+
+## 2026-11-02 Approved V3 failure analysis
+- [x] Reuseexistingregionalcorecompleteness+accuracy-only exit0, exactsixmeans/GTpoints/CDdecomposition; sameannotations/newoutput. Existingraw2meshdiagnostic originalevaluator exit0, rawgap81.92%postgap; no algorithm/training/TSDFchanges.
+- [x] Trace actualhostCUDA/selector/relocation/ALR/depthloss and pinnedDP-GSdc1ce835 source. Prioritymismatches documented; actualCPUpropagationlimits+analyticalmix-depthcounterexample explicitlynotreal-scenecauseproof.
+- [x] Quantify17NPZangles/viewagreement,115logE/ALRmass,regions/strata/raw-vs-post. Mainnormalangle39.43deg despitexyz-onlyaction; oneCLIflagchangesEandALRtoo. No newGPUcapture, noGTfailure/retry.
+- [x] Independent read-only review found no material issue: regional sums/strata, actual17NPZ angles/support counts, hostCUDA/action/loss and pinned donor boundaries verified without GT rerun. Finalreport/ledgers saved; next method remains discussion-only.
+
+## 2026-11-02 Five-remedy discussion (not implementation approval)
+- [x] Re-read host selector/propagation/train and pinned APDe/DP-GS/MP-SfM/normal-integration production functions; verify primary paper pages. CVF PDF opens403; use available arXiv primary HTML and existing pinned source, no repeated download.
+- [x] Formulate separate remedies: fixed-current-normal action gate; surface-level soft depth update; exclusive local depth target; separate ALR/position decisions and effective sampling; anchored discontinuity-aware propagation. Prioritize a single action-gate experiment, keep surface-loss route an alternative and anchor solver later. No source changes, tests, GT evaluation or training authorized/performed.
+
+## 2026-11-03 Approved valid-pool + position-check implementation
+- [x] User approves summarized hard-relocation repair package; D branchcodex/selector-v3-position-check created normally from6de5c44, old dirty Markdown preserved, no ACL changes. Spec/inlineplan saved; no renewed approval needed.
+- [ ] TDD existing shared selector/CLI/real NCC and effective sampling; default-off regression.
+- [ ] Thin observer/actual training consumer validation, minimal log and native-test reuse.
+- [ ] Whole-suite/source-scope checks, independent finalreview, commit/push and fixed30K guide; no auto serverrun.
