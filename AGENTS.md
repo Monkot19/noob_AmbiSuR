@@ -1,5 +1,7 @@
 # AmbiSuR 二周目项目规则
 
+> 2026-11-03结果状态：6172bc45位置检查版已完成30K/提取/本地正式评价，CD41.779128mm，比early差5.12%、旧spread差1.50%，不能视作成功模块或自动追加预算/Utility/训练。当前最好仍early。报告`docs/research/2026-11-03-selector-position-check-geometry-results.md`；本轮评估不构成软传播loss或其他新方法的实施授权。
+
 > 2026-11-03最新批准范围：在V3 spread上增加传播有效域内抽样与固定当前法线的位置执行检查，预算显式16384；联合E继续用于ALR，移动仅取检查通过子集，7100..14900/30K不变。D分支`codex/selector-v3-position-check`，生产固定`6172bc455184c2b77b7b199c7b66194319bd55fd`。两开关默认False，保留旧V3行为；无新loss/LR/传播/renderer/基线重训。规格`docs/superpowers/specs/2026-11-03-selector-position-check-design.md`，直接30K指南`docs/research/selector-v3-position-check-native7k-launch.md`；本地65项57通过/8原生依赖跳过，不声称GPU或收益通过，不自动启动服务器。
 
 > 2026-10-28最新批准范围：v2_early仅将重定位截止于15000（7100..14900共79次），其余V1/ALR/原优化继续至30K。D主目录分支codex/second-run-selector-v2-early，原V2/V1/baseline保留。规格docs/superpowers/specs/2026-10-28-selector-v2-early-design.md；不额外加smoke、baseline或诊断框架作前置。此前默认全程V2行为保留，禁止把本实验截止值静默变成原V2默认。
