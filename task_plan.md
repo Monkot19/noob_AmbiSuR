@@ -347,3 +347,8 @@ Research-only read correction: initially looked for Codex reference under brains
 - [x] TDD existing shared selector/CLI/real NCC and effective sampling; frozenV3 default-off regression exact. Added8meaningfulCPUcases, original6featurecases RED then GREEN.
 - [x] Thin observer actualsubsettarget validation, minimal eventlog, original native-test reused withbothflags; actualCPUtraining helper checks71/15K cutoff, rawprior and sourcecache. NativeGPU8skipped locally.
 - [x] Whole-suite65:57PASS/8native skips, Python3.10/source scope and independent finalreview9newCPUcases passed after supportmaskfix. Production6172bc45 committed; bothouter Bashblocks/inner and actualCLI guide passed. Branch firstpublishedHEAD4ef887e matchesremote/cleanstatus; no auto serverrun.
+
+## 2026-11-03 Position-check training receipt
+- [x] Read actualuserattachment: traincomplete/exit0/75:20/N1277504/PSNR30.8500263. Parse22tailrows, allsampled==proposal_usable; no global/geometry overclaim.
+- [x] Append originalmesh extraction withonepass full79event andcounter/file/version checks; no newmethod/model orsmoke. LocalBash validation before delivery.
+- [ ] Await serverextraction/file/eventreceipt anddownload, then reuseformalmesh evaluator; no newbaseline/training.
