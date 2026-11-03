@@ -1,5 +1,7 @@
 # 二周目主目录、归档与换机恢复
 
+2026-11-03最新：主目录仍D，当前`codex/selector-v3-position-check`，生产固定6172bc45，旧V3分支6de5c44保留。此前待提交分析与实施前规格已正常保存为d362742，未改Git权限。换机优先clone当前分支；具体运行/当前检查以`project-handoff.md`和`selector-v3-position-check-native7k-launch.md`最新条目为准。下方2026-10-23/28目录与历史版本记录继续保留，不作为当前运行版本。
+
 2026-10-23 用户确认 D 盘作为二周目长期主目录。2026-10-28当前开发分支为`codex/second-run-selector-v2-early`；最新批准实验与启动入口见`selector-v2-early-native7k-launch.md`。原V2/V1/baseline及C临时worktree保留。
 
 ## 目录与分支

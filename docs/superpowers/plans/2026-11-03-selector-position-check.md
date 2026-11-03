@@ -35,4 +35,4 @@ Files: train.py, scripts/evaluate_candidate_actions.py, same test entry; docs/re
 - [x] GREEN observer target-mask adaptation, event log joint checked/pass counts, original record schema preserved.
 - [x] Run complete unittest discover64:56PASS/8native skips, Python3.10 syntax/frozen source scope checks.
 - [x] Independent whole-change review found one support-mask issue, regressionRED then fixedG&move; re-review9newCPUcasesPASS/no remaining material issue. Finalfullsuite65:57PASS/8native skips.
-- [ ] Commit preserved prior analysis separately, then feature/docs; push fixed branch after status check, prepare exact direct30K handoff. No server start.
+- [x] Prior analysis d362742, feature6172bc45 committed; exact direct30K guide Bash/realCLI checked, branch publication follows cleanstatus. No server start.
