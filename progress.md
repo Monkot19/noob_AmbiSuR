@@ -330,3 +330,8 @@ Publication receipt: firstpushHEAD4ef887e56bbf78d5e65ded9bc4125e1e363c4eaa equal
 
 ### 2026-11-03 Position-check training completion receipt
 Read userattachment8e59628b text (not inferredserveraccess): global30000/23000steps/75:20/exit0/Trainingcomplete17:30:21, Gaussian/Appsave logs, N1277504, trainL10.017082376033067705, PSNR30.850026321411136. Parsed22selectorrows25800..30000 allsampled==proposal_usable, means12526.77/10735/4779.32; no original7K crossdomaincomparison or geometricclaim. ActualserverHEAD/clean/files/full79events notyetreceived. Guide extendsoriginalextract5m/.005m/trunc4/cluster2 withfull eventpair checks andnewoutputonly; no code/GT/serverrun, baseline read-only. Next await extractionreceipt/download, not anothertraining.
+
+### 2026-11-03 Downloaded position result analysis start
+Userpastedoldspreadpath; readonlylaunch/log confirmsNov2old8b1def9, siblingsearchfindsactualnew6172bc45 underselector_v3_position_check/selector_v3_position_check_2026_11_3. No need clarification/redownload; proceedingauthorizedfrozenevaluation. Actualidentityclean6172/RTX4090/seed0 andtrain/extract0, originalTSDFparams verified. Usingexistingplanning/verificationworkflow, newoutputandoriginalevaluator only; no bytecompareallarchive, no sourceedits/training/GTqueriesyet.
+
+PreGTdownloadverification savedoutsiderepo: bounded512linePLYheaders/filesizes, all79indices andpassed==moved<=checked;413554checks/315800moves vsold60273, 76.36%pass;115logrowsandALRmaskmassdescriptives. Actualoptimizationdiff onlytwoflags;406camera/supportbytesexact, evaluator/protocol/metadata bytes normalizeLFmatch5fde7cb. Readyone4modelCLI; firstcommitplanreceipt forclean execution identity. No GT failure/retry orinput mutation.

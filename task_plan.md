@@ -352,3 +352,9 @@ Research-only read correction: initially looked for Codex reference under brains
 - [x] Read actualuserattachment: traincomplete/exit0/75:20/N1277504/PSNR30.8500263. Parse22tailrows, allsampled==proposal_usable; no global/geometry overclaim.
 - [x] Append originalmesh extraction withonepass full79event andcounter/file/version checks; no newmethod/model orsmoke. LocalBash validation before delivery.
 - [ ] Await serverextraction/file/eventreceipt anddownload, then reuseformalmesh evaluator; no newbaseline/training.
+
+## 2026-11-03 Downloaded position-check formal geometry analysis
+- [x] Userauthorizes analysis. Namedpath isold8b1def9, foundactual6172bc45 in siblingselector_v3_position_check/selector_v3_position_check_2026_11_3. Train/extractexit0 andcleanserveridentity verified; inputs read-only.
+- [x] Fast sizes/PLYheaders/full79events:413554checked/315800moved/76.3625%pass, originalspread60273moves. Train/extract0/clean6172, actualopts onlytwoflags,406cameras/supportsexact, evaluator/protocol/metadata bytes identical5fde7cb. No GT queryyet.
+- [ ] Run frozen sharedmesh evaluator once atnewoutput, 1M/seed0/fullsurface/1,2,5cm/5cmprimary, noICP/crop/truncation. Preserve originalrecords; GTfailure requiresuserrecovery.
+- [ ] Verify JSON/CSV andoldcontrolmetrics/hashes, analyzebenefit/limits, independentread-onlyreview, updatehandoffandreport; no automaticnewmethod/training.
