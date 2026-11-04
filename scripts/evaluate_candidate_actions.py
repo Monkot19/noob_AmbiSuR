@@ -74,6 +74,13 @@ def observe_selector(model, reference, gray, depth, normal, supports, opt, *,
         sys.setprofile(None)
     if before != (id(model.get_xyz), model.get_xyz._version):
         raise RuntimeError('static selector changed model xyz')
+    return selection_record(model, reference, depth, result, captured)
+
+
+def selection_record(model, reference, depth, result, captured):
+    """Shared schema1 adapter for static observation and actual training returns."""
+    import torch
+    from utils import candidate_selector as selector
     labels, extra, stats, targets = result
     stats = {k: int(v) for k, v in stats.items()}
     stats.update(gaussian_count=len(model.get_xyz), sh_count=int((labels & ~extra).sum()))

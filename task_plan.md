@@ -384,6 +384,9 @@ Independent read-only review passed:95regional delta rows exact, oldraw metrics/
 
 ## 2026-11-04 User-approved process trace30K implementation
 - [x] Userselects existing7K→30K observation of unchanged current method; D isolated codex/selector-process-trace, spec+inlineplan saved.
-- [ ] Shared observer record extraction, trace events realCPU RED/GREEN.
-- [ ] runpy launcher, readonly A-only fixed probe and CPUhelper tests; original train/algorithm remain identical6172.
-- [ ] Unified tests/independent review, fixed commit/push and launch guide; no auto-serverrun.
+- [x] Shared observer record extraction, trace events realCPU RED/GREEN.
+- [x] runpy launcher, readonly A-only fixed probe and CPUhelper tests; original train/algorithm remain identical6172.
+- [x] Unified tests63=55pass8nativeSkip; independent review no material issues; Python3.10 syntax/CLI/Bash blocks pass. No auto-serverrun.
+- [ ] Fixed implementation commit/push and replace launch guide placeholders; final clean identity verification.
+
+Follow-up analysis and direct-output checklists above completed with independently reviewed reports/artifacts. This does not authorize new scientific method changes.

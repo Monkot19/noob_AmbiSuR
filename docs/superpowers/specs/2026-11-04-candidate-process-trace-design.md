@@ -19,7 +19,7 @@
 - 选择端：复用schema1 record，另存真实move_accepted/targets、fixednormal cost及共同支持；joint ALR accepted与实际move区别明确，后15K实际move为空。
 - 执行端：原helper主渲染的plane_depth、depth_normal、rendered_unc和实际移动坐标；同一参考帧可比较移动前后表面，不把中心距离当表面收益。
 - 固定诊断视角DSC06642：7001及每1000轮，额外只读no_grad前向保存depth/normal/RGB和明确A-only的mask。它不计算候选、不重定位、无额外反传；固定A-only probe不冒充该视角的联合ALR掩码。实际参考事件另存真实A并E的rendered_unc。
-- 记录NPZ/JSON与清单，复用原NumPy写法/metadata。每轮独立文件，既有文件不覆盖；预估额外数百MB到约1–2GB，实际由压缩率决定，不能预先保证耗时/字节量。
+- 记录NPZ/JSON与清单，复用原NumPy写法/metadata。每轮独立文件，既有文件不覆盖；按本场景876×584及96/24事件估算，未压缩数组约5GB，压缩后体积取决于内容。为trace额外预留约6GB，另需原训练output空间，不保证耗时/压缩字节量。
 
 ## 明确边界
 

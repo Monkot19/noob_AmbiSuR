@@ -1453,6 +1453,149 @@ class PositionCheckTests(unittest.TestCase):
                                       result[3][1].numpy())
 
 
+class ProcessTraceTests(unittest.TestCase):
+    def test_capture_schedule_bounds_storage_and_keeps_late_observation(self):
+        from scripts.trace_candidate_training import trace_iteration, probe_iteration
+        chosen = [i for i in range(7001, 30001) if trace_iteration(i)]
+        self.assertEqual(chosen, [7001] + list(range(7100,15000,100)) + list(range(15000,30001,1000)))
+        self.assertEqual(len(chosen), 96)
+        self.assertEqual([i for i in chosen if probe_iteration(i)], [7001]+list(range(8000,30001,1000)))
+
+    def test_actual_selector_trace_copies_pre_move_and_records_narrowed_targets(self):
+        from scripts.trace_candidate_training import CandidateTrainingTrace
+        from scripts import evaluate_candidate_actions as audit
+        ref,sources,model,depth,normal,opt,kw=PositionCheckTests().fixture(count=12,budget=7)
+        ref.image_name='sample'
+        before=model.get_xyz.clone();rng=torch.get_rng_state().clone()
+        with tempfile.TemporaryDirectory() as temp:
+            trace=CandidateTrainingTrace(Path(temp)/'trace')
+            with trace:
+                result=selector.select_candidate_labels_with_targets(model,ref,ref.gray,depth,
+                    normal,sources,opt,**kw)
+            manifest=json.loads((trace.output/'trace_manifest.json').read_text())
+            event=manifest['events'][0]
+            with np.load(trace.output/event['candidate_file']) as z:
+                record={k:z[k] for k in z.files}
+            audit.validate_record(record)
+            with np.load(trace.output/event['selection_file']) as z:
+                moved=z['move_accepted'];targets=z['target_xyz']
+                self.assertEqual(int(moved.sum()),len(result[3][0]))
+                self.assertLess(int(moved.sum()),int(record['accepted'].sum()))
+                np.testing.assert_array_equal(z['target_ids'],result[3][0].numpy())
+                np.testing.assert_array_equal(targets,result[3][1].numpy())
+            np.testing.assert_array_equal(record['current_world'],before[record['ids']].detach().numpy())
+            with torch.no_grad(): model._xyz.add_(1)
+            np.testing.assert_array_equal(record['current_world'],before[record['ids']].detach().numpy())
+            self.assertFalse(event['reference_complete'])
+        self.assertTrue(torch.equal(rng,torch.get_rng_state()))
+        self.assertIsNone(__import__('sys').getprofile())
+
+    def test_late_joint_labels_are_not_misreported_as_moves_and_empty_path_works(self):
+        from scripts.trace_candidate_training import CandidateTrainingTrace
+        ref,sources,model,depth,normal,opt,kw=PositionCheckTests().fixture()
+        ref.image_name='sample';kw['iteration']=15000
+        with tempfile.TemporaryDirectory() as temp:
+            with CandidateTrainingTrace(Path(temp)/'trace') as trace:
+                result=selector.select_candidate_labels(model,ref,ref.gray,depth,normal,sources,opt,**kw)
+            event=json.loads((trace.output/'trace_manifest.json').read_text())['events'][0]
+            with np.load(trace.output/event['selection_file']) as z:self.assertFalse(z['move_accepted'].any())
+            self.assertGreater(int(result[1].sum()),0)
+        kw['iteration']=7100;kw['proposal_valid']=torch.zeros_like(depth,dtype=torch.bool)
+        with tempfile.TemporaryDirectory() as temp:
+            with CandidateTrainingTrace(Path(temp)/'trace') as trace:
+                selector.select_candidate_labels_with_targets(model,ref,ref.gray,depth,normal,sources,opt,**kw)
+            event=json.loads((trace.output/'trace_manifest.json').read_text())['events'][0]
+            with np.load(trace.output/event['candidate_file']) as z:self.assertEqual(len(z['ids']),0)
+            with np.load(trace.output/event['selection_file']) as z:self.assertEqual(len(z['target_ids']),0)
+
+    def test_real_spread_inputs_replay_exactly_and_profile_restores_on_exception(self):
+        from scripts.trace_candidate_training import CandidateTrainingTrace
+        from utils.depth_spread import build_spread_proposal,propagate_depth
+        ref,sources,model,depth,normal=analytic_fixture();ref.image_name='sample'
+        opts=options(candidate_depth_source='spread',multi_view_sample_num=12)
+        geometry=dict(plane_depth=depth[None],rendered_normal=normal,rendered_distance=depth[None])
+        with tempfile.TemporaryDirectory() as temp:
+            with CandidateTrainingTrace(Path(temp)/'trace') as trace:
+                out,valid,stats=build_spread_proposal(model,ref,sources,depth*2,normal,
+                    geometry,opts,seed=0,iteration=7100,support_depth_fn=lambda c:depth[None])
+            event=json.loads((trace.output/'trace_manifest.json').read_text())['events'][0]
+            with np.load(trace.output/event['spread_file']) as z:
+                replay,rv=propagate_depth(torch.from_numpy(z['model_depth_before']),torch.from_numpy(z['prior_normal']),
+                    torch.from_numpy(z['rays']),torch.from_numpy(z['anchor_mask']),torch.from_numpy(z['normal_valid']))
+                self.assertTrue(torch.equal(replay,out));self.assertTrue(torch.equal(rv,valid))
+                self.assertEqual(int(z['anchor_mask'].sum()),int(stats['anchors']))
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(RuntimeError,'original failure'):
+                with CandidateTrainingTrace(Path(temp)/'trace'):
+                    raise RuntimeError('original failure')
+            self.assertIsNone(__import__('sys').getprofile())
+            with self.assertRaises(FileExistsError):CandidateTrainingTrace(Path(temp)/'trace')
+
+    def test_actual_training_helper_captures_post_move_and_readonly_fixed_probe(self):
+        from scripts.trace_candidate_training import CandidateTrainingTrace
+        from utils.depth_spread import build_spread_proposal
+        ref,sources,model,depth,normal,opt,kw=PositionCheckTests().fixture()
+        ref.image_name='sample';ref._candidate_support_cameras=sources
+        ref.get_calib_matrix_nerf=lambda scale=1:(ref.get_k(scale),ref.world_view_transform.T)
+        calls=[]
+        def boundary(camera,current,*args,**kwargs):
+            calls.append((camera.uid,kwargs.get('return_depth_normal'),kwargs.get('ambiguity_labels')))
+            z=(current.get_xyz@ref.world_view_transform[:3,:3]+ref.world_view_transform[3,:3])[:,2].mean()-.2
+            d=(z if camera.uid==ref.uid else z*0+2).expand(1,32,32)
+            return dict(plane_depth=d,rendered_normal=normal,rendered_distance=d,
+                depth_normal=normal,rendered_unc=d*0,render=ref.get_image()[0])
+        root=Path(__file__).resolve().parents[1]
+        ns=dict(torch=torch,F=torch.nn.functional,render=boundary,
+            normal_from_depth_image=normal_from_depth_image,
+            candidate_selector_active=selector.candidate_selector_active,
+            candidate_relocation_active=selector.candidate_relocation_active,
+            select_candidate_labels=selector.select_candidate_labels,
+            select_candidate_labels_with_targets=selector.select_candidate_labels_with_targets,
+            build_spread_proposal=build_spread_proposal)
+        n=next(x for x in ast.parse((root/'gaussian_renderer/__init__.py').read_text(encoding='utf-8')).body
+            if isinstance(x,ast.FunctionDef) and x.name=='render_normal')
+        exec(compile(ast.Module(body=[n],type_ignores=[]),str(root/'gaussian_renderer/__init__.py'),'exec'),ns)
+        f=next(x for x in ast.parse((root/'train.py').read_text(encoding='utf-8')).body
+            if isinstance(x,ast.FunctionDef) and x.name=='_render_training_reference')
+        exec(compile(ast.Module(body=[f],type_ignores=[]),str(root/'train.py'),'exec'),ns)
+        def training():
+            scene=SimpleNamespace(getTrainCameras=lambda:[ref,*sources])
+            return ns[f.name](ref,model,None,None,None,opt,iteration=8000,seed=0)
+        rng=torch.get_rng_state().clone()
+        with tempfile.TemporaryDirectory() as temp:
+            with CandidateTrainingTrace(Path(temp)/'trace',probe_view='sample') as trace:
+                result,data=training()
+            m=json.loads((trace.output/'trace_manifest.json').read_text());e=m['events'][0]
+            self.assertTrue(e['reference_complete']);self.assertEqual(len(m['probes']),1)
+            self.assertEqual(data['stats']['relocated'],2)
+            self.assertEqual([x[:2] for x in calls],[(0,False),(1,False),(2,False),(0,True),(0,True)])
+            np.testing.assert_array_equal(calls[-1][2].numpy(),selector.compute_sh_ambiguity_labels(model,opt).numpy())
+            with np.load(trace.output/e['reference_file']) as z:
+                np.testing.assert_array_equal(z['plane_depth'],result['plane_depth'].detach().numpy())
+                self.assertEqual(len(z['actual_target_ids']),2)
+            with np.load(trace.output/e['spread_file']) as z:
+                self.assertGreater(float(z['model_depth_before'].mean()),float(result['plane_depth'].detach().mean()))
+        self.assertTrue(torch.equal(rng,torch.get_rng_state()))
+
+    def test_launcher_preserves_original_arguments_and_restores_argv_on_failure(self):
+        from scripts import trace_candidate_training as trace
+        import sys
+        before=sys.argv
+        with tempfile.TemporaryDirectory() as temp:
+            original=['--source_path','data','--model_path','new','--iterations','30000']
+            def run(path,run_name):
+                self.assertEqual(Path(path),trace.REPOSITORY/'train.py')
+                self.assertEqual(run_name,'__main__')
+                self.assertEqual(sys.argv[1:],original)
+                raise RuntimeError('training failure')
+            with patch.object(trace.runpy,'run_path',side_effect=run):
+                with self.assertRaisesRegex(RuntimeError,'training failure'):
+                    trace.main(['--trace-output',str(Path(temp)/'trace'),'--',*original])
+            self.assertIs(sys.argv,before);self.assertIsNone(sys.getprofile())
+            m=json.loads((Path(temp)/'trace/trace_manifest.json').read_text())
+            self.assertFalse(m['successful']);self.assertEqual(m['error'],'training failure')
+
+
 class SpreadContractTests(unittest.TestCase):
     def test_gray_source_matches_frozen_pre_spread_implementation(self):
         frozen=subprocess.check_output(['git','show','43e2ea0:utils/candidate_selector.py'],text=True)
