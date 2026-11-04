@@ -232,3 +232,9 @@ Fixed trace implementation cd6475526b8cccc50e3ce797bcea4a2c66bea664; final unifi
 
 
 2026-11-04 user server receipt: cd647552 trace run completed30K/23000 remaining steps in74:32, exit0, N1279429, train L1=.01710001826286316/PSNR30.836247634887698, App save/complete12:20:20. No manifest/files received yet; cannot claim96/24 verified. Append original TSDF command preceded by cheap96/24/79/nonempty checks, no new methods or training. Misaddressed GS-SDF context withdrawn; AmbiSuR unchanged. Server extraction/user checks pending.
+
+
+## 2026-11-04 Downloaded process-trace analysis
+User provides actual selector_v3_spread_process_trace/selector_process_trace_2026_11_4/cd647552_seed0_b16384_until15000_30k_v1. Approved analysis only: validate96/24/79/files/config, original formal mesh protocol once, inspect actual anchor/proposal/move/immediate surface/fixed-probe late coverage with existing scorer/prior-grid/region core. GT offline only; no production edits/training/deletion. Preserve original output readonly and write unique analysis/evaluation artifacts. Stage1 inventory pending.
+
+Downloaded trace inventory exit0/1.263s:96reference/24probe/408NPZ/3,876,519,869bytes. All schema1 validated; actual move subset/target order and post-executor coordinates exact, late no move.79events415426checked/317598moved. Clean actualcd647552, optimization exactly prior6172 andcameras/support bytes exact. Model/mesh files found, original exit0. No GT query yet. Proceed frozen full-surface evaluator once with baseline/early/position/trace.
