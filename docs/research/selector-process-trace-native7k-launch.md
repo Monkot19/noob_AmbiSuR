@@ -108,3 +108,83 @@ fi
 下载完整新output，尤其保留`trace/`、train.log、元数据、最终point_cloud/App和原debug；不只下载mesh。过程NPZ可复用现有schema1 scorer离线分析；auxiliary里的move_accepted/target_ids才是实际动作，不能用candidates.accepted代替。已保存数值深度和未经JET归一化的mask，后续无需从JPEG逆推绝对值。
 
 此次目标是查因，不宣称新增方法收益。训练完成后仍按原5m/.005m/trunc4/cluster2提取新模型；旧baseline和early不重新训练或提取。
+
+## 2026-11-04训练回执与检查后提取
+
+用户日志回执：30000/23000续训步完成，74:32、退出0、N1279429、train L1=0.01710001826286316、PSNR=30.836247634887698，12:20:20打印Training complete及App保存。整千轮4.3–4.8秒的峰值与既定采集时点一致，但仅凭tail不能确认全清单/文件。PSNR为原训练抽样统计，不是几何或完整新视角评价。下方先检查96/24事件、79次位置动作及最终文件，再原参数只提取本次模型；不重训或更改方法。
+
+```bash
+bash <<'SH' || printf '\n检查或提取启动中止，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+cd /root/autodl-tmp/noob_AmbiSuR
+out=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_process_trace/cd647552_seed0_b16384_until15000_30k_v1
+test "$(git rev-parse HEAD)" = cd6475526b8cccc50e3ce797bcea4a2c66bea664
+test -z "$(git status --porcelain)"
+git rev-parse HEAD
+git diff --exit-code
+test "$(cat "$out/train.exitcode")" = 0
+test -s "$out/point_cloud/iteration_30000/point_cloud.ply"
+test -s "$out/app_model/iteration_30000/app.pth"
+/root/miniconda3/envs/ambisur/bin/python - "$out" <<'PY'
+import json, re, sys
+from pathlib import Path
+p = Path(sys.argv[1]); t = p / 'trace'
+m = json.loads((t / 'trace_manifest.json').read_text())
+expected = [7001] + list(range(7100, 15000, 100)) + list(range(15000, 30001, 1000))
+assert m['successful'], m.get('error')
+assert [e['iteration'] for e in m['events']] == expected, 'reference schedule mismatch'
+assert [e['iteration'] for e in m['probes']] == [7001] + list(range(8000, 30001, 1000)), 'probe schedule mismatch'
+for e in m['events']:
+    assert e['reference_complete'], e['iteration']
+    for key in ('spread_file', 'candidate_file', 'selection_file', 'reference_file'):
+        assert (t / e[key]).stat().st_size > 0, (e['iteration'], key)
+for e in m['probes']:
+    assert e['camera'] == 'DSC06642', e
+    assert (t / e['file']).stat().st_size > 0, e
+text = (p / 'train.log').read_text()
+events = [tuple(map(int, row)) for row in re.findall(
+    r'\[relocation (\d+)\] moved=(\d+) position_checked=(\d+) position_passed=(\d+)', text)]
+assert [e[0] for e in events] == list(range(7100, 15000, 100)), 'relocation schedule mismatch'
+assert all(moved == passed <= checked for _, moved, checked, passed in events)
+print('96个参考事件、24个固定探针、79次动作及非空文件检查通过。')
+print('累计检查:', sum(e[2] for e in events), '累计移动:', sum(e[1] for e in events))
+print('尚未验证NPZ内容或分析几何收益。')
+PY
+test ! -e "$out/mesh"
+test ! -e "$out/extract_general.log"
+test ! -e "$out/extract.exitcode"
+export PYTHONPATH="/root/autodl-tmp/ambisur-c0-rasterizer.U365Ym/python${PYTHONPATH:+:$PYTHONPATH}"
+export OMP_NUM_THREADS=1
+printf 'commit=%s\niteration=30000\nresolution=2\nmax_depth=5.0\nvoxel_size=0.005\nsdf_trunc_scale=4.0\nnum_cluster=2\nuse_depth_filter=false\n' "$(git rev-parse HEAD)" > "$out/extract.launch.txt"
+nohup bash -c '
+  set +e
+  "$1" -u -B mesh_extract/extract_general.py -m "$2" -r 2 \
+    --iteration 30000 --skip_test --max_depth 5.0 \
+    --voxel_size 0.005 --sdf_trunc_scale 4.0 --num_cluster 2
+  rc=$?
+  if [ "$rc" -eq 0 ]; then
+    test -s "$2/mesh/tsdf_fusion.ply" && test -s "$2/mesh/tsdf_fusion_post.ply"
+    rc=$?
+  fi
+  printf "%s\n" "$rc" > "$2/extract.exitcode"
+  exit "$rc"
+' _ /root/miniconda3/envs/ambisur/bin/python "$out" \
+  > "$out/extract_general.log" 2>&1 < /dev/null &
+extract_pid=$!
+printf '%s\n' "$extract_pid" > "$out/extract.pid"
+printf '提取PID：%s\n日志：%s/extract_general.log\n' "$extract_pid" "$out"
+SH
+```
+
+```bash
+out=/root/autodl-tmp/ambisur_runs/Tool_Room/selector_process_trace/cd647552_seed0_b16384_until15000_30k_v1
+tail -n 20 "$out/extract_general.log"
+if [ -f "$out/extract.exitcode" ]; then
+  printf '\n提取退出码：'
+  cat "$out/extract.exitcode"
+  ls -lh "$out/mesh/tsdf_fusion.ply" "$out/mesh/tsdf_fusion_post.ply"
+fi
+```
+
+提取退出0后下载本次完整output，尤其trace目录；不清理这些历史过程记录。服务器尚未回传上述检查/提取结果，不写成全部采集已验证。

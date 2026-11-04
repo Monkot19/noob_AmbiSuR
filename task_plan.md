@@ -390,3 +390,6 @@ Independent read-only review passed:95regional delta rows exact, oldraw metrics/
 - [x] Implementation fixed cd6475526b8cccc50e3ce797bcea4a2c66bea664; launch guide placeholders replaced and independently reviewed. Push/final identity recorded below.
 
 Follow-up analysis and direct-output checklists above completed with independently reviewed reports/artifacts. This does not authorize new scientific method changes.
+
+
+2026-11-04 user server receipt: cd647552 trace run completed30K/23000 remaining steps in74:32, exit0, N1279429, train L1=.01710001826286316/PSNR30.836247634887698, App save/complete12:20:20. No manifest/files received yet; cannot claim96/24 verified. Append original TSDF command preceded by cheap96/24/79/nonempty checks, no new methods or training. Misaddressed GS-SDF context withdrawn; AmbiSuR unchanged. Server extraction/user checks pending.

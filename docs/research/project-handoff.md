@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-04过程训练完成回执：** 用户返回cd647552输出路径的Training complete/退出0，74:32、N1279429、trainPSNR30.836247635，App保存12:20:20。整千轮采集耗时峰值符合时序；不能仅据tail认定96/24记录齐全。下一步按[过程指南新增检查与提取段](selector-process-trace-native7k-launch.md)核对清单/79动作/模型文件，再原TSDF参数提取本次模型，下载完整trace供离线定位；未授权新方法/预算/训练或baseline重训。与GS-SDF有关的误发消息用户已撤回，未改AmbiSuR代码。
+
 > **2026-11-04用户批准7K→30K过程采集：** D主目录分支`codex/selector-process-trace`，只新增独立`trace_candidate_training.py`，共享静态record构造及统一测试；原train/arguments/selector/spread/Gaussian/renderer/submodules相对6172bc45无差异，不换loss/LR/门槛，不重训baseline。96个实际参考事件、24个DSC06642只读A-only探针，joint ALR E与实际move分别保存，15K后继续观察。63项55通过/8本地native缺失跳过，6项trace通过；独立只读代码审查无实质问题。未运行GPU/服务器，不承诺逐位轨迹一致。约5GB未压缩trace数组，为采集额外预留约6GB，另需原output空间。固定提交及复制命令见[过程采集指南](selector-process-trace-native7k-launch.md)，用户执行服务器启动。
 
 > **门先验/后期覆盖补查：** 真实327个旧7K门候选有70.64%最近表面改善，不能认定初始传播全错；11400前鼓时ALR显示仍覆盖，19400/24600结构偏差增加同时门面ALR相对近零约70.72%/77.69%，不能倒置后期现象为首次原因。实际unc_decay=1、置信门槛ratio0；锚点是当前模型深度，传播目标没有持续depth loss。非门分区对C0净贡献+0.058mm、对early+1.058mm，故不能以“只需修门”宣称方法成功。数据/解释已独立复核，无GT失败重跑。见[补查报告](2026-11-04-door-priors-propagation-and-remaining-gains.md)。
