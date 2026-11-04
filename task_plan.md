@@ -387,6 +387,6 @@ Independent read-only review passed:95regional delta rows exact, oldraw metrics/
 - [x] Shared observer record extraction, trace events realCPU RED/GREEN.
 - [x] runpy launcher, readonly A-only fixed probe and CPUhelper tests; original train/algorithm remain identical6172.
 - [x] Unified tests63=55pass8nativeSkip; independent review no material issues; Python3.10 syntax/CLI/Bash blocks pass. No auto-serverrun.
-- [ ] Fixed implementation commit/push and replace launch guide placeholders; final clean identity verification.
+- [x] Implementation fixed cd6475526b8cccc50e3ce797bcea4a2c66bea664; launch guide placeholders replaced and independently reviewed. Push/final identity recorded below.
 
 Follow-up analysis and direct-output checklists above completed with independently reviewed reports/artifacts. This does not authorize new scientific method changes.

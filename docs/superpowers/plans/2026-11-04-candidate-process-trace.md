@@ -23,4 +23,4 @@ No GT/server actions/new loss/LR/RNG-based sampling. No writes to historical out
 - [x] Run unified CPU suite and existing native skips; source scope verifies production files identical6172bc45. No local native-render claim.
 - [x] Independent whole-change review; address material issues; fixed commit/push and launch guide with original parameters/newview/output. User performs server run, no extra smoke/baseline precondition.
 
-Verification: 63 total, 55 CPU pass/8 native dependency skips; six trace tests pass. Independent read-only review agrees, no material issues. Python3.10/CLI/Bash pass. Production scope diff6172 empty. Final fixed commit/push/launch publication pending. No server execution.
+Verification: 63 total, 55 CPU pass/8 native dependency skips; six trace tests pass. Independent read-only review agrees, no material issues. Python3.10/CLI/Bash pass. Production scope diff6172 empty. Implementation fixed cd6475526b8cccc50e3ce797bcea4a2c66bea664; launch guide pinned. Publication receipt follows in handoff/root ledgers. No server execution.
