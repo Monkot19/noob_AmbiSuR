@@ -358,3 +358,32 @@ Research-only read correction: initially looked for Codex reference under brains
 - [x] Fast sizes/PLYheaders/full79events:413554checked/315800moved/76.3625%pass, originalspread60273moves. Train/extract0/clean6172, actualopts onlytwoflags,406cameras/supportsexact, evaluator/protocol/metadata bytes identical5fde7cb. No GT queryyet.
 - [x] OriginalCLI once4models/exit0/106.139s evaluator106.985s wrapper, cleanfd73074; no GT failure/retry. Allold3metrics/meshSHA andGTsample/protocol/origin exact,12CSVJSONrowsagree.
 - [x] 12CSVJSON/3oldcontrolmetrics/hash/protocol/GTsampleexact verified; analysisreport negativewithcausalboundaries, independentreadonlyreviewno materialissue (79events/115frames/metadata included), handoff/ledgers/artifactreport saved. No automaticnewmethod/training.
+
+## 2026-11-04 Position-check failure explanation only
+- [x] Re-read selector gate, batch relocation, CUDA surface mixing, persistent DA3/ALR and pinned DP-GS execution source. Existing formal metrics/logs only; no new GT/training.
+- [x] Separate confirmed changes from causal hypotheses; note batch coupling with explicit mathematical counterexample, not actual trajectory proof. Review failure-mechanisms report before delivery.
+
+- [x] Independent narrow source/report review found no material issue; added early positive hard-action counterevidence and persistent-loss shared-control boundary. Analysis delivered without new methods or experiments.
+
+## 2026-11-04 User-approved direct output investigation
+- [x] Inventory actual current/oldspread/early/C0 downloads: meshes, Gaussian PLY,406 render/depth/normal JPEGs,115 debug/pg_view frames,logs. No metric depth or historical target arrays.
+- [ ] Reuse existing regional core on current result; reproduce official directional means and locate actual harm.
+- [ ] Reuse evaluator for raw-vs-post diagnostic and examine existing RGB/debug images/logs; no training, method changes or historical-causality claims.
+- [ ] Verify numeric artifacts, independent review, report evidence-supported versus untestable hypotheses.
+
+- [x] Direct output: original regional completeness+accuracy reproduced all6 formal means and exactCD delta; raw3model diagnostic exit0 with exactoldcontrols;406JPEG full-view scan;9view door first-hit thin adapter successful. No GT failures/retries.
+- [x] Main new damage located at door68: +1.034933mm CD vsoldspread, others net-.417332. Mesh signed-z median-96.8mm, DA3abs21.6/newmesh127.1mm;11400debug alreadywrong. Independent report/data review pending.
+
+Independent read-only review passed:95regional delta rows exact, oldraw metrics/hashes exact,406JPEG summaries and9view share exact,4camera hashes equal,ray script/sourcehash/coordinate/common-hit logic verified. No material issues; no GT rerun/training or reviewer edits.
+
+## 2026-11-04 Follow-up: door failure mechanism and modest remaining gains
+- [x] Re-read actual depth_spread producer and saved config. RawDA3 confidence ratio0.0 means binary depth/ALR mask passes all finite conf; cannot claim confidence excludeddoor.
+- [ ] Reuse existing output/score/propagation producer to examine door structure/anchoring and real training debug domain; no new training/production changes.
+- [ ] Decompose allregional gains and harms versusspread,early,C0 and report global weighting, not net0.417 as isolated improvement.
+- [ ] Verify artifacts and narrow independent review, separate current evidence from unavailable historical targets.
+
+## 2026-11-04 User-approved process trace30K implementation
+- [x] Userselects existing7K→30K observation of unchanged current method; D isolated codex/selector-process-trace, spec+inlineplan saved.
+- [ ] Shared observer record extraction, trace events realCPU RED/GREEN.
+- [ ] runpy launcher, readonly A-only fixed probe and CPUhelper tests; original train/algorithm remain identical6172.
+- [ ] Unified tests/independent review, fixed commit/push and launch guide; no auto-serverrun.
