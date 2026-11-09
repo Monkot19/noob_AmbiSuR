@@ -164,3 +164,83 @@ if [ -f "$audit_out/inference_cli_fix_v2.exitcode" ]; then
   cat "$audit_out/inference_cli_fix_v2.exitcode"
 fi
 ```
+
+## 2026-11-09 已批准支持视角上限修复
+
+用户批准把7作为上限：保留原邻居排序，不补重复帧或重新选邻居。真实17视角中15个取7个，DSC06669取5个、DSC06681取4个。固定实现b769fd555bd570ecd8a2aa6818e9f75546b0a237，配置值mvs_supports=7解释为maximum，manifest额外记录policy/count/available。采集／配置／评分／训练／DA3文件及renderer不改；全17视角在模型加载前预检。统一74项66通过8native跳过，真实17视角和127图片header通过，源代码窄复核无实质问题；4/5源实际GPU推理尚待运行。
+
+此前self-stack恢复已下载DINO／ResNet辅助权重并产生前三张MVS预测，因第4张只有5邻居触发旧断言，输出不覆盖；该日志未捕获旧挂起进程的实际调用栈，不宣称旧根因已证实。新的infer17批次仍使用同一原生7K相机、原邻居、480x640和1refinement；与旧7-source方案的唯一输入差异是这两张5/4真实源。旧3张保留，新批次完整推理以生成统一manifest，不拼接旧失败目录。
+
+为避免GitHub503，先上传已验证的depth-source-audit-support-cap.bundle到/root/autodl-tmp/，再完整执行以下命令。不下载／重装环境或重采集，不更改系统ptrace权限；保留60秒自身堆栈观察功能，Timeout标题仅表示快照。
+
+```bash
+bash <<'SH' || printf '\n推理启动停止，请贴回上方错误。\n'
+set -euo pipefail
+cd /root/autodl-tmp/noob_AmbiSuR
+test -z "$(git status --porcelain)"
+bundle=/root/autodl-tmp/depth-source-audit-support-cap.bundle
+git bundle verify "$bundle"
+git fetch "$bundle" refs/heads/codex/depth-source-audit
+git switch --detach b769fd555bd570ecd8a2aa6818e9f75546b0a237
+git rev-parse HEAD
+git diff --exit-code
+
+audit_out=/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1
+audit_runtime=/root/autodl-tmp/ambisur_runtime
+audit_python="$audit_runtime/mvsanywhere-env/bin/python"
+audit_source=/root/autodl-tmp/ambisur_work/data_views/native_c0_ckpt7k/toolroom_r2_seed0_30k_v1/colmap_undistorted
+audit_prefix=/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1
+audit_weights=/root/autodl-tmp/ambisur_models/mvsanywhere/mvsanywhere_hero.ckpt
+test "$(cat "$audit_out/capture.exitcode")" = 0
+test "$(cat "$audit_out/inference_self_stack_v3.exitcode")" != 0
+test -x "$audit_python"
+test -s "$audit_weights"
+test ! -e "$audit_out/mvs_support_cap_v4"
+test ! -e "$audit_out/inference_support_cap_v4.log"
+test ! -e "$audit_out/inference_support_cap_v4.exitcode"
+
+export TMPDIR="$audit_runtime/mvsanywhere-tmp"
+export TORCH_HOME="$audit_runtime/mvsanywhere-cache/torch"
+export HF_HOME="$audit_runtime/mvsanywhere-cache/huggingface"
+export OMP_NUM_THREADS=1
+export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+mkdir -p "$TMPDIR" "$TORCH_HOME" "$HF_HOME"
+observer_code=$(cat <<'PY'
+import faulthandler,runpy,sys
+faulthandler.enable()
+faulthandler.dump_traceback_later(60,repeat=True)
+entry="scripts/evaluate_depth_sources.py"
+sys.argv=[entry,*sys.argv[1:]]
+print("[observer] Started; automatic Python stack every 60 seconds.",flush=True)
+try:
+    runpy.run_path(entry,run_name="__main__")
+finally:
+    faulthandler.cancel_dump_traceback_later()
+PY
+)
+nohup bash -c '
+  "$1" -u -B -c "$2" infer \
+    --config experiments/depth_sources/toolroom_native7k_v1.json \
+    --source "$3" --baseline "$4" --vendor "$5" --weights "$6" \
+    --output "$7" --device cuda
+  rc=$?
+  printf "%s\n" "$rc" > "$8"
+  exit "$rc"
+' _ "$audit_python" "$observer_code" "$audit_source" "$audit_prefix" \
+  "$audit_runtime/mvsanywhere-vendor" "$audit_weights" \
+  "$audit_out/mvs_support_cap_v4" "$audit_out/inference_support_cap_v4.exitcode" \
+  > "$audit_out/inference_support_cap_v4.log" 2>&1 < /dev/null &
+printf '推理PID：%s\n日志：%s/inference_support_cap_v4.log\n' "$!" "$audit_out"
+SH
+```
+
+```bash
+audit_out=/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1
+tail -n 35 "$audit_out/inference_support_cap_v4.log"
+if [ -f "$audit_out/inference_support_cap_v4.exitcode" ]; then
+  printf '\n本次退出码：'
+  cat "$audit_out/inference_support_cap_v4.exitcode"
+fi
+```
+
+成功标准：新的inference_support_cap_v4.exitcode为0，mvs_support_cap_v4/inference_manifest.json包含17项及真实7/5/4支持数。原audit.exitcode=2、旧partial输出保持原样。成功后下载同一个20261109_v1根目录即可，后续score的--mvs使用mvs_support_cap_v4。未有GT质量或新训练收益结论。
