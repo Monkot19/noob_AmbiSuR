@@ -95,6 +95,36 @@ def production_depth_sampler():
 
 
 class DepthSourceAuditTests(unittest.TestCase):
+    def test_actual_donor_config_does_not_parse_outer_audit_arguments(self):
+        import contextlib
+        import importlib
+        import os
+        import sys
+        vendor = os.environ.get('AMBISUR_MVSANYWHERE_SOURCE')
+        if not vendor:
+            self.skipTest('set AMBISUR_MVSANYWHERE_SOURCE for the pinned donor interface test')
+        vendor = Path(vendor)
+        sha = subprocess.check_output(['git', '-C', str(vendor), 'rev-parse', 'HEAD'], text=True).strip()
+        from scripts.evaluate_depth_sources import VENDOR_COMMIT
+        self.assertEqual(sha, VENDOR_COMMIT)
+        tree = ast.parse((Path(__file__).resolve().parents[1] / 'scripts/evaluate_depth_sources.py').read_text(encoding='utf-8'))
+        infer = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'infer')
+        adapter = next(n for n in infer.body if isinstance(n, ast.ClassDef) and n.name == 'CachedInference')
+        init = next(n for n in adapter.body if isinstance(n, ast.FunctionDef) and n.name == '__init__')
+        call = next(n for n in init.body if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call)
+                    and isinstance(n.value.func, ast.Attribute) and n.value.func.attr == 'parse_and_merge_options')
+        argv = ['evaluate_depth_sources.py', 'infer', '--source', '/readonly/dataset', '--device', 'cuda']
+        with patch.object(sys, 'path', [str(vendor / 'src'), *sys.path]):
+            donor = importlib.import_module('mvsanywhere.options')
+            handler = donor.OptionsHandler()
+            with patch.object(sys, 'argv', argv.copy()), contextlib.redirect_stderr(io.StringIO()):
+                exec(compile(ast.Module(body=[call], type_ignores=[]), '<actual adapter options call>', 'exec'),
+                     {'handler': handler, 'vendor': vendor})
+                self.assertEqual(sys.argv, argv)
+            self.assertEqual(handler.options.image_width, 640)
+            self.assertEqual(handler.options.image_height, 480)
+            self.assertEqual(handler.options.image_encoder_name, 'dinov2_vitb14')
+
     def test_common_mean_admission_not_opportunistic_best_view(self):
         from scripts.evaluate_depth_sources import common_mean_admission
         z = np.array([[.4, .4], [.4, .4], [.4, .4]])

@@ -276,7 +276,8 @@ def infer(args):
         def __init__(self):
             torch.nn.Module.__init__(self)
             handler=hub.options.OptionsHandler()
-            handler.parse_and_merge_options(config_filepaths=str(vendor/'configs/models/mvsanywhere_model.yaml'))
+            handler.parse_and_merge_options(config_filepaths=str(vendor/'configs/models/mvsanywhere_model.yaml'),
+                                            ignore_cl_args=True)
             opts=handler.options;opts.load_weights_from_checkpoint=str(args.weights)
             self.model=hub.load_model_inference(opts,hub.get_model_class(opts)).eval()
             self.normalize=transforms.Normalize(mean=[.485,.456,.406],std=[.229,.224,.225])

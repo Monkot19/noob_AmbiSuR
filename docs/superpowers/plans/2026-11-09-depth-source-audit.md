@@ -23,3 +23,9 @@ Depthz vs rayrange; c2w/w2c and Kresizecopies; originalDA3scale and model/world 
 ## Errors / resource limits
 - multi_view.json is JSONLines, wholefile json.loads failed during inventory; corrected using actualproducer lines. No GT touched.
 - Native CUDA renderer unavailable locally. GPU RTX5060 has about2.6GiB free; avoid interfering with activeapps. User confirms AutoDL for read-only capture.
+
+## Server interface failure: donor CLI parsing (2026-11-09)
+- Evidence: capture/dependencies/freeze succeeded; inference exits2 because pinned OptionsHandler.parse_and_merge_options reads the outer audit CLI. Donor options.py309 exposes ignore_cl_args=False and321 parses sys.argv.
+- [x] Add one regression to the shared selector tests using the actual pinned donor OptionsHandler and the production constructor call under an audit argv; observe exit2 before the fix.
+- [x] Set ignore_cl_args=True only on the adapter configuration call. Keep YAML, weights, forward, cameras and scientific protocol unchanged; do not edit the vendor or training code.
+- [x] Run shared tests72/64pass8nativeSkip and actual donor-boundary verification; independent read-only review found no material issues. Commit/push release next. Preserve failed output; restart infer only into a new sibling directory, referencing existing capture/runtime/vendor/weights and recording their identities. No repeated capture, installation, training or GT scoring.

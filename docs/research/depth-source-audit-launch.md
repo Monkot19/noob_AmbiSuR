@@ -94,3 +94,73 @@ fi
 ## 2026-11-09 启动前空间回执
 
 用户服务器实测：系统盘30G中余8.3G，数据盘50G中余30G（41%使用）；无需清理或扩容。已核对主权重2420601860字节、DINOv2-B权重346378731字节；另需辅助权重、环境、缓存及结果。10GiB是启动保守预留值，非实测峰值。命令增加启动前余量检查，并将TMPDIR显式放在数据盘；继承至server的全部子进程。实现仍固定cae81969，无Python／训练方法变更，尚无服务器前向结果。
+
+## 2026-11-09 CLI接口修复：仅恢复推理
+
+服务器原capture/dependencies/freeze已成功，inference退出2。真实供体OptionsHandler默认重新解析宿主sys.argv，误读infer/--source等；适配器改用其原有ignore_cl_args=True，YAML与forward均不变。真实供体接口回归修复前复现SystemExit2，修复后通过；统一72项64通过8native跳过。仅MVS环境运行完整测试曾因缺少Open3D失败，最终使用已有评价环境加独立MVS依赖路径通过，未修改任何环境或训练代码。尚未验证实际权重加载／GPU前向。
+
+下面只恢复失败的推理，不重采集或重装依赖。旧mvs目录／inference.log／audit.exitcode=2保留，成功与否以新的inference_cli_fix_v2.exitcode为准。新结果在同一归档根目录的mvs_cli_fix_v2中，后续score的--mvs改用此目录。原capture仍为cae81969，推理身份由新版本独立记录，科学配置相同。
+
+```bash
+bash <<'SH' || printf '\n推理恢复启动失败，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "启动停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+cd /root/autodl-tmp/noob_AmbiSuR
+test -z "$(git status --porcelain)"
+fixed=CLI_FIX_COMMIT
+if ! git cat-file -e "$fixed^{commit}" 2>/dev/null; then
+  if [ -f /etc/network_turbo ]; then source /etc/network_turbo; fi
+  git fetch origin codex/depth-source-audit
+fi
+git switch --detach "$fixed"
+git rev-parse HEAD
+git diff --exit-code
+
+audit_out=/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1
+audit_python=/root/autodl-tmp/ambisur_runtime/mvsanywhere-env/bin/python
+audit_source=/root/autodl-tmp/ambisur_work/data_views/native_c0_ckpt7k/toolroom_r2_seed0_30k_v1/colmap_undistorted
+audit_prefix=/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1
+audit_vendor=/root/autodl-tmp/ambisur_runtime/mvsanywhere-vendor
+audit_weights=/root/autodl-tmp/ambisur_models/mvsanywhere/mvsanywhere_hero.ckpt
+audit_mvs="$audit_out/mvs_cli_fix_v2"
+test "$(cat "$audit_out/capture.exitcode")" = 0
+test "$(cat "$audit_out/dependencies.exitcode")" = 0
+test -s "$audit_out/capture/capture_manifest.json"
+test -x "$audit_python"
+test "$(stat -c %s "$audit_weights")" = 2420601860
+test ! -e "$audit_mvs"
+test ! -e "$audit_out/inference_cli_fix_v2.log"
+test ! -e "$audit_out/inference_cli_fix_v2.exitcode"
+
+export TMPDIR=/root/autodl-tmp/ambisur_runtime/mvsanywhere-tmp
+export TORCH_HOME=/root/autodl-tmp/ambisur_runtime/mvsanywhere-cache/torch
+export HF_HOME=/root/autodl-tmp/ambisur_runtime/mvsanywhere-cache/huggingface
+export OMP_NUM_THREADS=1
+export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+mkdir -p "$TMPDIR" "$TORCH_HOME" "$HF_HOME"
+
+nohup bash -c '
+  "$1" -u -B scripts/evaluate_depth_sources.py infer \
+    --config experiments/depth_sources/toolroom_native7k_v1.json \
+    --source "$2" --baseline "$3" --vendor "$4" --weights "$5" \
+    --output "$6" --device cuda
+  rc=$?
+  printf "%s\n" "$rc" > "$7"
+  exit "$rc"
+' _ "$audit_python" "$audit_source" "$audit_prefix" "$audit_vendor" "$audit_weights" \
+  "$audit_mvs" "$audit_out/inference_cli_fix_v2.exitcode" \
+  > "$audit_out/inference_cli_fix_v2.log" 2>&1 < /dev/null &
+printf '推理PID：%s\n日志：%s/inference_cli_fix_v2.log\n' "$!" "$audit_out"
+SH
+```
+
+查看新任务，不再用旧audit.exitcode判断本次恢复：
+
+```bash
+audit_out=/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1
+tail -n 20 "$audit_out/inference_cli_fix_v2.log"
+if [ -f "$audit_out/inference_cli_fix_v2.exitcode" ]; then
+  printf '\n本次推理退出码：'
+  cat "$audit_out/inference_cli_fix_v2.exitcode"
+fi
+```
