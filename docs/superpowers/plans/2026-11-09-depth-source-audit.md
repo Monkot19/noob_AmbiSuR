@@ -29,3 +29,9 @@ Depthz vs rayrange; c2w/w2c and Kresizecopies; originalDA3scale and model/world 
 - [x] Add one regression to the shared selector tests using the actual pinned donor OptionsHandler and the production constructor call under an audit argv; observe exit2 before the fix.
 - [x] Set ignore_cl_args=True only on the adapter configuration call. Keep YAML, weights, forward, cameras and scientific protocol unchanged; do not edit the vendor or training code.
 - [x] Run shared tests72/64pass8nativeSkip and actual donor-boundary verification; independent read-only review found no material issues. Commit/push release next. Preserve failed output; restart infer only into a new sibling directory, referencing existing capture/runtime/vendor/weights and recording their identities. No repeated capture, installation, training or GT scoring.
+
+## User-approved support cap recovery (2026-11-09)
+User approves continuing after the explained proposal:7 is an upper bound; use the saved5 neighbors forDSC06669 and4 forDSC06681, retain first7 for the other15, no duplicates/padding/new selection. Existing3predictions and failedself-stack output remain unchanged. No training orGT.
+- [x] Shared regression for8/5/4saved neighbors, exactorder/prefix, and empty-neighbor rejection.
+- [x] Extract one reused selection function; preflight all requested views before model loading. Infer uses the same planned names; manifest records cap policy, actual counts and lists. Config value7 remains the maximum; capture/config/score protocol numeric settings unchanged.
+- [x] Run unified74/66pass8nativeSkip and real17-view/127image metadata check; independent review found no material issue. Prepare fixedcommit/push and small offlinebundle from serverfc75cf58. Recover infer only in a new output, reuse originalcapture/environment/vendor/weight/cache; do not overwrite old3predictions or repeat capture/install.

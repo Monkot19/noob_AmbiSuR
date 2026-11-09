@@ -95,6 +95,22 @@ def production_depth_sampler():
 
 
 class DepthSourceAuditTests(unittest.TestCase):
+    def test_mvs_support_cap_preserves_real_saved_order_without_padding(self):
+        from scripts.evaluate_depth_sources import select_mvs_supports
+        names = ['s'+str(i) for i in range(8)]
+        cameras = dict.fromkeys(['many','five','four',*names])
+        saved = {'many':names.copy(), 'five':names[:5], 'four':names[:4]}
+        result = select_mvs_supports(['many','five','four'], saved, cameras, 7)
+        self.assertEqual(result, {'many':names[:7], 'five':names[:5], 'four':names[:4]})
+        self.assertEqual(saved['many'], names)
+        self.assertEqual([len(set(result[n])) for n in result], [7,5,4])
+
+    def test_mvs_support_preflight_rejects_empty_or_invalid_saved_list(self):
+        from scripts.evaluate_depth_sources import select_mvs_supports
+        for saved in ([], ['ref'], ['s','s'], ['missing']):
+            with self.subTest(saved=saved), self.assertRaisesRegex(ValueError, 'ref'):
+                select_mvs_supports(['ref'], {'ref':saved}, {'ref':{},'s':{}}, 7)
+
     def test_actual_donor_config_does_not_parse_outer_audit_arguments(self):
         import contextlib
         import importlib

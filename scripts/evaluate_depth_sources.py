@@ -244,6 +244,20 @@ def ncc_probe(data,proposal,config,camera_uid=0):
     return dict(pixel_ids=ids.numpy(),accepted=accepted,comparable=comparable,mean_costs=means)
 
 
+def select_mvs_supports(views,neighbors,cameras,max_supports):
+    """Use at most the saved ordered prefix, without padding or re-selection."""
+    maximum=int(max_supports)
+    if maximum<1:raise ValueError('MVS support maximum must be positive')
+    planned={}
+    for name in views:
+        names=list(neighbors.get(name,[]))[:maximum]
+        if (name not in cameras or not names or name in names or
+                len(set(names))!=len(names) or any(n not in cameras for n in names)):
+            raise ValueError('invalid or empty saved MVS neighbors for '+name)
+        planned[name]=names
+    return planned
+
+
 def infer(args):
     import torch
     from PIL import Image
@@ -262,6 +276,8 @@ def infer(args):
     if args.views:views=args.views
     neighbors={r['ref_name']:r['nearest_name'] for r in map(json.loads,
         (args.baseline/'multi_view.json').read_text(encoding='utf-8').splitlines())}
+    planned_supports=select_mvs_supports(views,neighbors,by_name,config['mvs_supports'])
+    print('MVS planned support counts:',json.dumps({n:len(s) for n,s in planned_supports.items()}),flush=True)
     args.output.mkdir(parents=True,exist_ok=False)
     write_run_metadata(args.output,dict(command=sys.argv,config=config),collect_run_identity(ROOT))
     sys.path.insert(0,str(vendor/'src'))
@@ -286,8 +302,7 @@ def infer(args):
     records=[]
     with torch.inference_mode():
         for name in views:
-            names=neighbors[name][:int(config['mvs_supports'])]
-            if len(names)!=int(config['mvs_supports']):raise ValueError('insufficient saved neighbors')
+            names=planned_supports[name]
             pose,k=inference_camera(by_name[name])
             inputs=[inference_camera(by_name[n]) for n in names]
             image=Image.open(args.source/'images'/(name+'.JPG')).convert('RGB')
@@ -308,10 +323,12 @@ def infer(args):
             prediction_k[1]*=depth.shape[0]/by_name[name]['height']
             payload['camera_k']=prediction_k[:3,:3]
             save_npz(args.output/filename,payload)
-            records.append(dict(camera=name,file=filename,supports=names,shape=list(depth.shape)))
+            records.append(dict(camera=name,file=filename,supports=names,support_count=len(names),
+                available_support_count=len(neighbors[name]),shape=list(depth.shape)))
             print('MVSAnywhere',name,depth.shape,flush=True)
     write_json(args.output/'inference_manifest.json',dict(schema_version=1,vendor_commit=sha,
         records=records,config=config,baseline=str(args.baseline),source=str(args.source),
+        support_policy=dict(maximum=int(config['mvs_supports']),selection='saved_order_prefix_without_padding'),
         metadata_sha256={n:file_sha(args.baseline/n) for n in ('cameras.json','multi_view.json')},
         units='camera-z in the coordinate scale of the provided saved cameras; no GT alignment',
         weights=str(args.weights),weights_bytes=args.weights.stat().st_size,
