@@ -417,3 +417,6 @@ Current phase: implement minimal reusable offlineaudit and prepare AutoDL forwar
 
 
 2026-11-09用户批准支持视角上限修复，固定实现b769fd555bd570ecd8a2aa6818e9f75546b0a237：mvs_supports=7作为最大值，保留真实邻居顺序；15视角取7，DSC06669取5，DSC06681取4；不填充／重选。统一74项66通过8native跳过，实际17视角／127图片header检查通过，源代码独立窄审无实质问题。原capture／配置／评分／训练／DA3／renderer不改。已有self-stack推理完成前3张后因旧exact7断言退出；原partial与日志保留。新批次仅infer至mvs_support_cap_v4，复用缓存与环境，仍保留60秒self-stack。命令见docs/research/depth-source-audit-launch.md；用从fc75制作的离线bundle避开GitHub503。实际4/5源GPU／17完整manifest／GT质量尚未验证。
+
+
+2026-11-09服务器成功回执：b769fd55支持视角上限版MVS推理，用户日志完整列出17视角480x640及inference_support_cap_v4.exitcode=0；DSC06669实际5源／DSC06681实际4源均完成，其余15视角7源。辅助DINO／ResNet缓存复用，原capture及旧partial／失败记录保留。实际manifest／17NPZ下载完整性与GT精度／准入收益尚未本地检查；不据此宣称几何收益，不启动训练。服务器归档根/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1；用户下载目标D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/depth_source_check/20261109_v1。之后仅用原evaluate_depth_sources.py score，capture来自原capture子目录，MVS来自mvs_support_cap_v4。
