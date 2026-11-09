@@ -42,8 +42,17 @@ test -d "$audit_ext/diff_plane_rasterization_ambisur"
 test -d "$audit_source/images"
 test ! -e "$audit_out"
 test ! -e "$audit_out.log"
-mkdir -p "$(dirname "$audit_out")"
-df -h /root/autodl-tmp
+"$audit_python" - <<'PY'
+import shutil
+free = shutil.disk_usage('/root/autodl-tmp').free
+print(f'Data disk free: {free / 2**30:.2f} GiB')
+if free < 10 * 2**30:
+    raise SystemExit('Stop: reserve at least 10 GiB before starting this audit.')
+PY
+audit_tmp=/root/autodl-tmp/ambisur_runtime/mvsanywhere-tmp
+mkdir -p "$(dirname "$audit_out")" "$audit_tmp"
+export TMPDIR="$audit_tmp"
+df -h / /root/autodl-tmp
 
 nohup "$audit_python" -u -B scripts/evaluate_depth_sources.py server \
   --config experiments/depth_sources/toolroom_native7k_v1.json \
@@ -81,3 +90,7 @@ fi
 ## 本地评分
 
 下载后由同一`evaluate_depth_sources.py score`入口处理，参数为config/capture/mvs/GT/output及可选GT语义文件。会先验证实际生产输出、相机／支持metadata身份、完成NCC并保存非GT探针，再初始化原GTQueries；GT只产出评价汇总，不产训练mask。当前还没有MVS质量、准入收益或新mesh结论。评分前需核验输出和路径，不提前启动训练。
+
+## 2026-11-09 启动前空间回执
+
+用户服务器实测：系统盘30G中余8.3G，数据盘50G中余30G（41%使用）；无需清理或扩容。已核对主权重2420601860字节、DINOv2-B权重346378731字节；另需辅助权重、环境、缓存及结果。10GiB是启动保守预留值，非实测峰值。命令增加启动前余量检查，并将TMPDIR显式放在数据盘；继承至server的全部子进程。实现仍固定cae81969，无Python／训练方法变更，尚无服务器前向结果。

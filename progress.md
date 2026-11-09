@@ -408,3 +408,6 @@ Current phase: implement minimal reusable offlineaudit and prepare AutoDL forwar
 
 
 2026-11-09发布回执：离线采集／推理实现固定`cae81969d5eee7f97e5a4fd9d8151b300742fbb4`，分支`codex/depth-source-audit`，操作见`docs/research/depth-source-audit-launch.md`。统一71项63通过／8native跳过（5.791s），独立复核无剩余实质问题；官方MVS模块仅导入验证，尚无权重加载／真实前向／GT质量结果。train／arguments／scene／utils／renderer／submodules保持87ec3c2，baseline／数据只读；服务器由用户执行17视角只读采集＋独立环境MVS推理，非30K训练。
+
+
+2026-11-09用户返回服务器空间：系统盘余8.3G、数据盘余30G，无需清理／扩容。仅更新启动指南：10GiB保守空间预留检查、TMPDIR数据盘化；Python实现仍cae81969，训练／数据／baseline未动。准备用户执行前向采集与MVS推理，尚无实际服务器结果。
