@@ -181,6 +181,7 @@ def capture(config, source, snapshots, output):
     from utils.camera_utils import loadCam
     from gaussian_renderer import render, render_normal
     from utils.depth_spread import build_spread_proposal
+    save_depth_maps = bool(config.get('save_depth_maps',False))
     if not torch.cuda.is_available():
         raise RuntimeError('native CUDA capture required')
     if output.resolve() == source.resolve() or source.resolve() in output.resolve().parents:
@@ -263,12 +264,22 @@ def capture(config, source, snapshots, output):
                         source_cache[camera.uid]=value
                     return value
                 proposal_args, spread_stats = {}, {}
+                depth_filename = None
                 if spread:
                     preview=render(ref,native,pipe,bg,return_plane=True,return_depth_normal=False,ray_reg=False)
                     proposal,usable,spread_stats=build_spread_proposal(native,ref,cams[1:],depth,normal,
                         preview,opt,seed=config['seed'],iteration=snapshot['probe_iteration'],support_depth_fn=source_depth)
                     proposal_args=dict(proposal_depth=proposal,proposal_valid=usable)
+                    if save_depth_maps:
+                        from scripts.evaluate_depth_sources import make_depth_map_record, save_npz
+                        depth_filename=name+'_'+view+'_depths.npz'
+                        full=make_depth_map_record(ref,preview,depth,normal,proposal,usable,
+                            cams[1:],[source_depth(c) for c in cams[1:]])
+                        save_npz(output/depth_filename,full)
+                        del full
                     del preview
+                elif save_depth_maps:
+                    raise ValueError('full depth-map capture requires spread source')
                 record, stats = observe_selector(native,ref,ref.get_image()[1],depth,normal,cams[1:],opt,
                     seed=config['seed'],iteration=snapshot['probe_iteration'],support_depth_fn=source_depth,**proposal_args)
                 stats.update({k:int(v) for k,v in spread_stats.items()})
@@ -280,6 +291,7 @@ def capture(config, source, snapshots, output):
                 probe_iteration=snapshot['probe_iteration'],camera=view,camera_uid=ref.uid,supports=supports,
                 groups=[g for g in ('illustrative','coverage') if view in views[g]],stats=stats,
                 model_commit=snapshot['model_commit'],options=vars(opt)))
+            if depth_filename is not None:records[-1]['depth_file']=depth_filename
             print(name,view,stats,flush=True)
             del record, cams, ref, depth, normal
         del native
@@ -317,6 +329,22 @@ class GTQueries:
         self.query = TriangleDistance(mesh)
         self.o3d, self.views = o3d, {}
         self.face_ids, self.labels = (None,{}) if segments is None else _face_regions(mesh,segments,annotations)
+
+    def depth_grid(self, k, tr, image_size):
+        """Shared visible camera-z grid, using the existing shifted GT scene."""
+        w,h=map(int,image_size)
+        y,x=np.mgrid[:h,:w]
+        ray=np.stack((x,y,np.ones_like(x)),-1)@np.linalg.inv(k).T
+        direction=ray@tr[:3,:3].T
+        center=np.linalg.inv(tr)[3,:3]-self.origin
+        rays=np.concatenate((np.broadcast_to(center,direction.shape),direction),-1).astype(np.float32)
+        hit=self.query.scene.cast_rays(self.o3d.core.Tensor(rays))
+        depth=hit['t_hit'].numpy()
+        valid=np.isfinite(depth)&(depth>0)
+        region=np.full(depth.shape,-1,np.int64)
+        if self.face_ids is not None:
+            region[valid]=self.face_ids[hit['primitive_ids'].numpy()[valid]]
+        return dict(depth=depth,valid=valid,region=region)
 
     def evaluate(self, record):
         import torch
@@ -471,6 +499,7 @@ def main():
     c.add_argument('--source',type=Path,required=True);c.add_argument('--snapshot',action='append',required=True)
     c.add_argument('--output',type=Path,required=True)
     c.add_argument('--candidate-depth-source',choices=('da3','spread'))
+    c.add_argument('--save-depth-maps',action='store_true')
     s = sub.add_parser('score');s.add_argument('--capture',type=Path,required=True)
     s.add_argument('--gt',type=Path,required=True);s.add_argument('--output',type=Path,required=True)
     s.add_argument('--segments',type=Path);s.add_argument('--annotations',type=Path)
@@ -486,6 +515,8 @@ def main():
         config=json.loads(args.config.read_text(encoding='utf-8'))
         if args.candidate_depth_source is not None:
             config['candidate_depth_source']=args.candidate_depth_source
+        if args.save_depth_maps:
+            config['save_depth_maps']=True
         if set(snapshots) != {s['name'] for s in config['snapshots']}:
             raise ValueError('snapshot names must match config')
         capture(config,args.source.resolve(strict=True),snapshots,args.output)

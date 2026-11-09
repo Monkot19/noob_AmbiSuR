@@ -1,0 +1,16 @@
+# Install only into a separate --system-site-packages venv; inherit host torch.
+# No nerfstudio, gsplat, pytorch3d or replacement CUDA/PyTorch is needed for inference.
+numpy==1.26.4
+lightning>=2.2,<2.6
+kornia==0.6.7
+timm>=1.0,<1.1
+antialiased-cnns
+efficientnet_pytorch
+einops
+loguru==0.7.2
+opencv-python-headless>=4.10,<4.12
+moviepy==1.0.3
+matplotlib>=3.8,<3.11
+PyYAML>=6,<7
+scipy
+setuptools<81

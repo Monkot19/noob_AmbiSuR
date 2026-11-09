@@ -94,6 +94,130 @@ def production_depth_sampler():
     return production_model_method("get_points_depth_in_depth_map")
 
 
+class DepthSourceAuditTests(unittest.TestCase):
+    def test_common_mean_admission_not_opportunistic_best_view(self):
+        from scripts.evaluate_depth_sources import common_mean_admission
+        z = np.array([[.4, .4], [.4, .4], [.4, .4]])
+        p = np.array([[.3, .3], [.3, .3], [.3, .3]])
+        q = np.array([[.1, .9], [.2, .2], [.1, .1]])
+        valid = np.ones_like(z, bool)
+        qvalid = valid.copy(); qvalid[2] = False
+        accept, comparable, means = common_mean_admission(z,p,q,valid,valid,qvalid)
+        np.testing.assert_array_equal(accept,[False,True,False])
+        np.testing.assert_array_equal(comparable,[True,True,False])
+        self.assertAlmostEqual(means[0,2],.5)
+
+    def test_target_replacement_gain_and_missing_values(self):
+        from scripts.evaluate_depth_sources import paired_target_stats
+        result = paired_target_stats(np.array([3.,1.,1.]),np.array([1.,2.,1.]),
+            np.array([2.,1.,np.nan]),np.ones(3),np.ones(3,bool),np.ones(3,bool))
+        self.assertEqual(result['count'],2)
+        self.assertAlmostEqual(result['gain_current_mean_mm'],500.)
+        self.assertAlmostEqual(result['gain_da3_mean_mm'],0.)
+        self.assertAlmostEqual(result['hybrid_da3_mean_gain_mm'],0.)
+        self.assertEqual(result['improved_da3_fraction'],.5)
+
+    def test_depth_map_producer_real_tensor_shapes(self):
+        from scripts.evaluate_depth_sources import make_depth_map_record, validate_depth_map
+        cam = AnalyticCamera()
+        depth = torch.full((32,32),2.)
+        normal = torch.zeros((3,32,32));normal[2] = -1
+        preview = dict(plane_depth=depth[None],rendered_normal=normal,
+                       rendered_distance=depth[None])
+        data = make_depth_map_record(cam,preview,depth,normal,depth,
+            torch.ones_like(depth,dtype=torch.bool),[cam,cam],[depth[None],depth[None]])
+        validate_depth_map(data)
+        self.assertEqual(data['current_depth'].shape,(32,32))
+        self.assertEqual(data['support0_depth'].dtype,np.float32)
+        data['spread_valid'] = np.ones((2,2),bool)
+        with self.assertRaises(ValueError):validate_depth_map(data)
+
+    def test_inference_camera_is_c2w_and_intrinsics_copy(self):
+        from scripts.evaluate_depth_sources import inference_camera
+        cam = dict(rotation=np.eye(3).tolist(),position=[1.,2.,3.],
+            width=100,height=80,fx=60.,fy=65.)
+        pose,k = inference_camera(cam)
+        np.testing.assert_array_equal(pose[:3,3],[1.,2.,3.])
+        k[0] *= .5
+        self.assertEqual(inference_camera(cam)[1][0,0],60.)
+
+    def test_mvs_regrid_preserves_slanted_plane_rays_not_image_corners(self):
+        from scripts.evaluate_depth_sources import regrid_depth
+        y,x=np.mgrid[:32,:32]
+        ks=np.array([[40.,0,16.],[0,40.,16.],[0,0,1]],np.float32)
+        kt=ks.copy();kt[:2]*=2
+        z=(2/(1-.2*(x-16)/40)).astype(np.float32)
+        mapped=regrid_depth(z,ks,kt,(64,64),np.ones_like(z,bool))
+        yt,xt=np.mgrid[:64,:64];expected=2/(1-.2*(xt-32)/80)
+        np.testing.assert_allclose(mapped[::2,::2],expected[::2,::2],atol=1e-6)
+        self.assertTrue(np.isnan(mapped[:,-1]).all())
+
+    def test_ncc_probe_uses_real_sampler_and_equal_target_cannot_win(self):
+        from scripts.evaluate_depth_sources import make_depth_map_record,ncc_probe
+        cam=AnalyticCamera();d=torch.full((32,32),2.)
+        n=torch.zeros((3,32,32));n[2]=-1
+        data=make_depth_map_record(cam,dict(plane_depth=d[None],rendered_normal=n,
+            rendered_distance=d[None]),d,n,d,torch.ones_like(d,dtype=torch.bool),
+            [cam,cam],[d[None],d[None]])
+        result=ncc_probe(data,d.numpy(),dict(patch_radius=3,budget=128,seed=0,max_cost=.5))
+        self.assertEqual(len(result['pixel_ids']),128)
+        self.assertTrue(result['comparable'].any())
+        self.assertFalse(result['accepted'].any())
+        empty=ncc_probe(data,np.zeros((32,32),np.float32),dict(patch_radius=3,budget=128,seed=0,max_cost=.5))
+        self.assertEqual(len(empty['pixel_ids']),0)
+
+    def test_visible_depth_grid_is_camera_z_after_origin_shift(self):
+        from scripts.evaluate_candidate_actions import GTQueries
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'plane.ply'
+            path.write_text('ply\nformat ascii 1.0\nelement vertex 4\nproperty float x\n'
+                'property float y\nproperty float z\nelement face 2\n'
+                'property list uchar int vertex_indices\nend_header\n'
+                '-10 -10 2\n10 -10 2\n10 10 2\n-10 10 2\n3 0 1 2\n3 0 2 3\n')
+            query=GTQueries(path)
+            frame=query.depth_grid(np.array([[10.,0,8],[0,10.,8],[0,0,1]],np.float32),
+                np.eye(4,dtype=np.float32),np.array([16,16]))
+            self.assertTrue(frame['valid'].all())
+            np.testing.assert_allclose(frame['depth'],2.,atol=1e-5)
+
+    def test_real_depth_source_score_serializer_and_no_overwrite(self):
+        from scripts.evaluate_depth_sources import make_depth_map_record,save_npz,score
+        from scripts.evaluate_candidate_actions import GTQueries
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);cap=root/'capture';mvs=root/'mvs'
+            cap.mkdir();mvs.mkdir()
+            cam=AnalyticCamera();d=torch.full((32,32),2.)
+            n=torch.zeros((3,32,32));n[2]=-1
+            data=make_depth_map_record(cam,dict(plane_depth=d[None],rendered_normal=n,
+                rendered_distance=d[None]),d,n,d,torch.ones_like(d,dtype=torch.bool),
+                [cam,cam],[d[None],d[None]])
+            save_npz(cap/'depth.npz',data);save_npz(mvs/'prediction.npz',
+                {'depth':d.numpy(),'camera_k':data['camera_k']})
+            config={'ncc_probe':dict(patch_radius=3,budget=64,seed=0,max_cost=.5)}
+            (root/'config.json').write_text(json.dumps(config))
+            hashes={'cameras.json':'same-cameras','multi_view.json':'same-supports'}
+            (cap/'capture_manifest.json').write_text(json.dumps(dict(records=[dict(camera='view',
+                camera_uid=0,snapshot_iteration=7000,depth_file='depth.npz')],
+                snapshot_inputs={'native7k':dict(metadata_sha256=hashes)})))
+            (mvs/'inference_manifest.json').write_text(json.dumps(dict(config=config,
+                records=[dict(camera='view',file='prediction.npz')],metadata_sha256=hashes)))
+            gt_dir=root/'ground_truth';gt_dir.mkdir()
+            gt=gt_dir/'plane.ply'
+            gt.write_text('ply\nformat ascii 1.0\nelement vertex 4\nproperty float x\n'
+                'property float y\nproperty float z\nelement face 2\n'
+                'property list uchar int vertex_indices\nend_header\n'
+                '-10 -10 2\n10 -10 2\n10 10 2\n-10 10 2\n3 0 1 2\n3 0 2 3\n')
+            args=SimpleNamespace(config=root/'config.json',capture=cap,mvs=mvs,gt=gt,
+                output=root/'scored',segments=None,annotations=None)
+            score(args)
+            rows=json.loads((args.output/'results.json').read_text())['rows']
+            self.assertEqual(len(rows),13)
+            self.assertTrue(all(r['count']==1024 for r in rows if r['kind']=='source'))
+            self.assertEqual(next(r for r in rows if r['subset']=='accepted')['count'],0)
+            self.assertTrue((args.output/'metrics.csv').is_file())
+            with self.assertRaises(FileExistsError):score(args)
+
+
 class AnalyticGaussians:
     get_points_depth_in_depth_map = production_depth_sampler()
 
