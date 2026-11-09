@@ -404,3 +404,37 @@ Trace analysis results so far: frozen formal4model evaluator exit0/107.56s, old3
 
 
 Process-trace analysis complete: all formal/control/input/protocol checks exact, region decomposition and actual process/target/pixel diagnostics saved. Additional three main harms matched-domain values current→spread:53.573→53.122,127.705→127.289,51.374→50.271mm; rawDA3 differs58.959/99.401/44.068. Jointunc averages.469/.201/.627, cannot inferA-only outsidefixeddoor. Independent readonly review no material findings; original adapter duplicate detail fully identical dedup noGT rerun and original source/data preserved. Three execution source snapshots/hash exact; live adapter parameters moved to adjacent JSON and future duplicate emission fixed, no GT rerun. Report/handoff/AGENTS updated; production unchanged. No new method or training authorized.
+
+
+## 2026-11-04 Dense-view route discussion and literature
+User identifies6failure issues and asks whether sparse-view donors transfer poorly, prioritizes accurate position targets and actual rendered surface effect. Discussion/source review only, no method edits/experiments. Verify sparse premise; distinguish dataset total view count from local identifiable evidence and existingDA3 redundancy. Academic MCP unavailable; OpenAlex fallback429, use primary arXiv/CVF/publisher/official source. Candidate new refs GVGS2026, CoMVS-GS2026, MonoMVSNet2025/SPE-MVS2026; read actual available source before recommending implementation.
+
+- [x] Dense-route discussion: verified DP-GS sparse settings and actual selector two-source interface; read 11 non-README pinned donor files (GVGS4/MonoMVSNet7), full CoMVS mechanism/ablation. No method changes/GT queries/training. Evidence report saved; independent narrow review requested.
+
+Dense-route independent read-only review complete: no material issues; statistical boundaries, selector/DA3 interfaces, MonoMVSNet/GVGS source and all11SHA verified. CoMVS external paper evidence remains primary-agent review, not independently refetched. Production unchanged; discussion only.
+
+## 2026-11-04 Expanded literature request
+User explicitly requests broader ideas beyond CoMVS/MonoMVSNet. Research/source downloads only. Search calibrated MVS/reflection/weak texture; joint normal-depth/planar structure/BA; surface execution/opacity; model-independent geometric priors. Deduplicate old24-paper review. Read actual official implementation for priority modules and pinSHA. No training/loss/method edits or GT queries. Academic MCP unavailable; prior OpenAlex429 so use primary CVF/arXiv/official sources.
+
+- [x] Retain user priority: candidate location, better geometry, actual surface; include rendering only where geometrically connected.
+- [x] Build31-entry deduplicated catalog with explicit reading tiers;44 new source files+3 reused pinned PAGaS files,33 files key implementation excerpts read. Fifteen source repositories including renderer submodule; placeholder SPE tree not counted as implementation.
+- [x] Draft expanded survey tying calibrated image correspondences / pretrained MVS / shared surface execution / CoMe component separation to existing interfaces. No production changes, inference, GT query, weights or training.
+- [x] Narrow independent read-only evidence review: no material issues; qualified AmbiSuR appearance/SSIM enable+raw-loss<0.5 condition and CoMe Python/paper scope, not fused CUDA audit. Four ablation groups/source derivation verified;47 source/12 paper hashes exact. Research report, catalog and review receipt archived. No production changes or experiment execution.
+
+
+## 2026-11-06 Position admission and DA3 supervision follow-up
+User critique identifies missing position correction vs extra ALR rule and new-target vs DA3 loss relation; does not accept propagation as established root cause. Authorized discussion/literature/source research while away only.
+- [x] Recheck actual ALR/depth/candidate interfaces and known6findings.
+- [x] Research concrete correspondence ambiguity, geometric support, depth-prior replacement/completion, normal and depth separation; read available official implementations.
+- [x] Compare2–3 coherent minimal routes with explicit loss, masks, A/ALR relation and fallback; donor mechanisms vs our hypotheses separately identified.
+- [x] Narrow evidence review and artifact verification, no production method/training change.
+
+
+## 2026-11-09 Admission benefit and spread anchors Q&A
+- [x] Read actual spread builder/propagation and train prior-normal producer.
+- [x] Check official pinned MVSAnywhere demo/hub inference, not README alone.
+- [x] Define offline target-gain/enrichment/coverage vs real training-benefit distinction; discussion only, no implementation/inference/GT evaluation.
+
+
+## 2026-11-09 User-approved source/admission check
+Current phase: implement minimal reusable offlineaudit and prepare AutoDL forward-only commands. Fixednative7K checkpoint and rawphotos/DA3 local present; only onefullnative7K reference cached, not17. User confirms server running. Dbranchcodex/depth-source-audit preservesprioruncommittedresearch. Plan docs/superpowers/plans/2026-11-09-depth-source-audit.md. NoGT/evaluation/newtraining yet.

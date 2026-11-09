@@ -1,5 +1,7 @@
 # AmbiSuR 二周目项目规则
 
+> **2026-11-09用户批准离线位置来源／准入检查：** 比较同原生7K的当前渲染深度、原DA3、spread与MVSAnywhere；GT只评价，不生成训练mask或调门槛。复用原capture／GTQueries／统计入口，补存17视角完整深度；MVS在独立环境推理。固定法线、同支持集平均NCC仅作离线准入对照探针，不等同已实现真实对应准入，不构成新训练mask授权。D隔离分支`codex/depth-source-audit`；既有训练、renderer、loss/LR/预算及baseline不改。用户已确认AutoDL开机，允许准备只读前向命令，服务器仍由用户执行，不自动启动训练。计划`docs/superpowers/plans/2026-11-09-depth-source-audit.md`。
+
 > 2026-11-04过程数据最新结论：cd647552训练/提取/下载及96参考、24探针、79动作验证完成；原正式评价新CD40.562933，仅比C0好0.3324%，仍比early差2.0593%。本次未重现旧严重前鼓/后期A覆盖下降，不能利用本次轨迹宣布旧根因或采集算法收益；门A-only权重.954、位置误差仍约4cm。大面积墙/天花板传播目标仅较当前改善约.4–1.1mm。报告`docs/research/2026-11-04-process-trace-results-and-mechanisms.md`，独立只读复核通过；当前最好仍early，本轮只有分析，不授权新loss/LR/预算/训练或Utility泛化。
 
 > 2026-11-04用户最新批准：从现有原生7K checkpoint直接到30K补过程记录，同时追踪后期纠正失败。D分支`codex/selector-process-trace`，只允许独立采集启动器/共享record抽取/统一测试与文档；6172bc45方法、原参数、原train/renderer/执行器不改，无新loss/LR/门槛/GT训练。96实际参考事件+24只读A-only固定探针，联合E与实际move分别记录。63项55通过8native缺失跳过，独立审查无实质问题；未验证GPU，服务器由用户启动，不增加smoke/新baseline前置。规格`docs/superpowers/specs/2026-11-04-candidate-process-trace-design.md`；固定提交及命令见`docs/research/selector-process-trace-native7k-launch.md`。

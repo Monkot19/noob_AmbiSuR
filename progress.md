@@ -372,3 +372,36 @@ Trace analysis results so far: frozen formal4model evaluator exit0/107.56s, old3
 
 
 Process-trace analysis complete: all formal/control/input/protocol checks exact, region decomposition and actual process/target/pixel diagnostics saved. Additional three main harms matched-domain values current→spread:53.573→53.122,127.705→127.289,51.374→50.271mm; rawDA3 differs58.959/99.401/44.068. Jointunc averages.469/.201/.627, cannot inferA-only outsidefixeddoor. Independent readonly review no material findings; original adapter duplicate detail fully identical dedup noGT rerun and original source/data preserved. Three execution source snapshots/hash exact; live adapter parameters moved to adjacent JSON and future duplicate emission fixed, no GT rerun. Report/handoff/AGENTS updated; production unchanged. No new method or training authorized.
+
+
+## 2026-11-04 Dense-view route discussion and literature
+User identifies6failure issues and asks whether sparse-view donors transfer poorly, prioritizes accurate position targets and actual rendered surface effect. Discussion/source review only, no method edits/experiments. Verify sparse premise; distinguish dataset total view count from local identifiable evidence and existingDA3 redundancy. Academic MCP unavailable; OpenAlex fallback429, use primary arXiv/CVF/publisher/official source. Candidate new refs GVGS2026, CoMVS-GS2026, MonoMVSNet2025/SPE-MVS2026; read actual available source before recommending implementation.
+
+Dense-route research snapshot complete: 11 donor source files pinned/hash verified; report docs/research/2026-11-04-position-target-and-surface-route-discussion.md. No runtime/model/dataset edits, weights or predictions; no production changes, GT queries, baseline retrain, budget/LR/loss edits or training. OpenAlex429/GitHubAPI403/CVFHTML403 fallbacks disclosed. Independent evidence review pending; no commit/push in this discussion.
+
+Dense-route independent read-only review complete: no material issues; statistical boundaries, selector/DA3 interfaces, MonoMVSNet/GVGS source and all11SHA verified. CoMVS external paper evidence remains primary-agent review, not independently refetched. Production unchanged; discussion only.
+
+## 2026-11-04 Expanded literature request
+User explicitly requests broader ideas beyond CoMVS/MonoMVSNet. Research/source downloads only. Search calibrated MVS/reflection/weak texture; joint normal-depth/planar structure/BA; surface execution/opacity; model-independent geometric priors. Deduplicate old24-paper review. Read actual official implementation for priority modules and pinSHA. No training/loss/method edits or GT queries. Academic MCP unavailable; prior OpenAlex429 so use primary CVF/arXiv/official sources.
+
+## 2026-11-04 Expanded survey (discussion only)
+
+User requested broader ideas and permitted geometrically relevant rendering enhancement while away. Organized31 unique entries with reading tiers and pinned actual implementation excerpts; did not treat abstract screening as full reading. Added docs/research/2026-11-04-expanded-candidate-ideas-and-code-survey.md and external catalog/source-read/source-hash artifacts.47 source identities checked,0 mismatch. Narrow read-only independent evidence review complete: no material issues, appearance enable/rawSSIM<.5 caveat corrected, four ablation groups/local renderer derivation/47source/12paper identities verified. No method/loss/LR/budget/camera/renderer changes, GT queries, inference or server activity; current HEAD87ec3c2 unchanged and no commit/push.
+
+
+## 2026-11-06 Deeper supervision/admission research started
+User away, explicitly requests source-grounded deeper proposals rather than implementation. Acknowledge prior over-prioritization of shared-plane expansion and omissions on DA3 conflicts and positional/ALR independence. Research artifacts candidate_supervision_research_20261106_v1. Academic MCP still not exposed; use primary papers and official sources. Preserve prior uncommitted docs/ledgers, HEAD87ec3c2.
+
+
+2026-11-06 targeted source research/draft complete:15catalog entries,25source files/10repos (15keyexcerpt),12paper caches identityverified0mismatch. Current selector/depth/ALR interfaces re-read. Report explicitly handles independent position vs extraALR, three depth explanations, single absolute teacher replacement with stable lifetime, actualrenderedsurface correspondence alternatives, and optional anchoredstructureintegration. Sharedplane/propagation replacement not asserted rootcause. Researchdocs only; no inference, GT queries, training, method/code changes, commits/push. Narrow readonly independent review running; final archive verification pending.
+
+2026-11-06 independent read-only evidence review complete: no Critical/Important issues. Minor frozen7K/current E_N notation fixed to Z_t/X_t/n_t, independently checked source/paper25/12 identities exact. Final research report copied to external archive, source status and fit-view reuse/near-grazing/ALR compatibility caveats retained. No production code changes, GT/inference/training, commit/push.
+
+
+2026-11-09 clarified two user questions via readonly actualcode and primary MVSAnywhere source; no code/inference/GT/training changes. Existing spread anchors from model not DA3; proposed matchedpixel gain, accepted-vscontrols and coverage-weighted hybridtarget metric distinguish selection utility from final surface execution. Officialinference c2w/K/depth interface verified, fullenvironment/GPU/candidateaccuracy not claimed. One PowerShell rg wildcard syntax readerror corrected with directory/-g; no data mutation.
+
+
+## 2026-11-09 User-approved source/admission check
+Current phase: implement minimal reusable offlineaudit and prepare AutoDL forward-only commands. Fixednative7K checkpoint and rawphotos/DA3 local present; only onefullnative7K reference cached, not17. User confirms server running. Dbranchcodex/depth-source-audit preservesprioruncommittedresearch. Plan docs/superpowers/plans/2026-11-09-depth-source-audit.md. NoGT/evaluation/newtraining yet.
+
+2026-11-09 auditcode checks complete locally:71sharedtests/63pass/8nativeSkip, 8newaudit pass, donorhubimporttrue (no weights/forward), Python3.10AST and2Bashblocks pass. Independentreview P2K-resampling resolved; finalno materialissues. Artifact analysis/candidate_depth_source_check_20261109_v1 includes scope/testlog/review. Sourceaccuracy and admission results awaituserAutoDL capture+inference; no realGTquery, training ormeshwork. Nativecodepaths train/arguments/scene/utils/renderer/submodules exact87ec3c2. Preparing fixedcommit/push and forward-onlycommands, no automaticserverrun.
