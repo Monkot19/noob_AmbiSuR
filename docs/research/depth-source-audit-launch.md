@@ -107,7 +107,7 @@ set -euo pipefail
 trap 'rc=$?; printf "启动停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
 cd /root/autodl-tmp/noob_AmbiSuR
 test -z "$(git status --porcelain)"
-fixed=CLI_FIX_COMMIT
+fixed=fc75cf58f4830e88fb40149ddd8c569f66538a33
 if ! git cat-file -e "$fixed^{commit}" 2>/dev/null; then
   if [ -f /etc/network_turbo ]; then source /etc/network_turbo; fi
   git fetch origin codex/depth-source-audit

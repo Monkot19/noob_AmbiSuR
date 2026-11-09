@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> 2026-11-09服务器接口失败已修复：原capture／dependencies／freeze成功，MVS初始化因供体解析宿主CLI退出2；固定修复`fc75cf58f4830e88fb40149ddd8c569f66538a33`使用官方ignore_cl_args=True，科学配置／权重／forward不变。真实供体回归修复前复现退出2、修复后通过；统一72项64通过8native跳过，独立复核无实质问题。原失败记录保留，仅恢复infer至同根mvs_cli_fix_v2，新退出码inference_cli_fix_v2.exitcode；不重复capture或安装／训练／GT，实际GPU前向尚待用户执行。恢复命令见docs/research/depth-source-audit-launch.md。
+
 > 2026-11-09发布回执：离线采集／推理实现固定`cae81969d5eee7f97e5a4fd9d8151b300742fbb4`，分支`codex/depth-source-audit`，操作见`docs/research/depth-source-audit-launch.md`。统一71项63通过／8native跳过（5.791s），独立复核无剩余实质问题；官方MVS模块仅导入验证，尚无权重加载／真实前向／GT质量结果。train／arguments／scene／utils／renderer／submodules保持87ec3c2，baseline／数据只读；服务器由用户执行17视角只读采集＋独立环境MVS推理，非30K训练。
 
 > **2026-11-09新批准批次：** 用户批准同原生7K的current/DA3/spread/MVSAnywhere位置来源与准入效用离线检查，并确认AutoDL可用。D隔离分支`codex/depth-source-audit`，复用原capture/GTQueries，补存17视角完整深度；MVS独立环境推理，GT本地评分。固定法线共支持平均NCC仅为对照探针，不是真实对应准入或新训练mask。现有训练/模型/renderer/loss/LR均不改，不自动训练或启动服务器。实施计划`../superpowers/plans/2026-11-09-depth-source-audit.md`，命令及固定提交见[离线检查指南](depth-source-audit-launch.md)。新来源质量尚未验证，不能把接口测试通过说成收益成立。

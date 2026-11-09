@@ -444,3 +444,6 @@ Current phase: implement minimal reusable offlineaudit and prepare AutoDL forwar
 
 
 2026-11-09用户返回服务器空间：系统盘余8.3G、数据盘余30G，无需清理／扩容。仅更新启动指南：10GiB保守空间预留检查、TMPDIR数据盘化；Python实现仍cae81969，训练／数据／baseline未动。准备用户执行前向采集与MVS推理，尚无实际服务器结果。
+
+
+2026-11-09服务器接口失败已修复：原capture／dependencies／freeze成功，MVS初始化因供体解析宿主CLI退出2；固定修复`fc75cf58f4830e88fb40149ddd8c569f66538a33`使用官方ignore_cl_args=True，科学配置／权重／forward不变。真实供体回归修复前复现退出2、修复后通过；统一72项64通过8native跳过，独立复核无实质问题。原失败记录保留，仅恢复infer至同根mvs_cli_fix_v2，新退出码inference_cli_fix_v2.exitcode；不重复capture或安装／训练／GT，实际GPU前向尚待用户执行。恢复命令见docs/research/depth-source-audit-launch.md。
