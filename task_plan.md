@@ -438,3 +438,6 @@ User critique identifies missing position correction vs extra ALR rule and new-t
 
 ## 2026-11-09 User-approved source/admission check
 Current phase: implement minimal reusable offlineaudit and prepare AutoDL forward-only commands. Fixednative7K checkpoint and rawphotos/DA3 local present; only onefullnative7K reference cached, not17. User confirms server running. Dbranchcodex/depth-source-audit preservesprioruncommittedresearch. Plan docs/superpowers/plans/2026-11-09-depth-source-audit.md. NoGT/evaluation/newtraining yet.
+
+
+2026-11-09发布回执：离线采集／推理实现固定`cae81969d5eee7f97e5a4fd9d8151b300742fbb4`，分支`codex/depth-source-audit`，操作见`docs/research/depth-source-audit-launch.md`。统一71项63通过／8native跳过（5.791s），独立复核无剩余实质问题；官方MVS模块仅导入验证，尚无权重加载／真实前向／GT质量结果。train／arguments／scene／utils／renderer／submodules保持87ec3c2，baseline／数据只读；服务器由用户执行17视角只读采集＋独立环境MVS推理，非30K训练。

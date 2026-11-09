@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> 2026-11-09发布回执：离线采集／推理实现固定`cae81969d5eee7f97e5a4fd9d8151b300742fbb4`，分支`codex/depth-source-audit`，操作见`docs/research/depth-source-audit-launch.md`。统一71项63通过／8native跳过（5.791s），独立复核无剩余实质问题；官方MVS模块仅导入验证，尚无权重加载／真实前向／GT质量结果。train／arguments／scene／utils／renderer／submodules保持87ec3c2，baseline／数据只读；服务器由用户执行17视角只读采集＋独立环境MVS推理，非30K训练。
+
 > **2026-11-09新批准批次：** 用户批准同原生7K的current/DA3/spread/MVSAnywhere位置来源与准入效用离线检查，并确认AutoDL可用。D隔离分支`codex/depth-source-audit`，复用原capture/GTQueries，补存17视角完整深度；MVS独立环境推理，GT本地评分。固定法线共支持平均NCC仅为对照探针，不是真实对应准入或新训练mask。现有训练/模型/renderer/loss/LR均不改，不自动训练或启动服务器。实施计划`../superpowers/plans/2026-11-09-depth-source-audit.md`，命令及固定提交见[离线检查指南](depth-source-audit-launch.md)。新来源质量尚未验证，不能把接口测试通过说成收益成立。
 
 > **2026-11-04实际过程output已分析：** 真实下载位于`selector_v3_spread_process_trace/selector_process_trace_2026_11_4/cd647552_seed0_b16384_until15000_30k_v1`。96/24/408 NPZ/79事件全部验证，415426检查/317598移动，目标执行坐标一致，优化/相机支持与旧position完全一致。原正式评价一次4模型退出0/107.56s，旧3对照/输入/GT样本协议精确；新CD40.562933/F1@5 .785307，对C0仅改善0.3324%、对early差2.0593%。本次24固定探针未重现旧严重前鼓或后期A覆盖消失；门abs z误差7001 21.79→8000 48.77→30K40.33mm，同时法线变好，30K A-only权重.954。不能以本次轨迹认定旧实验首次根因，不能归因采集带来算法收益。真实移动投影门2509条仅42.29%最近GT距离变好；63.85%同中心表面变动<1mm。三坏区墙69/天花板66/墙71贡献相对early退化+.39854/+.36709/+.12181mm，实际传播有效域目标相对当前仅改善.452/.415/1.103mm。原区域core两入口/过程查询全成功，无GT失败重跑。detail薄adapter重复原记录保留，严格相同去重纠正后无GT重跑。独立只读复核无实质问题。详见[过程报告](2026-11-04-process-trace-results-and-mechanisms.md)，产物`analysis/selector_process_trace_20261104_v1`；不自动加预算/LR/loss/训练，early仍最好。

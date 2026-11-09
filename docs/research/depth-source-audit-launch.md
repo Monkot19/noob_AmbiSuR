@@ -2,7 +2,7 @@
 
 2026-11-09用户已批准。D分支`codex/depth-source-audit`。本批没有训练、优化器step、重定位、baseline重训或renderer改动。服务器只生成17视角的同7K全图深度和MVS深度，GT仅在随后本地评分使用。
 
-固定执行提交：`AUDIT_FIXED_COMMIT`。配置`experiments/depth_sources/toolroom_native7k_v1.json`。
+固定执行提交：`cae81969d5eee7f97e5a4fd9d8151b300742fbb4`。配置`experiments/depth_sources/toolroom_native7k_v1.json`。
 
 ## 本批实际检查范围
 
@@ -23,7 +23,7 @@ set -euo pipefail
 trap 'rc=$?; printf "启动停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
 cd /root/autodl-tmp/noob_AmbiSuR
 test -z "$(git status --porcelain)"
-fixed=AUDIT_FIXED_COMMIT
+fixed=cae81969d5eee7f97e5a4fd9d8151b300742fbb4
 if ! git cat-file -e "$fixed^{commit}" 2>/dev/null; then
   if [ -f /etc/network_turbo ]; then source /etc/network_turbo; fi
   git fetch origin codex/depth-source-audit

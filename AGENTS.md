@@ -1,5 +1,7 @@
 # AmbiSuR 二周目项目规则
 
+> 2026-11-09发布回执：离线采集／推理实现固定`cae81969d5eee7f97e5a4fd9d8151b300742fbb4`，分支`codex/depth-source-audit`，操作见`docs/research/depth-source-audit-launch.md`。统一71项63通过／8native跳过（5.791s），独立复核无剩余实质问题；官方MVS模块仅导入验证，尚无权重加载／真实前向／GT质量结果。train／arguments／scene／utils／renderer／submodules保持87ec3c2，baseline／数据只读；服务器由用户执行17视角只读采集＋独立环境MVS推理，非30K训练。
+
 > **2026-11-09用户批准离线位置来源／准入检查：** 比较同原生7K的当前渲染深度、原DA3、spread与MVSAnywhere；GT只评价，不生成训练mask或调门槛。复用原capture／GTQueries／统计入口，补存17视角完整深度；MVS在独立环境推理。固定法线、同支持集平均NCC仅作离线准入对照探针，不等同已实现真实对应准入，不构成新训练mask授权。D隔离分支`codex/depth-source-audit`；既有训练、renderer、loss/LR/预算及baseline不改。用户已确认AutoDL开机，允许准备只读前向命令，服务器仍由用户执行，不自动启动训练。计划`docs/superpowers/plans/2026-11-09-depth-source-audit.md`。
 
 > 2026-11-04过程数据最新结论：cd647552训练/提取/下载及96参考、24探针、79动作验证完成；原正式评价新CD40.562933，仅比C0好0.3324%，仍比early差2.0593%。本次未重现旧严重前鼓/后期A覆盖下降，不能利用本次轨迹宣布旧根因或采集算法收益；门A-only权重.954、位置误差仍约4cm。大面积墙/天花板传播目标仅较当前改善约.4–1.1mm。报告`docs/research/2026-11-04-process-trace-results-and-mechanisms.md`，独立只读复核通过；当前最好仍early，本轮只有分析，不授权新loss/LR/预算/训练或Utility泛化。
