@@ -94,6 +94,119 @@ def production_depth_sampler():
     return production_model_method("get_points_depth_in_depth_map")
 
 
+class ObservedCorrespondenceTests(unittest.TestCase):
+    def test_actual_donor_grid_and_confidence_producer(self):
+        import os
+        from utils.observed_correspondence import host_to_normalized, query_matches
+        source = os.environ.get('AMBISUR_ROMAV2_SOURCE')
+        if not source:
+            self.skipTest('set AMBISUR_ROMAV2_SOURCE for pinned donor functions')
+        path=Path(os.environ.get('AMBISUR_ROMAV2_GEOMETRY',str(Path(source)/'src/romav2/geometry.py')))
+        tree=ast.parse(path.read_text(encoding='utf-8'))
+        names={'get_normalized_grid','to_normalized','to_pixel','prec_mat_from_prec_params'}
+        scope={'torch':torch,'np':np,'device':torch.device('cpu')}
+        exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef)
+            and n.name in names],type_ignores=[]),str(path),'exec'),scope)
+        model=Path(source)/'src/romav2/romav2.py'
+        fn=next(n for n in ast.parse(model.read_text(encoding='utf-8')).body
+            if isinstance(n,ast.FunctionDef) and n.name=='_map_confidence')
+        exec(compile(ast.Module(body=[fn],type_ignores=[]),str(model),'exec'),scope)
+        h,w=12,20
+        grid=scope['get_normalized_grid'](1,h,w)
+        overlap,precision=scope['_map_confidence'](confidence=torch.zeros(1,h,w,4),threshold=None)
+        raw={f'{key}_{direction}':value for direction in ('AB','BA')
+             for key,value in [('warp',grid),('overlap',overlap),('precision',precision)]}
+        xy=np.array([[5.,4.],[10.,8.]])
+        np.testing.assert_allclose(host_to_normalized(xy,(h,w)),
+            scope['to_normalized'](torch.tensor(xy+.5),H=h,W=w).numpy())
+        result=query_matches(raw,xy,(h,w),(h,w))
+        np.testing.assert_allclose(result['source_xy'],xy,atol=1e-5)
+        self.assertTrue(result['forward_valid'].all());self.assertTrue(result['cycle_valid'].all())
+        np.testing.assert_allclose(result['cycle_px'],0,atol=1e-5)
+        self.assertEqual(result['precision_forward'].shape,(2,2,2))
+
+    def test_reverse_padding_is_invalid_not_zero_cycle(self):
+        from utils.observed_correspondence import query_matches
+        y,x=torch.meshgrid(torch.arange(4),torch.arange(4),indexing='ij')
+        grid=torch.stack((2*(x+.5)/4-1,2*(y+.5)/4-1),-1)[None]
+        # Source host pixel 0 is in image, but outside the centers of a 4px warp
+        # representing an 8px host. Reverse interpolation would require padding.
+        warp=grid.clone();warp[:]=torch.tensor([-.875,0.])
+        raw={f'{k}_{d}':v for d in ('AB','BA') for k,v in
+            [('warp',warp if d=='AB' else grid),('overlap',torch.ones(1,4,4,1)),
+             ('precision',torch.eye(2).expand(1,4,4,2,2))]}
+        r=query_matches(raw,np.array([[3.,3.]]),(8,8),(8,8))
+        self.assertTrue(r['forward_valid'][0]);self.assertFalse(r['cycle_valid'][0])
+        self.assertTrue(np.isnan(r['cycle_px'][0]))
+
+    def test_normalized_triangulation_and_native_pixel_sensitivity(self):
+        from utils.observed_correspondence import triangulate_evidence, project_depth
+        k=np.array([[100.,0,50.],[0,100.,40.],[0,0,1.]])
+        tr=np.eye(4);a=tr.copy();a[3,0]=-.3;b=tr.copy();b[3,0]=.4
+        xy=np.array([[50.,40.],[60.,45.]])
+        z=np.array([2.,3.])
+        qs=np.stack([project_depth(xy,z,k,tr,k,s,(80,100),.01,.01)[0] for s in (a,b)],1)
+        r=triangulate_evidence(xy,qs,np.ones((2,2),bool),k,tr,[k,k],[a,b],
+            [(80,100)]*2,.01,[.01,.01])
+        np.testing.assert_allclose(r['depth'],np.broadcast_to(z[:,None],(2,3)),atol=1e-9)
+        self.assertTrue(r['valid'].all());self.assertTrue(r['sensitivity_all_valid'].all())
+        self.assertTrue((r['sensitivity_max_z_m']>0).all())
+        pe=r['point_reprojection_px'];re=r['ray_reprojection_px']
+        np.testing.assert_allclose(pe[np.isfinite(pe)],0,atol=1e-9)
+        np.testing.assert_allclose(re[np.isfinite(re)],0,atol=1e-9)
+        self.assertTrue(np.isnan(pe[:,0,2]).all())  # unused camera stays absent
+        bad=triangulate_evidence(xy,np.stack((xy,xy),1),np.ones((2,2),bool),k,tr,[k,k],[tr,tr],
+            [(80,100)]*2,.01,[.01,.01])
+        self.assertFalse(bad['valid'].any())
+
+    def test_common_support_and_no_candidate_dependent_support_selection(self):
+        from utils.observed_correspondence import compare_candidates
+        costs=np.array([[[1,4],[2,3],[.5,2],[0,0]],
+                        [[1,8],[2,4],[.5,9],[0,0]]],float)
+        valid=np.ones_like(costs,bool);valid[0,3]=False;valid[1,2,0]=False
+        out=compare_candidates(costs,valid)
+        np.testing.assert_array_equal(out['common3_support_count'],[2,1])
+        np.testing.assert_array_equal(out['common4_support_count'],[0,1])
+        np.testing.assert_array_equal(out['mvs_selected'],[True,False])
+        self.assertTrue(np.isnan(out['common4_means'][0]).all())
+
+    def test_evidence_serializer_then_cached_gt_score_and_non_overwrite(self):
+        from scripts.evaluate_depth_sources import (make_depth_map_record,save_npz,write_json,
+            build_correspondence_record,correspondence_score,file_sha)
+        from utils.observed_correspondence import project_depth
+        cam=AnalyticCamera();srcs=[AnalyticCamera(translation=.1),AnalyticCamera(translation=-.1)]
+        d=torch.full((32,32),2.);n=torch.zeros((3,32,32));n[2]=-1
+        data=make_depth_map_record(cam,dict(plane_depth=d[None],rendered_normal=n),
+            d,n,d,torch.ones_like(d,dtype=torch.bool),srcs,[d[None],d[None]])
+        ids=np.array([15*32+15,16*32+16],np.int64);xy=np.c_[ids%32,ids//32]
+        matches=[]
+        for i in range(2):
+            q,valid=project_depth(xy,np.full(2,2.),data['camera_k'],data['camera_transform'],
+                data[f'support{i}_k'],data[f'support{i}_transform'],(32,32),.01,.01)
+            matches.append(dict(source_xy=q,forward_valid=valid,cycle_px=np.zeros(2),
+                cycle_valid=valid,overlap_forward=np.ones((2,1))))
+        probe=dict(pixel_ids=ids,accepted=np.ones(2,bool),comparable=np.ones(2,bool),mean_costs=np.zeros((2,3)))
+        record=build_correspondence_record(data,np.full((32,32),2.),probe,matches)
+        self.assertFalse(record['mvs_selected'].any()) # equal candidates never win
+        self.assertEqual(record['common3_support_count'].tolist(),[2,2])
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);out=root/'matches';out.mkdir();gt=root/'gt';gt.mkdir()
+            save_npz(out/'view.npz',record)
+            write_json(out/'correspondence_manifest.json',dict(schema_version=1,
+                config={'seed':0,'descriptive':{'cycle_max_px':1.,'overlap_min':.5}},
+                records=[dict(camera='view',camera_uid=1,file='view.npz',sha256=file_sha(out/'view.npz'))]))
+            save_npz(gt/'view_gt_grid.npz',dict(depth=np.full((32,32),2.),
+                valid=np.ones((32,32),bool),region=np.zeros((32,32),int)))
+            args=SimpleNamespace(matches=out,gt_cache=gt,output=root/'scored')
+            correspondence_score(args)
+            report=json.loads((args.output/'results.json').read_text())
+            self.assertTrue(report['rows']);self.assertEqual(report['pixel_count'],2)
+            row=next(r for r in report['rows'] if r['kind']=='triangulation' and r['subset']=='joint' and r['region']=='all')
+            self.assertEqual(row['count'],2)
+            self.assertAlmostEqual(row['gain_current_mean_mm'],0,places=3)
+            with self.assertRaises(FileExistsError):correspondence_score(args)
+
+
 class DepthSourceAuditTests(unittest.TestCase):
     def test_mvs_support_cap_preserves_real_saved_order_without_padding(self):
         from scripts.evaluate_depth_sources import select_mvs_supports
@@ -188,7 +301,7 @@ class DepthSourceAuditTests(unittest.TestCase):
         self.assertEqual(inference_camera(cam)[1][0,0],60.)
 
     def test_mvs_regrid_preserves_slanted_plane_rays_not_image_corners(self):
-        from scripts.evaluate_depth_sources import regrid_depth
+        from scripts.evaluate_depth_sources import regrid_depth,regrid_mvs
         y,x=np.mgrid[:32,:32]
         ks=np.array([[40.,0,16.],[0,40.,16.],[0,0,1]],np.float32)
         kt=ks.copy();kt[:2]*=2
@@ -197,6 +310,11 @@ class DepthSourceAuditTests(unittest.TestCase):
         yt,xt=np.mgrid[:64,:64];expected=2/(1-.2*(xt-32)/80)
         np.testing.assert_allclose(mapped[::2,::2],expected[::2,::2],atol=1e-6)
         self.assertTrue(np.isnan(mapped[:,-1]).all())
+        masked=z.copy();masked[4,5]=np.nan
+        prediction=dict(depth=z,depth_masked=masked,camera_k=ks)
+        shared=regrid_mvs(prediction,ks,(32,32))
+        self.assertTrue(np.isnan(shared[4,5]))
+        self.assertAlmostEqual(float(shared[8,9]),float(z[8,9]))
 
     def test_ncc_probe_uses_real_sampler_and_equal_target_cannot_win(self):
         from scripts.evaluate_depth_sources import make_depth_map_record,ncc_probe

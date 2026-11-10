@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "seed": 0,
+  "pixels_per_reference": 16384,
+  "native_shape": [
+    584,
+    876
+  ],
+  "rgb_size": [
+    1752,
+    1168
+  ],
+  "model": {
+    "repository": "https://github.com/Parskatt/RoMaV2.git",
+    "commit": "95c9968145c8906b7b59383258e9f73b02853d89",
+    "setting": "precise",
+    "compile": false,
+    "weights_url": "https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt",
+    "weights_bytes": 1095883548,
+    "weights_sha256": "1557dec0d21b62366465f7ff4d5fdf228cc695d0582e196ad2b80e05230828b7"
+  },
+  "descriptive": {
+    "cycle_max_px": 1.0,
+    "overlap_min": 0.5
+  },
+  "conventions": {
+    "pixel_centers": "host integers, donor +0.5",
+    "align_corners": false,
+    "triangulation": "COLMAP 3.11.1 normalized linear; reference-camera frame",
+    "sensitivity": "each source u/v +/-1 native pixel, one component at a time; all perturbations must be valid"
+  },
+  "views": [
+    {
+      "reference": "DSC06348",
+      "supports": [
+        "DSC06347",
+        "DSC06349"
+      ],
+      "probe_sha256": "7cbd36ac3921886603d73ed19330de1ca1a276b88c040b35efb50dcae8e6c583"
+    },
+    {
+      "reference": "DSC06669",
+      "supports": [
+        "DSC06559",
+        "DSC06560"
+      ],
+      "probe_sha256": "48f4b22d5965bdd83d17859822eebe01a4e74c457d4611e2daa1032129e819be"
+    },
+    {
+      "reference": "DSC06274",
+      "supports": [
+        "DSC06275",
+        "DSC06276"
+      ],
+      "probe_sha256": "b031e8295c428ababc8fd381f989e8305a05d232620599997317b7bb50b8d01a"
+    },
+    {
+      "reference": "DSC06289",
+      "supports": [
+        "DSC06288",
+        "DSC06290"
+      ],
+      "probe_sha256": "80ed53da37cd34b6b0c50b7325c81e98273edf4b181b20a1de7361b31a04ad10"
+    }
+  ]
+}

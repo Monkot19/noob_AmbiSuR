@@ -474,3 +474,9 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 
 
 2026-11-10离线17视角评价完成：真实下载路径depth_source_check_17views_after_v3_position_check_from_NVSAnywhere/20261109_v1，实际状态为原生C0的7K。固定clean a4155ac原score一次40.97秒退出0，5369行／3237汇总，GT无失败重跑。四者共同域3059926条／36.62%可见记录，MAE当前59.296／DA3 71.781／spread55.371／MVS66.722mm，不能把条件域排名扩展到全场景。NCC接受GT后59412条，平均g0+2.312／gP+15.776mm，但改善DA3比例63.72%低于GT前等预算随机64.18%，伤害>5mm率33.26%高于随机31.78%；全图仅实际抽样替换目标收益0.11216mm／覆盖0.71095%，不是训练收益。墙71局部MVS强，天花板原DA3更准且准入危险。两个NCC视角全部重用于MVS输入。独立只读终审无实质问题，CSV/JSON逐字段与区域计数校验通过。报告docs/research/2026-11-10-depth-source-and-admission-results.md，产物analysis/depth_source_comparison_20261110_v1；没有新增方法／训练／loss／预算／GT标签，不直接授权30K。
+# 2026-11-10 approved observed correspondence batch
+
+- [x] Preserve prior analysis/spec as 30b7dad, create D branch codex/observed-correspondence-audit.
+- [x] RED meaningful unified regressions; implement offline helper/CLI/config.
+- [x] GREEN unified tests, actual input preflight, independent narrow review.
+- [ ] Fixed-commit AutoDL launch and probe/bundle handoff; no automatic server/model run.

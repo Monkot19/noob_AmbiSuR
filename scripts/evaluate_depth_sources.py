@@ -133,6 +133,14 @@ def regrid_depth(depth,source_k,target_k,target_shape,valid):
     return np.where(usable.numpy(),sampled.numpy(),np.nan)
 
 
+def regrid_mvs(prediction, target_k, target_shape):
+    """Original MVS score validity, shared by the correspondence adapter."""
+    depth=prediction['depth'];masked=prediction.get('depth_masked',depth)
+    if depth.ndim!=2 or masked.shape!=depth.shape:raise ValueError('invalid MVS producer shape')
+    valid=np.isfinite(depth)&(depth>0)&np.isfinite(masked)&(masked>0)
+    return regrid_depth(depth,prediction['camera_k'],target_k,target_shape,valid)
+
+
 def common_mean_admission(z,p,q,vz,vp,vq,max_cost=.5):
     costs=np.stack((z,p,q),-1)
     common=vz&vp&vq&np.isfinite(costs).all(-1)
@@ -357,11 +365,7 @@ def score(args):
             raise ValueError('native7K complete depth-map capture required')
         data=read_npz(args.capture/meta['depth_file']);validate_depth_map(data)
         predicted=read_npz(args.mvs/predictions[meta['camera']]['file'])
-        pred=predicted['depth']
-        masked=predicted.get('depth_masked',pred)
-        source_valid=np.isfinite(pred)&(pred>0)&np.isfinite(masked)&(masked>0)
-        if pred.ndim!=2 or masked.shape!=pred.shape:raise ValueError('invalid MVS producer shape')
-        q=regrid_depth(pred,predicted['camera_k'],data['camera_k'],data['current_depth'].shape,source_valid)
+        q=regrid_mvs(predicted,data['camera_k'],data['current_depth'].shape)
         probe=ncc_probe(data,q,config['ncc_probe'],meta['camera_uid'])
         prepared.append((meta,data,q,probe))
     args.output.mkdir(parents=True,exist_ok=False)
@@ -493,6 +497,203 @@ def server(args):
         (args.output/'audit.exitcode').write_text(str(rc)+'\n')
 
 
+def build_correspondence_record(data, mvs_depth, probe, matches, seed=0, camera_uid=0):
+    """Freeze non-GT evidence at the original pixel IDs, without new sampling."""
+    from utils.observed_correspondence import project_depth,compare_candidates,triangulate_evidence
+    validate_depth_map(data)
+    ids=probe['pixel_ids'];h,w=data['current_depth'].shape
+    if ids.dtype!=np.int64 or len(np.unique(ids))!=len(ids) or np.any((ids<0)|(ids>=h*w)):
+        raise ValueError('invalid frozen pixel IDs')
+    if len(matches)!=2 or mvs_depth.shape!=(h,w):raise ValueError('two supports and native MVS grid required')
+    xy=np.c_[ids%w,ids//w].astype(float)
+    targets=np.stack([data['current_depth'].ravel()[ids],data['da3_depth'].ravel()[ids],
+        mvs_depth.ravel()[ids],np.where(data['spread_valid'],data['spread_depth'],np.nan).ravel()[ids]],1)
+    costs=[];valid=[];ks=[];trs=[];shapes=[];nears=[]
+    for i,match in enumerate(matches):
+        k=data[f'support{i}_k'];tr=data[f'support{i}_transform'];shape=data[f'support{i}_depth'].shape
+        near=float(data[f'support{i}_znear']);ks.append(k);trs.append(tr);shapes.append(shape);nears.append(near)
+        c=[];v=[]
+        for depth in targets.T:
+            q,good=project_depth(xy,depth,data['camera_k'],data['camera_transform'],k,tr,shape,float(data['znear']),near)
+            c.append(np.linalg.norm(q-match['source_xy'],axis=-1));v.append(good&match['forward_valid'])
+        costs.append(np.stack(c,1));valid.append(np.stack(v,1))
+    costs=np.stack(costs,2);valid=np.stack(valid,2)
+    record=dict(pixel_ids=ids,reference_xy=xy,candidate_depths=targets,
+        candidate_costs_px=costs,candidate_projection_valid=valid,image_size=data['image_size'],
+        camera_k=data['camera_k'],camera_transform=data['camera_transform'],
+        old_ncc_accepted=probe['accepted'],old_ncc_comparable=probe['comparable'],old_ncc_mean_costs=probe['mean_costs'])
+    record.update(compare_candidates(costs,valid))
+    for common in (3,4):
+        count=record[f'common{common}_support_count']
+        accepted=record['mvs_selected' if common==3 else 'mvs_selected_common4']
+        for support_count in (1,2):
+            eligible=count==support_count;pool=np.flatnonzero(eligible)
+            random_mask=np.zeros(len(ids),bool)
+            rng=np.random.default_rng(int(seed)+int(camera_uid))
+            budget=int((accepted&eligible).sum())
+            if budget:random_mask[rng.choice(pool,budget,replace=False)]=True
+            record[f'common{common}_{support_count}support_random']=random_mask
+    for i,match in enumerate(matches):record.update({f'support{i}_{key}':value for key,value in match.items()})
+    tri=triangulate_evidence(xy,np.stack([m['source_xy'] for m in matches],1),
+        np.stack([m['forward_valid'] for m in matches],1),data['camera_k'],data['camera_transform'],
+        ks,trs,shapes,float(data['znear']),nears)
+    record.update({'tri_'+key:value for key,value in tri.items()})
+    return record
+
+
+def correspondence_match(args):
+    """Eight actual RGB pairs; no GT argument, model sampling, or training."""
+    import time
+    import torch
+    from PIL import Image
+    from utils.observed_correspondence import query_matches
+    config=json.loads(args.config.read_text(encoding='utf-8'))
+    vendor=args.vendor.resolve(strict=True)
+    sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=vendor,text=True).strip()
+    if sha!=config['model']['commit']:raise ValueError('pinned RoMaV2 source required')
+    if subprocess.check_output(['git','status','--porcelain'],cwd=vendor,text=True).strip():
+        raise ValueError('RoMaV2 source must be clean')
+    outside_inputs(args.output,[args.source,args.capture,args.mvs,args.probes,vendor])
+    cap_path=args.capture/'capture_manifest.json';mvs_path=args.mvs/'inference_manifest.json'
+    capture=json.loads(cap_path.read_text(encoding='utf-8'));mvs=json.loads(mvs_path.read_text(encoding='utf-8'))
+    cap={r['camera']:r for r in capture['records']};pred={r['camera']:r for r in mvs['records']}
+    for snapshot in capture['snapshot_inputs'].values():
+        if any(snapshot['metadata_sha256'][n]!=mvs['metadata_sha256'][n] for n in ('cameras.json','multi_view.json')):
+            raise ValueError('MVS/capture camera identities differ')
+    prepared=[];image_receipts={}
+    for view in config['views']:
+        name=view['reference'];meta=cap[name];pm=pred[name]
+        if meta['snapshot_iteration']!=7000 or meta['supports']!=view['supports']:
+            raise ValueError('original native7K and saved supports required')
+        dp=args.capture/meta['depth_file'];mp=args.mvs/pm['file'];pp=args.probes/(name+'_probe.npz')
+        if file_sha(pp)!=view['probe_sha256']:raise ValueError('frozen original probe differs: '+name)
+        data=read_npz(dp);validate_depth_map(data);probe=read_npz(pp)
+        if len(probe['pixel_ids'])!=config['pixels_per_reference']:raise ValueError('frozen pixel count differs')
+        if list(data['current_depth'].shape)!=config['native_shape']:raise ValueError('native shape differs')
+        for im_name in [name,*view['supports']]:
+            image=args.source/'images'/(im_name+'.JPG')
+            if im_name not in image_receipts:
+                with Image.open(image) as rgb:
+                    if list(rgb.size)!=config['rgb_size']:raise ValueError('RGB header differs')
+                image_receipts[im_name]=dict(bytes=image.stat().st_size,sha256=file_sha(image))
+        raw=read_npz(mp)
+        q=regrid_mvs(raw,data['camera_k'],data['current_depth'].shape)
+        prepared.append((view,meta,data,probe,q,dict(depth_sha256=file_sha(dp),mvs_sha256=file_sha(mp),probe_sha256=file_sha(pp))))
+    args.output.mkdir(parents=True,exist_ok=False)
+    write_run_metadata(args.output,dict(command=sys.argv,config=config),collect_run_identity(ROOT))
+    write_json(args.output/'input_receipt.json',dict(capture_sha256=file_sha(cap_path),mvs_manifest_sha256=file_sha(mvs_path),
+        images=image_receipts,records=[dict(camera=x[0]['reference'],**x[-1]) for x in prepared]))
+    if not torch.cuda.is_available():raise RuntimeError('approved precise batch requires CUDA; no silent CPU fallback')
+    torch.set_float32_matmul_precision('highest')
+    cache=Path(torch.hub.get_dir())/'checkpoints'/'romav2.0.1.pt';cache.parent.mkdir(parents=True,exist_ok=True)
+    model_config=config['model']
+    print('Inputs verified: 4 references / 8 pairs / 65536 frozen pixels. Checking RoMa checkpoint.',flush=True)
+    if not cache.exists():torch.hub.download_url_to_file(model_config['weights_url'],str(cache),hash_prefix=model_config['weights_sha256'])
+    if cache.stat().st_size!=model_config['weights_bytes'] or file_sha(cache)!=model_config['weights_sha256']:
+        raise ValueError('official RoMaV2 checkpoint identity differs')
+    sys.path.insert(0,str(vendor/'src'))
+    from romav2 import RoMaV2
+    import romav2.romav2 as donor_model
+    import romav2.local_correlation as corr
+    if not Path(donor_model.__file__).resolve().is_relative_to(vendor):raise ValueError('wrong installed RoMaV2')
+    if corr.local_corr is None:raise RuntimeError('approved Linux fused-local-corr backend missing; no silent fallback')
+    print('Initializing official RoMaV2 precise; DINOv3 code may be cached/downloaded.',flush=True)
+    model=RoMaV2(RoMaV2.Cfg(setting='precise',compile=False))
+    if (model.H_lr,model.W_lr,model.H_hr,model.W_hr,model.bidirectional)!=(800,800,1280,1280,True):
+        raise ValueError('official precise settings differ')
+    print('Model initialized. Beginning actual 8-pair batch.',flush=True)
+    records=[]
+    for view,meta,data,probe,q,receipt in prepared:
+        name=view['reference'];h,w=data['current_depth'].shape;ids=probe['pixel_ids'];xy=np.c_[ids%w,ids//w]
+        matches=[];timing=[]
+        for i,support in enumerate(view['supports']):
+            torch.cuda.reset_peak_memory_stats();torch.cuda.synchronize();start=time.monotonic()
+            print('START RoMaV2',name,'->',support,flush=True)
+            with torch.inference_mode():
+                prediction=model.match(args.source/'images'/(name+'.JPG'),args.source/'images'/(support+'.JPG'))
+                match=query_matches(prediction,xy,(h,w),data[f'support{i}_depth'].shape)
+            torch.cuda.synchronize();elapsed=time.monotonic()-start
+            pair_file=name+'_'+support+'.npz';save_npz(args.output/pair_file,dict(pixel_ids=ids,**match))
+            timing.append(dict(support=support,seconds=elapsed,peak_allocated_bytes=torch.cuda.max_memory_allocated(),
+                peak_reserved_bytes=torch.cuda.max_memory_reserved(),file=pair_file,sha256=file_sha(args.output/pair_file)))
+            matches.append(match);del prediction
+            print('DONE',name,'->',support,'forward_valid',int(match['forward_valid'].sum()),'seconds',round(elapsed,2),flush=True)
+        record=build_correspondence_record(data,q,probe,matches,config['seed'],meta['camera_uid']);filename=name+'.npz'
+        save_npz(args.output/filename,record)
+        records.append(dict(camera=name,camera_uid=int(meta['camera_uid']),supports=view['supports'],
+            file=filename,sha256=file_sha(args.output/filename),pairs=timing,**receipt))
+        print('FROZEN observed geometry',name,flush=True)
+    write_json(args.output/'correspondence_manifest.json',dict(schema_version=1,config=config,records=records,
+        model_commit=sha,backend='official fused-local-corr',torch=torch.__version__,
+        weights_sha256=model_config['weights_sha256'],input_receipt_sha256=file_sha(args.output/'input_receipt.json'),
+        interpretation='No GT read. RGB-only observed matches; original 7K candidate depths. Not independent evidence or a training mask.'))
+
+
+def correspondence_score(args):
+    """Read only completed evidence and cached GT; reuse paired target statistics."""
+    outside_inputs(args.output,[args.matches,args.gt_cache])
+    manifest_path=args.matches/'correspondence_manifest.json'
+    manifest=json.loads(manifest_path.read_text(encoding='utf-8'));config=manifest['config']
+    prepared=[]
+    # Validate all non-GT records first. Do not query mesh or produce GT caches.
+    for meta in manifest['records']:
+        path=args.matches/meta['file']
+        if file_sha(path)!=meta['sha256']:raise ValueError('frozen correspondence evidence differs')
+        prepared.append((meta,read_npz(path)))
+    args.output.mkdir(parents=True,exist_ok=False)
+    write_run_metadata(args.output,dict(command=sys.argv,manifest_sha256=file_sha(manifest_path)),collect_run_identity(ROOT))
+    rows=[];pixel_count=0;gt_receipts={}
+    for meta,data in prepared:
+        name=meta['camera'];gt_path=args.gt_cache/(name+'_gt_grid.npz')
+        grid=read_npz(gt_path);gt_receipts[name]=file_sha(gt_path)
+        if tuple(grid['depth'].shape)!=tuple(data['image_size'][::-1]):raise ValueError('cached GT native grid differs')
+        ids=data['pixel_ids'];truth=grid['depth'].ravel()[ids]
+        visible=grid['valid'].ravel()[ids]&np.isfinite(truth)&(truth>0)
+        region_ids=grid['region'].ravel()[ids];pixel_count+=len(ids)
+        z,p,q,spread=data['candidate_depths'].T
+        regs=[('all',np.ones(len(ids),bool)),*[(f'region_{int(r)}',region_ids==r) for r in np.unique(region_ids)]]
+        def append(kind,source,subset,domain,selected,target):
+            for region,mask in regs:
+                row=dict(camera=name,kind=kind,source=source,subset=subset,region=region)
+                row.update(paired_target_stats(z,p,target,truth,domain&visible&mask,selected))
+                use=domain&visible&mask&selected&np.isfinite(target)&(target>0)
+                error=np.abs(target[use]-truth[use])*1000
+                row.update(abs_mean_mm=float(error.mean()) if len(error) else None,
+                    abs_median_mm=float(np.median(error)) if len(error) else None,
+                    abs_p90_mm=float(np.quantile(error,.9)) if len(error) else None)
+                rows.append(row)
+        # Random controls fixed without GT. Same non-GT domain and exact budget.
+        for common in (3,4):
+            counts=data[f'common{common}_support_count'];means=data[f'common{common}_means']
+            for support_count in (1,2):
+                eligible=counts==support_count
+                selected=(means[:,2]<means[:,0])&(means[:,2]<means[:,1])&eligible
+                random_mask=data[f'common{common}_{support_count}support_random']
+                common_mask=data[f'common{common}_support_mask']
+                cycle=np.stack([data[f'support{i}_cycle_valid']&
+                    (data[f'support{i}_cycle_px']<=config['descriptive']['cycle_max_px']) for i in range(2)],1)
+                overlap=np.stack([data[f'support{i}_overlap_forward'].ravel()>=config['descriptive']['overlap_min'] for i in range(2)],1)
+                masks=[('all',eligible),('accepted',selected),('rejected',eligible&~selected),('random_same_count',random_mask),
+                    ('old_ncc_accepted',eligible&data['old_ncc_accepted']),
+                    ('cycle_le1_descriptive',eligible&((cycle&common_mask).sum(1)==support_count)),
+                    ('overlap_ge_half_descriptive',eligible&((overlap&common_mask).sum(1)==support_count))]
+                for label,mask in masks:
+                    append('admission','mvs',f'common{common}_{support_count}support_{label}',eligible,mask,q)
+                for s,target in enumerate((z,p,q,spread)[:common]):
+                    append('source',('current','da3','mvs','spread')[s],f'common{common}_{support_count}support',eligible,eligible,target)
+        for s,target in enumerate((z,p,q,spread)):
+            eligible=np.isfinite(target)&(target>0)
+            append('source',('current','da3','mvs','spread')[s],'native',np.ones(len(ids),bool),eligible,target)
+        for j,label in enumerate(('pair0','pair1','joint')):
+            append('triangulation',label,label,np.ones(len(ids),bool),data['tri_valid'][:,j],data['tri_depth'][:,j])
+        print('Scored cached GT',name,'pixels',len(ids),flush=True)
+    write_json(args.output/'results.json',dict(schema_version=1,pixel_count=pixel_count,rows=rows,gt_cache_sha256=gt_receipts,
+        interpretation='Original sampled pixels, not dense coverage. Positive gains mean lower same-ray camera-z error. One/two shared supports separate. Random selected before GT. Descriptive groups are not validated gates. Learned matches and repeated photos are not independent. No surface or mesh benefit established.'))
+    fields=list(dict.fromkeys(k for row in rows for k in row))
+    with (args.output/'metrics.csv').open('x',newline='',encoding='utf-8-sig') as stream:
+        writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader();writer.writerows(rows)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     sub=p.add_subparsers(dest='mode',required=True)
@@ -506,10 +707,17 @@ def main():
     for flag in ('config','source','baseline','vendor','weights','runtime','output'):
         r.add_argument('--'+flag,type=Path,required=True)
     r.add_argument('--rasterizer',type=Path)
+    m=sub.add_parser('match',help='fixed RGB correspondence and normalized triangulation; no GT')
+    for flag in ('config','source','capture','mvs','probes','vendor','output'):
+        m.add_argument('--'+flag,type=Path,required=True)
+    c=sub.add_parser('correspondence-score',help='score frozen correspondence evidence using existing GT grids')
+    for flag in ('matches','gt-cache','output'):c.add_argument('--'+flag,type=Path,required=True)
     args=p.parse_args()
     if args.mode=='infer':infer(args)
     elif args.mode=='score':score(args)
-    else:server(args)
+    elif args.mode=='server':server(args)
+    elif args.mode=='match':correspondence_match(args)
+    else:correspondence_score(args)
 
 
 if __name__=='__main__':main()
