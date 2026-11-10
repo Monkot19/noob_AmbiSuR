@@ -481,6 +481,12 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 - [x] Draft staged specification and exact reusable code interfaces; distinguish accepted route from proposed numerical settings and future training authorization.
 - [x] Independent builder check; clarified GT-before per-source-label permutation random control and identical old/new-support decision rules. Present concrete first-batch scope for user review. No implementation/model run/GT score/new training in this drafting turn.
 
+## 2026-11-10 approved first batch implementation
+User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,inlineexecution.
+- [ ] Shared support/ranking TDD; old correspondence behavior preserved.
+- [ ] CLI/cache/camera/score roundtrip TDD, fixed29pairs/8reuse21new,actualnonGTpreflight.
+- [ ] Unified verification,oneindependentreview,fixedcommit/launch/bundle,userhandoff. No training/GPU/GT execution here.
+
 ## Downloaded GPU evidence evaluation (approved existing specification)
 - [x] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.
 - [x] Run existing correspondence-score once against original four cached GT grids; no mesh queries, threshold edits, reruns after GT failure or training.
