@@ -207,6 +207,52 @@ class ObservedCorrespondenceTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):correspondence_score(args)
 
 
+class FourSourceRoutingTests(unittest.TestCase):
+    def test_pair_geometry_uses_actual_rays_not_camera_heading(self):
+        from utils.observed_correspondence import pair_geometry, project_depth
+        k=np.array([[100.,0,50.],[0,100.,40.],[0,0,1.]])
+        tr=np.eye(4);src=tr.copy();src[3,0]=-.5
+        xy=np.array([[50.,40.],[60.,45.]])
+        q,valid=project_depth(xy,np.array([2.,3.]),k,tr,k,src,(80,100),.01,.01)
+        g=pair_geometry(xy,q,valid,k,tr,k,src,(80,100),.01,.01)
+        np.testing.assert_allclose(g['depth'],[2.,3.],atol=1e-9)
+        self.assertTrue(g['valid'].all());self.assertTrue((g['angle_deg']>5).all())
+        np.testing.assert_allclose(g['epipolar_px'],0,atol=1e-9)
+        self.assertTrue(g['sensitivity_valid'].all())
+        self.assertTrue((g['sensitivity_max_z_m']>0).all())
+        bad=pair_geometry(xy,xy,np.ones(2,bool),k,tr,k,tr,(80,100),.01,.01)
+        self.assertFalse(bad['valid'].any())
+
+    def test_support_selection_shared_domains_missing_spread_and_ties(self):
+        from utils.observed_correspondence import routing_evidence
+        # Four candidates, four supports. New supports prefer MVS, old preferDA3.
+        costs=np.tile(np.array([[3,3,4,4],[1,1,3,3],[2,2,1,1],[5,5,2,2.]]),(6,1,1))
+        valid=np.ones_like(costs,bool);valid[1,3]=False
+        valid[2,2,2]=False # selected evidence cannot be shrunk to hide bad MVS
+        costs[3]=1. # exact ties abstain
+        ev={k:np.ones((6,4),bool) for k in ('forward_valid','cycle_valid','pair_valid')}
+        ev.update(cycle_px=np.zeros((6,4)),overlap=np.ones((6,4)),
+                  angle_deg=np.tile([1,2,8,8.],(6,1)))
+        ev['cycle_px'][4,2:]=2.;ev['pair_valid'][5,1:]=False
+        out=routing_evidence(costs,valid,ev,seed=3)
+        np.testing.assert_array_equal(out['new_best2_support_indices'][0],[2,3])
+        self.assertEqual(out['old_first2_common4_winner'][0],1)
+        self.assertEqual(out['new_best2_common4_winner'][0],2)
+        self.assertTrue(out['new_best2_common3_domain'][1])
+        self.assertFalse(out['new_best2_common4_domain'][1])
+        self.assertFalse(out['new_best2_common3_domain'][2])
+        self.assertEqual(out['new_best2_common3_winner'][3],-1)
+        np.testing.assert_array_equal(out['new_best2_support_indices'][4],[1,0])
+        self.assertFalse(out['new_best2_common3_domain'][5])
+        self.assertEqual(out['new_best2_common3_winner'][5],-1)
+        for label in ('old_first2','new_best2'):
+            for count in (3,4):
+                p=f'{label}_common{count}';domain=out[p+'_domain']
+                self.assertEqual(sorted(out[p+'_winner'][domain]),sorted(out[p+'_random_winner'][domain]))
+                np.testing.assert_array_equal(out[p+'_random_winner'],routing_evidence(costs,valid,ev,seed=3)[p+'_random_winner'])
+        np.testing.assert_array_equal(out['support_eligible'][2],np.ones(4,bool))
+
+
 class DepthSourceAuditTests(unittest.TestCase):
     def test_mvs_support_cap_preserves_real_saved_order_without_padding(self):
         from scripts.evaluate_depth_sources import select_mvs_supports

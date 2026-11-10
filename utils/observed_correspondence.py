@@ -194,3 +194,98 @@ def triangulate_evidence(reference_xy,source_xy,forward_valid,ref_k,ref_tr,src_k
         sensitivity_max_z_m=np.stack(sens,1),sensitivity_all_valid=np.stack(sens_valid,1),
         sensitivity_invalid_fraction=np.stack(invalid_frac,1),ray_angle_deg=np.stack(angle,1),
         pair_depth_disagreement_m=np.abs(depths[:,0]-depths[:,1]))
+
+
+def pair_geometry(xy, q, forward_valid, ref_k, ref_tr, src_k, src_tr,
+                  src_shape, ref_near, src_near):
+    """Observed-pair conditioning, using the same normalized COLMAP solver.
+
+    Depth is diagnostic only. Effective angle folds theta and 180-theta so
+    antiparallel collinear rays cannot masquerade as excellent parallax.
+    """
+    xy=np.asarray(xy,float);q=np.asarray(q,float);n=len(xy)
+    if xy.shape!=(n,2) or q.shape!=xy.shape:raise ValueError('invalid pair coordinates')
+    r,t=relative_pose(ref_tr,src_tr);a=rays(xy,ref_k)
+    projections=[np.c_[np.eye(3),np.zeros(3)],np.c_[r,t]]
+    base=np.asarray(forward_valid,bool)&np.isfinite(xy).all(1)
+    def solve(other):
+        use=base&inside(other,src_shape);ids=np.flatnonzero(use)
+        point=np.full((n,3),np.nan)
+        if len(ids):
+            value,good=_linear_points([a[ids,:2],rays(other[ids],src_k)[:,:2]],projections)
+            point[ids]=value;use[ids]&=good
+        source=point@r.T+t
+        use&=np.isfinite(point).all(1)&(point[:,2]>ref_near)&(source[:,2]>src_near)
+        return point,use
+    point,valid=solve(q);depth=np.where(valid,point[:,2],np.nan)
+    b=rays(q,src_k)@r
+    with np.errstate(invalid='ignore',divide='ignore'):
+        cos=(a*b).sum(1)/(np.linalg.norm(a,axis=1)*np.linalg.norm(b,axis=1))
+        raw_angle=np.rad2deg(np.arccos(np.clip(cos,-1,1)))
+    angle=np.minimum(raw_angle,180-raw_angle);angle[~valid]=np.nan
+    tx=np.array([[0,-t[2],t[1]],[t[2],0,-t[0]],[-t[1],t[0],0]])
+    f=np.linalg.inv(src_k).T@tx@r@np.linalg.inv(ref_k)
+    x=np.c_[xy,np.ones(n)];y=np.c_[q,np.ones(n)]
+    l2=x@f.T;l1=y@f
+    den=np.sqrt((l2[:,:2]**2).sum(1)+(l1[:,:2]**2).sum(1))
+    epipolar=np.full(n,np.nan);good=base&np.isfinite(den)&(den>1e-15)
+    epipolar[good]=np.abs((y*l2).sum(1)[good])/den[good]
+    deltas=[];perturbed=[]
+    for axis in range(2):
+        for sign in (-1.,1.):
+            other=q.copy();other[:,axis]+=sign
+            p,pv=solve(other);perturbed.append(pv&valid);deltas.append(np.abs(p[:,2]-depth))
+    pv=np.stack(perturbed,1);sv=pv.all(1);sensitivity=np.full(n,np.nan)
+    sensitivity[sv]=np.stack(deltas,1)[sv].max(1)
+    return dict(depth=depth,valid=valid,angle_deg=angle,raw_angle_deg=raw_angle,
+        epipolar_px=epipolar,sensitivity_max_z_m=sensitivity,sensitivity_valid=sv,
+        sensitivity_invalid_fraction=1-pv.mean(1))
+
+
+def routing_evidence(costs, projection_valid, evidence, seed=0,
+                     cycle_max_px=1., overlap_min=.5):
+    """Freeze old/new shared supports, candidate ranks and source-quota control.
+
+    Winners are offline labels only: -1 abstains, 0=current,1=DA3,2=MVS,3=spread.
+    Candidate depths/costs never influence selection of observed supports.
+    """
+    costs=np.asarray(costs,float);valid=np.asarray(projection_valid,bool)&np.isfinite(costs)
+    if costs.ndim!=3 or costs.shape[1]!=4 or valid.shape!=costs.shape or costs.shape[2]<2:
+        raise ValueError('expected N x 4 x S with at least two supports')
+    n,_,s=costs.shape
+    for key in ('forward_valid','cycle_valid','cycle_px','overlap','pair_valid','angle_deg'):
+        if np.asarray(evidence[key]).shape!=(n,s):raise ValueError('invalid support evidence: '+key)
+    angle=np.asarray(evidence['angle_deg'])
+    eligible=(evidence['forward_valid']&evidence['cycle_valid']&evidence['pair_valid']&
+        np.isfinite(evidence['cycle_px'])&(evidence['cycle_px']<=cycle_max_px)&
+        np.isfinite(evidence['overlap'])&(evidence['overlap']>=overlap_min)&np.isfinite(angle))
+    order=np.argsort(np.where(eligible,-angle,np.inf),axis=1,kind='stable')[:,:2]
+    old=np.broadcast_to(np.arange(2),(n,2)).copy()
+    out={'support_eligible':eligible}
+    for protocol,ix in (('old_first2',old),('new_best2',order)):
+        good=np.take_along_axis(eligible,ix,axis=1)
+        indices=np.where(good,ix,-1);mask=np.zeros((n,s),bool)
+        rows=np.broadcast_to(np.arange(n)[:,None],(n,2))
+        mask[rows[good],ix[good]]=True
+        out[protocol+'_support_indices']=indices;out[protocol+'_support_mask']=mask
+        for count in (3,4):
+            p=f'{protocol}_common{count}'
+            domain=(mask.sum(1)==2)&np.all(valid[:,:count]|~mask[:,None,:],axis=(1,2))
+            means=np.full((n,count),np.nan)
+            means[domain]=np.where(mask[:,None,:],costs[:,:count],0).sum(2)[domain]/2
+            winner=np.full(n,-1,np.int8);margin=np.full(n,np.nan)
+            if domain.any():
+                m=means[domain];best=np.argmin(m,axis=1)
+                unique=(m==m.min(1)[:,None]).sum(1)==1
+                winner[domain]=np.where(unique,best,-1)
+                ordered=np.sort(m,axis=1);margin[domain]=ordered[:,1]-ordered[:,0]
+            agreement=np.zeros(n,np.int8)
+            for j in range(2):
+                chosen=np.take_along_axis(costs[:,:count],ix[:,None,j:j+1],axis=2)[:,:,0]
+                vote=chosen.argmin(1);unique=(chosen==chosen.min(1)[:,None]).sum(1)==1
+                agreement+=((winner>=0)&(vote==winner)&unique).astype(np.int8)
+            random=winner.copy();ids=np.flatnonzero(domain)
+            random[ids]=np.random.default_rng(int(seed)).permutation(winner[ids])
+            out.update({p+'_domain':domain,p+'_means':means,p+'_winner':winner,
+                p+'_margin_px':margin,p+'_support_agreement_count':agreement,p+'_random_winner':random})
+    return out
