@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-10八对GPU对应检查已成功。** 用户日志four_views_offline_cache_v3：官方RoMaV2precise初始化、固定DINOv3缓存命中，8对全部DONE/4参考FROZEN，exit0。130584/131072查询满足坐标有限/插值域/边界条件（99.6277%，不是正确率）。科学实现仍7c698a3、65536原冻结像素、无新训练/GT输入。下一步用户下载该目录+同级log/exitcode及environment.freeze.txt，本地核对manifest/NPZ后复用correspondence-score与已有4GT网格。尚无位置精度/准入或表面收益结果，不据forward_valid宣布成功模块。
+
 > 2026-11-10服务器准备停在依赖安装：原7c698a3与RoMa95c9968就绪，新venv已建；pip拒绝wheel名称后退到源码构建，唯一PyTorch索引缺flit_core，退出1，尚未开始模型匹配。启动指南已补“已建环境恢复”段：仅该venv升级pip25.3，原固定requirements走PyPI+官方cu128索引；不用重新上传bundle或改变科学提交。四段Bash语法通过，实际恢复待用户执行。
 
 > 对应离线检查固定实现`7c698a3f11e5df50eaa5d70d3947639e2c39ed18`。后续仅文档回执；服务器按启动指南checkout该实现，不以分支最新文档提交代替版本身份。
