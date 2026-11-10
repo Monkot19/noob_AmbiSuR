@@ -420,3 +420,13 @@ Current phase: implement minimal reusable offlineaudit and prepare AutoDL forwar
 
 
 2026-11-09服务器成功回执：b769fd55支持视角上限版MVS推理，用户日志完整列出17视角480x640及inference_support_cap_v4.exitcode=0；DSC06669实际5源／DSC06681实际4源均完成，其余15视角7源。辅助DINO／ResNet缓存复用，原capture及旧partial／失败记录保留。实际manifest／17NPZ下载完整性与GT精度／准入收益尚未本地检查；不据此宣称几何收益，不启动训练。服务器归档根/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1；用户下载目标D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/depth_source_check/20261109_v1。之后仅用原evaluate_depth_sources.py score，capture来自原capture子目录，MVS来自mvs_support_cap_v4。
+
+
+## 2026-11-10 Downloaded17 source/admission evaluation
+User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/depth_source_check_17views_after_v3_position_check_from_NVSAnywhere/20261109_v1. Resume approved existing plan, no new methods/training. Directory contains17native7K capture records and17MVS support-cap results; original stage exits0, supports15x7/1x5/1x4. Source pipelineb769, capturecae819; oldfailedrecords preserved. No evaluation running at intake, repo cleanHEADdb5361a.
+- [ ] Preflight actual full-depth NPZ/masks/K/transforms, camera+support hashes/config/units and source identities without GT scoring; freeze output path/protocol and input receipt. Do not compare against30K current or infer GT labels.
+- [ ] Run existing evaluate_depth_sources.py score once, 17same-native7K, original threshold/seed/budget, originalGTQueries + semantic regions. Save unique analysis/depth_source_comparison_20261110_v1, preserve any failure; no automatic GT-after-failure retry.
+- [ ] Summarize four-source common-domain/nativecoverage and NCC accepted/rejected/random pairedgain/harm/coverage; separate illustrative vscoverage and targetquality vs actualsurface benefit. Independent read-only review, report and handoff.
+
+
+2026-11-10输入预检完成：下载449774436bytes；17完整深度图+17MVS，实际15x7/1x5/1x4，capture0/infer0，config与本地完全相同；原生7K/1074511797byte checkpoint身份，4metadatahash与本地baseline相同，全部K/pose一致（max4.77e-7），MVS480x640。GTmesh31547a...历史身份一致，segments/annotations路径已冻结；尚无GT查询。唯一输出analysis/depth_source_comparison_20261110_v1/score，复用原score入口，seed/门槛/预算不变。

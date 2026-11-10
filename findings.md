@@ -289,3 +289,6 @@ Errors recorded: JSONLinesinput corrected; PSbrace readsyntax corrected; _orient
 
 
 2026-11-09用户批准支持视角上限修复，固定实现b769fd555bd570ecd8a2aa6818e9f75546b0a237：mvs_supports=7作为最大值，保留真实邻居顺序；15视角取7，DSC06669取5，DSC06681取4；不填充／重选。统一74项66通过8native跳过，实际17视角／127图片header检查通过，源代码独立窄审无实质问题。原capture／配置／评分／训练／DA3／renderer不改。已有self-stack推理完成前3张后因旧exact7断言退出；原partial与日志保留。新批次仅infer至mvs_support_cap_v4，复用缓存与环境，仍保留60秒self-stack。命令见docs/research/depth-source-audit-launch.md；用从fc75制作的离线bundle避开GitHub503。实际4/5源GPU／17完整manifest／GT质量尚未验证。
+
+
+2026-11-10输入预检完成：下载449774436bytes；17完整深度图+17MVS，实际15x7/1x5/1x4，capture0/infer0，config与本地完全相同；原生7K/1074511797byte checkpoint身份，4metadatahash与本地baseline相同，全部K/pose一致（max4.77e-7），MVS480x640。GTmesh31547a...历史身份一致，segments/annotations路径已冻结；尚无GT查询。唯一输出analysis/depth_source_comparison_20261110_v1/score，复用原score入口，seed/门槛/预算不变。
