@@ -292,3 +292,6 @@ Errors recorded: JSONLinesinput corrected; PSbrace readsyntax corrected; _orient
 
 
 2026-11-10输入预检完成：下载449774436bytes；17完整深度图+17MVS，实际15x7/1x5/1x4，capture0/infer0，config与本地完全相同；原生7K/1074511797byte checkpoint身份，4metadatahash与本地baseline相同，全部K/pose一致（max4.77e-7），MVS480x640。GTmesh31547a...历史身份一致，segments/annotations路径已冻结；尚无GT查询。唯一输出analysis/depth_source_comparison_20261110_v1/score，复用原score入口，seed/门槛/预算不变。
+
+
+2026-11-10离线17视角评价完成：真实下载路径depth_source_check_17views_after_v3_position_check_from_NVSAnywhere/20261109_v1，实际状态为原生C0的7K。固定clean a4155ac原score一次40.97秒退出0，5369行／3237汇总，GT无失败重跑。四者共同域3059926条／36.62%可见记录，MAE当前59.296／DA3 71.781／spread55.371／MVS66.722mm，不能把条件域排名扩展到全场景。NCC接受GT后59412条，平均g0+2.312／gP+15.776mm，但改善DA3比例63.72%低于GT前等预算随机64.18%，伤害>5mm率33.26%高于随机31.78%；全图仅实际抽样替换目标收益0.11216mm／覆盖0.71095%，不是训练收益。墙71局部MVS强，天花板原DA3更准且准入危险。两个NCC视角全部重用于MVS输入。独立只读终审无实质问题，CSV/JSON逐字段与区域计数校验通过。报告docs/research/2026-11-10-depth-source-and-admission-results.md，产物analysis/depth_source_comparison_20261110_v1；没有新增方法／训练／loss／预算／GT标签，不直接授权30K。

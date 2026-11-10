@@ -15,7 +15,7 @@ User approved the preceding source/admission check on2026-11-09 and confirms Aut
 - [x] Read pinned donor dependency/model-loader implementations; minimal standalone inferenceadapter with stockforward/preprocess, separateenvironment, datasetreadonly.
 - [x] Freeze inputs/config before GT. Existing7001 fullreference pre/postdepth exact; no GT query yet and no substitution with Gaussiannearest stats. Complete17capture requires AutoDL.
 - [x] Independent read-only review complete; production paths unchanged. Prior research preserved in8c3805b, audited code fixed cae81969d5eee7f97e5a4fd9d8151b300742fbb4. Server commands pinned; release/push verification recorded in progress.md.
-- [ ] Complete17source/admission score only after actualgeneratedMVS/fullmaps available; no fabricatedresults or GT-drivenretries.
+- [x] Complete17source/admission score from actual downloadedMVS/fullmaps: once40.97s/exit0, independentreviewpassed, no GT-drivenretries. Result report docs/research/2026-11-10-depth-source-and-admission-results.md. No training benefit claimed.
 
 ## Review focus
 Depthz vs rayrange; c2w/w2c and Kresizecopies; originalDA3scale and model/world units; same valid domains vs nativecoverage; fit-viewreuse; stricttargetreplacementidentity; invalidNaN not becoming quality; noinputoverwrite; noGT inmask; scientificnegative separated from interfacefailure.

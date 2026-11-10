@@ -1,5 +1,7 @@
 # AmbiSuR 二周目项目规则
 
+> 2026-11-10离线17视角评价完成：真实下载路径depth_source_check_17views_after_v3_position_check_from_NVSAnywhere/20261109_v1，实际状态为原生C0的7K。固定clean a4155ac原score一次40.97秒退出0，5369行／3237汇总，GT无失败重跑。四者共同域3059926条／36.62%可见记录，MAE当前59.296／DA3 71.781／spread55.371／MVS66.722mm，不能把条件域排名扩展到全场景。NCC接受GT后59412条，平均g0+2.312／gP+15.776mm，但改善DA3比例63.72%低于GT前等预算随机64.18%，伤害>5mm率33.26%高于随机31.78%；全图仅实际抽样替换目标收益0.11216mm／覆盖0.71095%，不是训练收益。墙71局部MVS强，天花板原DA3更准且准入危险。两个NCC视角全部重用于MVS输入。独立只读终审无实质问题，CSV/JSON逐字段与区域计数校验通过。报告docs/research/2026-11-10-depth-source-and-admission-results.md，产物analysis/depth_source_comparison_20261110_v1；没有新增方法／训练／loss／预算／GT标签，不直接授权30K。
+
 > 2026-11-09用户批准支持视角上限修复，固定实现b769fd555bd570ecd8a2aa6818e9f75546b0a237：mvs_supports=7作为最大值，保留真实邻居顺序；15视角取7，DSC06669取5，DSC06681取4；不填充／重选。统一74项66通过8native跳过，实际17视角／127图片header检查通过，源代码独立窄审无实质问题。原capture／配置／评分／训练／DA3／renderer不改。已有self-stack推理完成前3张后因旧exact7断言退出；原partial与日志保留。新批次仅infer至mvs_support_cap_v4，复用缓存与环境，仍保留60秒self-stack。命令见docs/research/depth-source-audit-launch.md；用从fc75制作的离线bundle避开GitHub503。实际4/5源GPU／17完整manifest／GT质量尚未验证。
 
 > 2026-11-09服务器接口失败已修复：原capture／dependencies／freeze成功，MVS初始化因供体解析宿主CLI退出2；固定修复`fc75cf58f4830e88fb40149ddd8c569f66538a33`使用官方ignore_cl_args=True，科学配置／权重／forward不变。真实供体回归修复前复现退出2、修复后通过；统一72项64通过8native跳过，独立复核无实质问题。原失败记录保留，仅恢复infer至同根mvs_cli_fix_v2，新退出码inference_cli_fix_v2.exitcode；不重复capture或安装／训练／GT，实际GPU前向尚待用户执行。恢复命令见docs/research/depth-source-audit-launch.md。
