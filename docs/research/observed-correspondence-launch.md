@@ -191,6 +191,38 @@ SH
 
 得到OK再启动上述新out。此次只补传权重，不重新传三个原交付文件，不重装依赖。
 
+## DINOv3源码503：离线缓存恢复
+
+four_views_weight_retry_v2主权重已从缓存读入，随后供体features.py:103通过torch.hub.load获取固定DINOv3源码时GitHub503，退出1，尚未匹配。供体指定`facebookresearch/dinov3:adc254450203739c8149213a7a69d8d905b4fcfa`，不是另换模型/权重。
+
+本地已从官方固定commit codeload归档生成`D:/research_Space/handoff_bundle/observed-correspondence-audit_20261110/dinov3-torch-cache-adc25445.zip`，10282159bytes，SHA256`6b5a8f1aca7656ef0bb7188337f58a937afec8da4a7e037c6b776c805362582a`。163文件全部原样复制，只改最外层为Torch实际缓存目录名；许可证保留。归档根与完整commit一致，原归档SHA0c6a0270...；独立GitHubAPI查询遇403限流，改用同一官方immutable codeload，并未更换commit。
+
+128个Python文件按Python3.10语法解析通过；实际hubconf仅导入通过、未调用模型构造/forward。执行官方Torch2.8原始parser/trust/cache三个函数体，禁用下载器，实际离线命中该缓存。最初仅抽取缓存函数与本地2.11辅助函数混用遇签名差异，改为三个均取官方2.8后通过；不是服务器方法问题。模型GPU接口仍未验证。
+
+用户将此zip上传至`/root/autodl-tmp/`后执行以下缓存准备，再用同一启动段仅把out改成`/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_views_offline_cache_v3`。旧v1/v2保留，代码仍7c698a3、旧权重/环境复用，无需重新传权重或代码bundle。
+
+```bash
+/root/autodl-tmp/ambisur_runtime/observed-correspondence/env/bin/python - <<'PY'
+import hashlib,zipfile
+from pathlib import Path,PurePosixPath
+archive=Path('/root/autodl-tmp/dinov3-torch-cache-adc25445.zip')
+assert hashlib.sha256(archive.read_bytes()).hexdigest()=='6b5a8f1aca7656ef0bb7188337f58a937afec8da4a7e037c6b776c805362582a','Source ZIP hash differs'
+hub=Path('/root/autodl-tmp/ambisur_runtime/observed-correspondence/cache/torch/hub')
+name='facebookresearch_dinov3_adc254450203739c8149213a7a69d8d905b4fcfa'
+with zipfile.ZipFile(archive) as z:
+    for info in z.infolist():
+        path=PurePosixPath(info.filename)
+        assert path.parts[0]==name and '..' not in path.parts
+        target=hub.joinpath(*path.parts);content=z.read(info)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        if target.exists():assert target.read_bytes()==content,str(target)
+        else:
+            with target.open('xb') as stream:stream.write(content)
+assert (hub/name/'hubconf.py').is_file()
+print('Pinned DINOv3 source cache ready; no model loaded.')
+PY
+```
+
 ## 启动正式八对检查
 
 不需要重新capture、运行MVS或训练。选择新输出目录；已存在则停止，不覆盖旧记录。`match`会先校验实际图片header、原probe散列、7K/支持/相机身份，再加载模型。每对开头/结尾打印进度；启用60秒自身调用栈，网络缓存等待也可定位。
