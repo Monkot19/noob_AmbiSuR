@@ -130,6 +130,52 @@ printf '\n依赖和原probe准备完成；可执行指南中的八对检查启�
 SH
 ```
 
+## 权重下载83%后hash失败的恢复
+
+2026-11-10用户原four_views_v1日志：870MiB/1.02GiB、下载66分钟后invalid hash，退出1，位置在下载校验，尚未加载RoMa/匹配。重新读取GitHub官方release确认1095883548bytes、SHA2561557dec0d21b62366465f7ff4d5fdf228cc695d0582e196ad2b80e05230828b7；不改预期哈希。官方Torch2.8下载器finally会删除未通过校验的临时包，不能承诺复用之前83%。原日志/目录保留，恢复只处理同一官方缓存，不改7c698a3科学代码、参数或匹配器。
+
+先独立下载，保留`.part`以便连接中断后继续；只在大小/SHA256都通过时转为正式缓存。以下下载无需GPU；若官方链路仍慢，可在本地下载同一[官方权重](https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt)，上传为这里的`.part`文件，再执行此段校验。没有下载或运行本地模型。
+
+```bash
+bash <<'SH' || printf '\n权重准备停止；保留part文件，请贴回错误。\n'
+set -euo pipefail
+cd /root/autodl-tmp/noob_AmbiSuR
+runtime=/root/autodl-tmp/ambisur_runtime/observed-correspondence
+python="$runtime/env/bin/python"
+weights="$runtime/cache/torch/hub/checkpoints/romav2.0.1.pt"
+part="$weights.part"
+mkdir -p "$(dirname "$weights")"
+if [ -f /etc/network_turbo ]; then source /etc/network_turbo; fi
+if [ ! -f "$weights" ]; then
+  size=0
+  if [ -f "$part" ]; then size=$(stat -c %s "$part"); fi
+  if [ "$size" -lt 1095883548 ]; then
+    curl --fail --location --continue-at - --connect-timeout 20 --max-time 900 \
+      --output "$part" \
+      https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt
+  fi
+fi
+"$python" - "$weights" <<'PY'
+import hashlib,os,sys
+from pathlib import Path
+target=Path(sys.argv[1]);source=target if target.is_file() else Path(str(target)+'.part')
+expected='1557dec0d21b62366465f7ff4d5fdf228cc695d0582e196ad2b80e05230828b7'
+size=source.stat().st_size
+print('Downloaded bytes:',size,flush=True)
+assert size==1095883548,'Incomplete/incorrect size; keep the part file.'
+h=hashlib.sha256()
+with source.open('rb') as stream:
+    for chunk in iter(lambda:stream.read(8*1024*1024),b''):h.update(chunk)
+print('SHA256:',h.hexdigest(),flush=True)
+assert h.hexdigest()==expected,'Hash differs; keep the file, do not load it.'
+if source!=target:os.replace(source,target)
+print('Official RoMaV2 checkpoint verified and cached.')
+PY
+SH
+```
+
+校验成功后执行下方相同启动段，**仅将out改为**`/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_views_weight_retry_v2`。原four_views_v1目录/log/exitcode全部保留，不重复安装环境，不覆盖旧输出。固定7c698a3会校验并复用正式缓存；后续DINOv3源码下载仍可能联网，原60秒self-stack继续保留。服务器恢复由用户执行，尚无实际匹配结果。
+
 ## 启动正式八对检查
 
 不需要重新capture、运行MVS或训练。选择新输出目录；已存在则停止，不覆盖旧记录。`match`会先校验实际图片header、原probe散列、7K/支持/相机身份，再加载模型。每对开头/结尾打印进度；启用60秒自身调用栈，网络缓存等待也可定位。
