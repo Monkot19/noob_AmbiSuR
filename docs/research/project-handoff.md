@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-10真实对应本地分析完成。** 12NPZ/4参考/8对/65536冻结像素与原输入身份核验通过；唯一正式correspondence-score退出0，6370行，无新GT查询/重跑。双支持MVS观测准入在DSC06669相对DA3平均改善61.89mm，但DSC06348恶化105.00mm；四视角接受20863条合并gP=-9.27mm，尚不能接入训练。联合三角化同像素DSC06669 MAE33.64mm，DA3为61.02mm（下降44.88%）；其余三个视角均值更差，小视差敏感度/离群尾部仍严重。天花板703条观测接受88.62%比DA3恶化>5mm，“比当前好”不等于可替换原教师。预冻结cycle/overlap条件仍不能普遍解决。正式JSON/四份完整CSV有效；补充JSON因全缺失敏感度NaN导出失败，原失败保留，未恢复重跑，完整CSV与正式评分独立核对一致。独立只读终审无实质问题。详见[四视角结果](2026-11-10-observed-correspondence-results.md)，产物analysis/observed_correspondence_4views_20261110_v1。现有训练/DA3/renderer/baseline未改；下一批非GT准入/支持选择/训练须讨论，不自动执行。
+
 > **2026-11-10八对GPU对应检查已成功。** 用户日志four_views_offline_cache_v3：官方RoMaV2precise初始化、固定DINOv3缓存命中，8对全部DONE/4参考FROZEN，exit0。130584/131072查询满足坐标有限/插值域/边界条件（99.6277%，不是正确率）。科学实现仍7c698a3、65536原冻结像素、无新训练/GT输入。下一步用户下载该目录+同级log/exitcode及environment.freeze.txt，本地核对manifest/NPZ后复用correspondence-score与已有4GT网格。尚无位置精度/准入或表面收益结果，不据forward_valid宣布成功模块。
 
 > 2026-11-10服务器准备停在依赖安装：原7c698a3与RoMa95c9968就绪，新venv已建；pip拒绝wheel名称后退到源码构建，唯一PyTorch索引缺flit_core，退出1，尚未开始模型匹配。启动指南已补“已建环境恢复”段：仅该venv升级pip25.3，原固定requirements走PyPI+官方cu128索引；不用重新上传bundle或改变科学提交。四段Bash语法通过，实际恢复待用户执行。

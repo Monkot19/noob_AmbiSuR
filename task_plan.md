@@ -477,9 +477,9 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 # 2026-11-10 approved observed correspondence batch
 
 ## Downloaded GPU evidence evaluation (approved existing specification)
-- [ ] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.
-- [ ] Run existing correspondence-score once against original four cached GT grids; no mesh queries, threshold edits, reruns after GT failure or training.
-- [ ] Summarize same-domain source quality, observed-vs-NCC admission, pair/joint triangulation and numerical conditioning; independent read-only review, report and handoff.
+- [x] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.
+- [x] Run existing correspondence-score once against original four cached GT grids; no mesh queries, threshold edits, reruns after GT failure or training.
+- [x] Summarize same-domain source quality, observed-vs-NCC admission, pair/joint triangulation and numerical conditioning; independent read-only review completed without material findings, report and handoff updated. Supplementary JSON export failure retained; no GT rerun or recovery.
 
 - [x] Preserve prior analysis/spec as 30b7dad, create D branch codex/observed-correspondence-audit.
 - [x] RED meaningful unified regressions; implement offline helper/CLI/config.

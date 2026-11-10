@@ -1,5 +1,11 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-11-10 observed correspondence: conditional position information
+
+Fourchosenviews65536original7Kpixels,official8GPUmatching/frozengeometry0. FrozenobservedreprojectiondoesenrichMVSbenefit inlargebaselineDSC06669 (2011dual-supportaccept,gP+61.893 vsoldNCC1160/-80.498),butsmallparallaxDSC06348remains5698/-105.003. Fourviewpoolnew20863/gP-9.273 net harmful,old9846/-42.142 notsamebudget. RandompreGTsamebudgetpostGT20889/-46.420;notindependentviews. Jointtri06669samepixel15934:MAE33.639vsDA361.024,current79.717,MVS198.372. Otherthreejointmeanseriousoutliersdespitesomegoodmedians. Median1nativepixeldepthsensitivity06348/06669/06274/06289=331.38/4.17/102.13/30.40mm;smallpointreprojectiondoesnotimplyaccurateposition. Numericallystablesmallsubsetscanwronglytriangulate,mustnotcallconditioningcorrectnessprobability.
+
+Teacherpermissioncounterexample:06669ceilingnewMVSaccept59,g0+77.61butgP-102.29mm;positioncorrectionneednotjustifyreplacingDA3. Fourviewceiling703acceptedgP-163.73/88.62%harm>5mm. Positionevidence/priorpermission/surfaceexecutionremainseparate;noA/ALR/losschanges,nofinalsurfacebenefit. Frozenconfidence/cycleconditionhelpssomecohortsbutnotsmallparallax,nottraininggate. Formal6370rows/exit0; supplementaryCSVcompletebutJSONfailedall-missingmedianNaN,preservednoretry,reportusescompletedCSV. See2026-11-10-observed-correspondence-results.md andanalysis/observed_correspondence_4views_20261110_v1.
+
 ## 2026-11-02 V3 deeper failure analysis: emerging facts
 
 Userauthorizes analysis, unchangedexternalmesh_region_analysis.py executedcompleteness/maps once(exit0), thenexistingaccuracy-only direction once(exit0); actualsixdirectionmeans/formalGTsamplehash reproduce, CDpartitiondelta1.4170628717mm exactlyreproduces. Completenessvs earlygain-2.32796/harm+4.22344/net+1.89548mm;≥1cmgain6.1135%/harm8.5716%. Maincompcontributionswall69+.729793/wall71+.338859/ceiling66+.299956(~72.2%net), whilewall89compimproves-.143024. Thusinitial7Kbadstaticwall89isnotfinalmainharm; no causalobjectclaimfromstaticallowed.
