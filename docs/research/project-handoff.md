@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> 2026-11-10服务器准备停在依赖安装：原7c698a3与RoMa95c9968就绪，新venv已建；pip拒绝wheel名称后退到源码构建，唯一PyTorch索引缺flit_core，退出1，尚未开始模型匹配。启动指南已补“已建环境恢复”段：仅该venv升级pip25.3，原固定requirements走PyPI+官方cu128索引；不用重新上传bundle或改变科学提交。四段Bash语法通过，实际恢复待用户执行。
+
 > 对应离线检查固定实现`7c698a3f11e5df50eaa5d70d3947639e2c39ed18`。后续仅文档回执；服务器按启动指南checkout该实现，不以分支最新文档提交代替版本身份。
 
 > **2026-11-10已批准四参考／八对真实对应检查并完成本地实现。** D主目录分支`codex/observed-correspondence-audit`；原4×16384像素、8个原支持配对冻结，官方RoMaV2 precise源码95c9968。原评价CLI新增match/correspondence-score，normalized COLMAP pair/joint三角化与±1原生像素敏感度；非GT随机控制和几何证据先冻结，再读原GT网格评分。统一79项70通过9跳过（8native/1可选旧MVS源码），实际供体坐标/置信度函数执行通过、65536真实capture数组接口通过（合成投影，仅接线测试）；独立复核无剩余实质问题，四图MVS掩码共享适配与旧评分结果完全相同。没有模型权重下载／GPU前向或新质量结果，不改train/renderer/ALR/LR/损失，不启动新训练。命令与环境成本见[对应检查指南](observed-correspondence-launch.md)，交付包`D:/research_Space/handoff_bundle/observed-correspondence-audit_20261110`。用户上传后自行执行，服务器不读取GT。

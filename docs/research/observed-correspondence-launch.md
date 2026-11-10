@@ -53,10 +53,12 @@ if [ ! -x "$runtime/env/bin/python" ]; then
   /root/miniconda3/envs/ambisur/bin/python -m venv "$runtime/env"
 fi
 python="$runtime/env/bin/python"
-"$python" -m pip install --no-cache-dir 'torch==2.8.0' 'torchvision==0.23.0' \
-  --index-url https://download.pytorch.org/whl/cu128
-"$python" -m pip install --no-cache-dir -r experiments/depth_sources/correspondence-requirements.txt \
-  -i https://pypi.org/simple
+"$python" -m pip --version
+"$python" -m pip install --no-cache-dir --only-binary=:all: --upgrade 'pip==25.3' \
+  --index-url https://pypi.org/simple
+"$python" -m pip install --no-cache-dir --only-binary=:all: \
+  -r experiments/depth_sources/correspondence-requirements.txt \
+  --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cu128
 "$python" -m pip check
 "$python" -m pip freeze > "$runtime/environment.freeze.txt"
 "$python" - <<'PY'
@@ -76,6 +78,55 @@ with zipfile.ZipFile('/root/autodl-tmp/observed-correspondence-probes.zip') as z
 print('Four original probes ready. No GT or model loaded.')
 PY
 printf '\n独立环境与原probe已准备；下一段启动8对正式离线检查。\n'
+SH
+```
+
+## 已建环境、但依赖安装因flit_core失败时恢复
+
+2026-11-10用户实际日志：Git与供体源码准备成功，pip拒绝Jinja2/typing_extensions的wheel名称后退回源码包，构建子进程继承唯一PyTorch索引，找不到flit_core，准备第35行退出1。未进入RoMa加载/匹配，日志不是空间不足。尚未读取服务器pip版本，因此旧pip是待验证的上游原因；恢复先打印版本，仅升级本独立venv的pip25.3，再用PyPI＋官方cu128索引及固定二进制包恢复。依据：[pip安装来源与解析阶段](https://pip.pypa.io/en/stable/cli/pip_install/)。原7c698a3科学代码、环境之外的Conda/DA3/MVS均不变，不必重传bundle或重新clone。
+
+已经执行过前半段的服务器，直接运行这一段；不重复新建环境，也不以已经开始安装后的20GiB预检阻挡恢复。旧失败记录保留，不声称已在服务器修好。安装结果和剩余空间由本命令实际输出确认。
+
+```bash
+bash <<'SH' || printf '\n依赖恢复停止，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "恢复停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+cd /root/autodl-tmp/noob_AmbiSuR
+test "$(git rev-parse HEAD)" = 7c698a3f11e5df50eaa5d70d3947639e2c39ed18
+test -z "$(git status --porcelain)"
+runtime=/root/autodl-tmp/ambisur_runtime/observed-correspondence
+python="$runtime/env/bin/python"
+test -x "$python"
+mkdir -p "$runtime/tmp" "$runtime/cache/torch" "$runtime/cache/huggingface"
+export TMPDIR="$runtime/tmp" TORCH_HOME="$runtime/cache/torch" HF_HOME="$runtime/cache/huggingface"
+export PIP_NO_CACHE_DIR=1 OMP_NUM_THREADS=1
+unset PYTHONPATH PYTHONHOME
+"$python" -m pip --version
+"$python" -m pip install --no-cache-dir --only-binary=:all: --upgrade 'pip==25.3' \
+  --index-url https://pypi.org/simple
+"$python" -m pip install --no-cache-dir --only-binary=:all: \
+  -r experiments/depth_sources/correspondence-requirements.txt \
+  --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cu128
+"$python" -m pip check
+"$python" -m pip freeze > "$runtime/environment.freeze.txt"
+"$python" - <<'PY'
+import hashlib,json,zipfile
+from pathlib import Path
+from scripts.evaluate_depth_sources import file_sha
+root=Path('/root/autodl-tmp/ambisur_runtime/observed-correspondence/probes')
+config=json.loads(Path('experiments/depth_sources/toolroom_correspondence_v1.json').read_text())
+with zipfile.ZipFile('/root/autodl-tmp/observed-correspondence-probes.zip') as z:
+    for view in config['views']:
+        name=view['reference']+'_probe.npz';content=z.read(name)
+        assert hashlib.sha256(content).hexdigest()==view['probe_sha256'],name
+        root.mkdir(parents=True,exist_ok=True);p=root/name
+        if p.exists():assert file_sha(p)==view['probe_sha256'],name
+        else:p.write_bytes(content)
+print('Four original probes ready. No GT or model loaded.')
+PY
+df -h / /root/autodl-tmp
+du -sh "$runtime/env" "$runtime/cache" "$runtime/tmp"
+printf '\n依赖和原probe准备完成；可执行指南中的八对检查启动段。\n'
 SH
 ```
 
