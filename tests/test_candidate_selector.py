@@ -208,6 +208,72 @@ class ObservedCorrespondenceTests(unittest.TestCase):
 
 
 class FourSourceRoutingTests(unittest.TestCase):
+    def test_camera_metadata_matches_native_convention_and_text_fallback(self):
+        from scripts.evaluate_depth_sources import routing_camera_metadata
+        from utils.graphics_utils import getWorld2View2
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source=root/'data';poses=source/'sparse/0';poses.mkdir(parents=True)
+            # Noncentral COLMAP principal point is deliberately ignored by hostCamera.
+            (poses/'cameras.txt').write_text('1 PINHOLE 64 48 60 62 27 19\n')
+            (poses/'images.txt').write_text('1 1 0 0 0 0.2 -0.1 0 1 view.JPG\n\n')
+            baseline=root/'baseline';baseline.mkdir()
+            tr=getWorld2View2(np.eye(3),np.array([.2,-.1,0])).T
+            c2w=np.linalg.inv(tr.T)
+            (baseline/'cameras.json').write_text(json.dumps([dict(img_name='view',width=64,height=48,
+                fx=60,fy=62,rotation=c2w[:3,:3].tolist(),position=c2w[:3,3].tolist())]))
+            cams,receipt=routing_camera_metadata(source,baseline,(24,32))
+            self.assertEqual(receipt['pose_format'],'text')
+            np.testing.assert_allclose(cams['view']['transform'],tr,atol=1e-7)
+            np.testing.assert_allclose(cams['view']['k'],[[30,0,16],[0,31,12],[0,0,1]])
+            (poses/'images.txt').write_text('1 1 0 0 0 1 -0.1 0 1 view.JPG\n\n')
+            with self.assertRaisesRegex(ValueError,'pose'):routing_camera_metadata(source,baseline,(24,32))
+
+    def test_new_record_roundtrip_reuses_score_schema_and_abstain(self):
+        from scripts.evaluate_depth_sources import build_routing_record,save_npz,write_json,file_sha,correspondence_score
+        from utils.observed_correspondence import project_depth
+        cam=AnalyticCamera();ids=np.array([15*32+15,16*32+16,17*32+17],np.int64)
+        xy=np.c_[ids%32,ids//32];k=cam.get_k().numpy();tr=cam.world_view_transform.numpy()
+        targets=np.array([[2.,2.5,1.8,np.nan],[2.,2.,2.,2.],[2.,2.5,1.8,1.9]])
+        frozen=dict(pixel_ids=ids,reference_xy=xy,candidate_depths=targets,image_size=np.array([32,32]),
+            camera_k=k,camera_transform=tr,znear=np.array(.01))
+        matches=[];cameras=[]
+        for shift in (.1,-.1,.3,-.4):
+            src=AnalyticCamera(translation=shift);st=src.world_view_transform.numpy()
+            q,valid=project_depth(xy,np.array([1.8,2.,1.8]),k,tr,k,st,(32,32),.01,.01)
+            matches.append(dict(pixel_ids=ids,reference_xy=xy,source_xy=q,forward_valid=valid,
+                cycle_valid=valid,cycle_px=np.zeros(3),overlap_forward=np.ones((3,1))))
+            cameras.append(dict(k=k,transform=st,shape=(32,32),znear=.01))
+        record=build_routing_record(frozen,matches,cameras,seed=8)
+        np.testing.assert_array_equal(record['candidate_depths'],targets)
+        self.assertEqual(record['all_candidate_costs_px'].shape,(3,4,4))
+        self.assertTrue(record['new_best2_common3_domain'][0]);self.assertFalse(record['new_best2_common4_domain'][0])
+        self.assertEqual(record['new_best2_common3_winner'][0],2)
+        self.assertEqual(record['new_best2_common4_winner'][1],-1)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);out=root/'matches';gt=root/'gt';out.mkdir();gt.mkdir()
+            save_npz(out/'view.npz',record)
+            write_json(out/'correspondence_manifest.json',dict(schema_version=2,audit_type='four_source_routing',
+                config={},records=[dict(camera='view',file='view.npz',sha256=file_sha(out/'view.npz'))]))
+            save_npz(gt/'view_gt_grid.npz',dict(depth=np.full((32,32),1.8),valid=np.ones((32,32),bool),region=np.zeros((32,32),int)))
+            args=SimpleNamespace(matches=out,gt_cache=gt,output=root/'score')
+            correspondence_score(args)
+            result=json.loads((args.output/'results.json').read_text());self.assertEqual(result['pixel_count'],3)
+            row=next(r for r in result['rows'] if r['kind']=='routing_policy' and r['source']=='selected'
+                and r['subset']=='new_best2_common3_full_frozen' and r['region']=='all')
+            self.assertEqual(row['count'],3);self.assertEqual(row['selected_count'],2)
+            self.assertGreater(row['gain_da3_mean_mm'],0)
+            self.assertTrue((args.output/'metrics.csv').is_file())
+            with self.assertRaises(FileExistsError):correspondence_score(args)
+
+    def test_cached_pair_validation_checks_ids_and_reference_coordinates(self):
+        from scripts.evaluate_depth_sources import validate_routing_pair
+        frozen=dict(pixel_ids=np.array([2,4],np.int64),reference_xy=np.array([[2.,0.],[4.,0.]]))
+        pair=dict(**frozen,source_xy=np.array([[1.,0.],[3.,0.]]),forward_valid=np.ones(2,bool),
+            cycle_valid=np.ones(2,bool),cycle_px=np.zeros(2),overlap_forward=np.ones((2,1)))
+        validate_routing_pair(pair,frozen)
+        pair['pixel_ids']=np.array([4,2],np.int64)
+        with self.assertRaisesRegex(ValueError,'pixel'):validate_routing_pair(pair,frozen)
+
     def test_pair_geometry_uses_actual_rays_not_camera_heading(self):
         from utils.observed_correspondence import pair_geometry, project_depth
         k=np.array([[100.,0,50.],[0,100.,40.],[0,0,1.]])

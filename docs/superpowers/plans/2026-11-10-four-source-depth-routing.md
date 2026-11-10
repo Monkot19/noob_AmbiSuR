@@ -27,16 +27,16 @@
 ## Task1: shared support/ranking core
 Files: utils/observed_correspondence.py,tests/test_candidate_selector.py.
 Interfaces: pair_geometry(...)->dict angle/epipolar/positive/sensitivity; routing_evidence(candidate_costs,projection_valid,support_evidence,seed)->old_first2/new_best2 common3/common4 records.
-- [ ] Write meaningful missing-helper tests for variable supports, stable angle selection, source-independent masks, ties/missing-spread and quota-preserving random labels; run RED.
-- [ ] Implement minimal helpers, reuse normalized triangulation and pose/ray functions; run GREEN and old correspondence regressions.
+- [x] Write meaningful missing-helper tests for variable supports, stable angle selection, source-independent masks, ties/missing-spread and quota-preserving random labels; run RED.
+- [x] Implement minimal helpers, reuse normalized triangulation and pose/ray functions; run GREEN and old correspondence regressions.
 
 ## Task2: production-shaped CLI/cache/score
 Files: scripts/evaluate_depth_sources.py,experiments/depth_sources/toolroom_four_source_routing_v1.json,tests/test_candidate_selector.py.
 Interfaces: routing-match(config,source,existing,baseline,vendor,output); routing-score(matches,gt-cache,output). Existing refers successful8-pair directory; baseline supplies frozen neighbor/camera metadata identity. Read original 4NPZ+8pairNPZ; new source camera from original COLMAP loader, verify against baseline camera archive/native referenceK/pose.
-- [ ] RED actual cached producer roundtrip/score serializer, invalid-cache and real camera-conversion tests.
-- [ ] Implement data preflight before model load; reuse official model initialization; add new21calls only, freeze29record manifest and evidence. Preserve old functions; share initialization rather than copy model runner.
-- [ ] Score frozen arrays with paired_target_stats/strict serializers, output per-source/region and old/new intersection/native domains. Fixed models/targets and random labels saved beforeGT.
-- [ ] GREEN targeted tests and full existing unittest entry; actual downloaded nonGT producer preflight only, no realGT/model run.
+- [x] RED actual cached producer roundtrip/score serializer, invalid-cache and real camera-conversion tests.
+- [x] Implement data preflight before model load; reuse official model initialization; add new21calls only, freeze29record manifest and evidence. Preserve old functions; share initialization rather than copy model runner.
+- [x] Score frozen arrays with paired_target_stats/strict serializers, output per-source/region and old/new intersection/native domains. Fixed models/targets and random labels saved beforeGT.
+- [x] GREEN targeted tests and full existing unittest entry; actual downloaded nonGT producer preflight only, no realGT/model run.
 
 ## Task3: release and user handoff
 Files: docs/research/four-source-routing-launch.md,root planning files,project-handoff.md.

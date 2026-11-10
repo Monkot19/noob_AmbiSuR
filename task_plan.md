@@ -483,8 +483,8 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 
 ## 2026-11-10 approved first batch implementation
 User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,inlineexecution.
-- [ ] Shared support/ranking TDD; old correspondence behavior preserved.
-- [ ] CLI/cache/camera/score roundtrip TDD, fixed29pairs/8reuse21new,actualnonGTpreflight.
+- [x] Shared support/ranking TDD; old correspondence behavior preserved.
+- [x] CLI/cache/camera/score roundtrip TDD, fixed29pairs/8reuse21new,actualnonGTpreflight. Unified84:75pass/9skip.
 - [ ] Unified verification,oneindependentreview,fixedcommit/launch/bundle,userhandoff. No training/GPU/GT execution here.
 
 ## Downloaded GPU evidence evaluation (approved existing specification)

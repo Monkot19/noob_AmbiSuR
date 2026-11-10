@@ -541,6 +541,29 @@ def build_correspondence_record(data, mvs_depth, probe, matches, seed=0, camera_
     return record
 
 
+def load_correspondence_model(config, vendor):
+    """Shared unchanged official precise initialization for old and new batches."""
+    import torch
+    if not torch.cuda.is_available():raise RuntimeError('approved precise batch requires CUDA; no silent CPU fallback')
+    torch.set_float32_matmul_precision('highest')
+    cache=Path(torch.hub.get_dir())/'checkpoints'/'romav2.0.1.pt';cache.parent.mkdir(parents=True,exist_ok=True)
+    model_config=config['model']
+    if not cache.exists():torch.hub.download_url_to_file(model_config['weights_url'],str(cache),hash_prefix=model_config['weights_sha256'])
+    if cache.stat().st_size!=model_config['weights_bytes'] or file_sha(cache)!=model_config['weights_sha256']:
+        raise ValueError('official RoMaV2 checkpoint identity differs')
+    sys.path.insert(0,str(vendor/'src'))
+    from romav2 import RoMaV2
+    import romav2.romav2 as donor_model
+    import romav2.local_correlation as corr
+    if not Path(donor_model.__file__).resolve().is_relative_to(vendor):raise ValueError('wrong installed RoMaV2')
+    if corr.local_corr is None:raise RuntimeError('approved Linux fused-local-corr backend missing; no silent fallback')
+    print('Initializing official RoMaV2 precise; DINOv3 code may be cached/downloaded.',flush=True)
+    model=RoMaV2(RoMaV2.Cfg(setting='precise',compile=False))
+    if (model.H_lr,model.W_lr,model.H_hr,model.W_hr,model.bidirectional)!=(800,800,1280,1280,True):
+        raise ValueError('official precise settings differ')
+    return model
+
+
 def correspondence_match(args):
     """Eight actual RGB pairs; no GT argument, model sampling, or training."""
     import time
@@ -583,24 +606,9 @@ def correspondence_match(args):
     write_run_metadata(args.output,dict(command=sys.argv,config=config),collect_run_identity(ROOT))
     write_json(args.output/'input_receipt.json',dict(capture_sha256=file_sha(cap_path),mvs_manifest_sha256=file_sha(mvs_path),
         images=image_receipts,records=[dict(camera=x[0]['reference'],**x[-1]) for x in prepared]))
-    if not torch.cuda.is_available():raise RuntimeError('approved precise batch requires CUDA; no silent CPU fallback')
-    torch.set_float32_matmul_precision('highest')
-    cache=Path(torch.hub.get_dir())/'checkpoints'/'romav2.0.1.pt';cache.parent.mkdir(parents=True,exist_ok=True)
     model_config=config['model']
     print('Inputs verified: 4 references / 8 pairs / 65536 frozen pixels. Checking RoMa checkpoint.',flush=True)
-    if not cache.exists():torch.hub.download_url_to_file(model_config['weights_url'],str(cache),hash_prefix=model_config['weights_sha256'])
-    if cache.stat().st_size!=model_config['weights_bytes'] or file_sha(cache)!=model_config['weights_sha256']:
-        raise ValueError('official RoMaV2 checkpoint identity differs')
-    sys.path.insert(0,str(vendor/'src'))
-    from romav2 import RoMaV2
-    import romav2.romav2 as donor_model
-    import romav2.local_correlation as corr
-    if not Path(donor_model.__file__).resolve().is_relative_to(vendor):raise ValueError('wrong installed RoMaV2')
-    if corr.local_corr is None:raise RuntimeError('approved Linux fused-local-corr backend missing; no silent fallback')
-    print('Initializing official RoMaV2 precise; DINOv3 code may be cached/downloaded.',flush=True)
-    model=RoMaV2(RoMaV2.Cfg(setting='precise',compile=False))
-    if (model.H_lr,model.W_lr,model.H_hr,model.W_hr,model.bidirectional)!=(800,800,1280,1280,True):
-        raise ValueError('official precise settings differ')
+    model=load_correspondence_model(config,vendor)
     print('Model initialized. Beginning actual 8-pair batch.',flush=True)
     records=[]
     for view,meta,data,probe,q,receipt in prepared:
@@ -629,6 +637,215 @@ def correspondence_match(args):
         interpretation='No GT read. RGB-only observed matches; original 7K candidate depths. Not independent evidence or a training mask.'))
 
 
+def validate_routing_pair(pair, frozen):
+    """A reused match must refer to precisely the frozen reference pixels."""
+    ids=frozen['pixel_ids'];n=len(ids)
+    if not np.array_equal(pair['pixel_ids'],ids):raise ValueError('cached pair pixel IDs differ')
+    if not np.array_equal(pair['reference_xy'],frozen['reference_xy']):raise ValueError('cached pair reference pixels differ')
+    for key,shape in (('source_xy',(n,2)),('forward_valid',(n,)),('cycle_valid',(n,)),('cycle_px',(n,))):
+        if pair[key].shape!=shape:raise ValueError('invalid cached pair field: '+key)
+    if pair['overlap_forward'].shape not in ((n,),(n,1)):raise ValueError('invalid overlap shape')
+
+
+def routing_camera_metadata(source, baseline, native_shape):
+    """CPU-only native host camera convention; binary/text reader is shared."""
+    from scripts.evaluate_candidate_actions import read_pose_files
+    from utils.graphics_utils import getWorld2View2
+    spec=importlib.util.spec_from_file_location('routing_colmap_loader',ROOT/'scene/colmap_loader.py')
+    loader=importlib.util.module_from_spec(spec);spec.loader.exec_module(loader)
+    pose_path,extr,intr,kind=read_pose_files(source,loader)
+    archive={c['img_name']:c for c in json.loads((baseline/'cameras.json').read_text(encoding='utf-8'))}
+    h,w=map(int,native_shape);cameras={}
+    for e in extr.values():
+        name=Path(e.name).stem
+        if name not in archive:continue
+        c=intr[e.camera_id];saved=archive[name]
+        if c.model not in ('PINHOLE','SIMPLE_PINHOLE'):raise ValueError('undistorted PINHOLE source required')
+        fx=float(c.params[0]);fy=float(c.params[1] if c.model=='PINHOLE' else c.params[0])
+        if (c.width,c.height)!=(saved['width'],saved['height']) or not np.allclose([fx,fy],[saved['fx'],saved['fy']],atol=1e-3,rtol=0):
+            raise ValueError('archive camera intrinsics differ: '+name)
+        rotation=loader.qvec2rotmat(e.qvec)
+        tr=getWorld2View2(rotation.T,np.asarray(e.tvec)).T
+        expected_pose,_=inference_camera(saved)
+        if not np.allclose(np.linalg.inv(tr.T),expected_pose,atol=5e-6,rtol=0):raise ValueError('archive pose differs: '+name)
+        k=np.array([[fx*w/c.width,0,w/2],[0,fy*h/c.height,h/2],[0,0,1]],np.float32)
+        cameras[name]=dict(k=k,transform=tr,shape=(h,w),znear=.01,image_name=Path(e.name).name)
+    if set(cameras)!=set(archive):raise ValueError('COLMAP and baseline camera names differ')
+    suffix='.bin' if kind=='binary' else '.txt'
+    return cameras,dict(pose_format=kind,pose_files={name+suffix:file_sha(pose_path/(name+suffix)) for name in ('images','cameras')})
+
+
+def build_routing_record(frozen, matches, cameras, seed=0, cycle_max_px=1., overlap_min=.5):
+    """Freeze variable-support evidence around the unchanged depth hypotheses."""
+    from utils.observed_correspondence import project_depth,pair_geometry,routing_evidence
+    n=len(frozen['pixel_ids']);s=len(matches)
+    if s!=len(cameras) or s<2:raise ValueError('at least two matching support cameras required')
+    ids=frozen['pixel_ids'];w,h=map(int,frozen['image_size']);xy=frozen['reference_xy']
+    if ids.dtype!=np.int64 or len(np.unique(ids))!=n or np.any((ids<0)|(ids>=h*w)):
+        raise ValueError('invalid frozen pixel IDs')
+    if not np.array_equal(xy,np.c_[ids%w,ids//w]):raise ValueError('frozen reference coordinates differ')
+    targets=frozen['candidate_depths']
+    if targets.shape!=(n,4):raise ValueError('four frozen depth sources required')
+    ref_k=frozen['camera_k'];ref_tr=frozen['camera_transform'];near=float(frozen.get('znear',.01))
+    costs=[];valid=[];geometry=[]
+    for match,cam in zip(matches,cameras):
+        validate_routing_pair(match,frozen)
+        geom=pair_geometry(xy,match['source_xy'],match['forward_valid'],ref_k,ref_tr,
+            cam['k'],cam['transform'],cam['shape'],near,cam['znear']);geometry.append(geom)
+        c=[];v=[]
+        for z in targets.T:
+            projected,good=project_depth(xy,z,ref_k,ref_tr,cam['k'],cam['transform'],cam['shape'],near,cam['znear'])
+            c.append(np.linalg.norm(projected-match['source_xy'],axis=1));v.append(good&match['forward_valid'])
+        costs.append(np.stack(c,1));valid.append(np.stack(v,1))
+    costs=np.stack(costs,2);valid=np.stack(valid,2)
+    evidence={key:np.stack(values,1) for key,values in dict(
+        forward_valid=[m['forward_valid'] for m in matches],cycle_valid=[m['cycle_valid'] for m in matches],
+        cycle_px=[m['cycle_px'] for m in matches],overlap=[m['overlap_forward'].reshape(n) for m in matches],
+        pair_valid=[g['valid'] for g in geometry],angle_deg=[g['angle_deg'] for g in geometry]).items()}
+    record={key:frozen[key].copy() for key in ('pixel_ids','reference_xy','candidate_depths','image_size','camera_k','camera_transform')}
+    record.update(all_candidate_costs_px=costs,all_candidate_projection_valid=valid,znear=np.array(near))
+    record.update({'observed_'+key:value for key,value in evidence.items()})
+    record.update({'pair_'+key:np.stack([g[key] for g in geometry],1) for key in geometry[0]})
+    record.update(support_ks=np.stack([c['k'] for c in cameras]),
+        support_transforms=np.stack([c['transform'] for c in cameras]))
+    record.update(routing_evidence(costs,valid,evidence,seed,cycle_max_px,overlap_min))
+    return record
+
+
+def routing_preflight(config, source, existing, baseline):
+    """Validate the approved cache/neighbor/photo identities before GPU work."""
+    from PIL import Image
+    manifest_path=existing/'correspondence_manifest.json'
+    if file_sha(manifest_path)!=config['existing_manifest_sha256']:raise ValueError('original8 manifest differs')
+    old=json.loads(manifest_path.read_text(encoding='utf-8'))
+    if old['model_commit']!=config['model']['commit'] or old['config']['model']!=config['model']:
+        raise ValueError('original RoMa model configuration differs')
+    receipt_path=existing/'input_receipt.json'
+    if file_sha(receipt_path)!=old['input_receipt_sha256']:raise ValueError('original image receipt differs')
+    original_receipt=json.loads(receipt_path.read_text(encoding='utf-8'))
+    for name,expected in config['baseline_metadata_sha256'].items():
+        if file_sha(baseline/name)!=expected:raise ValueError('baseline metadata differs: '+name)
+    neighbors={r['ref_name']:r['nearest_name'] for r in map(json.loads,(baseline/'multi_view.json').read_text().splitlines())}
+    cameras,pose_receipt=routing_camera_metadata(source,baseline,config['native_shape'])
+    records={r['camera']:r for r in old['records']};prepared=[];images={};pair_count=0;reused=0
+    for view in config['views']:
+        name=view['reference'];meta=records[name];supports=view['supports']
+        if supports!=neighbors[name] or len(set(supports))!=len(supports) or supports[:2]!=meta['supports']:
+            raise ValueError('original full ordered neighbor list required: '+name)
+        path=existing/meta['file']
+        if file_sha(path)!=meta['sha256']:raise ValueError('frozen candidate record differs: '+name)
+        frozen=read_npz(path);n=len(frozen['pixel_ids']);w,h=map(int,frozen['image_size'])
+        if n!=config['pixels_per_reference'] or [h,w]!=config['native_shape']:
+            raise ValueError('original reference pixel grid differs')
+        reference=cameras[name]
+        if not np.allclose(frozen['camera_k'],reference['k'],rtol=0,atol=1e-3) or not np.allclose(
+                frozen['camera_transform'],reference['transform'],rtol=0,atol=5e-6):
+            raise ValueError('native reference camera differs: '+name)
+        cached={}
+        for pair in meta['pairs']:
+            pp=existing/pair['file']
+            if file_sha(pp)!=pair['sha256']:raise ValueError('cached pair hash differs: '+pair['file'])
+            data=read_npz(pp);validate_routing_pair(data,frozen)
+            cached[pair['support']]=(data,pair,pp)
+        if set(cached)!=set(meta['supports']) or len(cached)!=2:raise ValueError('exactly original two cached supports required')
+        for image_name in [name,*supports]:
+            if image_name not in images:
+                path=source/'images'/cameras[image_name]['image_name']
+                with Image.open(path) as image:
+                    if list(image.size)!=config['rgb_size']:raise ValueError('RGB header differs: '+image_name)
+                sha=file_sha(path)
+                if image_name in original_receipt['images'] and sha!=original_receipt['images'][image_name]['sha256']:
+                    raise ValueError('original photograph differs: '+image_name)
+                images[image_name]=dict(file=path.name,bytes=path.stat().st_size,sha256=sha)
+        pair_count+=len(supports);reused+=len(cached)
+        prepared.append(dict(view=view,meta=meta,frozen=frozen,cached=cached))
+    if (pair_count,reused,pair_count-reused)!=(config['pair_count'],config['reused_pairs'],config['new_pairs']):
+        raise ValueError('approved pair budget differs')
+    receipt=dict(existing_manifest_sha256=file_sha(manifest_path),existing_receipt_sha256=file_sha(receipt_path),
+        baseline_metadata_sha256=config['baseline_metadata_sha256'],images=images,
+        pair_count=pair_count,reused_pairs=reused,new_pairs=pair_count-reused,**pose_receipt)
+    return prepared,cameras,receipt
+
+
+def routing_match(args):
+    """Reuse 8 frozen RGB pairs, acquire only approved21, never load GT/model depths."""
+    import shutil
+    import time
+    import torch
+    from utils.observed_correspondence import query_matches
+    config=json.loads(args.config.read_text(encoding='utf-8'));vendor=args.vendor.resolve(strict=True)
+    outside_inputs(args.output,[args.source,args.existing,args.baseline,vendor])
+    if subprocess.check_output(['git','rev-parse','HEAD'],cwd=vendor,text=True).strip()!=config['model']['commit']:
+        raise ValueError('pinned RoMaV2 source required')
+    if subprocess.check_output(['git','status','--porcelain'],cwd=vendor,text=True).strip():raise ValueError('RoMaV2 source must be clean')
+    prepared,cameras,receipt=routing_preflight(config,args.source,args.existing,args.baseline)
+    args.output.mkdir(parents=True,exist_ok=False)
+    write_run_metadata(args.output,dict(command=sys.argv,config=config),collect_run_identity(ROOT))
+    write_json(args.output/'input_receipt.json',receipt)
+    print(f"Inputs verified: {len(prepared)} references / {receipt['pair_count']} pairs / "
+          f"{receipt['reused_pairs']} reused / {receipt['new_pairs']} new. No training or GT.",flush=True)
+    model=load_correspondence_model(config,vendor);records=[]
+    for item in prepared:
+        view=item['view'];meta=item['meta'];frozen=item['frozen'];name=view['reference']
+        xy=frozen['reference_xy'];ids=frozen['pixel_ids'];w,h=map(int,frozen['image_size'])
+        matches=[];timings=[];supports=[]
+        for support in view['supports']:
+            filename=name+'_'+support+'.npz';path=args.output/filename;cam=cameras[support]
+            if support in item['cached']:
+                match,old_pair,old_path=item['cached'][support]
+                with old_path.open('rb') as src,path.open('xb') as dst:shutil.copyfileobj(src,dst)
+                timing=dict(support=support,file=filename,sha256=file_sha(path),reused=True,
+                    original_sha256=old_pair['sha256'])
+                print('REUSE',name,'->',support,flush=True)
+            else:
+                torch.cuda.reset_peak_memory_stats();torch.cuda.synchronize();start=time.monotonic()
+                print('START RoMaV2',name,'->',support,flush=True)
+                with torch.inference_mode():
+                    prediction=model.match(args.source/'images'/cameras[name]['image_name'],args.source/'images'/cam['image_name'])
+                    match=query_matches(prediction,xy,(h,w),cam['shape'])
+                torch.cuda.synchronize();seconds=time.monotonic()-start
+                match=dict(pixel_ids=ids,**match);validate_routing_pair(match,frozen);save_npz(path,match)
+                timing=dict(support=support,file=filename,sha256=file_sha(path),reused=False,seconds=seconds,
+                    peak_allocated_bytes=torch.cuda.max_memory_allocated(),peak_reserved_bytes=torch.cuda.max_memory_reserved())
+                del prediction
+                print('DONE',name,'->',support,'seconds',round(seconds,2),flush=True)
+            matches.append(match);timings.append(timing);supports.append(cam)
+        record=build_routing_record(frozen,matches,supports,int(config['seed'])+int(meta['camera_uid']),**config['support_quality'])
+        filename=name+'.npz';save_npz(args.output/filename,record)
+        records.append(dict(camera=name,camera_uid=meta['camera_uid'],supports=view['supports'],pairs=timings,
+            file=filename,sha256=file_sha(args.output/filename),original_record_sha256=meta['sha256']))
+        print('FROZEN four-source routing',name,flush=True)
+    write_json(args.output/'correspondence_manifest.json',dict(schema_version=2,audit_type='four_source_routing',
+        config=config,records=records,model_commit=config['model']['commit'],backend='official fused-local-corr',
+        torch=torch.__version__,input_receipt_sha256=file_sha(args.output/'input_receipt.json'),
+        interpretation='Frozen offline source ranks and shared support evidence. No GT, no training teacher mask, no surface updates.'))
+
+
+def routing_score_specs(data):
+    """Describe policy/per-source paired statistics; original scorer serializes."""
+    targets=data['candidate_depths'];n=len(targets);all_pixels=np.ones(n,bool)
+    names=('current','da3','mvs','spread')
+    for count in (3,4):
+        for protocol,other in (('old_first2','new_best2'),('new_best2','old_first2')):
+            p=f'{protocol}_common{count}';domain=data[p+'_domain'];labels=data[p+'_winner']
+            random=data[p+'_random_winner'];paired=domain&data[f'{other}_common{count}_domain']
+            def target_for(which):
+                target=targets[:,1].copy();ids=np.flatnonzero(which>=0)
+                target[ids]=targets[ids,which[ids]]
+                return target
+            for suffix,scope in (('full_frozen',all_pixels),('native',domain),('paired',paired)):
+                subset=p+'_'+suffix
+                for name,target in (('selected',target_for(labels)),('random_source_quota',target_for(random)),
+                                    ('da3',targets[:,1]),('current',targets[:,0])):
+                    extra={'policy_labels':random if name=='random_source_quota' else labels}
+                    yield 'routing_policy',name,subset,scope,scope,target,extra
+                if suffix=='full_frozen':continue
+                for j in range(count):
+                    yield 'routing_source',names[j],subset,scope,scope,targets[:,j],{}
+                    yield 'routing_selection',names[j],subset,scope,scope&(labels==j),targets[:,j],{}
+                yield 'routing_selection','abstain',subset,scope,scope&(labels<0),targets[:,1],{}
+
+
 def correspondence_score(args):
     """Read only completed evidence and cached GT; reuse paired target statistics."""
     outside_inputs(args.output,[args.matches,args.gt_cache])
@@ -652,7 +869,7 @@ def correspondence_score(args):
         region_ids=grid['region'].ravel()[ids];pixel_count+=len(ids)
         z,p,q,spread=data['candidate_depths'].T
         regs=[('all',np.ones(len(ids),bool)),*[(f'region_{int(r)}',region_ids==r) for r in np.unique(region_ids)]]
-        def append(kind,source,subset,domain,selected,target):
+        def append(kind,source,subset,domain,selected,target,extra=None):
             for region,mask in regs:
                 row=dict(camera=name,kind=kind,source=source,subset=subset,region=region)
                 row.update(paired_target_stats(z,p,target,truth,domain&visible&mask,selected))
@@ -661,7 +878,17 @@ def correspondence_score(args):
                 row.update(abs_mean_mm=float(error.mean()) if len(error) else None,
                     abs_median_mm=float(np.median(error)) if len(error) else None,
                     abs_p90_mm=float(np.quantile(error,.9)) if len(error) else None)
+                if extra:
+                    labels=extra['policy_labels'];use_domain=domain&visible&mask
+                    use_domain&=np.isfinite(z)&(z>0)&np.isfinite(p)&(p>0)&np.isfinite(target)&(target>0)
+                    row.update(selected_count=int((use_domain&(labels>=0)).sum()),
+                        abstain_count=int((use_domain&(labels<0)).sum()))
                 rows.append(row)
+        if manifest.get('audit_type')=='four_source_routing':
+            for kind,source,subset,domain,selected,target,extra in routing_score_specs(data):
+                append(kind,source,subset,domain,selected,target,extra)
+            print('Scored cached routing GT',name,'pixels',len(ids),flush=True)
+            continue
         # Random controls fixed without GT. Same non-GT domain and exact budget.
         for common in (3,4):
             counts=data[f'common{common}_support_count'];means=data[f'common{common}_means']
@@ -687,8 +914,11 @@ def correspondence_score(args):
         for j,label in enumerate(('pair0','pair1','joint')):
             append('triangulation',label,label,np.ones(len(ids),bool),data['tri_valid'][:,j],data['tri_depth'][:,j])
         print('Scored cached GT',name,'pixels',len(ids),flush=True)
-    write_json(args.output/'results.json',dict(schema_version=1,pixel_count=pixel_count,rows=rows,gt_cache_sha256=gt_receipts,
-        interpretation='Original sampled pixels, not dense coverage. Positive gains mean lower same-ray camera-z error. One/two shared supports separate. Random selected before GT. Descriptive groups are not validated gates. Learned matches and repeated photos are not independent. No surface or mesh benefit established.'))
+    interpretation=('Four-source routing on original frozen pixels. Full/native/paired domains distinct; '
+        'source-quota random labels frozen before GT. Current is a static comparison, not a self-supervision target. '
+        'No learned-match independence, training mask or surface/mesh benefit established.' if manifest.get('audit_type')=='four_source_routing' else
+        'Original sampled pixels, not dense coverage. Positive gains mean lower same-ray camera-z error. One/two shared supports separate. Random selected before GT. Descriptive groups are not validated gates. Learned matches and repeated photos are not independent. No surface or mesh benefit established.')
+    write_json(args.output/'results.json',dict(schema_version=1,pixel_count=pixel_count,rows=rows,gt_cache_sha256=gt_receipts,interpretation=interpretation))
     fields=list(dict.fromkeys(k for row in rows for k in row))
     with (args.output/'metrics.csv').open('x',newline='',encoding='utf-8-sig') as stream:
         writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader();writer.writerows(rows)
@@ -712,11 +942,16 @@ def main():
         m.add_argument('--'+flag,type=Path,required=True)
     c=sub.add_parser('correspondence-score',help='score frozen correspondence evidence using existing GT grids')
     for flag in ('matches','gt-cache','output'):c.add_argument('--'+flag,type=Path,required=True)
+    m=sub.add_parser('routing-match',help='reuse original8 RGB pairs; acquire21 new original-neighbor pairs; no GT')
+    for flag in ('config','source','existing','baseline','vendor','output'):m.add_argument('--'+flag,type=Path,required=True)
+    c=sub.add_parser('routing-score',help='same cached-GT scorer for frozen four-source routing')
+    for flag in ('matches','gt-cache','output'):c.add_argument('--'+flag,type=Path,required=True)
     args=p.parse_args()
     if args.mode=='infer':infer(args)
     elif args.mode=='score':score(args)
     elif args.mode=='server':server(args)
     elif args.mode=='match':correspondence_match(args)
+    elif args.mode=='routing-match':routing_match(args)
     else:correspondence_score(args)
 
 
