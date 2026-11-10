@@ -1,5 +1,21 @@
 # AmbiSuR 新项目 Progress
 
+### 2026-11-10 Correspondence experiment source/interface proposal
+- User says continue after promise to review matcher/interfaces/resources before implementation. Read pinnedRoMaV2match/sample/geometry/features/localcorr andofficialCOLMAP3.11.1lineartriangulation; cachedsmallsource/release metadata only. Actualgeometryproducer roundtrip and8pairs12imageheaders verified, no weights/download/install/forward/newGT.
+- Prepared reviewable spec2026-11-10-observed-correspondence-probe-design.md with primaryobservedreprojection4sources andsecondaryfixedcameratriangulation on original4viewpixelsets; oneexistingentry/helper/unifiedtests/config, no trainchanges. Explicit0.5pixelboundary, no model.sample, learnedconfidence/GT/photo-reuse limits.
+- Resources: checkpoint1.02GiB, localfreeGPU1.9GiB; savedservervision.22.1belowofficial>=.23, requireisolatedruntimechoice notsilentupgrade. Outputproposal/source/receipts atanalysis/observed_correspondence_preflight_20261110_v1. Awaituserreview ofnewbatch beforeimplementation/weights/inference.
+- Independentproposalreview clarified3contracts before execution: forward/reverse/commonvaliddomains, COLMAPnormalizedobservations/cameras, nativepixel4/8perturbations; all resolved, no remaining concrete blocker. This is not a model-forward/VRAM confirmation. Draftarchive firstwrite hitWindowsdefaultGBK onChineseMarkdown; explicitUTF8fixed, no scientificoperation/GT involved.
+
+### 2026-11-10 Failure conditions investigated using existing outputs
+- User approved continuing offline evidence investigation. Standalone artifact adapter reuses production warp/roundtrip/NCC and shared source scorer; all17 original probes/means and accepted statistics reproduce,59412 postGT accepted unchanged. PreGT evidence/quantiles frozen; fixed local/wide depth curves, source signs/angles/texture and model consistency saved.
+- Features,score,correspondence,explain all exit0. Two distinct evaluation phases:17reference GT grids, then34unique support grids for explanatory visibility; no failures/retries. Cached-only plane explanation has264rows; conditional stats686rows. No production Python/config/renderer/method or training changes.
+- DSC06348 supports1.98..6.86cm,weak geometry/flat costs;3386two-source1px passes still gP-118.633mm. DSC06669 largebaseline~1.45m,strong wrong NCC;863bothsource winners still gP-80.207mm. Ceiling219bothsource winners91.78%harm. Actual source cost_volume is argmax depth, not confidence.
+- Visible/locallyplanar explanatory subsets889/486 still QbeatsGTplane91.23%/72.43%; conditional-on-accepted bias, GT finite-difference/bilinear/registration limitations explicit. Low-angle/flatness excludes beneficial other15rows too, so no validated routing rule. Independent terminal review found no material issues; actualsourcehash/score invariants savedvalidation.json. Report2026-11-10-depth-source-failure-evidence.md and artifactrootanalysis/depth_source_failure_evidence_20261110_v1. Nextnewcorrespondence/support/teacher rule requires discussion.
+
+### 2026-11-10 User discusses conditional regional depth losses
+- Read-only discussion: rechecked actual IndoorGS Sections4.1-4.3, CVF entry and an explicitly unofficial reproduction's PCC/loss call. Corrected analogy: evidence-specific treatment is supported, but multi-teacher routing is our unvalidated adaptation; patch correlation does not resolve absolute offset.
+- Reused completed17view numbers; no new GT queries, training or production edits. Proposed next discussion focuses on nonGT conditions that reject severe MVS/NCC failures while retaining source gains; retain baseline fallback, separate position from ALR, and avoid simultaneous competing absolute teachers. No new rule implementation authorized.
+
 > 当前主工作目录：`D:\research_Space\noob_AmbiSuR`，分支 `codex/selector-v3-spread`；C 保留 detached3775135。旧记录按时间保留，当前入口为 `docs/research/project-handoff.md`。
 
 ## Session Log

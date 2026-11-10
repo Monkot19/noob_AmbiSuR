@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-10最新：失败证据调查完成。** 17原probe与59412接受统计复现。DSC06348是小基线/弱位置分辨条件；DSC06669有大基线却仍出现错误NCC偏好。双支持天花板219条仍91.78%比DA3恶化>5mm。可见/局部平面对照排除了“只需更严NCC或多一视角”的充分性；低夹角门槛也会误伤其他视角。尚无已验证分区训练规则，生产代码/配置/训练不变。报告[失败证据](2026-11-10-depth-source-failure-evidence.md)，产物analysis/depth_source_failure_evidence_20261110_v1，独立终审无实质问题。下一批真实对应/支持选择/新loss或训练须先讨论。
+
 > 2026-11-10离线17视角评价完成：真实下载路径depth_source_check_17views_after_v3_position_check_from_NVSAnywhere/20261109_v1，实际状态为原生C0的7K。固定clean a4155ac原score一次40.97秒退出0，5369行／3237汇总，GT无失败重跑。四者共同域3059926条／36.62%可见记录，MAE当前59.296／DA3 71.781／spread55.371／MVS66.722mm，不能把条件域排名扩展到全场景。NCC接受GT后59412条，平均g0+2.312／gP+15.776mm，但改善DA3比例63.72%低于GT前等预算随机64.18%，伤害>5mm率33.26%高于随机31.78%；全图仅实际抽样替换目标收益0.11216mm／覆盖0.71095%，不是训练收益。墙71局部MVS强，天花板原DA3更准且准入危险。两个NCC视角全部重用于MVS输入。独立只读终审无实质问题，CSV/JSON逐字段与区域计数校验通过。报告docs/research/2026-11-10-depth-source-and-admission-results.md，产物analysis/depth_source_comparison_20261110_v1；没有新增方法／训练／loss／预算／GT标签，不直接授权30K。
 
 > 2026-11-09服务器成功回执：b769fd55支持视角上限版MVS推理，用户日志完整列出17视角480x640及inference_support_cap_v4.exitcode=0；DSC06669实际5源／DSC06681实际4源均完成，其余15视角7源。辅助DINO／ResNet缓存复用，原capture及旧partial／失败记录保留。实际manifest／17NPZ下载完整性与GT精度／准入收益尚未本地检查；不据此宣称几何收益，不启动训练。服务器归档根/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1；用户下载目标D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/depth_source_check/20261109_v1。之后仅用原evaluate_depth_sources.py score，capture来自原capture子目录，MVS来自mvs_support_cap_v4。
