@@ -1,5 +1,9 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-11-10 accepted route and support-pool feasibility
+
+User accepts fixed RoMa correspondences to compare current/DA3/spread/MVS rather than using triangulated depth as a fifth teacher. Rendering NCC remains baseline loss; position decisions separate from ALR. Read-only native C0 archive metadata: DSC06348/DSC06274/DSC06289 each8 neighbors, DSC06669has5;29total versus8cached,so proposed first offline batch needs21newpairs. Entire406-view neighbor distribution includes2zero/1one/1two/5four/4five/2six/9seven/382eight; do not promise every pixel/view has sufficient support. Existing helper cost axis supportsS,but builder/match/score fixed2 and admissionMVS-only. Proposed design in docs/superpowers/specs/2026-11-10-four-source-depth-routing-design.md; no implementation/inference/GT/target or training changes.
+
 ## 2026-11-10 observed correspondence: conditional position information
 
 Fourchosenviews65536original7Kpixels,official8GPUmatching/frozengeometry0. FrozenobservedreprojectiondoesenrichMVSbenefit inlargebaselineDSC06669 (2011dual-supportaccept,gP+61.893 vsoldNCC1160/-80.498),butsmallparallaxDSC06348remains5698/-105.003. Fourviewpoolnew20863/gP-9.273 net harmful,old9846/-42.142 notsamebudget. RandompreGTsamebudgetpostGT20889/-46.420;notindependentviews. Jointtri06669samepixel15934:MAE33.639vsDA361.024,current79.717,MVS198.372. Otherthreejointmeanseriousoutliersdespitesomegoodmedians. Median1nativepixeldepthsensitivity06348/06669/06274/06289=331.38/4.17/102.13/30.40mm;smallpointreprojectiondoesnotimplyaccurateposition. Numericallystablesmallsubsetscanwronglytriangulate,mustnotcallconditioningcorrectnessprobability.
