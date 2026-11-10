@@ -2,6 +2,8 @@
 
 ## 2026-11-10 accepted route and support-pool feasibility
 
+Firstbatch implementation confirmed by user and completed locally oncodex/four-source-depth-routing, fixedc4546a390004c8c9bbf41b12e21b0a0a2d919cac. Onlyoffline CLI/helper/config/test; no train/scene/ALR/renderer changes. Real4refs406cams33photos preflight29pairs8reuse21new, actualoriginal8pair adapter preserves65536IDs/depths and same2protocol outputs. Unified84/75pass9skip inclactualRoMa coordinateproducer; independentreview noCritical/Important. Ranking/per-supportagreement reconstructedfromstoredmeans/costs/indices ratherthanredundantarrays. Actualnew21GPU/GTquality andsurfacegain stillunverified; userAutoDL executionnext.
+
 User accepts fixed RoMa correspondences to compare current/DA3/spread/MVS rather than using triangulated depth as a fifth teacher. Rendering NCC remains baseline loss; position decisions separate from ALR. Read-only native C0 archive metadata: DSC06348/DSC06274/DSC06289 each8 neighbors, DSC06669has5;29total versus8cached,so proposed first offline batch needs21newpairs. Entire406-view neighbor distribution includes2zero/1one/1two/5four/4five/2six/9seven/382eight; do not promise every pixel/view has sufficient support. Existing helper cost axis supportsS,but builder/match/score fixed2 and admissionMVS-only. Proposed design in docs/superpowers/specs/2026-11-10-four-source-depth-routing-design.md; no implementation/inference/GT/target or training changes.
 
 ## 2026-11-10 observed correspondence: conditional position information

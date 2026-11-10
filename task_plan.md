@@ -485,7 +485,7 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,inlineexecution.
 - [x] Shared support/ranking TDD; old correspondence behavior preserved.
 - [x] CLI/cache/camera/score roundtrip TDD, fixed29pairs/8reuse21new,actualnonGTpreflight. Unified84:75pass/9skip.
-- [ ] Unified verification,oneindependentreview,fixedcommit/launch/bundle,userhandoff. No training/GPU/GT execution here.
+- [x] Unified verification,oneindependentreview(noCritical/Important),fixedcommit/launch/bundle/push/userhandoff. No training/GPU/GT execution here. Server actual21newpairs stillpending userexecution, not part oflocalcompletion claim.
 
 ## Downloaded GPU evidence evaluation (approved existing specification)
 - [x] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.

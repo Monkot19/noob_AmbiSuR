@@ -40,8 +40,8 @@ Interfaces: routing-match(config,source,existing,baseline,vendor,output); routin
 
 ## Task3: release and user handoff
 Files: docs/research/four-source-routing-launch.md,root planning files,project-handoff.md.
-- [ ] One read-only whole-branch review, verify production paths unchanged; meaningful fixes RED/GREEN if required.
-- [ ] Pin production commit; copy-paste Bash uses existing environment/cache, new output and exitcode; check Bash syntax/actual CLI.
-- [ ] Commit/push isolated branch; supply offline Gitbundle fallback as prior GitHub failures warrant. No automatic server execution.
+- [x] One read-only whole-branch review, verify production paths unchanged; no Critical/Important fixes required. Minor redundant derived arrays deferred; documented reconstruction.
+- [x] Pin production commit; copy-paste Bash uses existing environment/cache, new output and exitcode; check Bash syntax/actual CLI.
+- [x] Commit/push isolated branch; supply offline Gitbundle fallback as prior GitHub failures warrant. No automatic server execution.
 
 Root progress.md is the existing execution ledger (reuse over a second bookkeeping framework). No milestone implies scientific benefit before actual GPU/GT evaluation.
