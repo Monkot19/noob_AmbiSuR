@@ -176,6 +176,21 @@ SH
 
 校验成功后执行下方相同启动段，**仅将out改为**`/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_views_weight_retry_v2`。原four_views_v1目录/log/exitcode全部保留，不重复安装环境，不覆盖旧输出。固定7c698a3会校验并复用正式缓存；后续DINOv3源码下载仍可能联网，原60秒self-stack继续保留。服务器恢复由用户执行，尚无实际匹配结果。
 
+### 服务器SSL握手超时时走本地上传
+
+用户续传命令开启network_turbo后20秒SSL握手超时，零payload，尚无新权重/模型执行。切换同一官方文件的传输路径，不改任何科学设置：本地81.344秒下载完成，精确大小/SHA已核验；文件`D:/research_Space/handoff_bundle/observed-correspondence-audit_20261110/romav2.0.1.pt`。将其上传至服务器`/root/autodl-tmp/ambisur_runtime/observed-correspondence/cache/torch/hub/checkpoints/`。本地仅占约1.02GiB磁盘，没有安装/加载模型；官方大小/SHA保持上述值，receipt同本地权重目录。上传后校验：
+
+```bash
+bash <<'SH'
+set -euo pipefail
+weights=/root/autodl-tmp/ambisur_runtime/observed-correspondence/cache/torch/hub/checkpoints/romav2.0.1.pt
+test "$(stat -c %s "$weights")" = 1095883548
+printf '1557dec0d21b62366465f7ff4d5fdf228cc695d0582e196ad2b80e05230828b7  %s\n' "$weights" | sha256sum --check -
+SH
+```
+
+得到OK再启动上述新out。此次只补传权重，不重新传三个原交付文件，不重装依赖。
+
 ## 启动正式八对检查
 
 不需要重新capture、运行MVS或训练。选择新输出目录；已存在则停止，不覆盖旧记录。`match`会先校验实际图片header、原probe散列、7K/支持/相机身份，再加载模型。每对开头/结尾打印进度；启用60秒自身调用栈，网络缓存等待也可定位。
