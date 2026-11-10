@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> 对应离线检查固定实现`7c698a3f11e5df50eaa5d70d3947639e2c39ed18`。后续仅文档回执；服务器按启动指南checkout该实现，不以分支最新文档提交代替版本身份。
+
 > **2026-11-10已批准四参考／八对真实对应检查并完成本地实现。** D主目录分支`codex/observed-correspondence-audit`；原4×16384像素、8个原支持配对冻结，官方RoMaV2 precise源码95c9968。原评价CLI新增match/correspondence-score，normalized COLMAP pair/joint三角化与±1原生像素敏感度；非GT随机控制和几何证据先冻结，再读原GT网格评分。统一79项70通过9跳过（8native/1可选旧MVS源码），实际供体坐标/置信度函数执行通过、65536真实capture数组接口通过（合成投影，仅接线测试）；独立复核无剩余实质问题，四图MVS掩码共享适配与旧评分结果完全相同。没有模型权重下载／GPU前向或新质量结果，不改train/renderer/ALR/LR/损失，不启动新训练。命令与环境成本见[对应检查指南](observed-correspondence-launch.md)，交付包`D:/research_Space/handoff_bundle/observed-correspondence-audit_20261110`。用户上传后自行执行，服务器不读取GT。
 
 > **2026-11-10最新：失败证据调查完成。** 17原probe与59412接受统计复现。DSC06348是小基线/弱位置分辨条件；DSC06669有大基线却仍出现错误NCC偏好。双支持天花板219条仍91.78%比DA3恶化>5mm。可见/局部平面对照排除了“只需更严NCC或多一视角”的充分性；低夹角门槛也会误伤其他视角。尚无已验证分区训练规则，生产代码/配置/训练不变。报告[失败证据](2026-11-10-depth-source-failure-evidence.md)，产物analysis/depth_source_failure_evidence_20261110_v1，独立终审无实质问题。下一批真实对应/支持选择/新loss或训练须先讨论。

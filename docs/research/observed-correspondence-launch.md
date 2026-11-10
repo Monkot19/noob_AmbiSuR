@@ -1,7 +1,7 @@
 # 四参考／八对真实对应离线检查
 
 批准规格：`docs/superpowers/specs/2026-11-10-observed-correspondence-probe-design.md`。
-分支：`codex/observed-correspondence-audit`。发布提交见本文件末尾回执；不会启动训练，不改DA3、MVS、renderer或baseline。
+分支：`codex/observed-correspondence-audit`。固定实现提交：`7c698a3f11e5df50eaa5d70d3947639e2c39ed18`；不会启动训练，不改DA3、MVS、renderer或baseline。
 
 ## 这批执行什么
 
@@ -25,7 +25,7 @@ cd /root/autodl-tmp/noob_AmbiSuR
 test -z "$(git status --porcelain)"
 git bundle verify /root/autodl-tmp/observed-correspondence-audit.bundle
 git fetch /root/autodl-tmp/observed-correspondence-audit.bundle refs/heads/codex/observed-correspondence-audit
-git switch --detach FETCH_HEAD
+git switch --detach 7c698a3f11e5df50eaa5d70d3947639e2c39ed18
 git rev-parse HEAD
 git diff --exit-code
 
@@ -89,6 +89,7 @@ set -euo pipefail
 trap 'rc=$?; printf "启动停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
 cd /root/autodl-tmp/noob_AmbiSuR
 test -z "$(git status --porcelain)"
+test "$(git rev-parse HEAD)" = 7c698a3f11e5df50eaa5d70d3947639e2c39ed18
 git rev-parse HEAD
 git diff --exit-code
 runtime=/root/autodl-tmp/ambisur_runtime/observed-correspondence

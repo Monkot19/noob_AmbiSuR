@@ -479,4 +479,4 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 - [x] Preserve prior analysis/spec as 30b7dad, create D branch codex/observed-correspondence-audit.
 - [x] RED meaningful unified regressions; implement offline helper/CLI/config.
 - [x] GREEN unified tests, actual input preflight, independent narrow review.
-- [ ] Fixed-commit AutoDL launch and probe/bundle handoff; no automatic server/model run.
+- [x] Fixed implementation7c698a3, AutoDL launch and probe/source/code bundle handoff; no automatic server/model run.
