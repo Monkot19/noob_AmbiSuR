@@ -81,6 +81,18 @@ printf '采集PID：%s\n日志：%s.log\n' "$!" "$out"
 SH
 ```
 
+## 第29行原采集清单缺失：2026-11-12恢复
+
+用户服务器已成功checkout53600fd，启动脚本的内层第29行`test -s "$audit/capture/capture_manifest.json"`退出1，尚未启动RoMa或创建本轮输出。不是模型／代码推理错误；该路径文件缺失或为空（具体是否清理／移动未知）。本地原始10项输入全部存在，大小／SHA与固定dense配置一致，已准备97.29MiB最小恢复包，不重采集或预测。
+
+将交付目录`D:/research_Space/handoff_bundle/four-source-dense-routing_20261112`中新补充的`dense-source-inputs.zip`和`restore-dense-source-inputs.sh`上传至`/root/autodl-tmp/`，然后执行：
+
+```bash
+bash /root/autodl-tmp/restore-dense-source-inputs.sh
+```
+
+恢复程序先验证整个包及服务器已有同名文件，完全相同则保留，仅写缺失文件；任何已存在但内容不同的文件都保留并停止，不覆盖。包括原capture manifest／MVS manifest及本次4参考各自的完整depth-map／MVS文件共10项，原manifest保持原字节，不伪造清单。通过后直接重用原启动脚本；不改固定科学提交、方法、环境或baseline，不需要再次fetch。若遇到同名空文件／内容冲突，贴回错误后处理，不能直接覆盖。
+
 ## 查看进度与完成条件
 
 ```bash

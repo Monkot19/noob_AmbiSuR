@@ -518,3 +518,5 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 Userapprovedconcretespec/sourcecountpriority. Dbranchcodex/four-source-dense-routing fromef3e32c,inline3tasks:shareddecisionsTDD;densecapture/scorerTDD;verification/review/fixedhandoff. No newGT/model/trainexecuted.
 
 - [x] Dense implementation complete53600fd:unified92/83pass9skip,actual2046336inputpreflight,independentreview2P1fixedwithCLIRED/GREEN+narrowrecheck;launchsyntaxverified. No realGPU/GTquality/newtraining.
+
+- Serverlaunchpausedbeforemodel:originalcapturemanifestmissing/empty. Localminimaloriginalinputrestorepackready/hashchecked;userupload+restorepending,no newscientificrun.
