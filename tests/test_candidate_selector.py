@@ -124,6 +124,11 @@ class ObservedCorrespondenceTests(unittest.TestCase):
         self.assertTrue(result['forward_valid'].all());self.assertTrue(result['cycle_valid'].all())
         np.testing.assert_allclose(result['cycle_px'],0,atol=1e-5)
         self.assertEqual(result['precision_forward'].shape,(2,2,2))
+        from scripts.evaluate_depth_sources import query_dense_matches
+        dense=query_dense_matches(raw,(h,w),(h,w),chunk_size=17)
+        all_xy=np.c_[np.arange(h*w)%w,np.arange(h*w)//w]
+        direct=query_matches(raw,all_xy,(h,w),(h,w))
+        for key,value in direct.items():np.testing.assert_array_equal(dense[key],value)
 
     def test_reverse_padding_is_invalid_not_zero_cycle(self):
         from utils.observed_correspondence import query_matches
@@ -479,6 +484,35 @@ class DenseRoutingTests(unittest.TestCase):
             self.assertEqual(len(receipt['images']),3);self.assertEqual(receipt['pair_count'],2)
             self.assertEqual(prepared[0]['frozen']['candidate_depths'].shape,(1024,4))
             self.assertEqual(prepared[0]['frozen']['pixel_ids'][-1],1023)
+            # Exercise the actual dispatch -> dense query -> pair cache -> manifest.
+            # Only GPU forward/bootstrap is replaced; capture meta has no sha256.
+            from contextlib import ExitStack,nullcontext
+            from scripts import evaluate_depth_sources as audit
+            vendor=root/'vendor';vendor.mkdir()
+            cfg.update(audit_type='four_source_dense',seed=0,support_quality=dict(cycle_max_px=1.,overlap_min=.5))
+            write_json(root/'config.json',cfg)
+            args=SimpleNamespace(config=root/'config.json',source=source,existing=old,baseline=base,
+                capture=cap,mvs=mvs,vendor=vendor,output=root/'dense')
+            y,x=torch.meshgrid(torch.arange(32),torch.arange(32),indexing='ij')
+            grid=torch.stack((2*(x+.5)/32-1,2*(y+.5)/32-1),-1)[None]
+            raw={f'{k}_{d}':v for d in ('AB','BA') for k,v in
+                [('warp',grid),('overlap',torch.ones(1,32,32,1)),('precision',torch.eye(2).expand(1,32,32,2,2))]}
+            calls=[]
+            def forward(a,b):calls.append((a,b));return raw
+            original_check=subprocess.check_output
+            def check(command,*a,**kw):
+                if kw.get('cwd')==vendor.resolve():return 'example\n' if command[-1]=='HEAD' else ''
+                return original_check(command,*a,**kw)
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(audit.subprocess,'check_output',side_effect=check))
+                stack.enter_context(patch.object(audit,'offline_correspondence_hub',return_value=nullcontext()))
+                stack.enter_context(patch.object(audit,'load_correspondence_model',return_value=SimpleNamespace(match=forward)))
+                for method in ('reset_peak_memory_stats','synchronize','max_memory_allocated','max_memory_reserved'):
+                    stack.enter_context(patch.object(torch.cuda,method,return_value=0))
+                audit.routing_match(args)
+            manifest=json.loads((args.output/'correspondence_manifest.json').read_text())
+            self.assertEqual(len(calls),2);self.assertEqual(manifest['audit_type'],'four_source_dense')
+            self.assertEqual(manifest['records'][0]['original_record_sha256'],file_sha(old/'ref.npz'))
             (cap/'depth.npz').write_bytes(b'changed')
             with self.assertRaisesRegex(ValueError,'depth'):dense_routing_preflight(cfg,source,old,base,cap,mvs)
 

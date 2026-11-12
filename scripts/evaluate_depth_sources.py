@@ -924,7 +924,8 @@ def dense_routing_preflight(config, source, existing, baseline, capture, mvs):
             sha=file_sha(path)
             if sha!=original['images'][image_name]['sha256']:raise ValueError('original photograph differs: '+image_name)
             images[image_name]=dict(file=path.name,bytes=path.stat().st_size,sha256=sha)
-        prepared.append(dict(view=view,meta=meta,frozen=frozen,cached={}))
+        # Capture records have no record SHA; provenance refers to saved routing.
+        prepared.append(dict(view=view,meta=dict(meta,sha256=saved['sha256']),frozen=frozen,cached={}))
         sources[name]=identity;pair_count+=len(supports)
     if pair_count!=config['pair_count']:raise ValueError('approved dense pair budget differs')
     return prepared,cameras,dict(existing_manifest_sha256=config['existing_manifest_sha256'],
@@ -982,7 +983,8 @@ def routing_match(args):
                     match=(query_dense_matches(prediction,(h,w),cam['shape'],int(config['query_chunk_size'])) if dense
                            else query_matches(prediction,xy,(h,w),cam['shape']))
                 torch.cuda.synchronize();seconds=time.monotonic()-start
-                match=dict(pixel_ids=ids,**match);validate_routing_pair(match,frozen);save_npz(path,match)
+                match=dict(match);match.setdefault('pixel_ids',ids)
+                validate_routing_pair(match,frozen);save_npz(path,match)
                 timing=dict(support=support,file=filename,sha256=file_sha(path),reused=False,seconds=seconds,
                     peak_allocated_bytes=torch.cuda.max_memory_allocated(),peak_reserved_bytes=torch.cuda.max_memory_reserved())
                 del prediction
