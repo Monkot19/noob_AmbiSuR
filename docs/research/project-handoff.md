@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-12服务器采集完成回执。** 用户按固定c4546a390004c8c9bbf41b12e21b0a0a2d919cac启动four_source_routing_v1，退出0，最终correspondence_manifest.json约15K、目录74M；贴回末段含原pair REUSE、新pair DONE及DSC06274/DSC06289 FROZEN。固定流程为29对／8复用21新增，实际完整manifest、33NPZ身份／计数与65536像素／冻结深度尚待下载核验。系统盘余8.3G、数据盘余19G，无本批新安装或训练。下一步仅下载`/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_source_routing_v1`及同级.log/.exitcode；本地复用routing-score与原4GT网格，尚无本批选择精度或表面收益，不直接启动30K。
+
 > **2026-11-10用户确认四来源首批并完成本地实现。** D分支`codex/four-source-depth-routing`，固定生产`c4546a390004c8c9bbf41b12e21b0a0a2d919cac`。原CLI新增routing-match/routing-score，原8对／四来源冻结数组直接复用，只新增原邻居21对；非候选依赖支持选择、三／四来源共同域、弃权与GT前来源配额置换。真实406相机／33照片预检通过，原8对65536像素贯通新适配器且相同两支持的新旧结果精确一致；统一84项75通过9跳过（8native／1旧MVS可选环境），实际RoMa坐标／置信生产函数通过。独立终审无Critical/Important，完整排序／逐支持同意可由保存代价重建，说明见[启动指南](four-source-routing-launch.md)。原train／scene／ALR／传播／renderer与89c502d一致，没有GT或真实模型运行。下一步用户在AutoDL复用原环境／缓存采集新增21对，成功下载后才评价；不据本地通过宣布准入／表面收益，不启动30K。
 
 > **2026-11-10四来源路线获认可，具体首批规格待审阅。** 用户认可：RoMa固定对应比较current／spread／DA3／MVS，先改善支持可辨识性，再分区深度监督，三角化深度不作第五教师。实际原邻居4参考共29对，8已有、21新增；提议先做这一离线批次，复用原65536像素／模型数组／4GT网格／原环境权重，不改原训练邻居、NCC loss／ALR／renderer。支持条件与四来源排序仅离线候选，不直接发布训练mask。规格[四来源深度选择](../superpowers/specs/2026-11-10-four-source-depth-routing-design.md)；29对具体批次、未来训练判据／削弱系数／30K均未因路线认可自动获准。本轮只有源码和相机／邻居metadata读取与文档，无新推理／GT／代码实验。

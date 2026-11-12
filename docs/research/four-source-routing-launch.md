@@ -1,5 +1,7 @@
 # 四来源深度选择：29对离线检查
 
+2026-11-12用户已返回服务器c4546a3、退出0、最终manifest约15K和74M目录的成功回执。当前无需再执行启动命令；请直接按“下载与本地评价”归档新目录及.log/.exitcode。实际manifest／NPZ完整性和GT精度待本地检查，不能把采集完成等同选择有效。
+
 用户已确认[首批规格](../superpowers/specs/2026-11-10-four-source-depth-routing-design.md)。D主目录分支`codex/four-source-depth-routing`，固定实现`c4546a390004c8c9bbf41b12e21b0a0a2d919cac`。只采集RGB对应／离线几何，不是30K训练，不接受GT参数，不改数据、baseline、原NCC／ALR／renderer。
 
 ## 复用与成本

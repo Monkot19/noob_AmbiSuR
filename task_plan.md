@@ -487,6 +487,10 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 - [x] CLI/cache/camera/score roundtrip TDD, fixed29pairs/8reuse21new,actualnonGTpreflight. Unified84:75pass/9skip.
 - [x] Unified verification,oneindependentreview(noCritical/Important),fixedcommit/launch/bundle/push/userhandoff. No training/GPU/GT execution here. Server actual21newpairs stillpending userexecution, not part oflocalcompletion claim.
 
+## 2026-11-12 server receipt and next evaluation
+- [x] User returned fixedc4546a3/finalmanifest15K/output74M/exit0; record forward completion, no quality claim.
+- [ ] After user download, verify29pairs/8reuse21new/33NPZ/frozen65536IDs/four-source targets and metadata, then existingrouting-score withoriginal4GTgrids. No automatic rerun/newtraining.
+
 ## Downloaded GPU evidence evaluation (approved existing specification)
 - [x] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.
 - [x] Run existing correspondence-score once against original four cached GT grids; no mesh queries, threshold edits, reruns after GT failure or training.
