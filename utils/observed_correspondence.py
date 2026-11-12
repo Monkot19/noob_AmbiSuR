@@ -197,7 +197,7 @@ def triangulate_evidence(reference_xy,source_xy,forward_valid,ref_k,ref_tr,src_k
 
 
 def pair_geometry(xy, q, forward_valid, ref_k, ref_tr, src_k, src_tr,
-                  src_shape, ref_near, src_near):
+                  src_shape, ref_near, src_near, compute_sensitivity=True):
     """Observed-pair conditioning, using the same normalized COLMAP solver.
 
     Depth is diagnostic only. Effective angle folds theta and 180-theta so
@@ -230,6 +230,9 @@ def pair_geometry(xy, q, forward_valid, ref_k, ref_tr, src_k, src_tr,
     den=np.sqrt((l2[:,:2]**2).sum(1)+(l1[:,:2]**2).sum(1))
     epipolar=np.full(n,np.nan);good=base&np.isfinite(den)&(den>1e-15)
     epipolar[good]=np.abs((y*l2).sum(1)[good])/den[good]
+    core=dict(depth=depth,valid=valid,angle_deg=angle,raw_angle_deg=raw_angle,epipolar_px=epipolar)
+    if not compute_sensitivity:
+        return core
     deltas=[];perturbed=[]
     for axis in range(2):
         for sign in (-1.,1.):
@@ -240,6 +243,70 @@ def pair_geometry(xy, q, forward_valid, ref_k, ref_tr, src_k, src_tr,
     return dict(depth=depth,valid=valid,angle_deg=angle,raw_angle_deg=raw_angle,
         epipolar_px=epipolar,sensitivity_max_z_m=sensitivity,sensitivity_valid=sv,
         sensitivity_invalid_fraction=1-pv.mean(1))
+
+
+def dense_routing_evidence(costs, projection_valid, evidence, candidate_depths,
+                           seed=0, cycle_max_px=1., overlap_min=.5, znear=.01):
+    """Full-grid, variable-source comparison on one common set of <=2 supports.
+
+    Source count takes priority over shared support count. Only availability,
+    never costs or GT, chooses the comparison set. -1 preserves original DA3.
+    """
+    costs=np.asarray(costs,float);depths=np.asarray(candidate_depths)
+    valid=np.asarray(projection_valid,bool)&np.isfinite(costs)
+    if costs.ndim!=3 or costs.shape[1]!=4 or costs.shape[2]<1 or valid.shape!=costs.shape:
+        raise ValueError('expected N x 4 x S with at least one support')
+    n,_,s=costs.shape
+    if depths.shape!=(n,4):raise ValueError('expected N x 4 candidate depths')
+    for key in ('forward_valid','cycle_valid','cycle_px','overlap','pair_valid','angle_deg'):
+        if np.asarray(evidence[key]).shape!=(n,s):raise ValueError('invalid support evidence: '+key)
+    native=np.isfinite(depths)&(depths>znear);valid&=native[:,:,None]
+    angle=np.asarray(evidence['angle_deg'])
+    eligible=(evidence['forward_valid']&evidence['cycle_valid']&evidence['pair_valid']&
+        np.isfinite(evidence['cycle_px'])&(evidence['cycle_px']<=cycle_max_px)&
+        np.isfinite(evidence['overlap'])&(evidence['overlap']>=overlap_min)&np.isfinite(angle))
+    order=np.argsort(np.where(eligible,-angle,np.inf),axis=1,kind='stable')[:,:2]
+    pre=np.full((n,2),-1,np.int32)
+    pre[:,:order.shape[1]]=np.where(np.take_along_axis(eligible,order,axis=1),order,-1)
+    indices=np.full((n,2),-1,np.int32);participants=np.zeros((n,4),bool)
+    means=np.full((n,4),np.nan);rank=np.full(n,-1,int);num=np.zeros(n,np.uint8)
+    # The iteration order breaks an otherwise exact tie towards higher angle.
+    for slots in ((0,1),(0,),(1,)):
+        ix=pre[:,slots];present=(ix>=0).all(1)
+        gathered=np.take_along_axis(valid,np.maximum(ix,0)[:,None,:],axis=2)
+        candidates=gathered.all(2)&present[:,None]
+        count=candidates.sum(1);key=count*3+len(slots)
+        better=present&(count>=2)&(key>rank)
+        if not better.any():continue
+        shared=np.take_along_axis(costs,np.maximum(ix,0)[:,None,:],axis=2).mean(2)
+        indices[better]=-1;indices[np.ix_(better,np.arange(len(slots)))]=ix[better]
+        participants[better]=candidates[better];num[better]=len(slots);rank[better]=key[better]
+        means[better]=np.where(candidates[better],shared[better],np.nan)
+    domain=num>0;winner=np.full(n,-1,np.int8);margin=np.full(n,np.nan)
+    if domain.any():
+        m=np.where(participants[domain],means[domain],np.inf);best=m.argmin(1)
+        unique=(m==m.min(1)[:,None]).sum(1)==1
+        winner[domain]=np.where(unique,best,-1)
+        sorted_cost=np.sort(m,axis=1);margin[domain]=sorted_cost[:,1]-sorted_cost[:,0]
+    reason=np.where(pre[:,0]<0,1,2).astype(np.uint8)
+    reason[domain]=3;reason[winner>=0]=0
+    bits=np.array([1,2,4,8],np.uint8)
+    original=(native*bits).sum(1).astype(np.uint8)
+    participating=(participants*bits).sum(1).astype(np.uint8)
+    random=winner.copy();rng=np.random.default_rng(int(seed))
+    # Native validity also protects DA3-fallback labels in this permutation.
+    strata=np.c_[original,participating,num]
+    for key in np.unique(strata,axis=0):
+        ids=np.flatnonzero((strata==key).all(1));random[ids]=rng.permutation(winner[ids])
+    def hybrid(labels):
+        target=depths[:,1].copy();ids=np.flatnonzero(labels>=0)
+        target[ids]=depths[ids,labels[ids]]
+        return target
+    return dict(preselected_support_indices=pre,support_indices=indices,support_count=num,
+        original_source_bits=original,participating_source_bits=participating,
+        participating_sources=participants,candidate_means_px=means,winner=winner,
+        margin_px=margin,fallback_reason=reason,hybrid_depth=hybrid(winner),
+        random_winner=random,random_hybrid_depth=hybrid(random))
 
 
 def routing_evidence(costs, projection_valid, evidence, seed=0,

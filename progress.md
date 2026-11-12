@@ -517,3 +517,5 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 - Userselected29originalpairpool/maxangleupto2. Wroteshortconcretedenseproposal2026-11-12-dense-four-source-routing-design.md;shared-supportsource-subsetpriorityexplicitlyproposed,GT-mainDA3domainandrandomvalidityedgeshandled. Production/GT/model/trainingunchanged;pre-implementationreviewpending.
 
 - Dense spec buildercheck completed;fixed doc-only per-referenceX paired-domain andrandom fallbackstrata(original-valid+participating-sourcebits/supportcount). No model/GT/test/codeexecution. Pendingconcretepriorityapproval;noimplementationstarted.
+
+- Task1RED3missinginterfacesconfirmed,thenGREEN3new+5legacy8/8. Addedavailability-onlysharedsubsetselector/single-support/sourcequotastrata andpair_geometryoptionalnosensitivitycoreexact;oldrouting_evidenceuntouched. No scientific/model/GToperation.

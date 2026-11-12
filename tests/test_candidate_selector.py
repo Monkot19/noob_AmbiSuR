@@ -319,6 +319,68 @@ class FourSourceRoutingTests(unittest.TestCase):
         np.testing.assert_array_equal(out['support_eligible'][2],np.ones(4,bool))
 
 
+class DenseRoutingTests(unittest.TestCase):
+    @staticmethod
+    def evidence(n, s):
+        ev={k:np.ones((n,s),bool) for k in ('forward_valid','cycle_valid','pair_valid')}
+        ev.update(cycle_px=np.zeros((n,s)),overlap=np.ones((n,s)),
+                  angle_deg=np.broadcast_to(np.arange(s,0,-1),(n,s)).copy())
+        return ev
+
+    def test_available_sources_shared_single_support_and_priority(self):
+        from utils.observed_correspondence import dense_routing_evidence
+        z=np.tile([2.,2.5,1.8,1.9],(5,1));z[0,3]=np.nan
+        costs=np.tile(np.array([[3.,3.],[2.,2.],[1.,1.],[4.,4.]]),(5,1,1))
+        valid=np.ones_like(costs,bool)
+        valid[1,3,1]=False # four sources on first beats three on both
+        valid[2,3,0]=False # four on second beats three on both
+        ev=self.evidence(5,2);ev['forward_valid'][3,1]=False
+        costs[4,:,0]=[.1,.2,.3,.4];costs[4,:,1]=[9.,4.,2.,0.]
+        r=dense_routing_evidence(costs,valid,ev,z,seed=4)
+        np.testing.assert_array_equal(r['support_count'],[2,1,1,1,2])
+        np.testing.assert_array_equal(r['participating_source_bits'],[7,15,15,15,15])
+        np.testing.assert_array_equal(r['support_indices'][1],[0,-1])
+        np.testing.assert_array_equal(r['support_indices'][2],[1,-1])
+        self.assertEqual(r['winner'][4],3) # shared mean, never each source's best view
+        np.testing.assert_allclose(r['hybrid_depth'],[1.8,1.8,1.8,1.8,1.9])
+        changed=dense_routing_evidence(-costs,valid,ev,z,seed=4)
+        np.testing.assert_array_equal(changed['support_indices'],r['support_indices'])
+        np.testing.assert_array_equal(changed['participating_source_bits'],r['participating_source_bits'])
+
+    def test_abstain_invalid_da3_and_valid_random_source_quotas(self):
+        from utils.observed_correspondence import dense_routing_evidence
+        z=np.tile([2.,2.5,1.8,np.nan],(8,1));z[1,1]=np.nan
+        costs=np.ones((8,4,1));costs[2:,2]=0
+        valid=np.ones_like(costs,bool);valid[3:5,1]=False
+        z[4,1]=np.nan;ev=self.evidence(8,1);ev['forward_valid'][0]=False
+        valid[5,:3]=False
+        r=dense_routing_evidence(costs,valid,ev,z,seed=1)
+        self.assertEqual(r['winner'][0],-1);self.assertEqual(r['winner'][1],-1)
+        self.assertTrue(np.isnan(r['hybrid_depth'][1]))
+        self.assertEqual(r['fallback_reason'][0],1)
+        self.assertEqual(r['fallback_reason'][1],3)
+        self.assertEqual(r['fallback_reason'][5],2)
+        labels=r['random_winner'];chosen=labels>=0
+        self.assertTrue(r['participating_sources'][np.flatnonzero(chosen),labels[chosen]].all())
+        np.testing.assert_array_equal(labels,dense_routing_evidence(costs,valid,ev,z,seed=1)['random_winner'])
+        # Native DA3 validity is part of the exchangeability strata.
+        for bits in np.unique(r['original_source_bits']):
+            use=r['original_source_bits']==bits
+            np.testing.assert_array_equal(np.sort(labels[use]),np.sort(r['winner'][use]))
+
+    def test_geometry_lightweight_retains_exact_core(self):
+        from utils.observed_correspondence import pair_geometry,project_depth
+        k=np.array([[100.,0,50.],[0,100.,40.],[0,0,1.]])
+        tr=np.eye(4);src=tr.copy();src[3,0]=-.5
+        xy=np.array([[50.,40.],[60.,45.]])
+        q,v=project_depth(xy,np.array([2.,3.]),k,tr,k,src,(80,100),.01,.01)
+        full=pair_geometry(xy,q,v,k,tr,k,src,(80,100),.01,.01)
+        light=pair_geometry(xy,q,v,k,tr,k,src,(80,100),.01,.01,compute_sensitivity=False)
+        for key in ('depth','valid','angle_deg','raw_angle_deg','epipolar_px'):
+            np.testing.assert_array_equal(full[key],light[key])
+        self.assertNotIn('sensitivity_max_z_m',light)
+
+
 class DepthSourceAuditTests(unittest.TestCase):
     def test_mvs_support_cap_preserves_real_saved_order_without_padding(self):
         from scripts.evaluate_depth_sources import select_mvs_supports

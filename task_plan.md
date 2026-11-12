@@ -513,3 +513,6 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 - [x] Verify four complete current/DA3/spread maps and originalMVS predictions exist; paircache stores only sampledquery outputs,notdense RoMa fields. No GT values read/newmatching/scoring.
 - [x] User chose29pool/maxangle<=2; draft concrete denseallpixels/availablecandidate/shared1support/DA3fallback spec. No productionchanges/newbatch before review.
 - [ ] User reviews2026-11-12-dense-four-source-routing-design.md, especially deterministic maximum-source then maximum-shared-support priority; implementation plan next after approval.
+
+## 2026-11-12 dense implementation approved
+Userapprovedconcretespec/sourcecountpriority. Dbranchcodex/four-source-dense-routing fromef3e32c,inline3tasks:shareddecisionsTDD;densecapture/scorerTDD;verification/review/fixedhandoff. No newGT/model/trainexecuted.
