@@ -491,6 +491,11 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 - [x] User returned fixedc4546a3/finalmanifest15K/output74M/exit0; record forward completion, no quality claim.
 - [ ] After user download, verify29pairs/8reuse21new/33NPZ/frozen65536IDs/four-source targets and metadata, then existingrouting-score withoriginal4GTgrids. No automatic rerun/newtraining.
 
+## 2026-11-12 downloaded routing evaluation
+- [x] Verify supplied four_source_routing_v1 manifests/33NPZ/sourcearrays,29pair receipts and fixedc4546a3; freeze analysis/four_source_routing_4views_20261112_v1 before reading GT grids.
+- [ ] Existingrouting-score once with original4cachedGTgrids; retain all failures, no threshold edits/newmeshqueries/model/training.
+- [ ] Compare old/new support protocols on common domains and full-frozen fallback policies; inspect per-source choice, ceiling and small-parallax harm/coverage. One read-only independent results review, report/handoff.
+
 ## Downloaded GPU evidence evaluation (approved existing specification)
 - [x] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.
 - [x] Run existing correspondence-score once against original four cached GT grids; no mesh queries, threshold edits, reruns after GT failure or training.
