@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-12全像素采集服务器成功回执。** 用户贴回four_source_dense_v2末段，DSC06289余下匹配DONE、最终FROZEN，进程已结束且退出码0。此前60秒Timeout为faulthandler周期栈，栈位置是CPU SVD，不是程序失败。原输入恢复后的流程已越过预检并完成；实际4参考/29对/全2046336像素、37NPZ及地图/清单身份待下载核验，不据退出0宣布目标质量或训练收益。下一步用户下载`/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_source_dense_v2`完整目录及同级.log/.exitcode（.pid可保留），随后本地核对后原routing-score复用4份GT网格；没有自动GT评分、训练或新规则。
+
 > **2026-11-12服务器全像素采集尚未启动：** 已导入bundle并checkout53600fd；内层第29行检查原`depth_source_check/20261109_v1/capture/capture_manifest.json`失败（缺失或为空），停在模型/新输出前。原输入本地存在并与固定配置SHA一致，交付目录新增97.29MiB `dense-source-inputs.zip`及`restore-dense-source-inputs.sh`，仅恢复原10项缺失输入，已有同名文件须完全相同才保留通过，否则停止不覆盖。上传两文件至/root/autodl-tmp后执行restore脚本，会重用原启动脚本；无新代码/环境/预测/GT/训练。实际服务器恢复待回执，详见[恢复段](four-source-routing-launch.md)。
 
 > **2026-11-12全像素四来源版已实现，等待服务器采集。** 用户批准29池/maxangle最多2、可用来源数优先/共享支持数其次及单支持。D分支`codex/four-source-dense-routing`，生产固定`53600fd83e4bc488ee3ad99df801ba7fe9f3855a`。原routing-match/score显式dense模式，4×584×876=2046336点，29前向/14835936对查询；原4源整图复用，不重跑MVS/DA3/7K。共享支持、无效来源剔除、精确并列/无证据原DA3回退；各参照X配对域独立，不漏缺current/DA3像素。统一92项83过9跳过，真实全输入/33照片/29对预检通过；独立审查发现的两项CLI接缝已RED复现并修正，窄审无剩余问题，真实供体query分块精确一致。GPU/全图质量尚未验证，没有GT科学评分或训练。启动命令与资源见[全像素指南](four-source-routing-launch.md)，交付`D:/research_Space/handoff_bundle/four-source-dense-routing_20261112`；原环境/权重缓存复用，不安装/下载，数据盘预留6GiB。服务器由用户启动；后续下载后才原GT缓存评分，不自动30K。

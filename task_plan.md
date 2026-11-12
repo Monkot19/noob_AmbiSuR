@@ -520,3 +520,6 @@ Userapprovedconcretespec/sourcecountpriority. Dbranchcodex/four-source-dense-rou
 - [x] Dense implementation complete53600fd:unified92/83pass9skip,actual2046336inputpreflight,independentreview2P1fixedwithCLIRED/GREEN+narrowrecheck;launchsyntaxverified. No realGPU/GTquality/newtraining.
 
 - Serverlaunchpausedbeforemodel:originalcapturemanifestmissing/empty. Localminimaloriginalinputrestorepackready/hashchecked;userupload+restorepending,no newscientificrun.
+
+- [x] Userserverdensecaptureexit0/finalFROZENreceived.
+- [ ] Downloadwholefour_source_dense_v2+log/exitcode;verifyactualfullnativeinputs/decisions/identitybeforeoriginalcachedGTscore. No qualityclaimbeforeevaluation.
