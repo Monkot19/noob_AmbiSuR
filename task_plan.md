@@ -507,3 +507,9 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 - [x] RED meaningful unified regressions; implement offline helper/CLI/config.
 - [x] GREEN unified tests, actual input preflight, independent narrow review.
 - [x] Fixed implementation7c698a3, AutoDL launch and probe/source/code bundle handoff; no automatic server/model run.
+
+## 2026-11-12 user corrects full-image routing objective
+- [x] Read review and inspect actual routing masks/score/model-query persistence; exact native584x876,511584/view,2046336fourviews; sampled16384/view only3.2026%.
+- [x] Verify four complete current/DA3/spread maps and originalMVS predictions exist; paircache stores only sampledquery outputs,notdense RoMa fields. No GT values read/newmatching/scoring.
+- [x] User chose29pool/maxangle<=2; draft concrete denseallpixels/availablecandidate/shared1support/DA3fallback spec. No productionchanges/newbatch before review.
+- [ ] User reviews2026-11-12-dense-four-source-routing-design.md, especially deterministic maximum-source then maximum-shared-support priority; implementation plan next after approval.

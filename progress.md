@@ -510,3 +510,10 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 - Dependency metadata check found latest fused-local-corr0.3.211 requiresTorch2.11. Pinned isolated server environmentTorch2.8+cu128/vision0.23+cu128/fused0.3.28 (PyPI explicitlytorch2.8), no original environment upgrade. No environment/weight installation locally.
 - Added match/correspondence-score to original evaluator, offline geometry helper, one config/requirements and copy-paste launch guide. Three Bash blocks pass bash -n. Production train/arguments/scene/selector/renderer/submodules unchanged against30b7dad.
 - Independent whole-branch review complete: no critical/important defects. MVS masked-validity consistency suggestion fixed as shared producer contract; extended regrid regression RED→GREEN. Original score predicate shared without scientific changes; real four-file q arrays exactly equal original including NaNs. Final79/70pass9skip5.856s, original real score serializer still passes. No server/model run or quality/surface gain claim.
+
+### 2026-11-12 full-pixel user feedback reviewed
+- Appliedbrainstorming/receiving-review; read source+actualNPZkeys/shapes withoutGT. Confirmedsampled2support/allsourceintersectioncontractdiffersfromrequestedavailable-source densehybrid. Fourfullsourceinputsready,butRoMapaircacheonlysampledqueries. Useraskedwhichsupportprotocolforprimary:recommendedoriginal2matchingearlierRoMaquestion versus29pool/maxangle2. Awaitchoice; no newexperimentorproductionchange.
+
+- Userselected29originalpairpool/maxangleupto2. Wroteshortconcretedenseproposal2026-11-12-dense-four-source-routing-design.md;shared-supportsource-subsetpriorityexplicitlyproposed,GT-mainDA3domainandrandomvalidityedgeshandled. Production/GT/model/trainingunchanged;pre-implementationreviewpending.
+
+- Dense spec buildercheck completed;fixed doc-only per-referenceX paired-domain andrandom fallbackstrata(original-valid+participating-sourcebits/supportcount). No model/GT/test/codeexecution. Pendingconcretepriorityapproval;noimplementationstarted.
