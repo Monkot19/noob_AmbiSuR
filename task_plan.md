@@ -1,5 +1,7 @@
 # AmbiSuR Core 实施计划状态
 
+> **2026-11-12 当前批次已完成：** 下载核对、原四来源评分一次成功、支持／来源／区域分析与独立终审完成。新最大角策略仍不支持分区loss或30K；见docs/research/2026-11-12-four-source-routing-results.md。下方Core与旧任务仅历史，不恢复实施。
+
 > **2026-11-10 下一批对应检查规格已准备，待审阅：** 用户同意继续源码/接口/资源预检。拟RoMaV2固定95c996...、4参考/8原支持对、原65536像素；先用固定图像对应残差比较现有位置，再复用匹配做COLMAP式固定相机三角化。已读供体match/sample/半像素/特征加载/相关算子以及COLMAP3.11.1线性求解，实际12图header与供体坐标函数通过。权重未下载、依赖未安装、网络/GT未运行、生产代码未改。服务器torchvision0.22.1低于供体>=0.23、本地仅1.9GB显存空闲；需明确隔离运行环境。规格docs/superpowers/specs/2026-11-10-observed-correspondence-probe-design.md。
 
 > **2026-11-10 非GT失败证据调查（用户批准继续，已完成）：** 复用现有17视角/冻结抽样/生产warp与NCC/GTQueries，只读检查DSC06348、DSC06669、天花板及成功对照。先保存不依赖GT的每支持代价、相关符号/纹理、投影与模型深度分歧、位置代价曲线和观测夹角，再按既有GT定义描述条件收益。原正式评分不覆盖；新产物放analysis/depth_source_failure_evidence_20261110_v1。无GT调门槛、训练mask、loss/训练/renderer修改；不能将探索性分组称已验证准入。步骤：输入/复用接口核对→冻结证据定义与计算→原查询评价/原分数复现→可查看报告及局限。
@@ -489,12 +491,12 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 
 ## 2026-11-12 server receipt and next evaluation
 - [x] User returned fixedc4546a3/finalmanifest15K/output74M/exit0; record forward completion, no quality claim.
-- [ ] After user download, verify29pairs/8reuse21new/33NPZ/frozen65536IDs/four-source targets and metadata, then existingrouting-score withoriginal4GTgrids. No automatic rerun/newtraining.
+- [x] Download verified29pairs/8reuse21new/33NPZ/frozen65536IDs/four-source targets; originalrouting-score onceexit0. No automatic rerun/newtraining.
 
 ## 2026-11-12 downloaded routing evaluation
 - [x] Verify supplied four_source_routing_v1 manifests/33NPZ/sourcearrays,29pair receipts and fixedc4546a3; freeze analysis/four_source_routing_4views_20261112_v1 before reading GT grids.
-- [ ] Existingrouting-score once with original4cachedGTgrids; retain all failures, no threshold edits/newmeshqueries/model/training.
-- [ ] Compare old/new support protocols on common domains and full-frozen fallback policies; inspect per-source choice, ceiling and small-parallax harm/coverage. One read-only independent results review, report/handoff.
+- [x] Existingrouting-score once with original4cachedGTgrids; exit0/14560rows/65536pixels. No threshold edits/newmeshqueries/model/training.
+- [x] Compared common/full-frozen policies, source/ceiling/conditioning and exploratoryagreement/margins; original14560+224rows exact. Independentreview noCritical/Important; report/handoff complete. Nextmethod/experiment remainsdiscussiononly.
 
 ## Downloaded GPU evidence evaluation (approved existing specification)
 - [x] Verify downloaded v3 manifest/12NPZ/config/original65536IDs/input hashes and shared domains without inspecting GT values; freeze unique analysis output.

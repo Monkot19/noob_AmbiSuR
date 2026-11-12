@@ -1,5 +1,10 @@
 # AmbiSuR 新项目 Findings
 
+## 2026-11-12 four-source routing evaluated
+
+29pair/8reuse21new/33NPZ/65536fixedpixels preflight exact; formalrouting-score onceclean26677ac exit0/14560rows,63478GTvisible,original4cachehashes unchanged. Newmaxangle4sourcefullpolicyMAE80.673/gP+.773mm vsDA381.446,oldfirst2policy79.518/+1.929. Same4sourceGTintersection22988 old45.501→new49.151mm;06348/06289worse,06669/06274better. Broadersupportsarenotgloballyimprovedrouting. New4sourceMVS9897selectedgP-20.335mm;spread7293+20.246,current5198+19.750,DA34732unchanged(differentdomains). Ceiling2084fullpolicy174.936vsDA3144.773;395MVSselectedgP-154.779/87.34%harm. 06669ceiling405allfallbackDA3forno4sourcecomparison,notactiveGTcorrectteacherrecognition. 06348MVS1905dual-supportsamewinnergP-156.531/90.03%harm;highmarginQ4MVS290gP-188.090. Postformalexploratorydiagnostic224rows,nonGTquartilegroupsfrozenbeforediagnosticGTread,sharedpairedstats;nottrainingthresholdselection. No newGTqueries/model/train/rulechanges. Report2026-11-12-four-source-routing-results.md;independentreviewcomplete/noCriticalorImportant;GT-beforequotasclarified.
+
+
 ## 2026-11-10 accepted route and support-pool feasibility
 
 Firstbatch implementation confirmed by user and completed locally oncodex/four-source-depth-routing, fixedc4546a390004c8c9bbf41b12e21b0a0a2d919cac. Onlyoffline CLI/helper/config/test; no train/scene/ALR/renderer changes. Real4refs406cams33photos preflight29pairs8reuse21new, actualoriginal8pair adapter preserves65536IDs/depths and same2protocol outputs. Unified84/75pass9skip inclactualRoMa coordinateproducer; independentreview noCritical/Important. Ranking/per-supportagreement reconstructedfromstoredmeans/costs/indices ratherthanredundantarrays. Actualnew21GPU/GTquality andsurfacegain stillunverified; userAutoDL executionnext.

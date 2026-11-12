@@ -1,5 +1,10 @@
 # AmbiSuR 新项目 Progress
 
+### 2026-11-12 Four-source results finalized
+- Formalrouting-score onceclean26677ac exit0/14560rows;224exploratoryrows successful,original4GTcacheSHA unchanged. No newmeshquery/model/training/thresholds.
+- Full63478GTvisible DA3fallbackpolicynew4MAE80.673/gP+.773mm vsold4 79.518/+1.929; paired22988 old45.501/new49.151. Improvedconditioning doesnotestablishcorrectrouting; severe06348MVS/ceilingfailures remain.
+- Independentread-onlyreview noCritical/Important;14560+224CSVJSON exact,96poolings/regioncounts verified. MinorGT-before randomsourcequota explanation clarified; no scientificrerun. Report/handoff/plan updated,production identicalc4546a3. Nextnewrule/supportbatch/loss/30K discussiononly.
+
 ### 2026-11-10 Correspondence experiment source/interface proposal
 - User says continue after promise to review matcher/interfaces/resources before implementation. Read pinnedRoMaV2match/sample/geometry/features/localcorr andofficialCOLMAP3.11.1lineartriangulation; cachedsmallsource/release metadata only. Actualgeometryproducer roundtrip and8pairs12imageheaders verified, no weights/download/install/forward/newGT.
 - Prepared reviewable spec2026-11-10-observed-correspondence-probe-design.md with primaryobservedreprojection4sources andsecondaryfixedcameratriangulation on original4viewpixelsets; oneexistingentry/helper/unifiedtests/config, no trainchanges. Explicit0.5pixelboundary, no model.sample, learnedconfidence/GT/photo-reuse limits.
@@ -450,6 +455,10 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 
 2026-11-10离线17视角评价完成：真实下载路径depth_source_check_17views_after_v3_position_check_from_NVSAnywhere/20261109_v1，实际状态为原生C0的7K。固定clean a4155ac原score一次40.97秒退出0，5369行／3237汇总，GT无失败重跑。四者共同域3059926条／36.62%可见记录，MAE当前59.296／DA3 71.781／spread55.371／MVS66.722mm，不能把条件域排名扩展到全场景。NCC接受GT后59412条，平均g0+2.312／gP+15.776mm，但改善DA3比例63.72%低于GT前等预算随机64.18%，伤害>5mm率33.26%高于随机31.78%；全图仅实际抽样替换目标收益0.11216mm／覆盖0.71095%，不是训练收益。墙71局部MVS强，天花板原DA3更准且准入危险。两个NCC视角全部重用于MVS输入。独立只读终审无实质问题，CSV/JSON逐字段与区域计数校验通过。报告docs/research/2026-11-10-depth-source-and-admission-results.md，产物analysis/depth_source_comparison_20261110_v1；没有新增方法／训练／loss／预算／GT标签，不直接授权30K。
 # 2026-11-10 observed correspondence implementation
+
+- Completed14560CSV/JSON exact scalar checks andsame4GTcachehash comparison. Derivedpolicy/source/geometry summaries successful;newfull4policygP+.772895vsold+1.928507,GTpaired4MAE45.501415→49.150835. SourcechoiceMVSstillnetbad,small06348dominates;ceilingnewMVS395/87.34%harm. Addedexplicitpostformalexploratoryagreement/margin224rowdiagnostic withnonGTgroupssavedbeforeitsGTread,usesoriginalpaired_target_stats and4cachedgrids,noGTqueries orfailure. 06348bothsupportMVS1905/90.03%harm;thusconsensus/highermarginnotautomaticfix. Draftreportcomplete, independentread-onlyreviewnext. No production edits/newgates/GPU/training.
+
+- Formalrouting-score ranonce onclean26677ac, scientificcode exactc4546a3;4cachedGTgrids only, exit0/14560rows/65536pixels. Initialsame-domain evidence: newcommon4paired MAE06348 180.46→206.83mm,06669 20.41→20.28,06274 22.01→19.55,06289 26.36→29.28. Four-source/full-frozen fallback andper-source/ceiling aggregation pending. No recovery/newthreshold/model/meshquery/training.
 
 - Downloadpreflight completed beforeGT: cleanserverc4546a3/4090/torch2.8;33NPZ/29pairs(8exactcached21new)/4x16384pixelIDs/4candidatearrays/Kpose all exact, config/hash/image-receipt chain match. Recomputed support/rank/random frozenfields exactly from saved nonGT evidence, no gate edit. No invalidcurrent/DA3sampleddepths. Newpairforward sum8.1978s(excludesinit/geometry/preflight);allocated3,206,853,120B/reserved4,808,769,536B. Full preflight.json uniqueanalysis/four_source_routing_4views_20261112_v1; original4GTcache+scoreoutput fixed there. No GTgridread/modelrun/newthreshold atthisstage; nextoneoriginalrouting-score.
 

@@ -1,5 +1,7 @@
 # AmbiSuR 二周目交接入口
 
+> **2026-11-12四来源下载及正式评价完成。** 固定c4546a3采集29对／8复用21新／33NPZ／65536冻结像素身份精确通过；clean26677ac原routing-score一次退出0，14560正式行／224探索诊断行全部CSV/JSON一致，原4缓存GT SHA不变，无新mesh查询。63478可见记录回退DA3政策：原DA3 MAE81.446mm，四来源旧前2支持79.518／gP+1.929，新最大角支持80.673／+0.773；同四来源交集22988条45.501→49.151mm，不能宣布支持扩展有益。06348 MVS双支持同意1905条90.03%伤害>5mm，最高margin组仍严重；天花板新MVS395条87.34%伤害，06669天花板405条全回退DA3仅因无四来源比较，并非主动识别。独立终审无Critical/Important，随机配额GT前边界已澄清。报告[四来源结果](2026-11-12-four-source-routing-results.md)，产物analysis/four_source_routing_4views_20261112_v1。无训练／loss／门槛／预算／生产修改；后续仅提出讨论复用29对查错配与未选支持，不自动启动新批次或30K。
+
 > **2026-11-12服务器采集完成回执。** 用户按固定c4546a390004c8c9bbf41b12e21b0a0a2d919cac启动four_source_routing_v1，退出0，最终correspondence_manifest.json约15K、目录74M；贴回末段含原pair REUSE、新pair DONE及DSC06274/DSC06289 FROZEN。固定流程为29对／8复用21新增，实际完整manifest、33NPZ身份／计数与65536像素／冻结深度尚待下载核验。系统盘余8.3G、数据盘余19G，无本批新安装或训练。下一步仅下载`/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_source_routing_v1`及同级.log/.exitcode；本地复用routing-score与原4GT网格，尚无本批选择精度或表面收益，不直接启动30K。
 
 > **2026-11-10用户确认四来源首批并完成本地实现。** D分支`codex/four-source-depth-routing`，固定生产`c4546a390004c8c9bbf41b12e21b0a0a2d919cac`。原CLI新增routing-match/routing-score，原8对／四来源冻结数组直接复用，只新增原邻居21对；非候选依赖支持选择、三／四来源共同域、弃权与GT前来源配额置换。真实406相机／33照片预检通过，原8对65536像素贯通新适配器且相同两支持的新旧结果精确一致；统一84项75通过9跳过（8native／1旧MVS可选环境），实际RoMa坐标／置信生产函数通过。独立终审无Critical/Important，完整排序／逐支持同意可由保存代价重建，说明见[启动指南](four-source-routing-launch.md)。原train／scene／ALR／传播／renderer与89c502d一致，没有GT或真实模型运行。下一步用户在AutoDL复用原环境／缓存采集新增21对，成功下载后才评价；不据本地通过宣布准入／表面收益，不启动30K。
