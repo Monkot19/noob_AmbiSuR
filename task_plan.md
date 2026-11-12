@@ -526,5 +526,5 @@ Userapprovedconcretespec/sourcecountpriority. Dbranchcodex/four-source-dense-rou
 
 ## 2026-11-12 downloaded dense routing evaluation
 - [x] NonGTpreflight9.547s:clean53600fd/37NPZ8PNG/2046336pixels/29pairs/sourcearrays+oldsampleexact+decisions/random/mapsallreproduced. Frozenpreflight/protocolat analysis/four_source_dense_20261112_v1.
-- [ ] Run unchangedrouting-score exactlyoncewithoriginal4GTgrids,cleancommit;preservefailureifany/noautomaticGTretry.
-- [ ] Full-imageDA3/current/sourcepairedquality,source/support/regioncoverageandharm;CSVJSONvalidation;independentread-onlyresultreview/report/handoff. No newgate/model/train.
+- [x] Originalrouting-scorecleanb60573donceexit0/21.110s/2640rows;allCSVJSONfieldsexact,4GTcacheSHAunchanged,no failures/retry.
+- [x] Full-policy/per-source/per-support/regionresultsandCSVJSONverified;independentreview2640rows/1680pooled/80partitionsnoissues;report/handoffcomplete. No newgate/model/train.
