@@ -512,7 +512,9 @@ User confirms concrete spec. Dbranchcodex/four-source-depth-routing from89c502d,
 - [x] Read review and inspect actual routing masks/score/model-query persistence; exact native584x876,511584/view,2046336fourviews; sampled16384/view only3.2026%.
 - [x] Verify four complete current/DA3/spread maps and originalMVS predictions exist; paircache stores only sampledquery outputs,notdense RoMa fields. No GT values read/newmatching/scoring.
 - [x] User chose29pool/maxangle<=2; draft concrete denseallpixels/availablecandidate/shared1support/DA3fallback spec. No productionchanges/newbatch before review.
-- [ ] User reviews2026-11-12-dense-four-source-routing-design.md, especially deterministic maximum-source then maximum-shared-support priority; implementation plan next after approval.
+- [x] User approved fullspec including sourcecount/sharedsupport priority;implemented53600fd andverified,serverpending.
 
 ## 2026-11-12 dense implementation approved
 Userapprovedconcretespec/sourcecountpriority. Dbranchcodex/four-source-dense-routing fromef3e32c,inline3tasks:shareddecisionsTDD;densecapture/scorerTDD;verification/review/fixedhandoff. No newGT/model/trainexecuted.
+
+- [x] Dense implementation complete53600fd:unified92/83pass9skip,actual2046336inputpreflight,independentreview2P1fixedwithCLIRED/GREEN+narrowrecheck;launchsyntaxverified. No realGPU/GTquality/newtraining.

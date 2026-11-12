@@ -1,4 +1,118 @@
-# 四来源深度选择：29对离线检查
+# 全像素四来源混合深度：29对采集与评价
+
+2026-11-12用户已批准全像素／可变来源／单支持与“来源数优先、支持数其次”。固定生产提交`53600fd83e4bc488ee3ad99df801ba7fe9f3855a`，分支`codex/four-source-dense-routing`。已完成本地接口验证与独立审查；**实际服务器GPU、整图来源质量尚未验证**。不训练、不读GT、不新建环境、不安装或下载权重。
+
+## 本次运行与资源
+
+- 4参考×584×876=2,046,336参考像素，29对重新match，每对一次；65,536仅为查询分块大小，不是像素预算。总14,835,936对查询。
+- 原整图current/DA3/spread、MVS原预测及regrid全部复用；旧29对仅有抽样查询结果，不能当全像素缓存直接补齐。
+- 原RoMa/DINO缓存与`observed-correspondence/env`复用。若缓存缺失或身份不同，离线检查停止，不自动下载。当前不用DA3环境或renderer扩展。
+- 每对逐个GPU前向，CPU缓存／记录随全像素增大。按字段规模粗估未压缩约3–4GiB，压缩后实际大小待本次运行记录；启动时要求数据盘至少空6GiB。旧GPU reserved约4.48GiB仅作参考，尚无本次真实峰值或总时长承诺。
+- 输出新目录`four_source_dense_v2`，旧采集、评价、baseline和数据全部保留。无额外smoke或测试前置。
+
+## 服务器复制这一整段
+
+如GitHub不稳定，可先上传`D:/research_Space/handoff_bundle/four-source-dense-routing_20261112/four-source-dense-routing.bundle`到`/root/autodl-tmp/`；代码已在本地时无需联网。该bundle以服务器已有c4546a3为前提，不包含模型／照片／GT。
+
+```bash
+bash <<'SH' || printf '\n全像素采集启动停止，请贴回上方错误。\n'
+set -euo pipefail
+trap 'rc=$?; printf "启动停止：第%s行，退出码%s\n" "$LINENO" "$rc" >&2' ERR
+cd /root/autodl-tmp/noob_AmbiSuR
+test -z "$(git status --porcelain)"
+fixed=53600fd83e4bc488ee3ad99df801ba7fe9f3855a
+if ! git cat-file -e "$fixed^{commit}" 2>/dev/null; then
+  bundle=/root/autodl-tmp/four-source-dense-routing.bundle
+  if [ -f "$bundle" ]; then
+    git bundle verify "$bundle"
+    git fetch "$bundle" refs/heads/codex/four-source-dense-routing
+  else
+    if [ -f /etc/network_turbo ]; then source /etc/network_turbo; fi
+    git fetch origin codex/four-source-dense-routing
+  fi
+fi
+git switch --detach "$fixed"
+git rev-parse HEAD
+git diff --exit-code
+runtime=/root/autodl-tmp/ambisur_runtime/observed-correspondence
+python="$runtime/env/bin/python"
+source=/root/autodl-tmp/ambisur_work/data_views/native_c0_ckpt7k/toolroom_r2_seed0_30k_v1/colmap_undistorted
+baseline=/root/autodl-tmp/ambisur_runs/Tool_Room/native_c0_ckpt7k/d6f15c88_seed0_30k_v1
+audit=/root/autodl-tmp/ambisur_runs/Tool_Room/depth_source_check/20261109_v1
+existing=/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_source_routing_v1
+out=/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_source_dense_v2
+test -x "$python"
+test -d "$source/images"
+test -s "$existing/correspondence_manifest.json"
+test -s "$audit/capture/capture_manifest.json"
+test -s "$audit/mvs_support_cap_v4/inference_manifest.json"
+test -s "$runtime/cache/torch/hub/checkpoints/romav2.0.1.pt"
+test -s "$runtime/cache/torch/hub/facebookresearch_dinov3_adc254450203739c8149213a7a69d8d905b4fcfa/hubconf.py"
+test ! -e "$out"
+test ! -e "$out.log"
+test ! -e "$out.exitcode"
+df -h / /root/autodl-tmp
+"$python" -c 'import shutil; f=shutil.disk_usage("/root/autodl-tmp").free; print("Data disk free: %.2f GiB"%(f/2**30)); assert f>=6*2**30,"Reserve at least 6 GiB before capture"'
+export TMPDIR="$runtime/tmp" TORCH_HOME="$runtime/cache/torch" HF_HOME="$runtime/cache/huggingface"
+export OMP_NUM_THREADS=1 PYTHONUNBUFFERED=1
+unset PYTHONPATH PYTHONHOME TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD TORCH_FORCE_WEIGHTS_ONLY_LOAD
+mkdir -p "$TMPDIR" "$(dirname "$out")"
+observer=$(cat <<'PY'
+import faulthandler,runpy,sys
+faulthandler.enable();faulthandler.dump_traceback_later(60,repeat=True)
+entry='scripts/evaluate_depth_sources.py';sys.argv=[entry,*sys.argv[1:]]
+try:runpy.run_path(entry,run_name='__main__')
+finally:faulthandler.cancel_dump_traceback_later()
+PY
+)
+nohup bash -c '
+  "$1" -u -B -c "$2" routing-match \
+    --config experiments/depth_sources/toolroom_four_source_dense_v2.json \
+    --source "$3" --baseline "$4" --existing "$5" \
+    --capture "$6/capture" --mvs "$6/mvs_support_cap_v4" \
+    --vendor "$7/RoMaV2" --output "$8"
+  rc=$?
+  printf "%s\n" "$rc" > "$8.exitcode"
+  exit "$rc"
+' _ "$python" "$observer" "$source" "$baseline" "$existing" "$audit" "$runtime" "$out" \
+  > "$out.log" 2>&1 < /dev/null &
+printf '%s\n' "$!" > "$out.pid"
+printf '采集PID：%s\n日志：%s.log\n' "$!" "$out"
+SH
+```
+
+## 查看进度与完成条件
+
+```bash
+out=/root/autodl-tmp/ambisur_runs/Tool_Room/observed_correspondence/four_source_dense_v2
+tail -n 30 "$out.log"
+if [ -f "$out.exitcode" ]; then
+  printf '\n退出码：'; cat "$out.exitcode"
+  ls -lh "$out/correspondence_manifest.json"
+  du -sh "$out"
+fi
+```
+
+每对DONE只说明匹配查询完成；每参考FROZEN表示该图的选择／地图完成。必须总退出码0且最终manifest存在，再下载完整目录及同级.log/.exitcode/.pid。失败保留目录与日志，不覆盖、自动恢复或换规则。
+
+每图主NPZ含全部像素及成本／来源／支持／回退证据；`*_maps.npz`含H×W混合浮点深度与原始标签，`*_sources.png`图例为黑=回退DA3、蓝=current、绿=明确DA3、橙红=MVS、紫=spread；`*_supports.png`灰度0/100/200对应0/1/2个实际共享支持。参考原照片观察，PNG颜色不是误差图或GT标签。
+
+## 下载后的本地正式评价
+
+建议本地新目录`D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/observed_correspondence_full_image_four_source_20261112/four_source_dense_v2`。确认下载完整后再执行原routing-score，复用4份原GT缓存，不启动新mesh查询；以下路径按实际下载位置调整，新output必须不存在。
+
+```powershell
+& 'D:/research_Space/ambisur-eval-runtime/Scripts/python.exe' -u -B scripts/evaluate_depth_sources.py routing-score `
+  --matches D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/observed_correspondence_full_image_four_source_20261112/four_source_dense_v2 `
+  --gt-cache D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/analysis/depth_source_failure_evidence_20261110_v1/scored `
+  --output D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/Tool_Room/analysis/four_source_dense_20261112_v1
+```
+
+主DA3表的`full_image`包含回退区域，不能只挑接受区域；各参照X的count/MAE/gain均来自GT、X、混合目标共同有效域，不被无关current或DA3缺失过滤。单／双支持及2/3/4来源单列。离线混合目标好坏不等于削弱loss有效或30K表面收益，GT后失败不自动重跑。旧抽样模式保持可回读。
+
+---
+
+# 历史：29对抽样离线检查
 
 2026-11-12用户已返回服务器c4546a3、退出0、最终manifest约15K和74M目录的成功回执。当前无需再执行启动命令；请直接按“下载与本地评价”归档新目录及.log/.exitcode。实际manifest／NPZ完整性和GT精度待本地检查，不能把采集完成等同选择有效。
 

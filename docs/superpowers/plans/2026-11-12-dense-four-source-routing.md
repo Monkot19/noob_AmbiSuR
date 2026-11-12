@@ -31,6 +31,6 @@ D main directory/isolated branch,4×584×876/29pairs, original7K sources; maxang
 
 ### Task 3: Verify and handoff
 **Files:** docs/research/four-source-routing-launch.md,project-handoff.md,rootledgers.
-- [ ] Actual local nonGT fourmap+29photo metadata preflight and available donor producer check (no GT/newmodel); full unified CPU entry oncegreen.
-- [ ] One fresh read-only wholebranch review; necessary fixes only, preserveold numerical outputs.
-- [ ] Fixed codecommit, no-install server command/originalcache reuse/estimatedoutputs, Bashsyntaxcheck; push/bundle and concise userhandoff. Servermodel/GTscore/training not locallyrun.
+- [x] Actual nonGT2046336pixels/33photo/29pair preflight;actualdonorproducer+querychunks;unified92/83pass9skip7.411s.
+- [x] One independentwholebranchreview,2P1CLIseamsREDreproduced/fixed53600fd,independentnarrowrecheckpassed;legacynumericalcoreexact.
+- [x] Fixed53600fd,no-install/cache-onlycommandandBashouter+inner syntaxpass;deliverybundle/push/userhandoff. ActualserverGPU/GTscore/trainingnotrun.
