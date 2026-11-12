@@ -26,8 +26,8 @@ D main directory/isolated branch,4×584×876/29pairs, original7K sources; maxang
 ### Task 2: Dense capture and shared evaluation roundtrip
 **Files:** scripts/evaluate_depth_sources.py,experiments/depth_sources/toolroom_four_source_dense_v2.json,tests/test_candidate_selector.py
 **Interfaces:** routing-match --capture/--mvs in explicit denseconfig; dense source preflight, query chunks, pair cache and record build; original routing-score dispatch by audit_type.
-- [ ] Failing dense block/donor producer/full grid/preflight and real NPZ->CLI->JSON/CSV regressions, including unavailable current/DA3 domain.
-- [ ] Reuse actual query/regrid/projection/geometry, freeze all inputs and outputs before GT; source map labels/PNG; shared paired error adapter. GREEN unified entry; commit.
+- [x] RED missingdensequery/preflight/serializer/bootstrap; GREEN8newdense regressions including missingcurrent/DA3,full-gridchunks,actualNPZ/CLI/JSON/CSV/PNG.
+- [x] Reuse actualquery/regrid/projection/geometry andpairedstats;unified92tests83pass9skip15.787s, actualdonorproducerincluded. Real2,046,336pixel/33photo/29pair preflight6.797s, noGT/model.
 
 ### Task 3: Verify and handoff
 **Files:** docs/research/four-source-routing-launch.md,project-handoff.md,rootledgers.

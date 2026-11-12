@@ -519,3 +519,5 @@ User supplies actual root D:/research_Space/output/AmbiSuR_second_run/ScanNetpp/
 - Dense spec buildercheck completed;fixed doc-only per-referenceX paired-domain andrandom fallbackstrata(original-valid+participating-sourcebits/supportcount). No model/GT/test/codeexecution. Pendingconcretepriorityapproval;noimplementationstarted.
 
 - Task1RED3missinginterfacesconfirmed,thenGREEN3new+5legacy8/8. Addedavailability-onlysharedsubsetselector/single-support/sourcequotastrata andpair_geometryoptionalnosensitivitycoreexact;oldrouting_evidenceuntouched. No scientific/model/GToperation.
+
+- Task2RED missingquery/maps/preflight/offlineinterfaces,thenGREEN8newdensecases. AdditionalRED subnearDA3fallbackrandomcoverage identifiednativeznearbitinsufficient;addedpositivefallbackvalidstratum(no methodgatechange). Unified92/83pass9skip15.787s withactualRoMaproducer. Realfullinputpreflight2046336pixels/33photos/29pairs6.797s;receiptin handoff_bundle/four-source-dense-routing_20261112/local_input_preflight.json. No GTcontents/model/training.

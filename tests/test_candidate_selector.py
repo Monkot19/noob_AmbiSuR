@@ -380,6 +380,136 @@ class DenseRoutingTests(unittest.TestCase):
             np.testing.assert_array_equal(full[key],light[key])
         self.assertNotIn('sensitivity_max_z_m',light)
 
+    def test_dense_grid_chunk_queries_cover_real_donor_output(self):
+        from scripts.evaluate_depth_sources import query_dense_matches
+        from utils.observed_correspondence import query_matches
+        h,w=5,7;y,x=torch.meshgrid(torch.arange(h),torch.arange(w),indexing='ij')
+        grid=torch.stack((2*(x+.5)/w-1,2*(y+.5)/h-1),-1)[None]
+        raw={f'{k}_{d}':v for d in ('AB','BA') for k,v in
+             [('warp',grid),('overlap',torch.ones(1,h,w,1)),('precision',torch.eye(2).expand(1,h,w,2,2))]}
+        xy=np.c_[np.arange(h*w)%w,np.arange(h*w)//w]
+        result=query_dense_matches(raw,(h,w),(h,w),chunk_size=8)
+        expected=query_matches(raw,xy,(h,w),(h,w))
+        np.testing.assert_array_equal(result['pixel_ids'],np.arange(h*w))
+        for key,value in expected.items():np.testing.assert_array_equal(result[key],value)
+        with self.assertRaises(ValueError):query_dense_matches(raw,(h,w),(h,w),chunk_size=0)
+
+    def test_dense_record_real_serializer_score_domains_and_png(self):
+        from scripts.evaluate_depth_sources import (build_routing_record,save_npz,write_json,file_sha,
+            correspondence_score,write_dense_maps)
+        from utils.observed_correspondence import project_depth
+        cam=AnalyticCamera();h=w=32;ids=np.arange(h*w,dtype=np.int64);xy=np.c_[ids%w,ids//w]
+        k=cam.get_k().numpy();tr=cam.world_view_transform.numpy()
+        targets=np.tile([2.,2.5,1.8,np.nan],(h*w,1));targets[15*w+15,0]=np.nan
+        targets[16*w+16,1]=np.nan
+        frozen=dict(pixel_ids=ids,reference_xy=xy,candidate_depths=targets,image_size=np.array([w,h]),
+            camera_k=k,camera_transform=tr,znear=np.array(.01))
+        src=AnalyticCamera(translation=.1);st=src.world_view_transform.numpy()
+        q,valid=project_depth(xy,np.full(h*w,1.8),k,tr,k,st,(h,w),.01,.01)
+        match=dict(pixel_ids=ids,reference_xy=xy,source_xy=q,forward_valid=valid,
+                   cycle_valid=valid,cycle_px=np.zeros(h*w),overlap_forward=np.ones((h*w,1)))
+        record=build_routing_record(frozen,[match],[dict(k=k,transform=st,shape=(h,w),znear=.01)],dense=True)
+        self.assertEqual(record['winner'][15*w+15],2)
+        self.assertEqual(record['support_count'][15*w+15],1)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);matches=root/'matches';gt=root/'gt';matches.mkdir();gt.mkdir()
+            save_npz(matches/'view.npz',record);write_dense_maps(matches,'view',record)
+            from PIL import Image
+            with Image.open(matches/'view_sources.png') as im:self.assertEqual(im.size,(w,h))
+            write_json(matches/'correspondence_manifest.json',dict(schema_version=3,audit_type='four_source_dense',
+                config={},records=[dict(camera='view',file='view.npz',sha256=file_sha(matches/'view.npz'))]))
+            save_npz(gt/'view_gt_grid.npz',dict(depth=np.full((h,w),1.8),valid=np.ones((h,w),bool),region=np.zeros((h,w),int)))
+            args=SimpleNamespace(matches=matches,gt_cache=gt,output=root/'score')
+            correspondence_score(args)
+            result=json.loads((args.output/'results.json').read_text())
+            self.assertEqual(result['pixel_count'],h*w)
+            primary=next(r for r in result['rows'] if r['kind']=='dense_policy' and r['reference']=='da3'
+                         and r['subset']=='full_image' and r['region']=='all')
+            self.assertEqual(primary['count'],h*w-1) # missing current must not reduce it
+            current=next(r for r in result['rows'] if r['kind']=='dense_policy' and r['reference']=='current'
+                         and r['subset']=='full_image' and r['region']=='all')
+            self.assertEqual(current['count'],h*w-1) # missing DA3 must not reduce it
+            self.assertAlmostEqual(primary['reference_mae_mm']-primary['hybrid_mae_mm'],primary['gain_reference_mean_mm'])
+            import csv
+            with (args.output/'metrics.csv').open(encoding='utf-8-sig',newline='') as f:
+                rows=list(csv.DictReader(f))
+            self.assertEqual(len(rows),len(result['rows']))
+            with self.assertRaises(FileExistsError):correspondence_score(args)
+
+    def test_dense_preflight_reads_actual_manifests_poses_and_source_maps(self):
+        from PIL import Image
+        from scripts.evaluate_depth_sources import dense_routing_preflight,save_npz,write_json,file_sha
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source=root/'source';base=root/'base';old=root/'old';cap=root/'cap';mvs=root/'mvs'
+            for d in (source/'sparse/0',source/'images',base,old,cap,mvs):d.mkdir(parents=True)
+            names=['ref','a','b'];poses=[];lines=[]
+            for i,name in enumerate(names):
+                t=(i-1)*.1;poses.append(dict(img_name=name,width=32,height=32,fx=40,fy=40,
+                    rotation=np.eye(3).tolist(),position=[-t,0,0]))
+                lines.append(f'{i+1} 1 0 0 0 {t} 0 0 1 {name}.JPG\n\n')
+                Image.new('RGB',(32,32),(90,100,110)).save(source/'images'/(name+'.JPG'))
+            (source/'sparse/0/cameras.txt').write_text('1 PINHOLE 32 32 40 40 16 16\n')
+            (source/'sparse/0/images.txt').write_text(''.join(lines))
+            write_json(base/'cameras.json',poses)
+            (base/'multi_view.json').write_text(json.dumps(dict(ref_name='ref',nearest_name=['a','b']))+'\n')
+            metadata={x:file_sha(base/x) for x in ('cameras.json','multi_view.json')}
+            k=np.array([[40,0,16],[0,40,16],[0,0,1]],np.float32);tr=np.eye(4,dtype=np.float32);tr[3,0]=-.1
+            data=dict(current_depth=np.full((32,32),2.),da3_depth=np.full((32,32),2.5),
+                spread_depth=np.full((32,32),1.9),spread_valid=np.ones((32,32),bool),
+                current_normal=np.zeros((3,32,32)),prior_normal=np.zeros((3,32,32)),
+                camera_k=k,camera_transform=tr,image_size=np.array([32,32]),znear=np.array(.01))
+            for i in range(2):data.update({f'support{i}_depth':np.ones((32,32)),f'support{i}_k':k})
+            save_npz(cap/'depth.npz',data);save_npz(mvs/'mvs.npz',dict(depth=np.full((32,32),1.8),camera_k=k))
+            write_json(cap/'capture_manifest.json',dict(snapshot_inputs={'native7k':{'metadata_sha256':metadata}},
+                records=[dict(camera='ref',snapshot_iteration=7000,camera_uid=1,supports=['a','b'],depth_file='depth.npz')]))
+            write_json(mvs/'inference_manifest.json',dict(metadata_sha256=metadata,records=[dict(camera='ref',file='mvs.npz')]))
+            save_npz(old/'ref.npz',dict(camera_k=k,camera_transform=tr))
+            model={'commit':'example'}
+            write_json(old/'input_receipt.json',dict(images={n:dict(sha256=file_sha(source/'images'/(n+'.JPG'))) for n in names}))
+            write_json(old/'correspondence_manifest.json',dict(model_commit='example',config={'model':model},
+                input_receipt_sha256=file_sha(old/'input_receipt.json'),records=[dict(camera='ref',file='ref.npz',
+                sha256=file_sha(old/'ref.npz'),supports=['a','b'])]))
+            cfg=dict(model=model,views=[dict(reference='ref',supports=['a','b'])],native_shape=[32,32],rgb_size=[32,32],
+                pair_count=2,query_chunk_size=17,baseline_metadata_sha256=metadata,
+                existing_manifest_sha256=file_sha(old/'correspondence_manifest.json'),
+                capture_manifest_sha256=file_sha(cap/'capture_manifest.json'),mvs_manifest_sha256=file_sha(mvs/'inference_manifest.json'),
+                source_arrays={'ref':dict(depth_file='depth.npz',depth_sha256=file_sha(cap/'depth.npz'),
+                    mvs_file='mvs.npz',mvs_sha256=file_sha(mvs/'mvs.npz'))})
+            prepared,cameras,receipt=dense_routing_preflight(cfg,source,old,base,cap,mvs)
+            self.assertEqual(len(receipt['images']),3);self.assertEqual(receipt['pair_count'],2)
+            self.assertEqual(prepared[0]['frozen']['candidate_depths'].shape,(1024,4))
+            self.assertEqual(prepared[0]['frozen']['pixel_ids'][-1],1023)
+            (cap/'depth.npz').write_bytes(b'changed')
+            with self.assertRaisesRegex(ValueError,'depth'):dense_routing_preflight(cfg,source,old,base,cap,mvs)
+
+    def test_dense_model_bootstrap_is_cache_only_and_restores_hub(self):
+        from scripts.evaluate_depth_sources import offline_correspondence_hub
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            hub=Path(tmp);checkpoint=hub/'checkpoints/romav2.0.1.pt'
+            checkpoint.parent.mkdir();checkpoint.write_bytes(b'abc')
+            dino=hub/'facebookresearch_dinov3_fixed';dino.mkdir()
+            (dino/'hubconf.py').write_text('def marker(**kwargs): return kwargs\n')
+            cfg=dict(dinov3_commit='fixed',model=dict(weights_bytes=3,weights_sha256=hashlib.sha256(b'abc').hexdigest()))
+            before_load=torch.hub.load;before_download=torch.hub.download_url_to_file
+            with patch('torch.hub.get_dir',return_value=str(hub)):
+                with offline_correspondence_hub(cfg):
+                    result=torch.hub.load('facebookresearch/dinov3:fixed','marker',skip_validation=True,pretrained=False)
+                    self.assertEqual(result,dict(pretrained=False))
+                    with self.assertRaisesRegex(RuntimeError,'offline'):torch.hub.download_url_to_file('https://unused','unused')
+                self.assertIs(torch.hub.load,before_load);self.assertIs(torch.hub.download_url_to_file,before_download)
+                checkpoint.unlink()
+                with self.assertRaises(FileNotFoundError):
+                    with offline_correspondence_hub(cfg):pass
+
+    def test_random_fallback_preserves_positive_subnear_da3_coverage(self):
+        from utils.observed_correspondence import dense_routing_evidence
+        z=np.tile([2.,np.nan,1.8,np.nan],(12,1));z[:6,1]=.005
+        costs=np.ones((12,4,1));costs[6:,2]=0
+        r=dense_routing_evidence(costs,np.ones_like(costs,bool),self.evidence(12,1),z,seed=1)
+        self.assertTrue(np.isfinite(r['hybrid_depth']).all())
+        self.assertTrue(np.isfinite(r['random_hybrid_depth']).all())
+
 
 class DepthSourceAuditTests(unittest.TestCase):
     def test_mvs_support_cap_preserves_real_saved_order_without_padding(self):

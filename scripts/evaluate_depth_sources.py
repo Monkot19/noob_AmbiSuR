@@ -7,6 +7,7 @@ is explicitly not independent correspondence evidence or a training mask.
 import argparse
 import ast
 import csv
+from contextlib import contextmanager
 import hashlib
 import importlib.util
 import json
@@ -541,6 +542,31 @@ def build_correspondence_record(data, mvs_depth, probe, matches, seed=0, camera_
     return record
 
 
+@contextmanager
+def offline_correspondence_hub(config):
+    """Dense batch consumes the existing official caches, never downloads."""
+    import torch
+    hub=Path(torch.hub.get_dir());weights=hub/'checkpoints/romav2.0.1.pt'
+    if not weights.is_file():raise FileNotFoundError('missing cached RoMa checkpoint: '+str(weights))
+    model=config['model']
+    if weights.stat().st_size!=model['weights_bytes'] or file_sha(weights)!=model['weights_sha256']:
+        raise ValueError('cached official RoMa checkpoint differs')
+    commit=config['dinov3_commit'];repo='facebookresearch/dinov3:'+commit
+    directory=hub/('facebookresearch_dinov3_'+commit)
+    if not (directory/'hubconf.py').is_file():raise FileNotFoundError('missing pinned DINO source cache: '+str(directory))
+    original_load=torch.hub.load;original_download=torch.hub.download_url_to_file
+    def cached_load(repo_or_dir, model, *args, **kwargs):
+        if repo_or_dir!=repo:raise RuntimeError('offline batch encountered an uncached hub repository')
+        for key in ('skip_validation','trust_repo','force_reload','source'):kwargs.pop(key,None)
+        return original_load(str(directory),model,*args,source='local',**kwargs)
+    def no_download(*args,**kwargs):raise RuntimeError('offline batch requires an existing cache; downloads disabled')
+    torch.hub.load=cached_load;torch.hub.download_url_to_file=no_download
+    try:
+        yield
+    finally:
+        torch.hub.load=original_load;torch.hub.download_url_to_file=original_download
+
+
 def load_correspondence_model(config, vendor):
     """Shared unchanged official precise initialization for old and new batches."""
     import torch
@@ -675,11 +701,11 @@ def routing_camera_metadata(source, baseline, native_shape):
     return cameras,dict(pose_format=kind,pose_files={name+suffix:file_sha(pose_path/(name+suffix)) for name in ('images','cameras')})
 
 
-def build_routing_record(frozen, matches, cameras, seed=0, cycle_max_px=1., overlap_min=.5):
+def build_routing_record(frozen, matches, cameras, seed=0, cycle_max_px=1., overlap_min=.5, dense=False):
     """Freeze variable-support evidence around the unchanged depth hypotheses."""
     from utils.observed_correspondence import project_depth,pair_geometry,routing_evidence
     n=len(frozen['pixel_ids']);s=len(matches)
-    if s!=len(cameras) or s<2:raise ValueError('at least two matching support cameras required')
+    if s!=len(cameras) or s<(1 if dense else 2):raise ValueError('insufficient matching support cameras')
     ids=frozen['pixel_ids'];w,h=map(int,frozen['image_size']);xy=frozen['reference_xy']
     if ids.dtype!=np.int64 or len(np.unique(ids))!=n or np.any((ids<0)|(ids>=h*w)):
         raise ValueError('invalid frozen pixel IDs')
@@ -691,7 +717,7 @@ def build_routing_record(frozen, matches, cameras, seed=0, cycle_max_px=1., over
     for match,cam in zip(matches,cameras):
         validate_routing_pair(match,frozen)
         geom=pair_geometry(xy,match['source_xy'],match['forward_valid'],ref_k,ref_tr,
-            cam['k'],cam['transform'],cam['shape'],near,cam['znear']);geometry.append(geom)
+            cam['k'],cam['transform'],cam['shape'],near,cam['znear'],compute_sensitivity=not dense);geometry.append(geom)
         c=[];v=[]
         for z in targets.T:
             projected,good=project_depth(xy,z,ref_k,ref_tr,cam['k'],cam['transform'],cam['shape'],near,cam['znear'])
@@ -708,8 +734,80 @@ def build_routing_record(frozen, matches, cameras, seed=0, cycle_max_px=1., over
     record.update({'pair_'+key:np.stack([g[key] for g in geometry],1) for key in geometry[0]})
     record.update(support_ks=np.stack([c['k'] for c in cameras]),
         support_transforms=np.stack([c['transform'] for c in cameras]))
-    record.update(routing_evidence(costs,valid,evidence,seed,cycle_max_px,overlap_min))
+    if dense:
+        from utils.observed_correspondence import dense_routing_evidence
+        record.update(dense_routing_evidence(costs,valid,evidence,targets,seed,cycle_max_px,overlap_min,near))
+    else:
+        record.update(routing_evidence(costs,valid,evidence,seed,cycle_max_px,overlap_min))
     return record
+
+
+def query_dense_matches(predictions, reference_shape, source_shape, chunk_size=65536):
+    """Query every native pixel once; chunks never trigger extra model forwards."""
+    from utils.observed_correspondence import query_matches
+    if not isinstance(chunk_size,int) or chunk_size<1:raise ValueError('positive integer query chunk size required')
+    h,w=map(int,reference_shape);ids=np.arange(h*w,dtype=np.int64);parts={}
+    for start in range(0,len(ids),chunk_size):
+        use=ids[start:start+chunk_size];xy=np.c_[use%w,use//w]
+        for key,value in query_matches(predictions,xy,reference_shape,source_shape).items():
+            parts.setdefault(key,[]).append(value)
+    return dict(pixel_ids=ids,**{k:np.concatenate(v,axis=0) for k,v in parts.items()})
+
+
+def write_dense_maps(output, name, data):
+    """Lossless float/label maps plus a fixed legend visualization, no GT."""
+    from PIL import Image
+    w,h=map(int,data['image_size']);shape=(h,w)
+    save_npz(output/(name+'_maps.npz'),{
+        k:data[k].reshape(shape) for k in ('hybrid_depth','winner','support_count',
+            'original_source_bits','participating_source_bits','fallback_reason')})
+    palette=np.array([[0,0,0],[50,120,255],[55,190,80],[245,90,55],[185,70,220]],np.uint8)
+    Image.fromarray(palette[data['winner'].reshape(shape)+1]).save(output/(name+'_sources.png'))
+    Image.fromarray((data['support_count'].reshape(shape)*100).astype(np.uint8)).save(output/(name+'_supports.png'))
+
+
+def target_error_stats(target, truth, use):
+    error=np.abs(target[use]-truth[use])*1000
+    return dict(abs_mean_mm=float(error.mean()) if len(error) else None,
+        abs_median_mm=float(np.median(error)) if len(error) else None,
+        abs_p90_mm=float(np.quantile(error,.9)) if len(error) else None)
+
+
+def dense_score_rows(data, truth, visible, regions):
+    """Shared paired statistics with each actual reference's own valid domain."""
+    n=len(truth);all_pixels=np.ones(n,bool);names=('current','da3','mvs','spread')
+    labels=data['winner'];count=data['support_count'];bits=data['participating_source_bits']
+    groups=[('full_image',all_pixels)]
+    groups.extend((f'{i}_support',count==i) for i in (0,1,2))
+    number=data['participating_sources'].sum(1)
+    groups.extend((f'{i}_sources',number==i) for i in (2,3,4))
+    groups.extend((f'selected_{name}',labels==i) for i,name in enumerate(names))
+    groups.append(('fallback_da3',labels<0))
+    groups.extend((f'fallback_reason_{i}',data['fallback_reason']==i) for i in (1,2,3))
+    groups.append(('da3_not_compared',(count>0)&((bits&2)==0)))
+    region_masks=[('all',all_pixels),*[(f'region_{int(i)}',regions==i) for i in np.unique(regions)]]
+    for subset,mask in groups:
+        comparisons=[('dense_policy',i,data['hybrid_depth']) for i in (range(4) if subset=='full_image' else (1,))]
+        if subset=='full_image':comparisons.append(('dense_random',1,data['random_hybrid_depth']))
+        for kind,index,target in comparisons:
+            reference=data['candidate_depths'][:,index]
+            for region,rmask in region_masks:
+                domain=visible&mask&rmask
+                # Both reference inputs deliberately mean X, not actual current/DA3.
+                stats=paired_target_stats(reference,reference,target,truth,domain,all_pixels)
+                use=domain&np.isfinite(reference)&(reference>0)&np.isfinite(target)&(target>0)
+                row=dict(kind=kind,reference=names[index],subset=subset,region=region,
+                    count=stats['count'],domain_count=stats['domain_count'],eligible_count=stats['eligible_count'],
+                    coverage=stats['coverage'],visible_count=int(domain.sum()),
+                    gain_reference_mean_mm=stats['gain_da3_mean_mm'],
+                    gain_reference_median_mm=stats['gain_da3_median_mm'],
+                    improved_reference_fraction=stats['improved_da3_fraction'],
+                    harmed_reference_over5mm_fraction=stats['harmed_da3_over5mm_fraction'],
+                    gain_reference_p05_mm=stats['gain_da3_p05_mm'])
+                for prefix,values in (('reference',reference),('hybrid',target)):
+                    errors=target_error_stats(values,truth,use)
+                    row.update({prefix+'_'+k.removeprefix('abs_').replace('mean','mae'):v for k,v in errors.items()})
+                yield row
 
 
 def routing_preflight(config, source, existing, baseline):
@@ -767,6 +865,73 @@ def routing_preflight(config, source, existing, baseline):
     return prepared,cameras,receipt
 
 
+def dense_routing_preflight(config, source, existing, baseline, capture, mvs):
+    """Read the original complete depth producers; freeze inputs without GT."""
+    from PIL import Image
+    if int(config['query_chunk_size'])<1:raise ValueError('positive query chunk required')
+    manifest_path=existing/'correspondence_manifest.json';receipt_path=existing/'input_receipt.json'
+    if file_sha(manifest_path)!=config['existing_manifest_sha256']:raise ValueError('original routing manifest differs')
+    old=json.loads(manifest_path.read_text(encoding='utf-8'))
+    if old['model_commit']!=config['model']['commit'] or old['config']['model']!=config['model']:
+        raise ValueError('original model differs')
+    if file_sha(receipt_path)!=old['input_receipt_sha256']:raise ValueError('original image receipt differs')
+    original=json.loads(receipt_path.read_text(encoding='utf-8'))
+    for filename,expected in config['baseline_metadata_sha256'].items():
+        if file_sha(baseline/filename)!=expected:raise ValueError('baseline metadata differs: '+filename)
+    for directory,filename,key in ((capture,'capture_manifest.json','capture_manifest_sha256'),
+                                    (mvs,'inference_manifest.json','mvs_manifest_sha256')):
+        if file_sha(directory/filename)!=config[key]:raise ValueError('source manifest differs: '+filename)
+    cap=json.loads((capture/'capture_manifest.json').read_text(encoding='utf-8'))
+    pred=json.loads((mvs/'inference_manifest.json').read_text(encoding='utf-8'))
+    if pred['metadata_sha256']!=config['baseline_metadata_sha256']:raise ValueError('MVS cameras differ')
+    for snapshot in cap['snapshot_inputs'].values():
+        if any(snapshot['metadata_sha256'][k]!=v for k,v in config['baseline_metadata_sha256'].items()):
+            raise ValueError('capture cameras differ')
+    cap_records={r['camera']:r for r in cap['records']};mvs_records={r['camera']:r for r in pred['records']}
+    old_records={r['camera']:r for r in old['records']}
+    neighbors={r['ref_name']:r['nearest_name'] for r in map(json.loads,(baseline/'multi_view.json').read_text().splitlines())}
+    cameras,pose_receipt=routing_camera_metadata(source,baseline,config['native_shape'])
+    prepared=[];images={};sources={};pair_count=0
+    for view in config['views']:
+        name=view['reference'];meta=cap_records[name];saved=old_records[name];supports=view['supports']
+        if supports!=neighbors[name] or supports!=saved['supports'] or len(set(supports))!=len(supports):
+            raise ValueError('original ordered neighbor list differs: '+name)
+        if meta['snapshot_iteration']!=7000 or meta['supports']!=supports[:2]:raise ValueError('native7K capture required')
+        identity=config['source_arrays'][name];pm=mvs_records[name]
+        if meta['depth_file']!=identity['depth_file'] or pm['file']!=identity['mvs_file']:
+            raise ValueError('source filenames differ: '+name)
+        dp=capture/meta['depth_file'];mp=mvs/pm['file'];old_path=existing/saved['file']
+        for path,key in ((dp,'depth_sha256'),(mp,'mvs_sha256')):
+            if file_sha(path)!=identity[key]:raise ValueError('source '+key+' differs: '+name)
+        if file_sha(old_path)!=saved['sha256']:raise ValueError('original record differs: '+name)
+        data=read_npz(dp);validate_depth_map(data);native=cameras[name];prior=read_npz(old_path)
+        h,w=data['current_depth'].shape
+        if [h,w]!=config['native_shape']:raise ValueError('full native grid differs')
+        for frozen in (data,prior):
+            if not np.allclose(frozen['camera_k'],native['k'],atol=1e-3,rtol=0) or not np.allclose(
+                    frozen['camera_transform'],native['transform'],atol=5e-6,rtol=0):
+                raise ValueError('source camera differs: '+name)
+        q=regrid_mvs(read_npz(mp),data['camera_k'],(h,w));ids=np.arange(h*w,dtype=np.int64)
+        frozen=dict(pixel_ids=ids,reference_xy=np.c_[ids%w,ids//w],
+            candidate_depths=np.stack([data['current_depth'].ravel(),data['da3_depth'].ravel(),q.ravel(),
+                np.where(data['spread_valid'],data['spread_depth'],np.nan).ravel()],1),
+            image_size=data['image_size'],camera_k=data['camera_k'],camera_transform=data['camera_transform'],znear=data['znear'])
+        for image_name in [name,*supports]:
+            if image_name in images:continue
+            path=source/'images'/cameras[image_name]['image_name']
+            with Image.open(path) as image:
+                if list(image.size)!=config['rgb_size']:raise ValueError('RGB header differs: '+image_name)
+            sha=file_sha(path)
+            if sha!=original['images'][image_name]['sha256']:raise ValueError('original photograph differs: '+image_name)
+            images[image_name]=dict(file=path.name,bytes=path.stat().st_size,sha256=sha)
+        prepared.append(dict(view=view,meta=meta,frozen=frozen,cached={}))
+        sources[name]=identity;pair_count+=len(supports)
+    if pair_count!=config['pair_count']:raise ValueError('approved dense pair budget differs')
+    return prepared,cameras,dict(existing_manifest_sha256=config['existing_manifest_sha256'],
+        capture_manifest_sha256=config['capture_manifest_sha256'],mvs_manifest_sha256=config['mvs_manifest_sha256'],
+        images=images,source_arrays=sources,pair_count=pair_count,reused_pairs=0,new_pairs=pair_count,**pose_receipt)
+
+
 def routing_match(args):
     """Reuse 8 frozen RGB pairs, acquire only approved21, never load GT/model depths."""
     import shutil
@@ -774,17 +939,29 @@ def routing_match(args):
     import torch
     from utils.observed_correspondence import query_matches
     config=json.loads(args.config.read_text(encoding='utf-8'));vendor=args.vendor.resolve(strict=True)
-    outside_inputs(args.output,[args.source,args.existing,args.baseline,vendor])
+    dense=config.get('audit_type')=='four_source_dense'
+    inputs=[args.source,args.existing,args.baseline,vendor]
+    if dense:
+        if args.capture is None or args.mvs is None:raise ValueError('dense routing needs original --capture and --mvs')
+        inputs.extend([args.capture,args.mvs])
+    outside_inputs(args.output,inputs)
     if subprocess.check_output(['git','rev-parse','HEAD'],cwd=vendor,text=True).strip()!=config['model']['commit']:
         raise ValueError('pinned RoMaV2 source required')
     if subprocess.check_output(['git','status','--porcelain'],cwd=vendor,text=True).strip():raise ValueError('RoMaV2 source must be clean')
-    prepared,cameras,receipt=routing_preflight(config,args.source,args.existing,args.baseline)
+    if dense:
+        prepared,cameras,receipt=dense_routing_preflight(config,args.source,args.existing,args.baseline,args.capture,args.mvs)
+    else:
+        prepared,cameras,receipt=routing_preflight(config,args.source,args.existing,args.baseline)
     args.output.mkdir(parents=True,exist_ok=False)
     write_run_metadata(args.output,dict(command=sys.argv,config=config),collect_run_identity(ROOT))
     write_json(args.output/'input_receipt.json',receipt)
     print(f"Inputs verified: {len(prepared)} references / {receipt['pair_count']} pairs / "
           f"{receipt['reused_pairs']} reused / {receipt['new_pairs']} new. No training or GT.",flush=True)
-    model=load_correspondence_model(config,vendor);records=[]
+    if dense:
+        with offline_correspondence_hub(config):model=load_correspondence_model(config,vendor)
+    else:
+        model=load_correspondence_model(config,vendor)
+    records=[]
     for item in prepared:
         view=item['view'];meta=item['meta'];frozen=item['frozen'];name=view['reference']
         xy=frozen['reference_xy'];ids=frozen['pixel_ids'];w,h=map(int,frozen['image_size'])
@@ -802,7 +979,8 @@ def routing_match(args):
                 print('START RoMaV2',name,'->',support,flush=True)
                 with torch.inference_mode():
                     prediction=model.match(args.source/'images'/cameras[name]['image_name'],args.source/'images'/cam['image_name'])
-                    match=query_matches(prediction,xy,(h,w),cam['shape'])
+                    match=(query_dense_matches(prediction,(h,w),cam['shape'],int(config['query_chunk_size'])) if dense
+                           else query_matches(prediction,xy,(h,w),cam['shape']))
                 torch.cuda.synchronize();seconds=time.monotonic()-start
                 match=dict(pixel_ids=ids,**match);validate_routing_pair(match,frozen);save_npz(path,match)
                 timing=dict(support=support,file=filename,sha256=file_sha(path),reused=False,seconds=seconds,
@@ -810,12 +988,15 @@ def routing_match(args):
                 del prediction
                 print('DONE',name,'->',support,'seconds',round(seconds,2),flush=True)
             matches.append(match);timings.append(timing);supports.append(cam)
-        record=build_routing_record(frozen,matches,supports,int(config['seed'])+int(meta['camera_uid']),**config['support_quality'])
+        record=build_routing_record(frozen,matches,supports,int(config['seed'])+int(meta['camera_uid']),
+                                    dense=dense,**config['support_quality'])
         filename=name+'.npz';save_npz(args.output/filename,record)
+        if dense:write_dense_maps(args.output,name,record)
         records.append(dict(camera=name,camera_uid=meta['camera_uid'],supports=view['supports'],pairs=timings,
             file=filename,sha256=file_sha(args.output/filename),original_record_sha256=meta['sha256']))
         print('FROZEN four-source routing',name,flush=True)
-    write_json(args.output/'correspondence_manifest.json',dict(schema_version=2,audit_type='four_source_routing',
+    write_json(args.output/'correspondence_manifest.json',dict(schema_version=3 if dense else 2,
+        audit_type='four_source_dense' if dense else 'four_source_routing',
         config=config,records=records,model_commit=config['model']['commit'],backend='official fused-local-corr',
         torch=torch.__version__,input_receipt_sha256=file_sha(args.output/'input_receipt.json'),
         interpretation='Frozen offline source ranks and shared support evidence. No GT, no training teacher mask, no surface updates.'))
@@ -867,6 +1048,12 @@ def correspondence_score(args):
         ids=data['pixel_ids'];truth=grid['depth'].ravel()[ids]
         visible=grid['valid'].ravel()[ids]&np.isfinite(truth)&(truth>0)
         region_ids=grid['region'].ravel()[ids];pixel_count+=len(ids)
+        if manifest.get('audit_type')=='four_source_dense':
+            if not np.array_equal(ids,np.arange(grid['depth'].size,dtype=np.int64)):
+                raise ValueError('dense score requires every native pixel in order')
+            rows.extend(dict(camera=name,**row) for row in dense_score_rows(data,truth,visible,region_ids))
+            print('Scored full native grid',name,'pixels',len(ids),flush=True)
+            continue
         z,p,q,spread=data['candidate_depths'].T
         regs=[('all',np.ones(len(ids),bool)),*[(f'region_{int(r)}',region_ids==r) for r in np.unique(region_ids)]]
         def append(kind,source,subset,domain,selected,target,extra=None):
@@ -874,10 +1061,7 @@ def correspondence_score(args):
                 row=dict(camera=name,kind=kind,source=source,subset=subset,region=region)
                 row.update(paired_target_stats(z,p,target,truth,domain&visible&mask,selected))
                 use=domain&visible&mask&selected&np.isfinite(target)&(target>0)
-                error=np.abs(target[use]-truth[use])*1000
-                row.update(abs_mean_mm=float(error.mean()) if len(error) else None,
-                    abs_median_mm=float(np.median(error)) if len(error) else None,
-                    abs_p90_mm=float(np.quantile(error,.9)) if len(error) else None)
+                row.update(target_error_stats(target,truth,use))
                 if extra:
                     labels=extra['policy_labels'];use_domain=domain&visible&mask
                     use_domain&=np.isfinite(z)&(z>0)&np.isfinite(p)&(p>0)&np.isfinite(target)&(target>0)
@@ -918,6 +1102,12 @@ def correspondence_score(args):
         'source-quota random labels frozen before GT. Current is a static comparison, not a self-supervision target. '
         'No learned-match independence, training mask or surface/mesh benefit established.' if manifest.get('audit_type')=='four_source_routing' else
         'Original sampled pixels, not dense coverage. Positive gains mean lower same-ray camera-z error. One/two shared supports separate. Random selected before GT. Descriptive groups are not validated gates. Learned matches and repeated photos are not independent. No surface or mesh benefit established.')
+    if manifest.get('audit_type')=='four_source_dense':
+        interpretation=('All native pixels, variable available depth sources on the same one/two supports. '
+            'Each reference_X pair uses its own valid domain; primary DA3 table includes DA3 fallbacks. '
+            'Source-quota random labels stratified before GT by native validity, participating sources, '
+            'support count and fallback validity. Current winners are static targets, not self-supervision. '
+            'No training gate, independent evidence or rendered-surface gain established.')
     write_json(args.output/'results.json',dict(schema_version=1,pixel_count=pixel_count,rows=rows,gt_cache_sha256=gt_receipts,interpretation=interpretation))
     fields=list(dict.fromkeys(k for row in rows for k in row))
     with (args.output/'metrics.csv').open('x',newline='',encoding='utf-8-sig') as stream:
@@ -942,8 +1132,9 @@ def main():
         m.add_argument('--'+flag,type=Path,required=True)
     c=sub.add_parser('correspondence-score',help='score frozen correspondence evidence using existing GT grids')
     for flag in ('matches','gt-cache','output'):c.add_argument('--'+flag,type=Path,required=True)
-    m=sub.add_parser('routing-match',help='reuse original8 RGB pairs; acquire21 new original-neighbor pairs; no GT')
+    m=sub.add_parser('routing-match',help='offline routing; dense config queries every native pixel, no GT')
     for flag in ('config','source','existing','baseline','vendor','output'):m.add_argument('--'+flag,type=Path,required=True)
+    for flag in ('capture','mvs'):m.add_argument('--'+flag,type=Path)
     c=sub.add_parser('routing-score',help='same cached-GT scorer for frozen four-source routing')
     for flag in ('matches','gt-cache','output'):c.add_argument('--'+flag,type=Path,required=True)
     args=p.parse_args()

@@ -295,7 +295,8 @@ def dense_routing_evidence(costs, projection_valid, evidence, candidate_depths,
     participating=(participants*bits).sum(1).astype(np.uint8)
     random=winner.copy();rng=np.random.default_rng(int(seed))
     # Native validity also protects DA3-fallback labels in this permutation.
-    strata=np.c_[original,participating,num]
+    fallback_valid=np.isfinite(depths[:,1])&(depths[:,1]>0)
+    strata=np.c_[original,participating,num,fallback_valid]
     for key in np.unique(strata,axis=0):
         ids=np.flatnonzero((strata==key).all(1));random[ids]=rng.permutation(winner[ids])
     def hybrid(labels):

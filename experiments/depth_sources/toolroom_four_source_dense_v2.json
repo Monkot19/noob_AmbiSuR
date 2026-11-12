@@ -1,0 +1,123 @@
+{
+  "schema_version": 3,
+  "seed": 0,
+  "native_shape": [
+    584,
+    876
+  ],
+  "rgb_size": [
+    1752,
+    1168
+  ],
+  "model": {
+    "repository": "https://github.com/Parskatt/RoMaV2.git",
+    "commit": "95c9968145c8906b7b59383258e9f73b02853d89",
+    "setting": "precise",
+    "compile": false,
+    "weights_url": "https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt",
+    "weights_bytes": 1095883548,
+    "weights_sha256": "1557dec0d21b62366465f7ff4d5fdf228cc695d0582e196ad2b80e05230828b7"
+  },
+  "conventions": {
+    "pixel_centers": "host integers, donor +0.5",
+    "align_corners": false,
+    "triangulation": "COLMAP 3.11.1 normalized linear; reference-camera frame",
+    "sensitivity": "not computed for dense mode; same core triangulation/angle"
+  },
+  "views": [
+    {
+      "reference": "DSC06348",
+      "supports": [
+        "DSC06347",
+        "DSC06349",
+        "DSC06346",
+        "DSC06360",
+        "DSC06350",
+        "DSC06345",
+        "DSC06359",
+        "DSC06351"
+      ]
+    },
+    {
+      "reference": "DSC06669",
+      "supports": [
+        "DSC06559",
+        "DSC06560",
+        "DSC06563",
+        "DSC06561",
+        "DSC06562"
+      ]
+    },
+    {
+      "reference": "DSC06274",
+      "supports": [
+        "DSC06275",
+        "DSC06276",
+        "DSC06277",
+        "DSC06299",
+        "DSC06298",
+        "DSC06278",
+        "DSC06279",
+        "DSC06297"
+      ]
+    },
+    {
+      "reference": "DSC06289",
+      "supports": [
+        "DSC06288",
+        "DSC06290",
+        "DSC06287",
+        "DSC06291",
+        "DSC06282",
+        "DSC06286",
+        "DSC06292",
+        "DSC06293"
+      ]
+    }
+  ],
+  "audit_type": "four_source_dense",
+  "existing_manifest_sha256": "f6d0adcbcefa56ddc58ba91c55163ae9fafdc3dd7471b09e9c7ca82a05118b83",
+  "baseline_metadata_sha256": {
+    "cameras.json": "178b2027ba44dbb71acc43f983d95132ae73400259aadd0a3118847c0a1ec6f9",
+    "multi_view.json": "5e362e3efe7acc5182ef2f90cb46b342cf4be020f034d9c2fe274049b8b4b0bd"
+  },
+  "support_quality": {
+    "cycle_max_px": 1.0,
+    "overlap_min": 0.5
+  },
+  "pair_count": 29,
+  "reused_pairs": 0,
+  "new_pairs": 29,
+  "query_chunk_size": 65536,
+  "dinov3_commit": "adc254450203739c8149213a7a69d8d905b4fcfa",
+  "capture_manifest_sha256": "cbb8085f6ee4e8c5376f0594e07873c93f3106769794b1faacdf6404a3e2b8aa",
+  "mvs_manifest_sha256": "124ad91719ab9f1665967eb50b183ef5d2c002cb261a499cd666c8af00aed1c5",
+  "selection_policy": "max_sources_then_max_shared_supports_then_higher_angle",
+  "full_native_grid": true,
+  "source_arrays": {
+    "DSC06348": {
+      "depth_file": "native7k_DSC06348_depths.npz",
+      "depth_sha256": "356b2f40d8f256ae3fd098581235d62d7c7ffaaa170b08e29dbbc1564234e9c0",
+      "mvs_file": "DSC06348.npz",
+      "mvs_sha256": "7f6ceddcd9fba7c67e6ae28f6b0886cb039725aec6edb20b5bfb5546fdb5cb4b"
+    },
+    "DSC06669": {
+      "depth_file": "native7k_DSC06669_depths.npz",
+      "depth_sha256": "bf832baac5e5a17eb9e7306046517a59cd9edbd298c3e350885c1efbf918b0f5",
+      "mvs_file": "DSC06669.npz",
+      "mvs_sha256": "46017df6196b32730eee9f7e71345d33a7eb5c6caaea3ec72bbd95fb967f889f"
+    },
+    "DSC06274": {
+      "depth_file": "native7k_DSC06274_depths.npz",
+      "depth_sha256": "9c88ac9097e2a1a8a8c1dfbcd2eeda0aedd44dd49612db4ce0ffa7bab21b7af9",
+      "mvs_file": "DSC06274.npz",
+      "mvs_sha256": "33689452ded918d0c33dd5e98d15813502a161a9ad49e7d021d68549743d22fb"
+    },
+    "DSC06289": {
+      "depth_file": "native7k_DSC06289_depths.npz",
+      "depth_sha256": "916b99bafb4f2248156b02de3f9170757d4536ae9ecb4b6d6b99d5d006d7313c",
+      "mvs_file": "DSC06289.npz",
+      "mvs_sha256": "d0d6149bd388792df1dc5cf6137d47a4b94eb2542bff01d35559926704808408"
+    }
+  }
+}
