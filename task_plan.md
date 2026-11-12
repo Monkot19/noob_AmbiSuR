@@ -523,3 +523,8 @@ Userapprovedconcretespec/sourcecountpriority. Dbranchcodex/four-source-dense-rou
 
 - [x] Userserverdensecaptureexit0/finalFROZENreceived.
 - [ ] Downloadwholefour_source_dense_v2+log/exitcode;verifyactualfullnativeinputs/decisions/identitybeforeoriginalcachedGTscore. No qualityclaimbeforeevaluation.
+
+## 2026-11-12 downloaded dense routing evaluation
+- [x] NonGTpreflight9.547s:clean53600fd/37NPZ8PNG/2046336pixels/29pairs/sourcearrays+oldsampleexact+decisions/random/mapsallreproduced. Frozenpreflight/protocolat analysis/four_source_dense_20261112_v1.
+- [ ] Run unchangedrouting-score exactlyoncewithoriginal4GTgrids,cleancommit;preservefailureifany/noautomaticGTretry.
+- [ ] Full-imageDA3/current/sourcepairedquality,source/support/regioncoverageandharm;CSVJSONvalidation;independentread-onlyresultreview/report/handoff. No newgate/model/train.
